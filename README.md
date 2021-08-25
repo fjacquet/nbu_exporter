@@ -4,11 +4,6 @@ Netbackup exporter for prometheus + Grafana dashboard
 ![Code Analysis](https://github.com/fjacquet/nbu_exporter/actions/workflows/codeql-analysis.yml/badge.svg)
 ![Go build](https://github.com/fjacquet/nbu_exporter/actions/workflows/go.yml/badge.svg)
 
-## Debug
-To debud you need to install  Delve, this command should work:
-```bash
-$ go install github.com/go-delve/delve/cmd/dlv@latest
-```
 
 ## Run
 
@@ -25,3 +20,10 @@ But you need to
 ## Grafana dashboard
 
 One scrapped by prometheus, you can load the json in grafana folder to your system
+
+
+## Debug
+To debug, you need to install  Delve, this command should work:
+```bash
+$ go install github.com/go-delve/delve/cmd/dlv@latest
+```
