@@ -1,0 +1,16 @@
+vendor
+old
+*.o
+*.a
+*.so
+nbu-exporter
+nbu-exporter.log
+nbu_exporter
+nbu_exporter.log
+.vscode/launch.json
+.dccache
+.scannerwork/sonar-go-to-slang-linux-amd64
+.scannerwork/class-mapping.csv
+.scannerwork/report-task.txt
+.scannerwork/.sonar_lock
+samples

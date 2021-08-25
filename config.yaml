@@ -1,0 +1,16 @@
+---
+server:
+    host: "localhost"
+    port: 2112
+    uri: "/metrics"
+    scrappingInterval: "15m"
+    logName: "nbu-exporter.log"
+nbuserver:
+    scheme: "https"
+    uri: "/netbackup"
+    domain: "my.domain"
+    domainType: "NT"
+    host: "master.my.domain"
+    port: 1556
+    apiKey: "my-api-key"
+    contentType: "application/vnd.netbackup+json; version=3.0"
