@@ -1,6 +1,6 @@
 module hotela.ch/fjacquet/nbu_exporter
 
-go 1.20
+go 1.22.5
 
 require (
 	github.com/alecthomas/kong v0.9.0
