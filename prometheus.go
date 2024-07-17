@@ -6,8 +6,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-//You must create a constructor for you collector that
-//initializes every descriptor and returns a pointer to the collector
+// You must create a constructor for you collector that
+// initializes every descriptor and returns a pointer to the collector
 func newNbuCollector() *nbuCollector {
 	return &nbuCollector{
 		nbuResponseTime: prometheus.NewDesc(
@@ -33,8 +33,8 @@ func newNbuCollector() *nbuCollector {
 	}
 }
 
-//Each and every collector must implement the Describe function.
-//It essentially writes all descriptors to the prometheus desc channel.
+// Each and every collector must implement the Describe function.
+// It essentially writes all descriptors to the prometheus desc channel.
 func (collector *nbuCollector) Describe(ch chan<- *prometheus.Desc) {
 
 	//Update this section with the each metric you create for a given collector
@@ -46,7 +46,7 @@ func (collector *nbuCollector) Describe(ch chan<- *prometheus.Desc) {
 
 }
 
-//Collect implements required collect function for all promehteus collectors
+// Collect implements required collect function for all promehteus collectors
 func (collector *nbuCollector) Collect(ch chan<- prometheus.Metric) {
 
 	//Implement logic here to determine proper metric value to return to prometheus
@@ -80,9 +80,5 @@ func (collector *nbuCollector) Collect(ch chan<- prometheus.Metric) {
 		labels := strings.Split(key, "|")
 		ch <- prometheus.MustNewConstMetric(collector.nbuJobsStatusCount, prometheus.GaugeValue, value, labels[0], labels[1])
 	}
-
-	// ch <- prometheus.MustNewConstMetric(collector.nbuResponseTime, prometheus.GaugeValue, 1)
-	// ch <- prometheus.MustNewConstMetric(collector.nbuJobsSize, prometheus.GaugeValue, 1, "backup", "standard", "0")
-	// ch <- prometheus.MustNewConstMetric(collector.nbuJobsCount, prometheus.GaugeValue, 1, "backup", "standard", "0")
 
 }

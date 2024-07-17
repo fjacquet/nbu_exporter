@@ -1,5 +1,7 @@
 package main
 
+// Config represents the configuration for the application.
+// It includes settings for the server and the NBU server.
 type Config struct {
 	Server struct {
 		Port              string `yaml:"port"`

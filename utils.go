@@ -8,16 +8,18 @@ import (
 
 // test if a file exists
 //
+// fileExists checks if the given file exists.
+// It returns true if the file exists, and false otherwise.
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	} else {
-		return true
-	}
+	return !os.IsNotExist(err)
 }
 
 // readFile do read a yaml file
+// ReadFile reads the configuration from the specified YAML file.
+//
+// It opens the file, creates a YAML decoder, and decodes the configuration into the provided Config struct.
+// If any errors occur during the process, they are passed to the ProcessError function.
 func ReadFile(Cfg *Config, filepath string) {
 	f, err := os.Open(filepath)
 	if err != nil {
@@ -29,5 +31,6 @@ func ReadFile(Cfg *Config, filepath string) {
 	err = decoder.Decode(Cfg)
 	if err != nil {
 		ProcessError(err)
+		return
 	}
 }

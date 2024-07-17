@@ -10,6 +10,10 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+// getStorage retrieves storage unit information from the NBU server and updates the provided disks map with the free and used capacity for each storage unit.
+// The function makes a GET request to the /storage/storage-units endpoint on the NBU server, and unmarshals the JSON response into a Storages struct.
+// It then iterates through the storage units, skipping any tape storage units, and updates the disks map with the free and used capacity for each storage unit.
+// The disks map is keyed by a string in the format "<storage unit name>|<storage server type>|free" or "<storage unit name>|<storage server type>|used".
 func getStorage(disks map[string]float64) {
 
 	var s Storages
