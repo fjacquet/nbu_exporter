@@ -3,6 +3,8 @@
 Netbackup exporter for prometheus + Grafana dashboard
 
 ![Code Analysis](https://github.com/fjacquet/nbu_exporter/actions/workflows/codeql-analysis.yml/badge.svg)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=fjacquet_nbu_exporter&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=fjacquet_nbu_exporter)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=fjacquet_nbu_exporter&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=fjacquet_nbu_exporter)
 ![Go build](https://github.com/fjacquet/nbu_exporter/actions/workflows/go.yml/badge.svg)
 
 ## Run
@@ -24,7 +26,7 @@ One scrapped by prometheus, you can load the json in grafana folder to your syst
 
 ## Debug
 
-To debug, you need to install  Delve, this command should work:
+To debug, you need to install Delve, this command should work:
 
 ```bash
 go install github.com/go-delve/delve/cmd/dlv@latest
