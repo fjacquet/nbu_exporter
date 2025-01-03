@@ -3,8 +3,8 @@ server:
     host: "localhost"
     port: 2112
     uri: "/metrics"
-    scrappingInterval: "15m"
-    logName: "nbu-exporter.log"
+    scrappingInterval: "1s"
+    logName: "log/nbu-exporter.log"
 nbuserver:
     scheme: "https"
     uri: "/netbackup"

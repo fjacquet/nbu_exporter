@@ -2,125 +2,106 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"os"
-	"time"
+	"os/signal"
+	"syscall"
 
-	"github.com/alecthomas/kong"
+	"github.com/fjacquet/nbu_exporter/internal/exporter"
+	"github.com/fjacquet/nbu_exporter/internal/logging"
+	"github.com/fjacquet/nbu_exporter/internal/models"
+	"github.com/fjacquet/nbu_exporter/internal/utils"
 	"github.com/go-resty/resty/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
-// ConfigFile is the path to the configuration file.
-// Cfg is the configuration struct.
-// Client is the resty client.
-// programName is the name of the program, including the version.
-// cli is the command-line interface struct, with a Debug flag and a Config command.
-// nbuRoot is the root directory for the NBU (Netbackup) configuration.
 var (
 	ConfigFile  string
-	Cfg         Config
+	Cfg         models.Config
 	Client      *resty.Client
 	programName string
-	cli         struct {
-		Debug  bool          `help:"Enable debug mode."`
-		Config ConfigCommand `cmd help:"Path to configuration file."`
-	}
-	nbuRoot string
+	Debug       bool
+	nbuRoot     string
 )
 
 // checkParams validates the command-line arguments and configuration file.
-// If the number of arguments is less than 2, it prints an error message and exits the program.
-// It then parses the command-line arguments using the Kong library and runs the context.
-// If there is an error during the parsing or running, it prints an error message and exits the program.
-// Finally, it checks if the configuration file exists, and if not, it prints an error message and exits the program.
-func checkParams() {
-	if len(os.Args) < 2 {
-		fmt.Println("Invalid call, pleases try " + os.Args[0] + " --help ")
-		os.Exit(1)
+func checkParams() error {
+	if !utils.FileExists(ConfigFile) {
+		return fmt.Errorf("cannot find file %s", ConfigFile)
 	}
-
-	// command line management
-	ctx := kong.Parse(&cli)
-	err := ctx.Run(&context{Debug: cli.Debug})
-	ctx.FatalIfErrorf(err)
-
-	if !fileExists(ConfigFile) {
-		fmt.Println("can not find file " + ConfigFile)
-		os.Exit(1)
-	}
-
+	return nil
 }
 
-// prepareLogs sets up logging by creating a log file, configuring a multi-writer to write to both the log file and stdout, and setting the log output to the multi-writer.
-// The log file is created with the name specified in the Cfg.Server.LogName configuration, and has read-write permissions set to 0644.
-// If there is an error opening the log file, the function will panic.
-func prepareLogs() {
-	logFile, err := os.OpenFile(Cfg.Server.LogName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
-	if err != nil {
-		panic(err)
+// startHTTPServer starts the HTTP server and handles graceful shutdown.
+func startHTTPServer() {
+	server := &http.Server{
+		Addr:    fmt.Sprintf("%s:%s", Cfg.Server.Host, Cfg.Server.Port),
+		Handler: http.DefaultServeMux,
 	}
-	mw := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(mw)
-	// log.SetFormatter(&log.JSONFormatter{PrettyPrint: true})
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start HTTP server: %v", err)
+		}
+	}()
+
+	log.Infof("Starting exporter on %s:%s%s", Cfg.Server.Host, Cfg.Server.Port, Cfg.Server.URI)
+
+	// Graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+	<-stop
+
+	log.Info("Shutting down server...")
+	if err := server.Shutdown(nil); err != nil {
+		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+	log.Info("Server exiting")
 }
 
-// main is the entry point of the application. It sets up the program name, checks the command-line parameters,
-// reads the configuration file, sets up logging, registers the NBU collector with Prometheus, and starts the HTTP server
-// to expose the Prometheus metrics.
-//
-// The program name is constructed using the current time in the format "2006-01-02T15:04:05".
-//
-// The checkParams function validates the command-line arguments and configuration file. If the number of arguments is less
-// than 2, it prints an error message and exits the program. It then parses the command-line arguments using the Kong library
-// and runs the context. If there is an error during the parsing or running, it prints an error message and exits the program.
-// Finally, it checks if the configuration file exists, and if not, it prints an error message and exits the program.
-//
-// The prepareLogs function sets up logging by creating a log file, configuring a multi-writer to write to both the log file
-// and stdout, and setting the log output to the multi-writer. The log file is created with the name specified in the
-// Cfg.Server.LogName configuration, and has read-write permissions set to 0644. If there is an error opening the log file,
-// the function will panic.
-//
-// The program then registers the NBU collector with Prometheus and starts the HTTP server to expose the Prometheus metrics.
-// The server listens on the host and port specified in the Cfg.Server.Host and Cfg.Server.Port configuration, and serves the
-// metrics at the URI specified in the Cfg.Server.URI configuration.
 func main() {
+	var rootCmd = &cobra.Command{
+		Use:   "nbu_exporter",
+		Short: "NBU Exporter for Prometheus",
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := checkParams(); err != nil {
+				log.Fatal(err)
+			}
 
-	currentTime := time.Now()
-	var version string = currentTime.Format("2006-01-02T15:04:05")
+			utils.ReadFile(&Cfg, ConfigFile)
+			nbuRoot = fmt.Sprintf("%s://%s:%s%s", Cfg.NbuServer.Scheme, Cfg.NbuServer.Host, Cfg.NbuServer.Port, Cfg.NbuServer.URI)
 
-	// program name management
-	programName = os.Args[0] + "-" + version
+			if err := logging.PrepareLogs(Cfg.Server.LogName); err != nil {
+				log.Fatal(err)
+			}
 
-	checkParams()
+			log.Infof("Log name is: %s", Cfg.Server.LogName)
+			log.Infof("Starting %s...", programName)
+			log.Infof("ScrappingInterval: %s", Cfg.Server.ScrappingInterval)
 
-	ReadFile(&Cfg, ConfigFile)
+			if Debug {
+				log.Infof("NBU server is on %s", nbuRoot)
+			}
 
-	prepareLogs()
+			// Register worker
+			nbu := exporter.NewNbuCollector(Cfg)
+			prometheus.MustRegister(nbu)
 
-	// log creation
-
-	InfoLogger("logName is: " + Cfg.Server.LogName)
-	InfoLogger("Starting " + programName + "...")
-	InfoLogger("ScrappingInterval:" + Cfg.Server.ScrappingInterval)
-
-	nbuRoot = Cfg.NbuServer.Scheme + "://" + Cfg.NbuServer.Host + ":" + Cfg.NbuServer.Port + Cfg.NbuServer.URI
-	if cli.Debug {
-		InfoLogger("nbu server is on " + nbuRoot)
+			// HTTP server startup
+			http.Handle(Cfg.Server.URI, promhttp.Handler())
+			startHTTPServer()
+		},
 	}
 
-	// register worker
-	nbu := newNbuCollector()
-	prometheus.MustRegister(nbu)
+	rootCmd.PersistentFlags().StringVarP(&ConfigFile, "config", "c", "", "Path to configuration file")
+	rootCmd.PersistentFlags().BoolVarP(&Debug, "debug", "d", false, "Enable debug mode")
+	rootCmd.MarkPersistentFlagRequired("config")
 
-	// http server startup
-	http.Handle(Cfg.Server.URI, promhttp.Handler())
-	if cli.Debug {
-		InfoLogger("starting exporter on " + Cfg.Server.Host + ":" + Cfg.Server.Port + Cfg.Server.URI)
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
-	http.ListenAndServe(Cfg.Server.Host+":"+Cfg.Server.Port, nil)
-
 }

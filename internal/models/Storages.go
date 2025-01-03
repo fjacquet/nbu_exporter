@@ -1,4 +1,4 @@
-package main
+package models
 
 type Storages struct {
 	Data []struct {

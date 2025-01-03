@@ -1,15 +1,31 @@
-package main
+package exporter
 
 import (
 	"strings"
 
+	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// You must create a constructor for you collector that
+// Define a struct for you collector that contains pointers
+// to prometheus descriptors for each metric you wish to expose.
+// Note you can also include fields of other types if they provide utility
+// but we just won't be exposing them as metrics.
+type NbuCollector struct {
+	cfg                models.Config
+	nbuDiskSize        *prometheus.Desc
+	nbuResponseTime    *prometheus.Desc
+	nbuJobsSize        *prometheus.Desc
+	nbuJobsCount       *prometheus.Desc
+	nbuJobsStatusCount *prometheus.Desc
+}
+
+// NewNbuCollector You must create a constructor for you collector that
 // initializes every descriptor and returns a pointer to the collector
-func newNbuCollector() *nbuCollector {
-	return &nbuCollector{
+func NewNbuCollector(cfg models.Config) *NbuCollector {
+
+	return &NbuCollector{
+		cfg: cfg, // Injected configuration
 		nbuResponseTime: prometheus.NewDesc(
 			"nbu_response_time_ms",
 			"The server response time in millisecond",
@@ -33,9 +49,10 @@ func newNbuCollector() *nbuCollector {
 	}
 }
 
-// Each and every collector must implement the Describe function.
+//	Describe Each and every collector must implement the Describe function.
+//
 // It essentially writes all descriptors to the prometheus desc channel.
-func (collector *nbuCollector) Describe(ch chan<- *prometheus.Desc) {
+func (collector *NbuCollector) Describe(ch chan<- *prometheus.Desc) {
 
 	//Update this section with the each metric you create for a given collector
 	ch <- collector.nbuDiskSize
@@ -47,17 +64,17 @@ func (collector *nbuCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 // Collect implements required collect function for all promehteus collectors
-func (collector *nbuCollector) Collect(ch chan<- prometheus.Metric) {
+func (collector *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 
 	//Implement logic here to determine proper metric value to return to prometheus
 	//for each descriptor or call other functions that do so.
 
 	var disks = make(map[string]float64)
-	getStorage(disks)
+	fetchStorage(disks, collector.cfg)
 	var jobsSize = make(map[string]float64)
 	var jobsCount = make(map[string]float64)
 	var jobsStatusCount = make(map[string]float64)
-	getJobs(jobsSize, jobsCount, jobsStatusCount)
+	fetchAllJobs(jobsSize, jobsCount, jobsStatusCount, collector.cfg)
 
 	//Write latest value for each metric in the prometheus metric channel.
 	//Note that you can pass CounterValue, GaugeValue, or UntypedValue types here

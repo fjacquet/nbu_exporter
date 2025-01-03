@@ -1,4 +1,4 @@
-package main
+package models
 
 // Config represents the configuration for the application.
 // It includes settings for the server and the NBU server.
