@@ -15,3 +15,4 @@ nbu_exporter.log
 .scannerwork/.sonar_lock
 samples
 .codegpt
+.DS_Store

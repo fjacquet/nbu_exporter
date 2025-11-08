@@ -1,3 +1,6 @@
+// Package logging provides centralized logging functionality using logrus.
+// It configures structured logging with JSON formatting and provides
+// convenience functions for different log levels.
 package logging
 
 import (
@@ -12,10 +15,10 @@ import (
 var currentTime = time.Now()
 var version = currentTime.Format("2006-01-02T15:04:05")
 
-// Program name management
+// programName is used as a field in all log entries for identification
 var programName = os.Args[0] + "-" + version
 
-// LogInfo logs the provided message with the programName field.
+// LogInfo logs an informational message with the programName field.
 // This function should be used to log informational messages during program execution.
 func LogInfo(msg string) {
 	log.WithFields(log.Fields{"job": programName}).Info(msg)
@@ -46,7 +49,13 @@ func LogError(msg string) {
 	log.WithFields(log.Fields{"job": programName}).Error(msg)
 }
 
-// PrepareLogs sets up logging.
+// PrepareLogs initializes the logging system with the specified log file.
+// It configures logging to write to both stdout and the log file with JSON formatting.
+//
+// Parameters:
+//   - logName: Path to the log file (will be created if it doesn't exist)
+//
+// Returns an error if the log file cannot be opened or created.
 func PrepareLogs(logName string) error {
 	logFile, err := os.OpenFile(logName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 	if err != nil {

@@ -1,0 +1,1344 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Asset Service API
+  version: '12.0'
+  description: >-
+    The NetBackup Asset Service API provides access to NetBackup asset
+    information via workload providers.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+paths:
+  /asset-service/workloads:
+    get:
+      description: |
+        Retrieves the list of workloads supported by the asset service.
+
+        **Access Control**\
+        Enforcement Type: `None`
+      tags:
+        - Workloads
+      parameters:
+        - name: include
+          description: Specifies the related resource type to include in the response.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - workloadDetails
+        - &ref_2
+          in: query
+          name: meta
+          description: >
+            Appends additional metadata for the resources to the response. The
+            meta parameter is a comma-separated list of metadata values.
+
+            Following are the available values:
+
+            |Name|Description|
+
+            |---|---|
+
+            |accessControlId|Appends access control identification metadata in
+            the meta section of each system-defined resource.|
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Retrieved the list of workloads.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_16
+                type: object
+                required:
+                  - data
+                  - links
+                properties:
+                  links: &ref_13
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        description: Link to the current page.
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        description: Link to the first page.
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        description: Link to the last page.
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        description: Link to the next page.
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        description: Link to the previous page.
+                        properties:
+                          href:
+                            type: string
+                  meta:
+                    type: object
+                    properties:
+                      pagination: &ref_14
+                        type: object
+                        properties:
+                          count:
+                            type: integer
+                            description: Total number of records.
+                          pages:
+                            type: integer
+                            description: Total number of pages.
+                          page:
+                            type: integer
+                            description: The current page number.
+                          offset:
+                            type: integer
+                            description: The offset value for the current page.
+                          limit:
+                            type: integer
+                            description: The number of records per page.
+                          first:
+                            type: integer
+                            description: The offset value for the first page.
+                          last:
+                            type: integer
+                            description: The offset value for the last page.
+                          next:
+                            type: integer
+                            description: The offset value for the next page.
+                          prev:
+                            type: integer
+                            description: The offset value for the previous page.
+                  data:
+                    type: array
+                    items: &ref_3
+                      type: object
+                      required:
+                        - links
+                        - type
+                        - id
+                        - relationships
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self: &ref_10
+                              type: object
+                              description: Link to the resource.
+                              properties:
+                                href:
+                                  type: string
+                        type:
+                          type: string
+                          enum:
+                            - workload
+                          description: >-
+                            Specifies the resource type. Must be set to
+                            'workload'.
+                        id:
+                          type: string
+                          description: The name of the workload.
+                          example: exampleworkload
+                        relationships:
+                          type: object
+                          required:
+                            - workloadDetails
+                          properties:
+                            workloadDetails: &ref_0
+                              type: object
+                              required:
+                                - data
+                              properties:
+                                data:
+                                  type: object
+                                  required:
+                                    - type
+                                    - id
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                        - workloadDetails
+                                      description: >-
+                                        Specifies the resource type. Must be set
+                                        to 'workloadDetails'.
+                                    id:
+                                      type: string
+                                      description: The name of the workload.
+                                      example: exampleworkload
+                        meta:
+                          type: object
+                          properties:
+                            accessControlId:
+                              type: string
+                              description: Access control namespace of the object.
+                  included:
+                    type: array
+                    items: &ref_4
+                      allOf:
+                        - *ref_0
+                        - type: object
+                          description: Metadata for the specified workload.
+                          required:
+                            - attributes
+                          properties:
+                            attributes:
+                              type: object
+                              required:
+                                - properties
+                              properties:
+                                workloadAttributes:
+                                  type: object
+                                  description: Workload-specific metadata.
+                                  example:
+                                    exampleVersion: 1.0.0
+                                    exampleDisplayName: Example Workload
+        '400':
+          description: Invalid include parameter.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_1
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '401': &ref_5
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/asset-service/workloads/{workload}':
+    get:
+      description: |
+        Retrieves the workload details of a specified workload.
+
+        **Access Control**\
+        Enforcement Type: `None`
+      tags:
+        - Workloads
+      parameters:
+        - name: workload
+          description: Specifies the workload type.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: include
+          description: Specifies the related resource type to include in the response.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - workloadDetails
+        - *ref_2
+      responses:
+        '200':
+          description: Retrieved the workload details.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_17
+                type: object
+                required:
+                  - data
+                properties:
+                  data: *ref_3
+                  included:
+                    type: array
+                    items: *ref_4
+        '400':
+          description: Invalid include parameter.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_5
+        '404':
+          description: Specified workload cannot be found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/asset-service/workloads/{workload}/assets':
+    get:
+      description: >
+        Retrieves the list of assets from the specified workload based on
+        specified filters.
+
+
+        For a complete JSON schema definition of the supported assets for this
+        specified workload, please refer to `data.attributes.schema` in the
+        response of the following API:
+
+
+        `GET /asset-service/workloads/{workload}/schemas?filter=schemaName eq
+        'asset'`
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+
+
+        Namespace: (Reference the `data.meta.accessControlId` metadata response
+        attribute for specific object-level namespaces)\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Assets
+      parameters:
+        - name: workload
+          description: >
+            Specifies the workload type. For a list of supported workloads,
+            please refer to `data[].id` in the response of the following API:
+
+
+            `GET /asset-service/workloads`
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Specifies filters according to OData standards.
+
+
+            The `x-netbackup.filterable` boolean value for each field in the
+            JSON schema definition determines whether that field is supported
+            for filtering.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'fields[asset]'
+          description: >
+            Specifies the asset fields only to be returned in the response.
+
+            The value of this parameter must be a comma-separated list that
+            refers to the name(s) of the fields only to be included in the
+            response. If this parameter is not present, then all fields will be
+            returned.
+          in: query
+          required: false
+          schema:
+            type: string
+        - *ref_2
+        - name: 'page[offset]'
+          description: Specifies the asset record number offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: 'page[limit]'
+          description: Specifies the number of asset records to display on one page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: 'page[disable]'
+          description: >
+            Specifies that pagination should be disabled entirely. All results
+            will be returned together.
+
+            This param is mutually exclusive of any other page params.
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: sort
+          description: >
+            Specifies one or more fields by which to sort the response data.
+
+
+            The value of this parameter must be a comma-separated list of sort
+            fields in the order they are to be sorted.
+
+            The sort order for each sort field is ascending unless it is
+            prefixed with a minus (`-`) to specify descending order.
+
+
+            The `x-netbackup.sortable` value for each field in the JSON schema
+            definition determines if that field is supported for sorting and the
+            supported sorting order.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: Cache-Control
+          description: >
+            Specifies a directive to modify the caching behavior of the request.
+
+            * `no-cache` - Fetch assets without reusing previously cached data.
+            Newly created assets, deleted assets, and RBAC changes are reflected
+            in the response.
+          in: header
+          required: false
+          schema:
+            type: string
+            enum:
+              - no-cache
+      responses:
+        '200':
+          description: Retrieved the assets based on the applied filters.
+          headers:
+            X-NetBackup-Warning: &ref_6
+              schema:
+                type: string
+              description: >
+                Migration warning message string with quotes.
+
+                Example:
+
+                "The migration process is in progress. The provided data might
+                be inconsistent and incomplete."
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_8
+                type: object
+                required:
+                  - data
+                properties:
+                  links: &ref_11
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        description: Link to the current page.
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        description: Link to the first page.
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        description: Link to the next page.
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        description: Link to the previous page.
+                        properties:
+                          href:
+                            type: string
+                  meta:
+                    type: object
+                    properties:
+                      pagination: &ref_12
+                        type: object
+                        properties:
+                          offset:
+                            type: integer
+                            description: The offset value for the current page.
+                          limit:
+                            type: integer
+                            description: The number of records per page.
+                          first:
+                            type: integer
+                            description: The offset value for the first page.
+                          next:
+                            type: integer
+                            description: The offset value for the next page.
+                          prev:
+                            type: integer
+                            description: The offset value for the previous page.
+                          hasNext:
+                            type: boolean
+                            description: Indicates whether there are more records.
+                  data:
+                    type: array
+                    items: &ref_7
+                      type: object
+                      example:
+                        links:
+                          self:
+                            href: >-
+                              /asset-service/workloads/exampleworkload/assets/9.11919a-62bc-11e9-a923-1681be663d3e
+                        id: 9101919a-62bc-11e9-a923-1681be663d3e
+                        type: exampleAsset
+                        attributes:
+                          commonAssetAttributes:
+                            commonAttributeKey1: exampleValue1
+                          assetType: exampleAssetType
+                          workloadSpecificKey1: exampleValue2
+                          workloadSpecificKey2:
+                            - exampleValue3
+                            - exampleValue4
+                            - exampleValue5
+                          workloadSpecificKey3:
+                            field1: exampleValue6
+                            field2: exampleValue7
+        '400':
+          description: Invalid filter criteria.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_5
+        '404':
+          description: Specified workload could not be found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '406': &ref_9
+          description: >-
+            Invalid `Accept` type. Make sure your `Accept` header matches what
+            this API produces.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/asset-service/workloads/{workload}/assets/{assetId}':
+    get:
+      description: >
+        Retrieves the details of the specified asset.
+
+
+        For a complete JSON schema definition of the supported assets for this
+        specified workload, please refer to `data.attributes.schema` in the
+        response of the following API:
+
+
+        `GET /asset-service/workloads/{workload}/schemas?filter=schemaName eq
+        'asset-by-id' and schemaType eq 'NAMED_QUERY_RESPONSE'`
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+
+
+        Namespace: (Reference the `data.meta.accessControlId` metadata response
+        attribute for specific object-level namespaces) \
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Assets
+      parameters:
+        - name: workload
+          description: >
+            Specifies the workload type. For a list of supported workloads,
+            please refer to `data[].id` in the response of the following API:
+
+
+            `GET /asset-service/workloads`
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: assetId
+          description: Specifies the identifier of an asset of a particular workload.
+          in: path
+          required: true
+          schema:
+            type: string
+        - *ref_2
+      responses:
+        '200':
+          description: Successfully retrieved the the details of the asset.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_18
+                type: object
+                required:
+                  - data
+                properties:
+                  data: *ref_7
+        '400':
+          description: Invalid asset ID.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_5
+        '403':
+          description: Forbidden. An attempt to alter system-defined data was denied.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '404':
+          description: >-
+            Specified workload could not be found or no asset was found for the
+            specified asset identifier.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/asset-service/workloads/{workload}/assets/{assetId}/{relationshipName}':
+    get:
+      description: >
+        Retrieves the list of related assets of a specified asset ID.
+
+
+        For a complete JSON schema definition of the supported assets for this
+        specified workload, please refer to `data.attributes.schema` in the
+        response of the following API:
+
+
+        `GET /asset-service/workloads/{workload}/schemas?filter=schemaName eq
+        'asset'`
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+
+
+        Namespace: (Reference the `data.meta.accessControlId` metadata response
+        attribute for specific object-level namespaces)\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Assets
+      parameters:
+        - name: workload
+          description: >
+            Specifies the workload type. For a list of supported workloads,
+            please refer to `data[].id` in the response of the following API:
+
+
+            `GET /asset-service/workloads`
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: assetId
+          description: Specifies the identifier of an asset of a particular workload.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: relationshipName
+          description: >-
+            Specifies the name of the asset's relationship to its related
+            assets.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: 'fields[asset]'
+          description: >
+            Specifies the related asset fields only to be returned in the
+            response.
+
+            The value of this parameter must be a comma-separated list that
+            refers to the name(s) of the fields only to be included in the
+            response. If this parameter is not present, then all fields will be
+            returned.
+          in: query
+          required: false
+          schema:
+            type: string
+        - *ref_2
+        - name: 'page[offset]'
+          description: Specifies the asset record number offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: 'page[limit]'
+          description: Specifies the number of asset records to display on one page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: 'page[disable]'
+          description: >
+            Specifies that pagination should be disabled entirely. All results
+            will be returned together.
+
+            This param is mutually exclusive of any other page params.
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: Cache-Control
+          description: >
+            Specifies a directive to modify the caching behavior of the request.
+
+            * `no-cache` - Fetch related assets without reusing previously
+            cached data. Newly created assets, deleted assets, and RBAC changes
+            are reflected in the response.
+          in: header
+          required: false
+          schema:
+            type: string
+            enum:
+              - no-cache
+      responses:
+        '200':
+          description: Retrieved the assets based on the applied filters.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_8
+        '400':
+          description: Invalid filter criteria.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_5
+        '404':
+          description: >-
+            Either specified workload could not be found, no asset was found for
+            the specified asset identifier or relationship name could not be
+            found for the specified asset.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '406': *ref_9
+  /asset-service/queries:
+    post:
+      description: >
+        Execute a named query by one or more workloads.
+
+
+        The result set of this named query execution is a short-lived resource
+        and will expire after 30 minutes of inactivity. If the asset service is
+        under heavy load, the result set could expire earlier.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+
+
+        Namespace: For object level access controls please refer to
+        `data.attributes.schema.x-netbackup.accessControls` in the response of
+        the following API:
+
+
+        `GET /asset-service/workloads/{workload}/schemas?filter=schemaName eq
+        {queryName} and schemaType eq 'NAMED_QUERY_REQUEST'`
+      tags:
+        - Queries
+      parameters:
+        - name: x-netbackup-initial-owner-role
+          in: header
+          description: Specifies the role Ids intended to define the initial object access.
+          required: false
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_19
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - query
+                    attributes: &ref_20
+                      description: Request data that is common to all named queries.
+                      type: object
+                      required:
+                        - queryName
+                        - workloads
+                      properties:
+                        queryName:
+                          type: string
+                          description: Name of the query.
+                          example: exampleworkload.queryName
+                        workloads:
+                          type: array
+                          description: >
+                            List of workloads to execute the query.  An empty
+                            list means query will be executed by all workloads.
+                          items:
+                            type: string
+                            example: exampleworkload
+                        filter:
+                          description: Specifies filters according to OData standards.
+                          type: string
+                        sort:
+                          type: string
+                          description: >
+                            Specifies one or more fields by which to sort the
+                            response data.
+
+
+                            The value of this parameter must be a
+                            comma-separated list of sort fields in the order
+                            they are to be sorted.
+
+                            The sort order for each sort field is ascending
+                            unless it is prefixed with a minus (`-`) to specify
+                            descending order.
+
+
+                            The `x-netbackup.sortable` value for each field in
+                            the JSON schema definition determines if that field
+                            is supported for sorting and the supported sorting
+                            order.
+                        meta:
+                          type: string
+                          description: >
+                            Appends additional metadata for the resources to the
+                            response. The meta parameter is a comma-separated
+                            list of metadata values.
+
+                            Following are the available values:
+
+                            |Name|Description|
+
+                            |---|---|
+
+                            |accessControlId|Appends access control
+                            identification metadata in the meta section of each
+                            system-defined resource.|
+                        fields:
+                          type: array
+                          description: >
+                            Specifies the fields to be returned in the response
+                            of the named query.
+                          items:
+                            type: string
+                        parameters:
+                          type: object
+                          description: >
+                            The parameters for the specified named query. These
+                            parameters must be key-value pairs.
+                          example:
+                            exampleParameter1: exampleValue1
+                            exampleParameter2: exampleValue2
+        description: >
+          The request body of the named query that includes the query name,
+          workloads, and workload/query specific parameters. If the workloads
+          field is empty, the query will be executed by all supported workloads.
+
+
+          For the JSON schema definition of the parameters object of the request
+          body for a specified workload, please refer to
+          `data.attributes.schema` in the response of the following API:
+
+
+          `GET /asset-service/workloads/{workload}/schemas?filter=schemaName eq
+          {queryName} and schemaType eq 'NAMED_QUERY_REQUEST'`
+      responses:
+        '201':
+          description: Successfully executed the named query.
+          headers:
+            X-NetBackup-Warning: *ref_6
+            Location:
+              schema:
+                type: string
+              description: URL of the response resource
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_21
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - type
+                      - id
+                      - links
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - queryResponse
+                        description: Specifies the resource type.
+                      id:
+                        type: string
+                        description: >
+                          Unique identifier of the result of the query. This
+                          `id` can be used as the `queryId` parameter in
+
+
+                          `GET /asset-service/queries/{queryId}`
+                      links:
+                        type: object
+                        properties:
+                          self: *ref_10
+        '400':
+          description: Invalid request parameters.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_5
+  '/asset-service/queries/{queryId}':
+    get:
+      description: >
+        Retrieves the result set of a specific named query execution, which was
+        performed via the following API:
+
+
+        `POST /asset-service/queries`
+
+
+        For a complete JSON schema definition of the results of a specified
+        named query for a specified workload, please refer to
+        `data.attributes.schema` in the response of the following API:
+
+
+        `GET /asset-service/workloads/{workload}/schemas?filter=schemaName eq
+        {queryName} and schemaType eq 'NAMED_QUERY_RESPONSE'`
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+
+
+        Namespace: For object level access controls please refer to
+        `data.attributes.schema.x-netbackup.accessControls` in the response of
+        the following API:
+
+
+        `GET /asset-service/workloads/{workload}/schemas?filter=schemaName eq
+        {queryName} and schemaType eq 'NAMED_QUERY_REQUEST'`
+      tags:
+        - Queries
+      parameters:
+        - name: queryId
+          description: >
+            The global unique identifier for a named query result set. This
+            identifier can be found in `id` of the response of the following
+            API:
+
+
+            `POST /asset-service/queries`
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: Specifies the named query result set record number offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: 'page[limit]'
+          description: >-
+            Specifies the number of named query result set records to display on
+            one page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: 'page[disable]'
+          description: >
+            Specifies that pagination should be disabled entirely. All results
+            will be returned together.
+
+            This param is mutually exclusive of any other page params.
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: Cache-Control
+          description: >
+            Specifies a directive to modify the caching behavior of the request.
+
+            * `no-cache` - Fetch query results without reusing previously cached
+            data. Newly created assets, deleted assets, and RBAC changes are
+            reflected in the response.
+          in: header
+          required: false
+          schema:
+            type: string
+            enum:
+              - no-cache
+      responses:
+        '200':
+          description: >
+            Successfully retrieved the result set of the named query execution.
+            If the named query was executed on multiple workloads, a failure to
+            retrieve results from any of the specified workloads will result in
+            a GET failure.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_22
+                type: object
+                required:
+                  - links
+                  - data
+                properties:
+                  links: *ref_11
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_12
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      example:
+                        id: example-id
+                        type: exampleworkload-assetsCount
+                        attributes:
+                          assetsCount: 10
+        '400':
+          description: Invalid query parameters.
+          headers:
+            X-NetBackup-Warning: *ref_6
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_5
+        '404':
+          description: >-
+            No query result set was found for the specified query identifier or
+            the query result set has expired.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/asset-service/workloads/{workload}/schemas':
+    get:
+      description: >
+        Retrieves the list of available schemas based on specified filters. If
+        no filters are specified, all available schemas are listed.
+
+
+        **Access Control**\
+
+        Enforcement Type: `None`
+      tags:
+        - Schemas
+      parameters:
+        - name: workload
+          description: >
+            Specifies the workload type. For a list of supported workloads,
+            please refer to `data[].id` in the response of the following API:
+
+
+            `GET /asset-service/workloads`
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |schemaName|eq ne gt ge lt le and or not () contains endswith
+            startswith tolower toupper|The schema name. For example, 'assets'.
+            |string|
+
+            |schemaType|eq ne gt ge lt le and or not () contains endswith
+            startswith tolower toupper|The schema type. For example,
+            'NAMED_QUERY_RESPONSE'. |string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'fields[schemas]'
+          description: >
+            Specifies the schema fields only to be returned in the response.
+
+            The value of this parameter must be a comma-separated list that
+            refers to the name(s) of the fields only to be included in the
+            response. If this parameter is not present, then all fields will be
+            returned.
+
+            Possible values are schemaName and schemaType.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: Specifies the schema record number offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: 'page[limit]'
+          description: Specifies the number of schema records to display on one page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: |
+            Successfully retrieved the list of available schemas.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_23
+                type: object
+                required:
+                  - links
+                  - data
+                properties:
+                  links: *ref_13
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_14
+                  data:
+                    type: array
+                    items: &ref_15
+                      type: object
+                      required:
+                        - links
+                        - type
+                        - id
+                        - attributes
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self: *ref_10
+                        type:
+                          type: string
+                          enum:
+                            - schemas
+                          description: >-
+                            Specifies the resource type. Must be set to
+                            'schemas'.
+                        id:
+                          type: string
+                          description: The response identifier.
+                        attributes:
+                          type: object
+                          properties:
+                            schemaName:
+                              description: The name of the schema.
+                              type: string
+                            schemaType:
+                              description: The type of the schema.
+                              type: string
+                            schema:
+                              description: >
+                                The JSON schema describing the associated
+                                response payload.
+
+
+                                The schema must conform to OpenAPI specification
+                                version 3.0.0.
+                              type: object
+        '400':
+          description: The given URL was malformed.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_5
+        '404':
+          description: Specified workload could not be found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/asset-service/workloads/{workload}/schemas/{schemaId}':
+    get:
+      description: >
+        Retrieves the specified JSON schema definition for the specified
+        workload.
+
+
+        **Access Control**\
+
+        Enforcement Type: `None`
+      tags:
+        - Schemas
+      parameters:
+        - name: workload
+          description: >
+            Specifies the workload type. For a list of supported workloads,
+            please refer to `data[].id` in the response of the following API:
+
+
+            `GET /asset-service/workloads`
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: schemaId
+          description: >
+            Specifies the schema to retrieve. For a list of supported schema
+            names for the specified workload, please refer to `data[].id` in the
+            response of the following API:
+
+
+            `GET
+            /asset-service/workloads/{workload}/schemas?fields[schemas]=schemaName`
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: 'fields[schemas]'
+          description: >
+            Specifies the schema fields only to be returned in the response.
+
+            The value of this parameter must be a comma-separated list that
+            refers to the name(s) of the fields only to be included in the
+            response. If this parameter is not present, then all fields will be
+            returned.
+
+            Possible values are schemaName and schemaType.
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: |
+            Successfully returned the requested schema.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_24
+                type: object
+                required:
+                  - links
+                  - data
+                properties:
+                  links: *ref_13
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_14
+                  data: *ref_15
+        '401': *ref_5
+        '404':
+          description: Specified workload or specified schema could not be found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  headers:
+    X-NetBackup-Warning: *ref_6
+  schemas:
+    getWorkloadsResponse: *ref_16
+    getWorkloadResponse: *ref_17
+    workloadNameDetails: *ref_3
+    workloadDetails: *ref_0
+    workloadDetailsData: *ref_4
+    getAssetResponse: *ref_18
+    getAssetsResponse: *ref_8
+    assetDetails: *ref_7
+    postNamedQueryRequest: *ref_19
+    namedQueryRequestData: *ref_20
+    postNamedQueryResponse: *ref_21
+    getNamedQueryResponse: *ref_22
+    getSchemasResponse: *ref_23
+    getSchemaResponse: *ref_24
+    schemaResponseData: *ref_15
+  parameters:
+    metaData: *ref_2
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []
