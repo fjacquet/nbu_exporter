@@ -44,10 +44,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }} # Secret automatique
 
       - name: 🚀 Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
-          # 'latest' utilisera la dernière version de GoReleaser
-          version: latest
+          # Version 2.x+ supporte la configuration version: 2
+          version: '~> v2'
           # '--clean' supprime le dossier 'dist' avant de commencer
           args: release --clean
         env:
