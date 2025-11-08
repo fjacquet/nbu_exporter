@@ -1,3 +1,4 @@
+// Package utils provides timing and delay utilities.
 package utils
 
 import (
@@ -6,7 +7,7 @@ import (
 	"github.com/fjacquet/nbu_exporter/internal/logging"
 )
 
-// Pause sleeps for the duration specified in the server.ScrappingInterval configuration.
+// Pause sleeps for the duration specified by the interval string.
 // If there is an error parsing the duration, it will panic with the error message.
 func Pause(interval string) {
 	var duration time.Duration

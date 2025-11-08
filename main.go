@@ -1,3 +1,19 @@
+// NBU Exporter is a Prometheus exporter for Veritas NetBackup that collects
+// and exposes backup infrastructure metrics for monitoring and visualization.
+//
+// The exporter scrapes NetBackup API endpoints to collect:
+//   - Storage unit capacity metrics (free/used bytes)
+//   - Job statistics (count, bytes transferred, status)
+//
+// Metrics are exposed via HTTP endpoint for Prometheus scraping.
+//
+// Usage:
+//
+//	nbu_exporter --config config.yaml [--debug]
+//
+// Configuration is provided via YAML file specifying:
+//   - Server settings (host, port, metrics URI, scraping interval)
+//   - NetBackup server details (host, port, API key, API version)
 package main
 
 import (
@@ -20,9 +36,9 @@ import (
 )
 
 const (
-	programName       = "nbu_exporter"
-	shutdownTimeout   = 10 * time.Second
-	readHeaderTimeout = 5 * time.Second
+	programName       = "nbu_exporter"   // Application name
+	shutdownTimeout   = 10 * time.Second // Maximum time to wait for graceful shutdown
+	readHeaderTimeout = 5 * time.Second  // HTTP server read header timeout
 )
 
 var (
@@ -30,14 +46,22 @@ var (
 	debug      bool
 )
 
-// Server encapsulates the HTTP server and its dependencies.
+// Server encapsulates the HTTP server and its dependencies for serving Prometheus metrics.
+// It manages the lifecycle of the HTTP server, Prometheus registry, and NetBackup collector.
 type Server struct {
-	cfg      models.Config
-	httpSrv  *http.Server
-	registry *prometheus.Registry
+	cfg      models.Config        // Application configuration
+	httpSrv  *http.Server         // HTTP server instance
+	registry *prometheus.Registry // Prometheus metrics registry
 }
 
 // NewServer creates a new server instance with the provided configuration.
+// It initializes a new Prometheus registry for metric collection.
+//
+// Example:
+//
+//	cfg := models.Config{...}
+//	server := NewServer(cfg)
+//	server.Start()
 func NewServer(cfg models.Config) *Server {
 	return &Server{
 		cfg:      cfg,
@@ -45,7 +69,16 @@ func NewServer(cfg models.Config) *Server {
 	}
 }
 
-// Start initializes and starts the HTTP server.
+// Start initializes and starts the HTTP server with Prometheus metrics endpoint.
+// It registers the NetBackup collector, configures HTTP handlers, and starts
+// the server in a goroutine.
+//
+// The server exposes:
+//   - Metrics endpoint at the configured URI (default: /metrics)
+//   - Health check endpoint at /health
+//
+// Returns an error if collector registration fails. The HTTP server runs
+// asynchronously and logs fatal errors if startup fails.
 func (s *Server) Start() error {
 	// Register NetBackup collector
 	collector := exporter.NewNbuCollector(s.cfg)
@@ -76,7 +109,15 @@ func (s *Server) Start() error {
 	return nil
 }
 
-// Shutdown gracefully shuts down the HTTP server.
+// Shutdown gracefully shuts down the HTTP server with a timeout.
+// It waits for active connections to complete before shutting down.
+//
+// The shutdown process:
+//  1. Stops accepting new connections
+//  2. Waits for active requests to complete (up to shutdownTimeout)
+//  3. Forces shutdown if timeout is exceeded
+//
+// Returns an error if shutdown fails or times out.
 func (s *Server) Shutdown() error {
 	if s.httpSrv == nil {
 		return nil
@@ -94,13 +135,22 @@ func (s *Server) Shutdown() error {
 	return nil
 }
 
-// healthHandler provides a simple health check endpoint.
+// healthHandler provides a simple health check endpoint that returns HTTP 200 OK.
+// This endpoint can be used by load balancers and monitoring systems to verify
+// the application is running.
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "OK\n")
 }
 
-// validateConfig checks if the configuration file exists and is valid.
+// validateConfig checks if the configuration file exists, loads it, and validates its contents.
+//
+// Parameters:
+//   - configPath: Path to the YAML configuration file
+//
+// Returns:
+//   - Pointer to validated Config struct
+//   - Error if file doesn't exist, cannot be parsed, or validation fails
 func validateConfig(configPath string) (*models.Config, error) {
 	if !utils.FileExists(configPath) {
 		return nil, fmt.Errorf("config file not found: %s", configPath)
@@ -118,7 +168,14 @@ func validateConfig(configPath string) (*models.Config, error) {
 	return &cfg, nil
 }
 
-// setupLogging initializes the logging system.
+// setupLogging initializes the logging system with the configured log file.
+// If debug mode is enabled, sets the log level to DEBUG for verbose output.
+//
+// Parameters:
+//   - cfg: Application configuration containing log file path
+//   - debugMode: If true, enables DEBUG level logging
+//
+// Returns an error if log file initialization fails.
 func setupLogging(cfg models.Config, debugMode bool) error {
 	if err := logging.PrepareLogs(cfg.Server.LogName); err != nil {
 		return fmt.Errorf("failed to initialize logging: %w", err)
@@ -132,7 +189,12 @@ func setupLogging(cfg models.Config, debugMode bool) error {
 	return nil
 }
 
-// waitForShutdownSignal blocks until a shutdown signal is received.
+// waitForShutdownSignal blocks until a shutdown signal (SIGINT or SIGTERM) is received.
+// This enables graceful shutdown when the application is terminated.
+//
+// Signals handled:
+//   - SIGINT (Ctrl+C)
+//   - SIGTERM (kill command)
 func waitForShutdownSignal() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)

@@ -1,3 +1,6 @@
+// Package exporter implements the Prometheus Collector interface for NetBackup metrics.
+// It collects storage and job statistics from the NetBackup API and exposes them
+// in Prometheus format.
 package exporter
 
 import (
@@ -10,9 +13,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const collectionTimeout = 2 * time.Minute
+const collectionTimeout = 2 * time.Minute // Maximum time allowed for metric collection
 
 // NbuCollector implements the Prometheus Collector interface for NetBackup metrics.
+// It collects storage capacity and job statistics from the NetBackup API and exposes
+// them as Prometheus metrics.
+//
+// The collector fetches:
+//   - Storage unit capacity (free/used bytes) for disk-based storage
+//   - Job statistics (count, bytes transferred) aggregated by type, policy, and status
+//   - Job status counts aggregated by action and status code
+//
+// Metrics are collected on-demand when Prometheus scrapes the /metrics endpoint.
 type NbuCollector struct {
 	cfg                models.Config
 	client             *NbuClient
@@ -24,6 +36,24 @@ type NbuCollector struct {
 }
 
 // NewNbuCollector creates a new NetBackup collector with the provided configuration.
+// It initializes the HTTP client, attempts to detect the API version, and registers
+// Prometheus metric descriptors.
+//
+// The collector creates the following metrics:
+//   - nbu_disk_bytes: Storage capacity in bytes (labels: name, type, size)
+//   - nbu_jobs_bytes: Bytes transferred by jobs (labels: action, policy_type, status)
+//   - nbu_jobs_count: Number of jobs (labels: action, policy_type, status)
+//   - nbu_status_count: Job counts by status (labels: action, status)
+//   - nbu_response_time_ms: API response time in milliseconds
+//
+// If API version detection fails during initialization, a warning is logged but the
+// collector continues to function using the configured API version.
+//
+// Example:
+//
+//	cfg := models.Config{...}
+//	collector := NewNbuCollector(cfg)
+//	prometheus.MustRegister(collector)
 func NewNbuCollector(cfg models.Config) *NbuCollector {
 	client := NewNbuClient(cfg)
 
@@ -70,6 +100,8 @@ func NewNbuCollector(cfg models.Config) *NbuCollector {
 }
 
 // Describe sends the descriptors of each metric to the provided channel.
+// This method is required by the prometheus.Collector interface and is called
+// during collector registration to validate metric definitions.
 func (c *NbuCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.nbuDiskSize
 	ch <- c.nbuResponseTime
@@ -79,6 +111,16 @@ func (c *NbuCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 // Collect fetches metrics from NetBackup and sends them to the provided channel.
+// This method is called by Prometheus on each scrape request and performs the following:
+//  1. Fetches storage unit capacity data
+//  2. Fetches job statistics within the configured time window
+//  3. Converts metrics to Prometheus format and sends to the channel
+//
+// The method uses a 2-minute timeout for the entire collection process and continues
+// to expose partial metrics even if some API calls fail. Errors are logged but do not
+// prevent metric exposition.
+//
+// This method is required by the prometheus.Collector interface.
 func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), collectionTimeout)
 	defer cancel()

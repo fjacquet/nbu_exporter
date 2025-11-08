@@ -1,5 +1,17 @@
+// Package models defines data structures for NetBackup API responses.
 package models
 
+// Storages represents the response structure from the NetBackup /storage/storage-units API endpoint.
+// It contains storage unit data, pagination metadata, and hypermedia links following the JSON:API specification.
+//
+// The structure includes comprehensive storage unit attributes such as:
+//   - Storage identification (name, type, subtype)
+//   - Capacity information (free, used, total bytes)
+//   - Storage capabilities (replication, snapshot, WORM)
+//   - Configuration settings (max concurrent jobs, fragment size)
+//   - Relationships to disk pools
+//
+// Storage types include DISK, CLOUD, and TAPE units, each with type-specific attributes.
 type Storages struct {
 	Data []struct {
 		Links struct {

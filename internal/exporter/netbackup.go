@@ -1,3 +1,5 @@
+// Package exporter provides data fetching and processing logic for NetBackup API endpoints.
+// It handles pagination, metric aggregation, and data transformation for Prometheus metrics.
 package exporter
 
 import (
@@ -12,16 +14,31 @@ import (
 )
 
 const (
-	pageLimit        = "100"
-	storageTypeTape  = "Tape"
-	storagePath      = "/storage/storage-units"
-	jobsPath         = "/admin/jobs"
-	sizeTypeFree     = "free"
-	sizeTypeUsed     = "used"
-	bytesPerKilobyte = 1024
+	pageLimit        = "100"                    // Default page size for API pagination
+	storageTypeTape  = "Tape"                   // Storage type identifier for tape units (excluded from metrics)
+	storagePath      = "/storage/storage-units" // API endpoint for storage unit data
+	jobsPath         = "/admin/jobs"            // API endpoint for job data
+	sizeTypeFree     = "free"                   // Metric dimension for free capacity
+	sizeTypeUsed     = "used"                   // Metric dimension for used capacity
+	bytesPerKilobyte = 1024                     // Conversion factor from kilobytes to bytes
 )
 
-// FetchStorage retrieves and processes storage unit information from the NetBackup API.
+// FetchStorage retrieves storage unit information from the NetBackup API and populates
+// the provided metrics map with capacity data. It fetches all storage units and extracts
+// free and used capacity metrics for non-tape storage.
+//
+// Tape storage units are excluded from metrics as they don't report meaningful capacity values.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - client: Configured NetBackup API client
+//   - storageMetrics: Map to populate with storage metrics (key format: "name|type|size")
+//
+// The function populates storageMetrics with entries like:
+//   - "disk-pool-1|MEDIA_SERVER|free" -> 5368709120000 (bytes)
+//   - "disk-pool-1|MEDIA_SERVER|used" -> 5368709120000 (bytes)
+//
+// Returns an error if the API request fails or response cannot be parsed.
 func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[string]float64) error {
 	var storages models.Storages
 
@@ -54,7 +71,30 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
 	return nil
 }
 
-// FetchJobDetails retrieves and processes job details for a specific offset.
+// FetchJobDetails retrieves a single job record at the specified pagination offset and
+// updates the provided metrics maps with job statistics. This function is designed to be
+// called repeatedly during pagination to process all jobs within a time window.
+//
+// The function fetches one job at a time (limit=1) to enable efficient pagination and
+// filters jobs by endTime to only include jobs completed after startTime.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - client: Configured NetBackup API client
+//   - jobsSize: Map to accumulate bytes transferred per job type/status
+//   - jobsCount: Map to accumulate job counts per job type/status
+//   - jobsStatusCount: Map to accumulate job counts per action/status
+//   - offset: Pagination offset for the current request
+//   - startTime: Filter to only include jobs completed after this time
+//
+// Returns:
+//   - Next pagination offset (or -1 if no more jobs)
+//   - Error if the API request fails
+//
+// The function updates metrics maps with keys like:
+//   - jobsSize["BACKUP|VMWARE|0"] += bytes transferred
+//   - jobsCount["BACKUP|VMWARE|0"] += 1
+//   - jobsStatusCount["BACKUP|0"] += 1
 func FetchJobDetails(
 	ctx context.Context,
 	client *NbuClient,
@@ -109,7 +149,28 @@ func FetchJobDetails(
 	return jobs.Meta.Pagination.Next, nil
 }
 
-// HandlePagination iterates over paginated responses and processes them.
+// HandlePagination provides a generic pagination handler that repeatedly calls a fetch function
+// until all pages have been processed. It handles context cancellation and propagates errors
+// from the fetch function.
+//
+// The fetch function should:
+//   - Accept a context and offset parameter
+//   - Return the next offset (or -1 when pagination is complete)
+//   - Return an error if the fetch operation fails
+//
+// Parameters:
+//   - ctx: Context for cancellation (checked before each page fetch)
+//   - fetchFunc: Function to fetch and process a single page of results
+//
+// Returns an error if:
+//   - Context is cancelled (ctx.Err())
+//   - The fetch function returns an error
+//
+// Example:
+//
+//	err := HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
+//	    return FetchJobDetails(ctx, client, metrics, offset, startTime)
+//	})
 func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, offset int) (int, error)) error {
 	offset := 0
 	for offset != -1 {
@@ -127,7 +188,34 @@ func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, o
 	return nil
 }
 
-// FetchAllJobs aggregates job statistics by iterating over paginated job data.
+// FetchAllJobs aggregates job statistics by iterating over all paginated job data within
+// the configured time window. It calculates the start time based on the scraping interval
+// and fetches all jobs that completed after that time.
+//
+// The function uses pagination to efficiently process large job datasets and populates
+// three metrics maps with aggregated statistics:
+//   - jobsSize: Total bytes transferred per job type/policy/status
+//   - jobsCount: Number of jobs per job type/policy/status
+//   - jobsStatusCount: Number of jobs per action/status (simplified aggregation)
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - client: Configured NetBackup API client
+//   - jobsSize: Map to populate with bytes transferred metrics
+//   - jobsCount: Map to populate with job count metrics
+//   - jobsStatusCount: Map to populate with status count metrics
+//   - scrapingInterval: Duration string (e.g., "5m", "1h") defining the time window
+//
+// Returns an error if:
+//   - The scraping interval cannot be parsed
+//   - Any API request fails during pagination
+//
+// Example:
+//
+//	jobsSize := make(map[string]float64)
+//	jobsCount := make(map[string]float64)
+//	jobsStatusCount := make(map[string]float64)
+//	err := FetchAllJobs(ctx, client, jobsSize, jobsCount, jobsStatusCount, "5m")
 func FetchAllJobs(
 	ctx context.Context,
 	client *NbuClient,

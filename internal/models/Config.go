@@ -1,3 +1,6 @@
+// Package models defines the core data structures for the NBU exporter application.
+// It includes configuration models and API response structures that match the
+// NetBackup REST API JSON:API format.
 package models
 
 import (
@@ -9,7 +12,7 @@ import (
 	"time"
 )
 
-// Config represents the configuration for the application.
+// Config represents the complete application configuration for the NBU exporter.
 // It includes settings for the server and the NBU server.
 type Config struct {
 	Server struct {
@@ -35,6 +38,8 @@ type Config struct {
 }
 
 // SetDefaults sets default values for optional configuration fields.
+// Currently sets the default API version to "12.0" (NetBackup 10.5+) if not specified.
+// This method is called automatically by Validate() before validation checks.
 func (c *Config) SetDefaults() {
 	// Set default API version for NetBackup 10.5
 	if c.NbuServer.APIVersion == "" {
@@ -43,6 +48,17 @@ func (c *Config) SetDefaults() {
 }
 
 // Validate checks if the configuration is valid and returns an error if not.
+// It performs comprehensive validation of all configuration fields including:
+//   - Server settings (host, port, URI, scraping interval)
+//   - NetBackup server settings (host, port, scheme, API key, API version)
+//   - Port ranges (1-65535)
+//   - URL schemes (http/https only)
+//   - API version format (X.Y pattern)
+//
+// This method calls SetDefaults() before validation to ensure optional fields
+// have appropriate default values.
+//
+// Returns an error describing the first validation failure encountered.
 func (c *Config) Validate() error {
 	// Set defaults before validation
 	c.SetDefaults()
@@ -92,22 +108,38 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// GetNBUBaseURL returns the complete base URL for the NBU server.
+// GetNBUBaseURL returns the complete base URL for the NetBackup server.
+// Format: scheme://host:port/uri
+//
+// Example: "https://nbu-master.example.com:1556/netbackup"
 func (c *Config) GetNBUBaseURL() string {
 	return fmt.Sprintf("%s://%s:%s%s", c.NbuServer.Scheme, c.NbuServer.Host, c.NbuServer.Port, c.NbuServer.URI)
 }
 
-// GetServerAddress returns the complete server address for binding.
+// GetServerAddress returns the complete server address for HTTP server binding.
+// Format: host:port
+//
+// Example: "0.0.0.0:2112"
 func (c *Config) GetServerAddress() string {
 	return fmt.Sprintf("%s:%s", c.Server.Host, c.Server.Port)
 }
 
 // GetScrapingDuration parses and returns the scraping interval as a time.Duration.
+// The scraping interval defines the time window for job data collection.
+//
+// Example: "5m" -> 5 * time.Minute
+//
+// Returns an error if the interval string cannot be parsed.
 func (c *Config) GetScrapingDuration() (time.Duration, error) {
 	return time.ParseDuration(c.Server.ScrapingInterval)
 }
 
-// MaskAPIKey returns a masked version of the API key for logging purposes.
+// MaskAPIKey returns a masked version of the API key for safe logging.
+// Shows the first 4 and last 4 characters with asterisks in between.
+//
+// Example: "abcd1234efgh5678" -> "abcd****5678"
+//
+// For keys shorter than 8 characters, returns "****".
 func (c *Config) MaskAPIKey() string {
 	if len(c.NbuServer.APIKey) <= 8 {
 		return "****"
@@ -115,7 +147,20 @@ func (c *Config) MaskAPIKey() string {
 	return c.NbuServer.APIKey[:4] + "****" + c.NbuServer.APIKey[len(c.NbuServer.APIKey)-4:]
 }
 
-// BuildURL constructs a complete URL from path and query parameters.
+// BuildURL constructs a complete URL from the base URL, path, and query parameters.
+// It properly encodes query parameters and handles URL construction.
+//
+// Parameters:
+//   - path: API endpoint path (e.g., "/admin/jobs")
+//   - queryParams: Map of query parameter names to values
+//
+// Example:
+//
+//	url := cfg.BuildURL("/admin/jobs", map[string]string{
+//	    "page[limit]": "100",
+//	    "page[offset]": "0",
+//	})
+//	// Returns: "https://nbu:1556/netbackup/admin/jobs?page[limit]=100&page[offset]=0"
 func (c *Config) BuildURL(path string, queryParams map[string]string) string {
 	u, _ := url.Parse(c.GetNBUBaseURL())
 	u.Path = path

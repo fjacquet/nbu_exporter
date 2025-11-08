@@ -1,3 +1,6 @@
+// Package exporter provides HTTP client functionality and data fetching logic
+// for the NetBackup REST API. It handles API communication, pagination,
+// and metric collection for Prometheus exposition.
 package exporter
 
 import (
@@ -13,31 +16,43 @@ import (
 )
 
 const (
-	defaultTimeout = 1 * time.Minute
-	contentType    = "application/json"
+	defaultTimeout = 1 * time.Minute    // Default timeout for HTTP requests
+	contentType    = "application/json" // Content type for API requests
 )
 
-// HTTPHeaders contains common HTTP header names.
+// HTTP header names used in NetBackup API requests.
 const (
-	HeaderAccept        = "Accept"
-	HeaderAuthorization = "Authorization"
+	HeaderAccept        = "Accept"        // Accept header for content negotiation
+	HeaderAuthorization = "Authorization" // Authorization header for API key authentication
 )
 
-// QueryParams contains common query parameter names.
+// Query parameter names used in NetBackup API pagination and filtering.
 const (
-	QueryParamLimit  = "page[limit]"
-	QueryParamOffset = "page[offset]"
-	QueryParamSort   = "sort"
-	QueryParamFilter = "filter"
+	QueryParamLimit  = "page[limit]"  // Maximum number of results per page
+	QueryParamOffset = "page[offset]" // Starting offset for pagination
+	QueryParamSort   = "sort"         // Field to sort results by
+	QueryParamFilter = "filter"       // Filter expression for result filtering
 )
 
-// NbuClient handles HTTP communication with the NetBackup API.
+// NbuClient handles HTTP communication with the NetBackup REST API.
+// It manages TLS configuration, request headers, and provides methods for
+// fetching data from various NetBackup API endpoints.
 type NbuClient struct {
-	client *resty.Client
-	cfg    models.Config
+	client *resty.Client // HTTP client with TLS configuration
+	cfg    models.Config // Application configuration including API settings
 }
 
 // NewNbuClient creates a new NetBackup API client with the provided configuration.
+// It initializes the HTTP client with appropriate TLS settings and timeout values.
+//
+// The client is configured with:
+//   - TLS verification based on cfg.NbuServer.InsecureSkipVerify
+//   - Default timeout of 1 minute for all requests
+//
+// Example:
+//
+//	cfg := models.Config{...}
+//	client := NewNbuClient(cfg)
 func NewNbuClient(cfg models.Config) *NbuClient {
 	client := resty.New().
 		SetTLSClientConfig(&tls.Config{
@@ -62,7 +77,25 @@ func (c *NbuClient) getHeaders() map[string]string {
 	}
 }
 
-// FetchData sends an HTTP GET request and unmarshals the response into the target.
+// FetchData sends an HTTP GET request to the specified URL and unmarshals the JSON response
+// into the provided target interface. It handles API version negotiation, error responses,
+// and provides detailed error messages for common failure scenarios.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - url: Complete URL to fetch (including query parameters)
+//   - target: Pointer to struct where JSON response will be unmarshaled
+//
+// Returns an error if:
+//   - HTTP request fails (network error, timeout)
+//   - Server returns non-2xx status code
+//   - API version is not supported (HTTP 406)
+//   - JSON unmarshaling fails
+//
+// Example:
+//
+//	var jobs models.Jobs
+//	err := client.FetchData(ctx, "https://nbu:1556/admin/jobs", &jobs)
 func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{}) error {
 	resp, err := c.client.R().
 		SetContext(ctx).
@@ -100,9 +133,27 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 	return nil
 }
 
-// DetectAPIVersion attempts to detect the NetBackup API version by making a lightweight API call.
-// It returns the configured API version and logs the detection result.
-// If detection fails, it returns an error but does not prevent the client from functioning.
+// DetectAPIVersion attempts to detect and validate the NetBackup API version by making
+// a lightweight test request to the jobs endpoint. This helps identify API compatibility
+// issues early in the application lifecycle.
+//
+// The method tests connectivity using the configured API version and returns:
+//   - The configured API version string if successful
+//   - An error if the version is not supported or connectivity fails
+//
+// Common error scenarios:
+//   - HTTP 406: API version not supported by the NetBackup server
+//   - Network errors: Connectivity issues with the NetBackup server
+//
+// This method is typically called during collector initialization to provide early
+// feedback about API compatibility issues.
+//
+// Example:
+//
+//	version, err := client.DetectAPIVersion(ctx)
+//	if err != nil {
+//	    log.Warnf("API version detection failed: %v", err)
+//	}
 func (c *NbuClient) DetectAPIVersion(ctx context.Context) (string, error) {
 	// Use a lightweight endpoint to test API connectivity
 	// We'll use the jobs endpoint with a very small limit
@@ -133,7 +184,9 @@ func (c *NbuClient) DetectAPIVersion(ctx context.Context) (string, error) {
 	return c.cfg.NbuServer.APIVersion, nil
 }
 
-// Close closes the underlying HTTP client connections.
+// Close releases resources associated with the HTTP client.
+// Note: Resty doesn't provide an explicit close method, so this clears the client reference
+// to allow garbage collection. Connection pooling is managed by the underlying http.Client.
 func (c *NbuClient) Close() {
 	// Resty doesn't have an explicit close, but we can clear the client
 	c.client = nil

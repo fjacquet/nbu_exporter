@@ -1,3 +1,5 @@
+// Package utils provides utility functions for date conversion, file operations,
+// and timing utilities used throughout the NBU exporter application.
 package utils
 
 import (

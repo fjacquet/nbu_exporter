@@ -1,3 +1,4 @@
+// Package utils provides utility functions for file operations and configuration management.
 package utils
 
 import (
@@ -8,14 +9,27 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// FileExists checks if the given file exists.
+// FileExists checks if the given file exists and is accessible.
 func FileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return !os.IsNotExist(err)
 }
 
-// ReadFile reads the configuration from the specified YAML file.
-// It returns an error if the file cannot be opened or parsed.
+// ReadFile reads and parses a YAML configuration file into the provided Config struct.
+//
+// Parameters:
+//   - cfg: Pointer to Config struct to populate
+//   - filepath: Path to the YAML configuration file
+//
+// Returns an error if:
+//   - The file cannot be opened
+//   - The YAML cannot be parsed
+//   - The structure doesn't match the Config model
+//
+// Example:
+//
+//	var cfg models.Config
+//	err := ReadFile(&cfg, "config.yaml")
 func ReadFile(cfg *models.Config, filepath string) error {
 	f, err := os.Open(filepath)
 	if err != nil {
