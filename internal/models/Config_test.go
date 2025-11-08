@@ -993,3 +993,353 @@ func TestConfig_Validate_SupportedVersions(t *testing.T) {
 		})
 	}
 }
+
+func TestConfig_Validate_OpenTelemetry(t *testing.T) {
+	baseConfig := func() Config {
+		return Config{
+			Server: struct {
+				Port             string `yaml:"port"`
+				Host             string `yaml:"host"`
+				URI              string `yaml:"uri"`
+				ScrapingInterval string `yaml:"scrapingInterval"`
+				LogName          string `yaml:"logName"`
+			}{
+				Port:             "2112",
+				Host:             "localhost",
+				URI:              "/metrics",
+				ScrapingInterval: "5m",
+			},
+			NbuServer: struct {
+				Port               string `yaml:"port"`
+				Scheme             string `yaml:"scheme"`
+				URI                string `yaml:"uri"`
+				Domain             string `yaml:"domain"`
+				DomainType         string `yaml:"domainType"`
+				Host               string `yaml:"host"`
+				APIKey             string `yaml:"apiKey"`
+				APIVersion         string `yaml:"apiVersion"`
+				ContentType        string `yaml:"contentType"`
+				InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			}{
+				Port:   "1556",
+				Scheme: "https",
+				URI:    "/netbackup",
+				Host:   "nbu-master",
+				APIKey: "test-key",
+			},
+		}
+	}
+
+	tests := []struct {
+		name      string
+		modify    func(*Config)
+		wantError bool
+		errMsg    string
+	}{
+		{
+			name: "valid OpenTelemetry config",
+			modify: func(c *Config) {
+				c.OpenTelemetry.Enabled = true
+				c.OpenTelemetry.Endpoint = "localhost:4317"
+				c.OpenTelemetry.Insecure = true
+				c.OpenTelemetry.SamplingRate = 0.1
+			},
+			wantError: false,
+		},
+		{
+			name: "OpenTelemetry disabled - no validation",
+			modify: func(c *Config) {
+				c.OpenTelemetry.Enabled = false
+				c.OpenTelemetry.Endpoint = ""
+				c.OpenTelemetry.SamplingRate = 2.0
+			},
+			wantError: false,
+		},
+		{
+			name: "missing endpoint when enabled",
+			modify: func(c *Config) {
+				c.OpenTelemetry.Enabled = true
+				c.OpenTelemetry.Endpoint = ""
+			},
+			wantError: true,
+			errMsg:    "OpenTelemetry endpoint is required when enabled",
+		},
+		{
+			name: "sampling rate too low",
+			modify: func(c *Config) {
+				c.OpenTelemetry.Enabled = true
+				c.OpenTelemetry.Endpoint = "localhost:4317"
+				c.OpenTelemetry.SamplingRate = -0.1
+			},
+			wantError: true,
+			errMsg:    "OpenTelemetry sampling rate must be between 0.0 and 1.0",
+		},
+		{
+			name: "sampling rate too high",
+			modify: func(c *Config) {
+				c.OpenTelemetry.Enabled = true
+				c.OpenTelemetry.Endpoint = "localhost:4317"
+				c.OpenTelemetry.SamplingRate = 1.5
+			},
+			wantError: true,
+			errMsg:    "OpenTelemetry sampling rate must be between 0.0 and 1.0",
+		},
+		{
+			name: "sampling rate at lower bound",
+			modify: func(c *Config) {
+				c.OpenTelemetry.Enabled = true
+				c.OpenTelemetry.Endpoint = "localhost:4317"
+				c.OpenTelemetry.SamplingRate = 0.0
+			},
+			wantError: false,
+		},
+		{
+			name: "sampling rate at upper bound",
+			modify: func(c *Config) {
+				c.OpenTelemetry.Enabled = true
+				c.OpenTelemetry.Endpoint = "localhost:4317"
+				c.OpenTelemetry.SamplingRate = 1.0
+			},
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := baseConfig()
+			tt.modify(&config)
+
+			err := config.Validate()
+
+			if tt.wantError {
+				if err == nil {
+					t.Error("Expected error, got nil")
+				} else if tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("Expected error containing %q, got %q", tt.errMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestConfig_IsOTelEnabled(t *testing.T) {
+	tests := []struct {
+		name     string
+		enabled  bool
+		expected bool
+	}{
+		{
+			name:     "OpenTelemetry enabled",
+			enabled:  true,
+			expected: true,
+		},
+		{
+			name:     "OpenTelemetry disabled",
+			enabled:  false,
+			expected: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				OpenTelemetry: struct {
+					Enabled      bool    `yaml:"enabled"`
+					Endpoint     string  `yaml:"endpoint"`
+					Insecure     bool    `yaml:"insecure"`
+					SamplingRate float64 `yaml:"samplingRate"`
+				}{
+					Enabled: tt.enabled,
+				},
+			}
+
+			result := config.IsOTelEnabled()
+			if result != tt.expected {
+				t.Errorf("IsOTelEnabled() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestConfig_GetOTelConfig(t *testing.T) {
+	tests := []struct {
+		name         string
+		enabled      bool
+		endpoint     string
+		insecure     bool
+		samplingRate float64
+	}{
+		{
+			name:         "full OpenTelemetry config",
+			enabled:      true,
+			endpoint:     "localhost:4317",
+			insecure:     true,
+			samplingRate: 0.1,
+		},
+		{
+			name:         "disabled OpenTelemetry",
+			enabled:      false,
+			endpoint:     "",
+			insecure:     false,
+			samplingRate: 0.0,
+		},
+		{
+			name:         "secure endpoint with full sampling",
+			enabled:      true,
+			endpoint:     "otel-collector.example.com:4317",
+			insecure:     false,
+			samplingRate: 1.0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				OpenTelemetry: struct {
+					Enabled      bool    `yaml:"enabled"`
+					Endpoint     string  `yaml:"endpoint"`
+					Insecure     bool    `yaml:"insecure"`
+					SamplingRate float64 `yaml:"samplingRate"`
+				}{
+					Enabled:      tt.enabled,
+					Endpoint:     tt.endpoint,
+					Insecure:     tt.insecure,
+					SamplingRate: tt.samplingRate,
+				},
+			}
+
+			result := config.GetOTelConfig()
+
+			if result.Enabled != tt.enabled {
+				t.Errorf("GetOTelConfig().Enabled = %v, want %v", result.Enabled, tt.enabled)
+			}
+			if result.Endpoint != tt.endpoint {
+				t.Errorf("GetOTelConfig().Endpoint = %v, want %v", result.Endpoint, tt.endpoint)
+			}
+			if result.Insecure != tt.insecure {
+				t.Errorf("GetOTelConfig().Insecure = %v, want %v", result.Insecure, tt.insecure)
+			}
+			if result.SamplingRate != tt.samplingRate {
+				t.Errorf("GetOTelConfig().SamplingRate = %v, want %v", result.SamplingRate, tt.samplingRate)
+			}
+		})
+	}
+}
+
+func TestConfig_ParseYAML_OpenTelemetry(t *testing.T) {
+	tests := []struct {
+		name         string
+		yaml         string
+		enabled      bool
+		endpoint     string
+		insecure     bool
+		samplingRate float64
+		wantErr      bool
+	}{
+		{
+			name: "parses OpenTelemetry config from YAML",
+			yaml: `
+server:
+  host: "localhost"
+  port: "2112"
+  uri: "/metrics"
+  scrapingInterval: "5m"
+  logName: "test.log"
+nbuserver:
+  host: "nbu-master"
+  port: "1556"
+  scheme: "https"
+  uri: "/netbackup"
+  apiKey: "test-key"
+opentelemetry:
+  enabled: true
+  endpoint: "localhost:4317"
+  insecure: true
+  samplingRate: 0.1
+`,
+			enabled:      true,
+			endpoint:     "localhost:4317",
+			insecure:     true,
+			samplingRate: 0.1,
+			wantErr:      false,
+		},
+		{
+			name: "handles missing OpenTelemetry section",
+			yaml: `
+server:
+  host: "localhost"
+  port: "2112"
+  uri: "/metrics"
+  scrapingInterval: "5m"
+  logName: "test.log"
+nbuserver:
+  host: "nbu-master"
+  port: "1556"
+  scheme: "https"
+  uri: "/netbackup"
+  apiKey: "test-key"
+`,
+			enabled:      false,
+			endpoint:     "",
+			insecure:     false,
+			samplingRate: 0.0,
+			wantErr:      false,
+		},
+		{
+			name: "parses disabled OpenTelemetry",
+			yaml: `
+server:
+  host: "localhost"
+  port: "2112"
+  uri: "/metrics"
+  scrapingInterval: "5m"
+  logName: "test.log"
+nbuserver:
+  host: "nbu-master"
+  port: "1556"
+  scheme: "https"
+  uri: "/netbackup"
+  apiKey: "test-key"
+opentelemetry:
+  enabled: false
+  endpoint: "localhost:4317"
+  insecure: false
+  samplingRate: 0.5
+`,
+			enabled:      false,
+			endpoint:     "localhost:4317",
+			insecure:     false,
+			samplingRate: 0.5,
+			wantErr:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var config Config
+			err := yaml.Unmarshal([]byte(tt.yaml), &config)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("yaml.Unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				if config.OpenTelemetry.Enabled != tt.enabled {
+					t.Errorf("ParseYAML() OpenTelemetry.Enabled = %v, want %v", config.OpenTelemetry.Enabled, tt.enabled)
+				}
+				if config.OpenTelemetry.Endpoint != tt.endpoint {
+					t.Errorf("ParseYAML() OpenTelemetry.Endpoint = %v, want %v", config.OpenTelemetry.Endpoint, tt.endpoint)
+				}
+				if config.OpenTelemetry.Insecure != tt.insecure {
+					t.Errorf("ParseYAML() OpenTelemetry.Insecure = %v, want %v", config.OpenTelemetry.Insecure, tt.insecure)
+				}
+				if config.OpenTelemetry.SamplingRate != tt.samplingRate {
+					t.Errorf("ParseYAML() OpenTelemetry.SamplingRate = %v, want %v", config.OpenTelemetry.SamplingRate, tt.samplingRate)
+				}
+			}
+		})
+	}
+}

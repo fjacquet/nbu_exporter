@@ -49,6 +49,13 @@ type Config struct {
 		ContentType        string `yaml:"contentType"`
 		InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 	} `yaml:"nbuserver"`
+
+	OpenTelemetry struct {
+		Enabled      bool    `yaml:"enabled"`
+		Endpoint     string  `yaml:"endpoint"`
+		Insecure     bool    `yaml:"insecure"`
+		SamplingRate float64 `yaml:"samplingRate"`
+	} `yaml:"opentelemetry"`
 }
 
 // SetDefaults sets default values for optional configuration fields.
@@ -132,6 +139,16 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	// Validate OpenTelemetry configuration if enabled
+	if c.OpenTelemetry.Enabled {
+		if c.OpenTelemetry.Endpoint == "" {
+			return errors.New("OpenTelemetry endpoint is required when enabled")
+		}
+		if c.OpenTelemetry.SamplingRate < 0.0 || c.OpenTelemetry.SamplingRate > 1.0 {
+			return fmt.Errorf("OpenTelemetry sampling rate must be between 0.0 and 1.0, got: %f", c.OpenTelemetry.SamplingRate)
+		}
+	}
+
 	return nil
 }
 
@@ -197,4 +214,37 @@ func (c *Config) BuildURL(path string, queryParams map[string]string) string {
 	}
 	u.RawQuery = q.Encode()
 	return u.String()
+}
+
+// IsOTelEnabled returns whether OpenTelemetry tracing is enabled in the configuration.
+// This is a convenience method to check the OpenTelemetry.Enabled field.
+//
+// Returns true if OpenTelemetry is enabled, false otherwise.
+func (c *Config) IsOTelEnabled() bool {
+	return c.OpenTelemetry.Enabled
+}
+
+// OTelConfig represents OpenTelemetry configuration settings.
+type OTelConfig struct {
+	Enabled      bool
+	Endpoint     string
+	Insecure     bool
+	SamplingRate float64
+}
+
+// GetOTelConfig returns a copy of the OpenTelemetry configuration settings.
+// This method extracts the OpenTelemetry configuration for use by the telemetry manager.
+//
+// Returns an OTelConfig struct containing:
+//   - Enabled: Whether OpenTelemetry is enabled
+//   - Endpoint: OTLP gRPC endpoint address
+//   - Insecure: Whether to use insecure connection (no TLS)
+//   - SamplingRate: Trace sampling rate (0.0 to 1.0)
+func (c *Config) GetOTelConfig() OTelConfig {
+	return OTelConfig{
+		Enabled:      c.OpenTelemetry.Enabled,
+		Endpoint:     c.OpenTelemetry.Endpoint,
+		Insecure:     c.OpenTelemetry.Insecure,
+		SamplingRate: c.OpenTelemetry.SamplingRate,
+	}
 }

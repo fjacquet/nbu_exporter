@@ -1,0 +1,289 @@
+# Implementation Plan
+
+- [x] 1. Set up project structure and dependencies
+  - Create `internal/telemetry/` package directory for OpenTelemetry components
+  - Add OpenTelemetry dependencies to `go.mod` (otel, otel/sdk, otlptrace, otlptracegrpc)
+  - Add otelhttp instrumentation dependency for HTTP client integration
+  - Run `go mod tidy` to download and verify dependencies
+  - _Requirements: 1.1, 1.3_
+
+- [x] 2. Extend configuration model for OpenTelemetry settings
+  - [x] 2.1 Add OpenTelemetry struct to Config model
+    - Add `OpenTelemetry` struct with fields: Enabled, Endpoint, Insecure, SamplingRate
+    - Add YAML tags for configuration file parsing
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6_
+  - [x] 2.2 Implement configuration validation
+    - Extend `Validate()` method to check OpenTelemetry configuration
+    - Validate endpoint is not empty when enabled
+    - Validate sampling rate is between 0.0 and 1.0
+    - Return descriptive errors for invalid configurations
+    - _Requirements: 4.7, 4.8_
+  - [x] 2.3 Add configuration helper methods
+    - Add `GetOTelConfig()` method to extract OpenTelemetry configuration
+    - Add `IsOTelEnabled()` convenience method
+    - _Requirements: 4.2, 4.3_
+
+- [ ] 3. Implement telemetry manager for OpenTelemetry lifecycle
+  - [ ] 3.1 Create telemetry package structure
+    - Create `internal/telemetry/manager.go` file
+    - Define `Manager` struct with TracerProvider and configuration
+    - Define `Config` struct for telemetry-specific settings
+    - _Requirements: 1.1, 1.2_
+  - [ ] 3.2 Implement manager initialization
+    - Implement `NewManager()` constructor accepting configuration
+    - Implement `Initialize()` method to set up OTLP exporter
+    - Create OTLP gRPC exporter with configured endpoint and TLS settings
+    - Create TracerProvider with batch span processor
+    - Configure sampling based on sampling rate (AlwaysSample or TraceIDRatioBased)
+    - Set resource attributes (service.name, service.version, host.name, netbackup.server)
+    - Register global tracer provider using `otel.SetTracerProvider()`
+    - _Requirements: 1.1, 1.3, 1.4, 4.4, 4.5, 4.6, 4.7, 4.8, 8.1, 8.2, 8.3, 8.4, 8.5_
+  - [ ] 3.3 Implement graceful shutdown
+    - Implement `Shutdown()` method with context timeout
+    - Call `TracerProvider.Shutdown()` to flush pending spans
+    - Handle shutdown errors gracefully with logging
+    - _Requirements: 1.4_
+  - [ ] 3.4 Implement error handling and graceful degradation
+    - Add error handling for exporter creation failures
+    - Log warnings when initialization fails
+    - Set `enabled = false` on initialization failure
+    - Implement `IsEnabled()` method to check telemetry status
+    - _Requirements: 1.2, 6.4_
+
+- [ ] 4. Instrument HTTP client for NetBackup API calls
+  - [ ] 4.1 Add tracer to NbuClient struct
+    - Add `tracer trace.Tracer` field to NbuClient struct
+    - Update `NewNbuClient()` to accept optional tracer
+    - Initialize tracer from global provider if available
+    - _Requirements: 2.5_
+  - [ ] 4.2 Implement span creation for HTTP requests
+    - Create `createHTTPSpan()` helper method
+    - Start span with operation name "http.request"
+    - Set span kind to `trace.SpanKindClient`
+    - Add nil-safe checks for tracer
+    - _Requirements: 2.5, 6.2_
+  - [ ] 4.3 Record HTTP semantic convention attributes
+    - Implement `recordHTTPAttributes()` method
+    - Record `http.method`, `http.url`, `http.status_code` attributes
+    - Record `http.request_content_length` and `http.response_content_length`
+    - Record `http.duration_ms` for request timing
+    - Follow OpenTelemetry HTTP semantic conventions
+    - _Requirements: 2.5, 5.4, 5.6_
+  - [ ] 4.4 Implement error recording and span status
+    - Record error messages as span events
+    - Set span status to `codes.Error` on HTTP failures
+    - Add error attribute with error message
+    - _Requirements: 2.6_
+  - [ ] 4.5 Implement trace context injection
+    - Configure W3C Trace Context propagator
+    - Inject trace context into outgoing HTTP request headers
+    - Use `otel.GetTextMapPropagator().Inject()` for context injection
+    - _Requirements: 7.1, 7.4_
+  - [ ] 4.6 Update FetchData method with instrumentation
+    - Wrap HTTP request with span creation
+    - Propagate context through request
+    - Record attributes before and after request
+    - End span with defer statement
+    - _Requirements: 2.5, 2.7_
+
+- [ ] 5. Instrument Prometheus collector for scrape tracing
+  - [ ] 5.1 Add tracer to NbuCollector struct
+    - Add `tracer trace.Tracer` field to NbuCollector
+    - Initialize tracer in `NewNbuCollector()` from global provider
+    - _Requirements: 2.1_
+  - [ ] 5.2 Create root span for scrape cycle
+    - Implement `createScrapeSpan()` helper method
+    - Start span with operation name "prometheus.scrape"
+    - Set span kind to `trace.SpanKindServer`
+    - Add nil-safe checks for tracer
+    - _Requirements: 2.1, 6.2_
+  - [ ] 5.3 Update Collect method with root span
+    - Create root span at start of `Collect()` method
+    - Propagate context to child operations (FetchStorage, FetchAllJobs)
+    - Record scrape duration as span attribute
+    - Record metric counts (storage, jobs) as span attributes
+    - End span with defer statement
+    - _Requirements: 2.1, 2.7, 5.1_
+  - [ ] 5.4 Record scrape status and errors
+    - Add `scrape.status` attribute ("success" or "partial_failure")
+    - Record errors as span events
+    - Set span status based on scrape outcome
+    - _Requirements: 2.6_
+
+- [ ] 6. Instrument storage fetching operations
+  - [ ] 6.1 Add span creation to FetchStorage
+    - Start child span "netbackup.fetch_storage" from parent context
+    - Set span kind to `trace.SpanKindClient`
+    - Record `netbackup.endpoint` attribute with storage path
+    - _Requirements: 2.2, 5.2_
+  - [ ] 6.2 Record storage operation attributes
+    - Record `netbackup.storage_units` attribute with count of units retrieved
+    - Record `netbackup.api_version` attribute
+    - Record operation duration
+    - _Requirements: 5.1, 5.2_
+  - [ ] 6.3 Handle errors in storage fetching
+    - Record errors as span events
+    - Set span status to error on failures
+    - Propagate errors to caller
+    - _Requirements: 2.6_
+
+- [ ] 7. Instrument job fetching operations
+  - [ ] 7.1 Add span creation to FetchAllJobs
+    - Start child span "netbackup.fetch_jobs" from parent context
+    - Set span kind to `trace.SpanKindClient`
+    - Record `netbackup.endpoint` attribute with jobs path
+    - Record `netbackup.time_window` attribute with scraping interval
+    - Record `netbackup.start_time` attribute with ISO 8601 timestamp
+    - _Requirements: 2.3, 5.3_
+  - [ ] 7.2 Add span creation to FetchJobDetails for pagination
+    - Start child span "netbackup.fetch_job_page" from parent context
+    - Record `netbackup.page_offset` attribute
+    - Calculate and record `netbackup.page_number` attribute
+    - _Requirements: 2.4, 5.3_
+  - [ ] 7.3 Record job operation attributes
+    - Record `netbackup.total_jobs` attribute in FetchAllJobs
+    - Record `netbackup.total_pages` attribute after pagination completes
+    - Record `netbackup.jobs_in_page` attribute in FetchJobDetails
+    - _Requirements: 5.2, 5.3_
+  - [ ] 7.4 Handle errors in job fetching
+    - Record errors as span events
+    - Set span status to error on failures
+    - Propagate errors to caller
+    - _Requirements: 2.6_
+
+- [ ] 8. Instrument API version detection
+  - [ ] 8.1 Add span creation to version detection
+    - Start span "netbackup.detect_version" in DetectVersion method
+    - Record attempted versions as span attributes
+    - Record detected version as span attribute
+    - _Requirements: 5.5_
+  - [ ] 8.2 Record version detection results
+    - Record each version attempt as span event
+    - Record success/failure for each attempt
+    - Set span status based on detection outcome
+    - _Requirements: 5.5_
+
+- [ ] 9. Integrate telemetry manager into main application
+  - [ ] 9.1 Initialize telemetry manager in main
+    - Create telemetry manager from configuration in main.go
+    - Call `Initialize()` after configuration validation
+    - Handle initialization errors with warning logs
+    - _Requirements: 1.1, 1.2, 6.4_
+  - [ ] 9.2 Pass tracer to components
+    - Update Server struct to hold telemetry manager
+    - Pass tracer to NbuCollector during creation
+    - Pass tracer to NbuClient during creation
+    - _Requirements: 1.1_
+  - [ ] 9.3 Implement graceful shutdown
+    - Call `telemetryManager.Shutdown()` in shutdown handler
+    - Add timeout context for shutdown (10 seconds)
+    - Log shutdown status
+    - _Requirements: 1.4_
+  - [ ] 9.4 Handle disabled telemetry
+    - Check if telemetry is enabled before initialization
+    - Skip tracer passing if telemetry is disabled
+    - Ensure nil-safe operations throughout
+    - _Requirements: 1.2, 6.1, 6.2, 6.3_
+
+- [ ] 10. Implement trace context propagation
+  - [ ] 10.1 Configure global propagators
+    - Set W3C Trace Context as default propagator
+    - Add Baggage propagator for cross-cutting concerns
+    - Use `otel.SetTextMapPropagator()` with composite propagator
+    - _Requirements: 7.1, 7.5_
+  - [ ] 10.2 Implement context extraction
+    - Extract trace context from incoming HTTP requests (if applicable)
+    - Use propagator to extract parent context
+    - _Requirements: 7.2_
+  - [ ] 10.3 Implement context injection
+    - Inject trace context into outgoing NetBackup API requests
+    - Use propagator to inject context into headers
+    - _Requirements: 7.3, 7.4_
+
+- [ ] 11. Add configuration examples and documentation
+  - [ ] 11.1 Create example configuration file
+    - Add commented OpenTelemetry section to example config.yaml
+    - Include all configuration options with descriptions
+    - Provide examples for common scenarios (development, production)
+    - _Requirements: 10.1_
+  - [ ] 11.2 Update README with OpenTelemetry documentation
+    - Add OpenTelemetry section to README
+    - Document all configuration options
+    - Explain sampling rate behavior
+    - Provide troubleshooting guidance
+    - _Requirements: 10.2, 10.5_
+  - [ ] 11.3 Create Docker Compose example
+    - Create docker-compose.yaml with exporter, collector, and Jaeger
+    - Create otel-collector-config.yaml for collector configuration
+    - Add instructions for running the example
+    - _Requirements: 10.3_
+  - [ ] 11.4 Document trace queries and analysis
+    - Provide example trace queries for common scenarios
+    - Document how to identify slow API calls
+    - Explain span attributes and their meanings
+    - _Requirements: 10.4_
+
+- [ ] 12. Implement comprehensive testing
+  - [ ] 12.1 Add unit tests for telemetry manager
+    - Test initialization with valid configuration
+    - Test initialization with invalid endpoint
+    - Test shutdown with pending spans
+    - Test disabled mode behavior
+    - _Requirements: 1.1, 1.2, 1.4, 6.4_
+  - [ ] 12.2 Add unit tests for instrumented client
+    - Test span creation for HTTP requests
+    - Test attribute recording (method, URL, status)
+    - Test error recording and span status
+    - Test nil-safe operation without tracer
+    - _Requirements: 2.5, 2.6, 2.7, 6.2_
+  - [ ] 12.3 Add unit tests for instrumented collector
+    - Test scrape span creation
+    - Test context propagation to fetch operations
+    - Test span attributes for successful scrape
+    - Test span attributes for failed scrape
+    - _Requirements: 2.1, 2.6, 2.7_
+  - [ ] 12.4 Add unit tests for configuration
+    - Test OpenTelemetry config validation
+    - Test default values
+    - Test invalid sampling rates
+    - Test missing endpoint when enabled
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8_
+  - [ ] 12.5 Add integration tests
+    - Test end-to-end tracing with test collector
+    - Test backward compatibility without OTel config
+    - Test graceful degradation with invalid endpoint
+    - _Requirements: 6.1, 6.2, 6.3, 6.4_
+  - [ ] 12.6 Add performance benchmarks
+    - Benchmark scrape with tracing disabled
+    - Benchmark scrape with tracing enabled (sampling=1.0)
+    - Benchmark scrape with tracing enabled (sampling=0.1)
+    - Verify overhead is acceptable (< 5% for sampling=0.1)
+    - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
+
+- [ ] 13. Validate and finalize implementation
+  - [ ] 13.1 Run all tests and verify passing
+    - Execute unit tests with `go test ./...`
+    - Execute integration tests
+    - Review test coverage
+    - _Requirements: All_
+  - [ ] 13.2 Test with real NetBackup server
+    - Deploy exporter with OpenTelemetry enabled
+    - Trigger scrapes and verify traces in Jaeger
+    - Test various sampling rates
+    - Verify trace hierarchy and attributes
+    - _Requirements: All_
+  - [ ] 13.3 Verify backward compatibility
+    - Deploy exporter without OpenTelemetry configuration
+    - Verify normal operation
+    - Verify Prometheus metrics work correctly
+    - _Requirements: 6.1, 6.2, 6.3, 6.5_
+  - [ ] 13.4 Performance validation
+    - Measure scrape duration with and without tracing
+    - Verify memory usage is acceptable
+    - Test with high scrape frequency
+    - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
+  - [ ] 13.5 Update CHANGELOG and version
+    - Document new OpenTelemetry features
+    - Update version number
+    - Tag release
+    - _Requirements: All_
