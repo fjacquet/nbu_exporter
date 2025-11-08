@@ -12,6 +12,20 @@ import (
 	"time"
 )
 
+// Supported NetBackup API versions
+const (
+	// APIVersion30 represents NetBackup 10.0-10.4 API version
+	APIVersion30 = "3.0"
+	// APIVersion120 represents NetBackup 10.5 API version
+	APIVersion120 = "12.0"
+	// APIVersion130 represents NetBackup 11.0 API version
+	APIVersion130 = "13.0"
+)
+
+// SupportedAPIVersions contains all supported NetBackup API versions in descending order.
+// This list is used for version detection fallback (newest to oldest).
+var SupportedAPIVersions = []string{APIVersion130, APIVersion120, APIVersion30}
+
 // Config represents the complete application configuration for the NBU exporter.
 // It includes settings for the server and the NBU server.
 type Config struct {
@@ -38,12 +52,12 @@ type Config struct {
 }
 
 // SetDefaults sets default values for optional configuration fields.
-// Currently sets the default API version to "12.0" (NetBackup 10.5+) if not specified.
+// Currently sets the default API version to "13.0" (NetBackup 11.0) if not specified.
 // This method is called automatically by Validate() before validation checks.
 func (c *Config) SetDefaults() {
-	// Set default API version for NetBackup 10.5
+	// Set default API version for NetBackup 11.0
 	if c.NbuServer.APIVersion == "" {
-		c.NbuServer.APIVersion = "12.0"
+		c.NbuServer.APIVersion = APIVersion130
 	}
 }
 
@@ -54,6 +68,7 @@ func (c *Config) SetDefaults() {
 //   - Port ranges (1-65535)
 //   - URL schemes (http/https only)
 //   - API version format (X.Y pattern)
+//   - API version is in the supported versions list
 //
 // This method calls SetDefaults() before validation to ensure optional fields
 // have appropriate default values.
@@ -97,11 +112,23 @@ func (c *Config) Validate() error {
 		return errors.New("NBU server API key is required")
 	}
 
-	// Validate API version format (e.g., "12.0", "11.1", "10.5")
+	// Validate API version format and check against supported versions
 	if c.NbuServer.APIVersion != "" {
 		apiVersionPattern := regexp.MustCompile(`^\d+\.\d+$`)
 		if !apiVersionPattern.MatchString(c.NbuServer.APIVersion) {
-			return fmt.Errorf("invalid API version format: %s (must be in format X.Y, e.g., 12.0)", c.NbuServer.APIVersion)
+			return fmt.Errorf("invalid API version format: %s (must be in format X.Y, e.g., 13.0)", c.NbuServer.APIVersion)
+		}
+
+		// Check if the version is in the supported list
+		supported := false
+		for _, version := range SupportedAPIVersions {
+			if c.NbuServer.APIVersion == version {
+				supported = true
+				break
+			}
+		}
+		if !supported {
+			return fmt.Errorf("unsupported API version: %s (supported versions: %v)", c.NbuServer.APIVersion, SupportedAPIVersions)
 		}
 	}
 

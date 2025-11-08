@@ -30,7 +30,7 @@ func TestConfig_SetDefaults(t *testing.T) {
 					APIVersion: "",
 				},
 			},
-			expectedAPIVer: "12.0",
+			expectedAPIVer: "13.0",
 		},
 		{
 			name: "preserves existing API version",
@@ -72,19 +72,31 @@ func TestConfig_Validate_APIVersion(t *testing.T) {
 		errMsg     string
 	}{
 		{
+			name:       "valid API version 13.0",
+			apiVersion: "13.0",
+			wantErr:    false,
+		},
+		{
 			name:       "valid API version 12.0",
 			apiVersion: "12.0",
 			wantErr:    false,
 		},
 		{
-			name:       "valid API version 11.1",
-			apiVersion: "11.1",
+			name:       "valid API version 3.0",
+			apiVersion: "3.0",
 			wantErr:    false,
 		},
 		{
-			name:       "valid API version 10.5",
+			name:       "unsupported API version 11.1",
+			apiVersion: "11.1",
+			wantErr:    true,
+			errMsg:     "unsupported API version",
+		},
+		{
+			name:       "unsupported API version 10.5",
 			apiVersion: "10.5",
-			wantErr:    false,
+			wantErr:    true,
+			errMsg:     "unsupported API version",
 		},
 		{
 			name:       "empty API version gets default",
@@ -168,8 +180,8 @@ func TestConfig_Validate_APIVersion(t *testing.T) {
 					t.Errorf("Validate() unexpected error = %v", err)
 				}
 				// Verify default was set if empty
-				if tt.apiVersion == "" && config.NbuServer.APIVersion != "12.0" {
-					t.Errorf("Validate() APIVersion = %v, want default 12.0", config.NbuServer.APIVersion)
+				if tt.apiVersion == "" && config.NbuServer.APIVersion != "13.0" {
+					t.Errorf("Validate() APIVersion = %v, want default 13.0", config.NbuServer.APIVersion)
 				}
 			}
 		})
@@ -198,9 +210,9 @@ nbuserver:
   scheme: "https"
   uri: "/netbackup"
   apiKey: "test-key"
-  apiVersion: "11.1"
+  apiVersion: "13.0"
 `,
-			expectedAPIVer: "11.1",
+			expectedAPIVer: "13.0",
 			wantErr:        false,
 		},
 		{
@@ -283,7 +295,7 @@ nbuserver:
   apiKey: "test-key"
   contentType: "application/json"
 `,
-			expectedAPIVer: "12.0",
+			expectedAPIVer: "13.0",
 			shouldValidate: true,
 		},
 		{
@@ -306,7 +318,7 @@ nbuserver:
   contentType: "application/json"
   insecureSkipVerify: false
 `,
-			expectedAPIVer: "12.0",
+			expectedAPIVer: "13.0",
 			shouldValidate: true,
 		},
 	}
@@ -331,6 +343,154 @@ nbuserver:
 			// Check that default API version was set
 			if tt.shouldValidate && config.NbuServer.APIVersion != tt.expectedAPIVer {
 				t.Errorf("APIVersion = %v, want %v", config.NbuServer.APIVersion, tt.expectedAPIVer)
+			}
+		})
+	}
+}
+
+func TestSupportedAPIVersions(t *testing.T) {
+	// Test that the supported versions list contains expected versions
+	expectedVersions := []string{"13.0", "12.0", "3.0"}
+
+	if len(SupportedAPIVersions) != len(expectedVersions) {
+		t.Errorf("SupportedAPIVersions length = %d, want %d", len(SupportedAPIVersions), len(expectedVersions))
+	}
+
+	for i, expected := range expectedVersions {
+		if SupportedAPIVersions[i] != expected {
+			t.Errorf("SupportedAPIVersions[%d] = %s, want %s", i, SupportedAPIVersions[i], expected)
+		}
+	}
+}
+
+func TestAPIVersionConstants(t *testing.T) {
+	tests := []struct {
+		name     string
+		constant string
+		expected string
+	}{
+		{
+			name:     "APIVersion30 constant",
+			constant: APIVersion30,
+			expected: "3.0",
+		},
+		{
+			name:     "APIVersion120 constant",
+			constant: APIVersion120,
+			expected: "12.0",
+		},
+		{
+			name:     "APIVersion130 constant",
+			constant: APIVersion130,
+			expected: "13.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.constant != tt.expected {
+				t.Errorf("%s = %s, want %s", tt.name, tt.constant, tt.expected)
+			}
+		})
+	}
+}
+
+func TestConfig_Validate_SupportedVersions(t *testing.T) {
+	tests := []struct {
+		name       string
+		apiVersion string
+		wantErr    bool
+		errMsg     string
+	}{
+		{
+			name:       "supported version 13.0",
+			apiVersion: "13.0",
+			wantErr:    false,
+		},
+		{
+			name:       "supported version 12.0",
+			apiVersion: "12.0",
+			wantErr:    false,
+		},
+		{
+			name:       "supported version 3.0",
+			apiVersion: "3.0",
+			wantErr:    false,
+		},
+		{
+			name:       "unsupported version 14.0",
+			apiVersion: "14.0",
+			wantErr:    true,
+			errMsg:     "unsupported API version: 14.0",
+		},
+		{
+			name:       "unsupported version 2.0",
+			apiVersion: "2.0",
+			wantErr:    true,
+			errMsg:     "unsupported API version: 2.0",
+		},
+		{
+			name:       "unsupported version 11.0",
+			apiVersion: "11.0",
+			wantErr:    true,
+			errMsg:     "unsupported API version: 11.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := &Config{
+				Server: struct {
+					Port             string `yaml:"port"`
+					Host             string `yaml:"host"`
+					URI              string `yaml:"uri"`
+					ScrapingInterval string `yaml:"scrapingInterval"`
+					LogName          string `yaml:"logName"`
+				}{
+					Port:             "2112",
+					Host:             "localhost",
+					URI:              "/metrics",
+					ScrapingInterval: "5m",
+					LogName:          "test.log",
+				},
+				NbuServer: struct {
+					Port               string `yaml:"port"`
+					Scheme             string `yaml:"scheme"`
+					URI                string `yaml:"uri"`
+					Domain             string `yaml:"domain"`
+					DomainType         string `yaml:"domainType"`
+					Host               string `yaml:"host"`
+					APIKey             string `yaml:"apiKey"`
+					APIVersion         string `yaml:"apiVersion"`
+					ContentType        string `yaml:"contentType"`
+					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+				}{
+					Port:       "1556",
+					Scheme:     "https",
+					URI:        "/netbackup",
+					Host:       "nbu-master",
+					APIKey:     "test-api-key",
+					APIVersion: tt.apiVersion,
+				},
+			}
+
+			err := config.Validate()
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("Validate() expected error, got nil")
+					return
+				}
+				// Check if error message contains the expected substring
+				if tt.errMsg != "" {
+					errStr := err.Error()
+					if len(errStr) < len(tt.errMsg) || errStr[:len(tt.errMsg)] != tt.errMsg {
+						t.Errorf("Validate() error = %v, want error starting with %v", err.Error(), tt.errMsg)
+					}
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Validate() unexpected error = %v", err)
+				}
 			}
 		})
 	}
