@@ -30,20 +30,20 @@ archives:
       - README.md
       - config.yaml
 
-dockers:
-  - # Image Docker multi-architecture
-    dockerfile: Dockerfile.goreleaser
-    image_templates:
-      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER | default \"fjacquet\" }}/{{ .ProjectName }}:{{ .Version }}"
-      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER | default \"fjacquet\" }}/{{ .ProjectName }}:latest"
-    use: buildx
-    build_flag_templates:
-      - "--platform=linux/amd64,linux/arm64"
-      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-      - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.source=https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER | default \"fjacquet\" }}/{{ .ProjectName }}"
-    extra_files:
-      - config.yaml
+# dockers:
+#   - # Image Docker multi-architecture
+#     dockerfile: Dockerfile.goreleaser
+#     image_templates:
+#       - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER | default \"fjacquet\" }}/{{ .ProjectName }}:{{ .Version }}"
+#       - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER | default \"fjacquet\" }}/{{ .ProjectName }}:latest"
+#     use: buildx
+#     build_flag_templates:
+#       - "--platform=linux/amd64,linux/arm64"
+#       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+#       - "--label=org.opencontainers.image.version={{ .Version }}"
+#       - "--label=org.opencontainers.image.source=https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER | default \"fjacquet\" }}/{{ .ProjectName }}"
+#     extra_files:
+#       - config.yaml
 
 changelog:
   sort: asc
