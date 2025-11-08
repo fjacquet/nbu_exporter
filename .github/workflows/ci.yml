@@ -7,6 +7,10 @@ on:
     branches: [ main ]
   schedule:
     - cron: '0 0 * * 1'  # Run every Monday at midnight
+    
+env:
+  GO_VERSION: '1.23'
+  COVERAGE_THRESHOLD: 80
 
 jobs:
   test:
@@ -32,8 +36,16 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+  
           
+      - name: Run linting
+        run: |
+          go fmt ./...
+          go vet ./...
+
+              
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -47,11 +59,6 @@ jobs:
         
       - name: Download dependencies
         run: go mod download
-
-      - name: Run linting
-        run: |
-          go fmt ./...
-          go vet ./...
 
       - name: Build
         run: go build -v ./...
@@ -71,10 +78,21 @@ jobs:
             echo "✅ Test coverage meets 80% threshold"
           fi
 
-      - name: Generate coverage summary
-        run: go tool cover -func=coverage.out > coverage-summary.txt
+          - name: Generate coverage summary
+          if: always()
+          run: go tool cover -func=coverage.out > coverage-summary.txt
+  
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage.out
+            coverage-summary.txt
 
       - name: SonarQube Scan
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
