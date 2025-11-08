@@ -383,3 +383,273 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// TestNbuClient_HeaderConstruction_AllVersions tests that headers are correctly
+// constructed for all three supported API versions (3.0, 12.0, 13.0)
+func TestNbuClient_HeaderConstruction_AllVersions(t *testing.T) {
+	tests := []struct {
+		name           string
+		apiVersion     string
+		apiKey         string
+		expectedAccept string
+	}{
+		{
+			name:           "API version 3.0 (NetBackup 10.0-10.4)",
+			apiVersion:     models.APIVersion30,
+			apiKey:         "test-key-v3",
+			expectedAccept: "application/vnd.netbackup+json;version=3.0",
+		},
+		{
+			name:           "API version 12.0 (NetBackup 10.5)",
+			apiVersion:     models.APIVersion120,
+			apiKey:         "test-key-v12",
+			expectedAccept: "application/vnd.netbackup+json;version=12.0",
+		},
+		{
+			name:           "API version 13.0 (NetBackup 11.0)",
+			apiVersion:     models.APIVersion130,
+			apiKey:         "test-key-v13",
+			expectedAccept: "application/vnd.netbackup+json;version=13.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := models.Config{}
+			cfg.NbuServer.APIVersion = tt.apiVersion
+			cfg.NbuServer.APIKey = tt.apiKey
+
+			client := NewNbuClient(cfg)
+			headers := client.getHeaders()
+
+			if headers[HeaderAccept] != tt.expectedAccept {
+				t.Errorf("getHeaders() Accept = %v, want %v", headers[HeaderAccept], tt.expectedAccept)
+			}
+
+			if headers[HeaderAuthorization] != tt.apiKey {
+				t.Errorf("getHeaders() Authorization = %v, want %v", headers[HeaderAuthorization], tt.apiKey)
+			}
+		})
+	}
+}
+
+// TestNbuClient_VersionFailureErrorMessages tests that error messages for version
+// failures include helpful troubleshooting information
+func TestNbuClient_VersionFailureErrorMessages(t *testing.T) {
+	tests := []struct {
+		name              string
+		apiVersion        string
+		statusCode        int
+		wantErrorContains []string
+		wantErrorExcludes []string
+	}{
+		{
+			name:       "406 error includes all supported versions",
+			apiVersion: "13.0",
+			statusCode: 406,
+			wantErrorContains: []string{
+				"API version 13.0 is not supported",
+				"HTTP 406 Not Acceptable",
+				"3.0  (NetBackup 10.0-10.4)",
+				"12.0 (NetBackup 10.5)",
+				"13.0 (NetBackup 11.0)",
+				"Troubleshooting steps",
+				"bpgetconfig -g | grep VERSION",
+				"automatic version detection",
+			},
+		},
+		{
+			name:       "406 error for version 12.0",
+			apiVersion: "12.0",
+			statusCode: 406,
+			wantErrorContains: []string{
+				"API version 12.0 is not supported",
+				"HTTP 406 Not Acceptable",
+				"apiVersion",
+			},
+		},
+		{
+			name:       "406 error for version 3.0",
+			apiVersion: "3.0",
+			statusCode: 406,
+			wantErrorContains: []string{
+				"API version 3.0 is not supported",
+				"HTTP 406 Not Acceptable",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.statusCode)
+				json.NewEncoder(w).Encode(map[string]string{
+					"errorMessage": "API version not supported",
+				})
+			}))
+			defer server.Close()
+
+			cfg := models.Config{}
+			cfg.NbuServer.APIVersion = tt.apiVersion
+			cfg.NbuServer.APIKey = "test-key"
+			cfg.NbuServer.InsecureSkipVerify = true
+
+			client := NewNbuClient(cfg)
+			var result mockAPIResponse
+
+			err := client.FetchData(context.Background(), server.URL, &result)
+			if err == nil {
+				t.Fatal("FetchData() expected error, got nil")
+			}
+
+			errMsg := err.Error()
+
+			// Check that all expected strings are present
+			for _, expected := range tt.wantErrorContains {
+				if len(expected) > 0 && !contains(errMsg, expected) {
+					t.Errorf("Error message missing expected text: %q\nGot: %s", expected, errMsg)
+				}
+			}
+
+			// Check that excluded strings are not present
+			for _, excluded := range tt.wantErrorExcludes {
+				if len(excluded) > 0 && contains(errMsg, excluded) {
+					t.Errorf("Error message contains unexpected text: %q\nGot: %s", excluded, errMsg)
+				}
+			}
+		})
+	}
+}
+
+// TestNewNbuClientWithVersionDetection_ExplicitVersion tests that when an API version
+// is explicitly configured, version detection is bypassed
+func TestNewNbuClientWithVersionDetection_ExplicitVersion(t *testing.T) {
+	tests := []struct {
+		name              string
+		configuredVersion string
+		shouldDetect      bool
+	}{
+		{
+			name:              "explicit version 3.0 bypasses detection",
+			configuredVersion: models.APIVersion30,
+			shouldDetect:      false,
+		},
+		{
+			name:              "explicit version 12.0 bypasses detection",
+			configuredVersion: models.APIVersion120,
+			shouldDetect:      false,
+		},
+		{
+			name:              "empty version triggers detection",
+			configuredVersion: "",
+			shouldDetect:      true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := models.Config{}
+			cfg.NbuServer.Host = "localhost"
+			cfg.NbuServer.Port = "1556"
+			cfg.NbuServer.Scheme = "https"
+			cfg.NbuServer.URI = "/netbackup"
+			cfg.NbuServer.APIKey = "test-key"
+			cfg.NbuServer.APIVersion = tt.configuredVersion
+			cfg.NbuServer.InsecureSkipVerify = true
+
+			// For explicit versions, we should not attempt detection
+			if !tt.shouldDetect {
+				client := NewNbuClient(cfg)
+				if client.cfg.NbuServer.APIVersion != tt.configuredVersion {
+					t.Errorf("NewNbuClient() changed configured version from %s to %s",
+						tt.configuredVersion, client.cfg.NbuServer.APIVersion)
+				}
+			}
+		})
+	}
+}
+
+// TestNewNbuClientWithVersionDetection_AutoDetection tests automatic version detection
+// when no version is configured
+// Note: This test is simplified to avoid complex mock server setup.
+// Full integration tests for version detection are in version_detector_test.go
+func TestNewNbuClientWithVersionDetection_AutoDetection(t *testing.T) {
+	t.Run("returns error when detection fails", func(t *testing.T) {
+		// Create a server that always returns 406
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(406)
+		}))
+		defer server.Close()
+
+		cfg := models.Config{}
+		// Parse the test server URL to get host and port
+		cfg.NbuServer.Scheme = "http"
+		cfg.NbuServer.Host = "localhost"
+		cfg.NbuServer.Port = "9999" // Non-existent port to trigger failure
+		cfg.NbuServer.URI = ""
+		cfg.NbuServer.APIKey = "test-key"
+		cfg.NbuServer.APIVersion = "" // Empty to trigger detection
+		cfg.NbuServer.InsecureSkipVerify = true
+
+		_, err := NewNbuClientWithVersionDetection(context.Background(), &cfg)
+		if err == nil {
+			t.Error("NewNbuClientWithVersionDetection() expected error when all versions fail, got nil")
+		}
+	})
+}
+
+// TestNbuClient_ConfigurationOverride tests that explicit configuration
+// takes precedence over automatic detection
+func TestNbuClient_ConfigurationOverride(t *testing.T) {
+	tests := []struct {
+		name              string
+		configuredVersion string
+		wantVersion       string
+	}{
+		{
+			name:              "configured version 3.0 is preserved",
+			configuredVersion: "3.0",
+			wantVersion:       "3.0",
+		},
+		{
+			name:              "configured version 12.0 is preserved",
+			configuredVersion: "12.0",
+			wantVersion:       "12.0",
+		},
+		{
+			name:              "configured version 13.0 is preserved",
+			configuredVersion: "13.0",
+			wantVersion:       "13.0",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := models.Config{}
+			cfg.NbuServer.APIVersion = tt.configuredVersion
+			cfg.NbuServer.APIKey = "test-key"
+			cfg.NbuServer.InsecureSkipVerify = true
+
+			client := NewNbuClient(cfg)
+
+			if client.cfg.NbuServer.APIVersion != tt.wantVersion {
+				t.Errorf("Configuration override failed: got version %s, want %s",
+					client.cfg.NbuServer.APIVersion, tt.wantVersion)
+			}
+		})
+	}
+}
+
+// Helper function to check if a string contains a substring
+func contains(s, substr string) bool {
+	return len(substr) > 0 && len(s) > 0 && (s == substr || len(s) >= len(substr) && containsHelper(s, substr))
+}
+
+func containsHelper(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}

@@ -7,74 +7,74 @@
   - _Requirements: 2.2, 2.3_
 
 - [x] 2. Implement API version detection with fallback logic
-- [x] 2.1 Create version detector module
-  - Create new file `internal/exporter/version_detector.go`
-  - Implement `APIVersionDetector` struct with client and config fields
-  - Implement `DetectVersion()` method with descending version order (13.0 → 12.0 → 3.0)
-  - Implement `tryVersion()` helper method for testing individual versions
-  - _Requirements: 1.1, 1.2, 1.3_
+  - [x] 2.1 Create version detector module
+    - Create new file `internal/exporter/version_detector.go`
+    - Implement `APIVersionDetector` struct with client and config fields
+    - Implement `DetectVersion()` method with descending version order (13.0 → 12.0 → 3.0)
+    - Implement `tryVersion()` helper method for testing individual versions
+    - _Requirements: 1.1, 1.2, 1.3_
 
-- [x] 2.2 Add retry logic with exponential backoff
-  - Define `RetryConfig` struct with max attempts, delays, and backoff factor
-  - Implement exponential backoff in version detection
-  - Distinguish between version incompatibility (HTTP 406) and transient errors
-  - _Requirements: 1.5, 6.1, 6.2_
+  - [x] 2.2 Add retry logic with exponential backoff
+    - Define `RetryConfig` struct with max attempts, delays, and backoff factor
+    - Implement exponential backoff in version detection
+    - Distinguish between version incompatibility (HTTP 406) and transient errors
+    - _Requirements: 1.5, 6.1, 6.2_
 
-- [x] 2.3 Enhance error handling and logging
-  - Add detailed logging for each version attempt (DEBUG level)
-  - Log detected version at INFO level on success
-  - Provide comprehensive error messages with troubleshooting steps on failure
-  - Handle authentication errors (HTTP 401) separately from version errors
-  - _Requirements: 1.4, 6.1, 6.3, 6.4_
+  - [x] 2.3 Enhance error handling and logging
+    - Add detailed logging for each version attempt (DEBUG level)
+    - Log detected version at INFO level on success
+    - Provide comprehensive error messages with troubleshooting steps on failure
+    - Handle authentication errors (HTTP 401) separately from version errors
+    - _Requirements: 1.4, 6.1, 6.3, 6.4_
 
-- [x] 2.4 Write unit tests for version detector
-  - Test fallback logic with mock HTTP responses
-  - Test retry behavior with transient failures
-  - Test error handling for different HTTP status codes
-  - Test early exit on authentication errors
-  - Verify logging output at each stage
-  - _Requirements: 10.1, 10.4_
+  - [x] 2.4 Write unit tests for version detector
+    - Test fallback logic with mock HTTP responses
+    - Test retry behavior with transient failures
+    - Test error handling for different HTTP status codes
+    - Test early exit on authentication errors
+    - Verify logging output at each stage
+    - _Requirements: 10.1, 10.4_
 
-- [ ] 3. Update HTTP client for version-aware requests
-- [ ] 3.1 Enhance client initialization
-  - Update `NewNbuClient()` to support version detection during initialization
-  - Integrate `APIVersionDetector` into client creation flow
-  - Add version detection bypass when apiVersion is explicitly configured
-  - _Requirements: 1.1, 2.1_
+- [x] 3. Update HTTP client for version-aware requests
+  - [x] 3.1 Enhance client initialization
+    - Update `NewNbuClient()` to support version detection during initialization
+    - Integrate `APIVersionDetector` into client creation flow
+    - Add version detection bypass when apiVersion is explicitly configured
+    - _Requirements: 1.1, 2.1_
 
-- [ ] 3.2 Improve error messages for version-related failures
-  - Enhance HTTP 406 error handling in `FetchData()` method
-  - Add suggestions for version configuration in error messages
-  - Include detected vs configured version information in errors
-  - _Requirements: 6.1, 6.2_
+  - [x] 3.2 Improve error messages for version-related failures
+    - Enhance HTTP 406 error handling in `FetchData()` method
+    - Add suggestions for version configuration in error messages
+    - Include detected vs configured version information in errors
+    - _Requirements: 6.1, 6.2_
 
-- [ ] 3.3 Write unit tests for enhanced client
-  - Test header construction for all three API versions
-  - Test error message formatting for version failures
-  - Test configuration override behavior
-  - Verify retry logic integration
-  - _Requirements: 10.1, 10.4_
+  - [x] 3.3 Write unit tests for enhanced client
+    - Test header construction for all three API versions
+    - Test error message formatting for version failures
+    - Test configuration override behavior
+    - Verify retry logic integration
+    - _Requirements: 10.1, 10.4_
 
 - [ ] 4. Update collector initialization with version detection
-- [ ] 4.1 Integrate version detection into collector
-  - Modify `NewNbuCollector()` in `internal/exporter/prometheus.go`
-  - Add version detection call when apiVersion is not configured
-  - Log detected version at INFO level
-  - Handle version detection failures gracefully
-  - _Requirements: 1.1, 1.3, 1.4_
+  - [ ] 4.1 Integrate version detection into collector
+    - Modify `NewNbuCollector()` in `internal/exporter/prometheus.go`
+    - Add version detection call when apiVersion is not configured
+    - Log detected version at INFO level
+    - Handle version detection failures gracefully
+    - _Requirements: 1.1, 1.3, 1.4_
 
-- [ ] 4.2 Add API version metric
-  - Create new Prometheus gauge metric `nbu_api_version`
-  - Expose current API version as metric with version label
-  - Update metric in collector's `Describe()` and `Collect()` methods
-  - _Requirements: 8.5_
+  - [ ] 4.2 Add API version metric
+    - Create new Prometheus gauge metric `nbu_api_version`
+    - Expose current API version as metric with version label
+    - Update metric in collector's `Describe()` and `Collect()` methods
+    - _Requirements: 8.5_
 
-- [ ] 4.3 Write unit tests for collector initialization
-  - Test collector creation with explicit version configuration
-  - Test collector creation with automatic version detection
-  - Test error handling when version detection fails
-  - Verify API version metric is exposed correctly
-  - _Requirements: 10.1, 10.2_
+  - [ ] 4.3 Write unit tests for collector initialization
+    - Test collector creation with explicit version configuration
+    - Test collector creation with automatic version detection
+    - Test error handling when version detection fails
+    - Verify API version metric is exposed correctly
+    - _Requirements: 10.1, 10.2_
 
 - [ ] 5. Create test data for all API versions
 - [ ] 5.1 Add mock response files

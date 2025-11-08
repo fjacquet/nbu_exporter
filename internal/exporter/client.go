@@ -66,6 +66,63 @@ func NewNbuClient(cfg models.Config) *NbuClient {
 	}
 }
 
+// NewNbuClientWithVersionDetection creates a new NetBackup API client and automatically
+// detects the API version if not explicitly configured. This is the recommended way to
+// create a client when you want automatic version detection.
+//
+// The function:
+//   - Creates a new HTTP client with the provided configuration
+//   - If apiVersion is not set in config, performs automatic version detection
+//   - Updates the configuration with the detected version
+//   - Returns the configured client ready for use
+//
+// Parameters:
+//   - ctx: Context for version detection requests (supports cancellation and timeout)
+//   - cfg: Application configuration (will be modified if version detection occurs)
+//
+// Returns:
+//   - Configured NbuClient with detected or configured API version
+//   - Error if version detection fails or configuration is invalid
+//
+// Example:
+//
+//	cfg := models.Config{...}
+//	client, err := NewNbuClientWithVersionDetection(ctx, &cfg)
+//	if err != nil {
+//	    log.Fatalf("Failed to create client: %v", err)
+//	}
+func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config) (*NbuClient, error) {
+	// Create the base client
+	client := NewNbuClient(*cfg)
+
+	// If API version is not explicitly configured, perform version detection
+	if cfg.NbuServer.APIVersion == "" || cfg.NbuServer.APIVersion == models.APIVersion130 {
+		// Only perform detection if version is empty or set to default
+		// This allows users to explicitly configure a version to bypass detection
+		shouldDetect := cfg.NbuServer.APIVersion == ""
+
+		if shouldDetect {
+			logging.LogInfo("API version not configured, performing automatic detection")
+			detector := NewAPIVersionDetector(client, cfg)
+			detectedVersion, err := detector.DetectVersion(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("automatic API version detection failed: %w", err)
+			}
+
+			// Update configuration with detected version
+			cfg.NbuServer.APIVersion = detectedVersion
+			client.cfg.NbuServer.APIVersion = detectedVersion
+			logging.LogInfo(fmt.Sprintf("Automatically detected API version: %s", detectedVersion))
+		} else {
+			logging.LogInfo(fmt.Sprintf("Using configured API version: %s", cfg.NbuServer.APIVersion))
+		}
+	} else {
+		logging.LogInfo(fmt.Sprintf("Using explicitly configured API version: %s (bypassing detection)", cfg.NbuServer.APIVersion))
+	}
+
+	return client, nil
+}
+
 // getHeaders returns the standard headers for NBU API requests.
 func (c *NbuClient) getHeaders() map[string]string {
 	// Construct versioned Accept header for NetBackup API 10.5+
@@ -110,11 +167,21 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 		// Handle 406 Not Acceptable - API version not supported
 		if resp.StatusCode() == 406 {
 			errMsg := fmt.Sprintf(
-				"API version %s is not supported by the NetBackup server (HTTP 406 Not Acceptable). "+
-					"The server may be running an older version of NetBackup that does not support API version %s. "+
-					"Please verify your NetBackup server version and update the 'apiVersion' field in your configuration "+
-					"to match a supported version. Common versions: '10.0' (NetBackup 10.0-10.4), '12.0' (NetBackup 10.5+). "+
-					"URL: %s",
+				"API version %s is not supported by the NetBackup server (HTTP 406 Not Acceptable).\n\n"+
+					"The server may be running a version of NetBackup that does not support API version %s.\n\n"+
+					"Supported API versions:\n"+
+					"  - 3.0  (NetBackup 10.0-10.4)\n"+
+					"  - 12.0 (NetBackup 10.5)\n"+
+					"  - 13.0 (NetBackup 11.0)\n\n"+
+					"Troubleshooting steps:\n"+
+					"1. Verify your NetBackup server version: bpgetconfig -g | grep VERSION\n"+
+					"2. Update the 'apiVersion' field in config.yaml to match your server version\n"+
+					"3. Or remove the 'apiVersion' field to enable automatic version detection\n\n"+
+					"Example configuration:\n"+
+					"  nbuserver:\n"+
+					"    apiVersion: \"12.0\"  # For NetBackup 10.5\n"+
+					"    # Or omit apiVersion for automatic detection\n\n"+
+					"Request URL: %s",
 				c.cfg.NbuServer.APIVersion,
 				c.cfg.NbuServer.APIVersion,
 				url,
