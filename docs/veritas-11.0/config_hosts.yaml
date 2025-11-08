@@ -1,0 +1,2638 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Hosts Configuration API
+  version: '13.0'
+  description: |
+    API set for configuration of NetBackup hosts.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+paths:
+  /config/hosts:
+    get:
+      description: >
+        Gets the list of hosts information based on specified filter. If no
+        filter is specified, information of all the
+
+        hosts will be retrieved.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Hosts
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |hostName|eq|The name of the host machine. If the hostName contains
+            a space or '%', encode these characters as '%20' or '%25'
+            respectively.|string|
+
+            |trustVersion|eq ne|The trust version of hosts.|string|
+
+            |vxUpdatePlatform|contains|VxUpdate recognized platform name of the
+            host.|string|
+
+            |osType|eq ne|The operating system type of the host.|string|
+
+            |nbuReleaseVersion|ge|NetBackup release version on the host. Note:
+            This comparison is not a string comparison, rather it follows the
+            rules of semantic version numbers.|string|
+
+            |nbuHostType|eq|NetBackup host type. Possible values:
+            PRIMARY_SERVER, MEDIA_SERVER and CLIENT.|string|
+
+            |dteClientMode|eq ne|The data channel encryption status of hosts.
+            Possible values UNDEFINED, OFF, ON, AUTOMATIC.|string|
+
+            |lastUpdateTimeUTC|eq ne lt gt le ge|The time when the host was last
+            updated.|date-time|
+
+            |decommissionedDateTime|eq ne lt gt|The UTC time when the host was
+            decommissioned.|date-time|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >
+            Successfully fetched all hosts information based on the specified
+            filter.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_8
+                type: object
+                properties:
+                  hosts:
+                    type: array
+                    items: &ref_2
+                      type: object
+                      properties:
+                        uuid:
+                          type: string
+                          description: The unique ID of the host.
+                        osVersion:
+                          type: string
+                          description: The operating system of the host.
+                        osReleaseVersion:
+                          type: string
+                          description: >-
+                            The release version of the operating system of the
+                            host.
+                        osType:
+                          type: string
+                          description: The operating system type of the host.
+                        hostName:
+                          type: string
+                          description: The name of the host.
+                        cpuArchitecture:
+                          type: string
+                          description: The CPU architecture of the host.
+                        masterServer:
+                          type: string
+                          description: >-
+                            The NetBackup master server that is associated with
+                            the host.
+                        installedEEBs:
+                          type: string
+                          description: The NetBackup EEBs installed on the host.
+                        installedPackages:
+                          type: string
+                          description: The NetBackup packages installed on the host.
+                        nbuVersion:
+                          type: string
+                          description: The NetBackup version on the host.
+                        hwDescription:
+                          type: string
+                          description: The hardware description of the host.
+                        vxUpdatePlatform:
+                          type: string
+                          description: The VxUpdate recognized platform name of the host.
+                        isSecureEnabled:
+                          type: boolean
+                          description: >-
+                            Specifies whether the host can communicate securely
+                            or not.
+                        autoReissue:
+                          type: boolean
+                          description: >-
+                            Specifies whether the host requires a reissue token
+                            to reissue a certificate or not.
+                        autoReissueDuration:
+                          type: number
+                          description: >
+                            The time duration (in milliseconds) for which the
+                            certificate can be deployed on the host without
+                            requiring a reissue token.
+                        externalCertificateSubject:
+                          type: string
+                          description: The identifier of the host certificate.
+                        externalCertificateFingerprintSha1:
+                          type: string
+                          description: The SHA-1 fingerprint of the host certificate.
+                        externalCertificateFingerprintSha256:
+                          type: string
+                          description: The SHA-256 fingerprint of the host certificate.
+                        hasNetBackupCaHostCertificate:
+                          type: boolean
+                          description: >-
+                            Specifies whether the host certificate is issued by
+                            the NetBackup CA or not.
+                        servers:
+                          type: array
+                          description: A list of servers associated with the host.
+                          items:
+                            type: string
+                        comment:
+                          type: string
+                          description: Comment provided for the host.
+                        nbuReleaseVersion:
+                          type: string
+                          description: NetBackup release version on the host.
+                        nbuHostType:
+                          type: string
+                          description: NetBackup host type.
+                          enum:
+                            - PRIMARY_SERVER
+                            - MEDIA_SERVER
+                            - CLIENT
+                            - NOT_DEFINED
+                        hostMappings:
+                          type: array
+                          description: >-
+                            The list of host mappings that are associated with
+                            the host.
+                          items: &ref_12
+                            type: object
+                            properties:
+                              mappedHostName:
+                                type: string
+                                description: >-
+                                  The name of the mapped host that is associated
+                                  with the mapping details.
+                              isApproved:
+                                type: boolean
+                                description: >-
+                                  Specifies whether the new mapping is approved
+                                  or not.
+                              isConflicting:
+                                type: boolean
+                                description: >-
+                                  Specifies whether mapping already exists for
+                                  another host ID.
+                              isAddedManually:
+                                type: boolean
+                                description: >-
+                                  Specifies whether the mapping was added
+                                  manually or not.
+                              isShared:
+                                type: boolean
+                                description: >-
+                                  Specifies whether the mapping is shared across
+                                  hosts.
+                              createdOn:
+                                type: integer
+                                format: int64
+                                description: >-
+                                  The time the host ID-to-host name mapping was
+                                  created, in UTC.
+                              updatedOn:
+                                type: integer
+                                format: int64
+                                description: >-
+                                  Specifies the time when the host ID-to-host
+                                  name mapping was last updated.
+                              origin:
+                                type: string
+                                description: >-
+                                  Specifies how the host ID-to-host name mapping
+                                  was added.
+                                enum:
+                                  - CERTIFICATE_DEPLOYMENT
+                                  - USER_ADDED
+                                  - HOST_DISCOVERY
+                                  - COMMUNICATION_DISCOVERY
+                                  - ADD_HOST
+                                  - ENROLL_CERTIFICATE
+                            required:
+                              - mappedHostName
+                              - isApproved
+                              - isConflicting
+                              - isAddedManually
+                              - isShared
+                              - createdOn
+                              - updatedOn
+                              - origin
+                        trustVersion:
+                          type: string
+                          description: >
+                            The trust version of the host. Trust version can be
+                            used to determine the CAs trusted by that particular
+                            host.
+                        lastUpdatedDateTime:
+                          type: integer
+                          description: >-
+                            The time when the host entry was last updated, in
+                            UTC.
+                        createdDateTime:
+                          type: integer
+                          description: 'The time that the host entry was made, in UTC.'
+                        decommissionedDateTime:
+                          type: integer
+                          description: 'The time when the host was decommissioned, in UTC.'
+                        machineType:
+                          type: string
+                          description: >-
+                            Specifies whether the host is virtual or physical
+                            machine.
+                          enum:
+                            - UNKNOWN
+                            - PHYSICAL
+                            - VIRTUAL
+                        hypervisorType:
+                          type: string
+                          description: >-
+                            Specifies the type of hypervisor to which this host
+                            belongs to.
+                          enum:
+                            - NONE
+                            - VMWARE
+                            - HYPERV
+                            - VXVI
+                            - HYPER_SCALE
+                            - RHV
+                            - AHV
+                            - AZURE
+                            - AZURE_STACK
+                            - OPEN_STACK
+                        machineNbuType:
+                          type: string
+                          description: Specifies the machine type characteristic.
+                          enum:
+                            - NOT_DEFINED
+                            - MSDP_CONTAINER
+                            - NB_OPENSTACK_VM
+                            - CP_SERVER
+                            - KUBERNETES_CLUSTER
+                            - NB_SCAN_HOST
+                        dteClientMode:
+                          type: string
+                          description: Client DTE configuration on host.
+                          enum:
+                            - UNDEFINED
+                            - 'OFF'
+                            - 'ON'
+                            - AUTOMATIC
+                        serviceUser:
+                          type: string
+                          description: >-
+                            This is an optional field. It is a service account
+                            used for running services with non-privileged mode.
+                        fipsEnabled:
+                          type: string
+                          description: Specifies whether the host is FIPS enabled or not.
+                          enum:
+                            - DISABLED
+                            - ENABLED
+                            - UNKNOWN
+                      required:
+                        - uuid
+                        - osVersion
+                        - osReleaseVersion
+                        - osType
+                        - hostName
+                        - cpuArchitecture
+                        - masterServer
+                        - installedEEBs
+                        - installedPackages
+                        - nbuVersion
+                        - hwDescription
+                        - vxUpdatePlatform
+                        - isSecureEnabled
+                        - autoReissue
+                        - autoReissueDuration
+                        - externalCertificateSubject
+                        - hasNetBackupCaHostCertificate
+                        - servers
+                        - comment
+                        - nbuReleaseVersion
+                        - nbuHostType
+                        - createdDateTime
+                        - lastUpdatedDateTime
+                        - hostMappings
+                        - trustVersion
+                        - machineType
+                        - hypervisorType
+                        - machineNbuType
+                        - dteClientMode
+                        - fipsEnabled
+        '401': &ref_1
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_0
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '406': &ref_3
+          description: >-
+            Invalid `Accept` type. Make sure your `Accept` header matches what
+            this API produces.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': &ref_6
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+    post:
+      description: >
+        Creates a host entry in database.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Hosts
+      parameters:
+        - &ref_4
+          name: X-NetBackup-Audit-Reason
+          in: header
+          description: >
+            Audit reason for the action being performed. This value must be
+            URL-encoded. Maximum 512 bytes, in UTF-8 encoding. The remaining
+            bytes are truncated.
+          schema:
+            type: string
+          required: false
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_20
+              type: object
+              properties:
+                hostName:
+                  type: string
+                  description: The name of the host.
+                osVersion:
+                  type: string
+                  description: The operating system of the host.
+                osReleaseVersion:
+                  type: string
+                  description: The release version of the operating system of the host.
+                osType:
+                  type: string
+                  description: The operating system type of the host.
+                cpuArchitecture:
+                  type: string
+                  description: The CPU architecture of the host.
+                masterServer:
+                  type: string
+                  description: >-
+                    The NetBackup master server that is associated with the
+                    host.
+                installedEEBs:
+                  type: string
+                  description: The NetBackup EEBs installed on the host.
+                installedPackages:
+                  type: string
+                  description: The NetBackup packages installed on the host.
+                nbuVersion:
+                  type: string
+                  description: The NetBackup version on the host.
+                hwDescription:
+                  type: string
+                  description: The hardware description of the host.
+                vxUpdatePlatform:
+                  type: string
+                  description: The VxUpdate recognized platform name of the host.
+                isSecureEnabled:
+                  type: boolean
+                  description: Specifies whether the host can communicate securely or not.
+                trustVersion:
+                  type: string
+                  description: >
+                    The trust version of the host. Trust version can be used to
+                    determine the CAs trusted by that particular host.
+                servers:
+                  type: array
+                  description: The list of servers associated with the host.
+                  items:
+                    type: string
+                hostMappings:
+                  type: array
+                  description: The list of host mappings that are associated with the host.
+                  items:
+                    type: object
+                    properties:
+                      mappedHostName:
+                        type: string
+                        description: >-
+                          The name of the mapped host for which the details are
+                          provided.
+                machineType:
+                  type: string
+                  description: Specifies whether the host is virtual or physical machine.
+                  enum:
+                    - UNKNOWN
+                    - PHYSICAL
+                    - VIRTUAL
+                hypervisorType:
+                  type: string
+                  description: >-
+                    Specifies the type of hypervisor to which this host belongs
+                    to.
+                  enum:
+                    - NONE
+                    - VMWARE
+                    - HYPERV
+                    - VXVI
+                    - HYPER_SCALE
+                    - RHV
+                    - AHV
+                    - AZURE_STACK
+                    - OPEN_STACK
+                dteClientMode:
+                  type: string
+                  description: Client DTE configuration on host.
+                  enum:
+                    - UNDEFINED
+                    - 'OFF'
+                    - 'ON'
+                    - AUTOMATIC
+                serviceUser:
+                  type: string
+                  description: >-
+                    This is an optional field. It is a service account used for
+                    running services with non-privileged mode.
+              required:
+                - hostName
+        description: The properties of the host to be added in the database.
+        required: true
+      responses:
+        '201':
+          description: Successfully created a host database entry.
+          headers:
+            Location:
+              description: The URI of the created host entry.
+              schema:
+                type: string
+        '400':
+          description: Bad or invalid request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '401': *ref_1
+        '409':
+          description: The server already exists in the database.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': &ref_5
+          description: >
+            Unsupported Media Type. The media type specified in the
+            `Content-Type` header is not supported by this API.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+  '/config/hosts/{hostId}':
+    parameters:
+      - &ref_7
+        name: hostId
+        in: path
+        description: The host ID of the host.
+        required: true
+        schema:
+          type: string
+    get:
+      description: >
+        Gets information for the specified host ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Hosts
+      responses:
+        '200':
+          description: Successfully retrieved host information.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_2
+        '401': *ref_1
+        '404':
+          description: No host exists with host ID.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '406': *ref_3
+    patch:
+      description: >
+        Updates information for a host with the specified host ID. Only the
+        NetBackup security administrator can update
+
+        the 'autoReissue' parameter.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Hosts
+      parameters:
+        - *ref_4
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_22
+              type: object
+              properties:
+                hostName:
+                  type: string
+                  description: The name of the host.
+                osVersion:
+                  type: string
+                  description: The operating system of the host.
+                osReleaseVersion:
+                  type: string
+                  description: The release version of the operating system of the host.
+                osType:
+                  type: string
+                  description: The operating system type of the host.
+                cpuArchitecture:
+                  type: string
+                  description: The CPU architecture of the host.
+                masterServer:
+                  type: string
+                  description: >-
+                    The NetBackup master server that is associated with the
+                    host.
+                installedEEBs:
+                  type: string
+                  description: The NetBackup EEBs installed on the host.
+                installedPackages:
+                  type: string
+                  description: The NetBackup packages installed on the host.
+                nbuVersion:
+                  type: string
+                  description: The NetBackup version on the host.
+                hwDescription:
+                  type: string
+                  description: The hardware description of the host.
+                vxUpdatePlatform:
+                  type: string
+                  description: The VxUpdate recognized platform name of the host.
+                isSecureEnabled:
+                  type: boolean
+                  description: Specifies whether or not the host can communicate securely.
+                trustVersion:
+                  type: string
+                  description: >
+                    The trust version of the host. Trust version can be used to
+                    determine the CAs trusted by that particular host.
+                autoReissue:
+                  type: boolean
+                  description: >
+                    Specifies whether or not an automatic reissue of the
+                    certificate is allowed. If this parameter is set and is
+                    valid, a certificate can be deployed on the host without
+                    requiring a reissue token.
+                servers:
+                  type: array
+                  description: A list of servers associated with the host.
+                  items:
+                    type: string
+                clusterSharedNames:
+                  type: array
+                  description: >-
+                    A list of cluster shared names that are associated with the
+                    host. This is an optional field. Host Mappings only get
+                    ADDED if "clusterSharedNames" is specified. Administrator
+                    approval is required for the new cluster shared name.
+                  items:
+                    type: string
+                    description: cluster shared name
+                machineType:
+                  type: string
+                  description: Specifies whether the host is virtual or physical machine.
+                  enum:
+                    - UNKNOWN
+                    - PHYSICAL
+                    - VIRTUAL
+                hypervisorType:
+                  type: string
+                  description: >-
+                    Specifies the type of hypervisor to which this host belongs
+                    to.
+                  enum:
+                    - NONE
+                    - VMWARE
+                    - HYPERV
+                    - VXVI
+                    - HYPER_SCALE
+                    - RHV
+                    - AHV
+                    - AZURE_STACK
+                    - OPEN_STACK
+                dteClientMode:
+                  type: string
+                  description: Client DTE configuration on host.
+                  enum:
+                    - UNDEFINED
+                    - 'OFF'
+                    - 'ON'
+                    - AUTOMATIC
+                serviceUser:
+                  type: string
+                  description: >-
+                    This is an optional field. It is a service account used for
+                    running services with non-privileged mode.
+        description: Properties of the host to be updated.
+        required: true
+      responses:
+        '204':
+          description: Host information is successfully updated.
+        '400':
+          description: Bad or Invalid Request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '401': *ref_1
+        '404':
+          description: No host associated with the specified host ID.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '409':
+          description: The host already exists.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': *ref_5
+        '500': *ref_6
+  '/config/hosts/{hostId}/comment':
+    put:
+      description: >
+        Updates comment for the host that is associated with the specified host
+        ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|HOSTS|COMMENT|`
+      tags:
+        - Hosts
+      parameters:
+        - *ref_7
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_23
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: Host-specific comment to be updated.
+        description: Host-specific comment to be updated.
+        required: true
+      responses:
+        '200':
+          description: Successfully updated the host information.
+        '400':
+          description: Bad or invalid request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '401': *ref_1
+        '404':
+          description: No host associated with the specified host ID exists.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': *ref_5
+  '/config/hosts/{hostId}/reset':
+    put:
+      description: >
+        Resets the host information that is associated with the specified host
+        ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|HOSTS|RESET|`
+      tags:
+        - Hosts
+      parameters:
+        - *ref_7
+        - *ref_4
+      responses:
+        '200':
+          description: Successfully reset the host entry.
+        '401': *ref_1
+        '404':
+          description: No host exists with the specified host ID.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '406': *ref_3
+        '500': *ref_6
+  '/config/hosts/{hostId}/decommission':
+    post:
+      description: >
+        Decommission the host that is associated with the specified host ID.
+
+        This operation is applicable only to NetBackup Clients.
+
+        If the specified host is configured with NBCA certificate, the
+        corresponding certificates are revoked.
+
+        If the specified host is configured with ECA, its enrollment is removed.
+
+
+        Notes:
+
+        If policies(or protection plans) or backup images exist for the host
+        that is being decommissioned, the API returns an error.
+
+        You can use the force delete option to decommission the host
+        irrespective of the associated policies(or protection plans)
+
+        or images or delete the data.
+
+
+        Dry Run Check: If the X-NetBackup-Readiness-Check header is included,
+        the API performs a dry run and
+
+        returns the appropriate status code based on the outcome.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|DECOMMISSION|`
+      tags:
+        - Hosts
+      parameters:
+        - *ref_7
+        - name: X-NetBackup-Audit-Reason
+          in: header
+          description: >
+            Audit reason for the action being performed. This value must be
+            URL-encoded. Maximum 512 bytes, in UTF-8 encoding. The remaining
+            bytes are truncated.
+          schema:
+            type: string
+          required: true
+        - name: X-NetBackup-Force-Delete
+          in: header
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: >
+            A host cannot be decommissioned if backup images or policies(or
+            protection plans) are associated with the host.
+
+            This option enables the forced decommissioning of such a host.
+        - name: X-NetBackup-Readiness-Check
+          in: header
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: >
+            When included, the API performs a dry run and returns the
+            appropriate status code based
+
+            on the outcome. This means that the API will simulate the
+            decommissioning process without
+
+            making any actual changes.
+
+            The response will indicate whether the decommissioning would succeed
+            or fail, allowing
+
+            you to identify and resolve any potential issues before performing
+            the actual decommissioning.
+
+            The possible status codes returned are:
+
+            200 OK: The dry run was successful, indicating that the
+            decommissioning process would succeed.
+
+            400 Bad Request: There was an error with the request, such as
+            invalid data or invalid host.
+
+            409 Conflict: There was a conflict during the dry run, such as the
+            host being protected by
+                policies(or protection plans) or having live backup images.
+      responses:
+        '200':
+          description: Successfully decommissioned the host.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_8
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '401': *ref_1
+        '404': &ref_11
+          description: No entity found.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '406': *ref_3
+        '409':
+          description: >
+            The host is currently protected by policies(or protection plans),
+            live backup images are present.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': *ref_5
+        '500': *ref_6
+  /config/hosts-certificate-mappings:
+    get:
+      description: >
+        Retrieves all hosts along with their latest NetBackup and external
+        certificates based on the specified filters. If no filters are
+        specified, all hosts are retrieved.
+
+         **Access Control**\
+         Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+         Namespace: `|SECURITY|CERTIFICATE-MANAGEMENT|NETBACKUP-CERTIFICATES|`\
+         Requires Operation:  `|OPERATIONS|VIEW|`
+      tags:
+        - Hosts
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |hostName|eq ne|NetBackup hostName|string|
+
+            |nbuVersion|gt lt ge le eq ne|NetBackup version|integer|
+
+            |nbuCertificateState|eq ne|The state of the NetBackup
+            certificate|string|
+
+            |externalCertCommonName|eq ne|The common name of the external
+            certificate|string|
+
+            |externalCertSubjectName|eq ne|Subject name of the external
+            certificate|string|
+
+            |externalCertIssuerName|eq ne|Issuer of the external
+            certificate|string|
+
+            |externalCertNotValidBefore|gt lt|The external certificate validity
+            date. The certificate is not valid until this date. The value is in
+            the ISO 8601 formatted time.|date-time|
+
+            |externalCertNotValidAfter|gt lt|The external certificate validity
+            date. The certificate is not valid after this time. The value is in
+            the ISO 8601 formatted time.|date-time|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: The record offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: 'page[limit]'
+          description: The number of records on one page after the offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          description: >
+            Sorts values of the specified property in ascending order. Use
+            `-sort` to sort the values in descending order.
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The certificates are successfully retrieved.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_26
+                description: >
+                  The response containing the hosts along with their latest
+                  certificates that are enrolled with NetBackup.
+                type: object
+                properties:
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                  data:
+                    type: array
+                    items: &ref_9
+                      description: >
+                        The response containing the host along with its latest
+                        certificate that is enrolled with NetBackup.
+                      type: object
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                        type:
+                          type: string
+                          description: The type of the response.
+                          enum:
+                            - hostCertificateDetails
+                        id:
+                          type: string
+                          description: The host ID of the host.
+                        attributes:
+                          type: object
+                          description: The attributes of the host and certificate.
+                          properties:
+                            hostName:
+                              type: string
+                              description: The name of the host.
+                            nbuVersion:
+                              type: integer
+                              description: NetBackup version
+                              example: 812100
+                            nbuVersionDisplayString:
+                              type: string
+                              description: NetBackup version
+                              example: NetBackup_8.1.2.1
+                            nbuCertificateState:
+                              type: string
+                              description: >
+                                The state of the NetBackup certificate, if
+                                certificate is not present then it returns
+                                'N/A'.
+                              enum:
+                                - ACTIVE
+                                - REVOKED
+                                - EXPIRED
+                                - DEFAULT
+                                - N/A
+                            externalCertCommonName:
+                              type: string
+                              description: The common name of the external certificate.
+                            externalCertSubjectName:
+                              type: string
+                              description: The subject of the external certificate.
+                            externalCertIssuerName:
+                              type: string
+                              description: The issuer of the external certificate.
+                            externalCertSerialNumber:
+                              type: string
+                              description: The serial number of the external certificate.
+                            externalCertFingerPrint:
+                              type: string
+                              description: Identifier of the external certificate.
+                            externalCertNotValidBefore:
+                              type: string
+                              format: date-time
+                              description: >
+                                The ISO 8601 formatted time. The certificate is
+                                not valid until this time.
+                            externalCertNotValidAfter:
+                              type: string
+                              format: date-time
+                              description: >
+                                The ISO 8601 formatted time. The certificate is
+                                not valid after this time.
+                            hostCreatedDateTime:
+                              type: string
+                              format: date-time
+                              description: >
+                                The ISO 8601 formatted time. The certificate is
+                                not valid until this time.
+                            hostLastUpdatedDateTime:
+                              type: string
+                              format: date-time
+                              description: >-
+                                The ISO 8601 formatted time when host record was
+                                last updated.
+                            externalCertLastUpdatedDateTime:
+                              type: string
+                              format: date-time
+                              description: >
+                                The ISO 8601 formatted time when external
+                                certificate record was last updated.
+                  meta:
+                    type: object
+                    properties:
+                      pagination:
+                        type: object
+                        properties:
+                          prev:
+                            type: integer
+                          next:
+                            type: integer
+                          first:
+                            type: integer
+                          last:
+                            type: integer
+                          count:
+                            type: integer
+                          page:
+                            type: integer
+                          offset:
+                            type: integer
+                          pages:
+                            type: integer
+                          limit:
+                            type: integer
+        '400': &ref_10
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '401': *ref_1
+        '406': *ref_3
+        '500': *ref_6
+  '/config/hosts-certificate-mappings/{hostId}':
+    get:
+      description: >
+        Retrieves the host along with its latest certificate details based on
+        the specified hostId.
+
+         **Access Control**\
+         Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+         Namespace: `|SECURITY|CERTIFICATE-MANAGEMENT|NETBACKUP-CERTIFICATES|`\
+         Requires Operation:  `|OPERATIONS|VIEW|`
+      tags:
+        - Hosts
+      parameters:
+        - name: hostId
+          description: The host ID of the host.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            The certificate details are successfully retrieved for the specified
+            hostId.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_27
+                type: object
+                properties:
+                  data: *ref_9
+        '400': *ref_10
+        '401': *ref_1
+        '404': *ref_11
+        '406': *ref_3
+        '500': *ref_6
+  /config/hosts-certificate-mappings/report:
+    get:
+      description: >
+        Displays the host details with respect to external CA-signed
+        certificates. For example: Number of hosts that have valid external
+        certificates, number of hosts that are upgraded but do not have external
+        certificates, number of hosts that do not support external certificates
+        as they are yet to be upgraded, and expiration status of certificates.
+
+         **Access Control**\
+         Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+         Namespace: `|SECURITY|CERTIFICATE-MANAGEMENT|NETBACKUP-CERTIFICATES|`\
+         Requires Operation:  `|OPERATIONS|VIEW|`
+      tags:
+        - Hosts
+      responses:
+        '200':
+          description: The required list of hosts is successfully retrieved.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_28
+                type: object
+                properties:
+                  data:
+                    properties:
+                      links:
+                        type: object
+                        properties:
+                          self:
+                            type: object
+                            properties:
+                              href:
+                                type: string
+                                example: /config/hosts-certificate-mappings/report
+                      type:
+                        type: string
+                        enum:
+                          - hostCertificateMappingsReport
+                      id:
+                        type: string
+                        example: 7142d0e6-6904-4193-84b7-5f418174b3d8
+                      attributes:
+                        type: object
+                        properties:
+                          validExternalCertificateConfiguredHosts:
+                            type: integer
+                            description: >-
+                              The number of hosts with valid external
+                              certificates.
+                          externalCertificateNotConfiguredHosts:
+                            type: integer
+                            description: >-
+                              The number of hosts that do not have external
+                              certificates.
+                          externalCertificateNotSupportedHosts:
+                            type: integer
+                            description: >
+                              The number of hosts that do not support external
+                              certificates. The hosts with NetBackup versions
+                              older than 8.1.3.
+                          expiredExternalCertificateHosts:
+                            type: integer
+                            description: >-
+                              The number of hosts with the expired external
+                              certificates.
+                          externalCertificatesExpiringIn-1-7-DaysHosts:
+                            type: integer
+                            description: >
+                              The number of hosts with external certificates
+                              that will expire in 1 to 7 days.
+                          externalCertificatesExpiringIn-8-30-DaysHosts:
+                            type: integer
+                            description: >
+                              The number of hosts with external certificates
+                              that will expire in 8 to 30 days.
+                          externalCertificatesExpiringIn-31-90-DaysHosts:
+                            type: integer
+                            description: >
+                              The number of hosts with external certificates
+                              that will expire in 31 to 90 days.
+                          totalHosts:
+                            type: integer
+                            description: >
+                              The number of hosts with external certificate or
+                              NetBackup certificate.
+                          ecaCertExpiredConnectedHosts:
+                            type: integer
+                            description: >
+                              The number of hosts with expired external
+                              certificates that were connected to the primary
+                              server in the last n-days. n is derived from the
+                              property connectedHostDaysLimit.
+                          ecaCertExpiringConnectedHostsBelowLowerLimit:
+                            type: integer
+                            description: >
+                              The number of hosts with the external certificates
+                              that are going to expire in
+                              expiringCertLowerLimitValueInDays days and that
+                              were connected to the primary server in the last
+                              n-days. expiringCertLowerLimitValueInDays defines
+                              the lower limit of the certificate expiration
+                              period. A notification should be raised when this
+                              limit is reached. n is derived from the property
+                              connectedHostDaysLimit.
+                          ecaCertExpiringConnectedHostsBetweenLowerUpperLimit:
+                            type: integer
+                            description: >
+                              The number of hosts with the external certificates
+                              that are going to expire during the lower and
+                              upper limits of the certificate expiration period
+                              and that were connected to the primary server in
+                              the last n-days. n is derived from the property
+                              connectedHostDaysLimit.
+                          ecaCertConnectedHosts:
+                            type: integer
+                            description: >
+                              The number of hosts with the external certificates
+                              that were connected to the primary server in the
+                              last n-days. n is derived from the property
+                              connectedHostDaysLimit.
+                          expiringCertLowerLimitValueInDays:
+                            type: integer
+                            description: >
+                              The lower limit of the certificate expiration
+                              period. A notification should be raised when this
+                              limit is reached. CRITICAL type of a notification
+                              is sent if the time period of a host certificate
+                              reaches the lower limit of the expiration period.
+                              WARNING type of a notification is sent if the time
+                              period of a host certificate is in between this
+                              limit and expiringCertUpperLimitValueInDays.
+                          expiringCertUpperLimitValueInDays:
+                            type: integer
+                            description: >
+                              The upper limit of the certificate expiration
+                              period. A notification should be raised when this
+                              limit is reached. WARNING type of a notification
+                              is sent if the time period of a host certificate
+                              is in between expiringCertLowerLimitValueInDays
+                              and this limit.
+                          connectedHostDaysLimit:
+                            type: integer
+                            description: >
+                              The time period during which a host should be
+                              connected at least once to the primary server with
+                              a certificate login.
+        '400': *ref_10
+        '401': *ref_1
+        '406': *ref_3
+        '500': *ref_6
+  /config/hosts/hostmappings:
+    get:
+      description: >
+        Fetches a list of hosts and the details of their host ID-to-host name
+        mappings. The results depend on one or
+
+        more parameters or conditions, such as `isapproved`, `isconflict`,
+        `isshared`, and `isaddedmanually`. The result
+
+        set is determined, if all specified conditions are true.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Hosts
+      parameters:
+        - name: mappedhostname
+          description: >
+            Fetches a list of hosts and the details of their host ID-to-host
+            name mappings based on the value of the mappedhostname parameter.
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: isapproved
+          description: >
+            Fetches a list of hosts and the details of their host ID-to-host
+            name mappings based on the value of the isapproved parameter.
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: isconflict
+          description: >
+            Fetches a list of hosts and the details of their host ID-to-hostname
+            mappings based on the value of the isconflict parameter.
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: isshared
+          description: >
+            Fetches a list of hosts and the details of their host ID-to-hostname
+            mappings based on the value of the isshared parameter.
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: isaddedmanually
+          description: >
+            Fetches a list of hosts and the details of their host ID-to-hostname
+            mappings based on the value of the isaddedmanually parameter.
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Successfully fetched host information.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_8
+        '401': *ref_1
+        '406': *ref_3
+  '/config/hosts/{hostId}/hostmappings':
+    parameters:
+      - *ref_7
+    get:
+      description: >
+        Fetches the details of the host ID-to-host name mappings that are
+        associated with the specified host ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|HOSTS|HOSTMAPPINGS|VIEW|`
+      tags:
+        - Hosts
+      parameters:
+        - name: isapproved
+          description: >
+            Provides a list of approved or pending mappings of the host ID based
+            on the specified parameter value.
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Successfully retrieved host information.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_24
+                type: object
+                properties:
+                  hostMappings:
+                    type: array
+                    description: >-
+                      The list of host mappings associated with the specified
+                      host.
+                    items: *ref_12
+                  timeToLiveInMin:
+                    type: integer
+                    description: >
+                      The time duration (in minutes) for which the response
+                      provided by the URI is valid.
+        '401': *ref_1
+        '404':
+          description: No host exists with specified host ID.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '406': *ref_3
+  '/config/hosts/{hostId}/hostmappings/{mappedHostName}':
+    parameters:
+      - *ref_7
+      - name: mappedHostName
+        description: Host ID-to-host name mapping to be added.
+        in: path
+        required: true
+        schema:
+          type: string
+      - *ref_4
+    put:
+      description: >
+        Adds mappings for the specified host ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|HOSTS|HOSTMAPPINGS|UPDATE|`
+      tags:
+        - Hosts
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_25
+              type: object
+              properties:
+                isApproved:
+                  type: boolean
+                  description: >-
+                    Specifies whether or not the mapping is approved. This field
+                    is optional.
+                isShared:
+                  type: boolean
+                  description: >-
+                    Specifies whether the mapping is shared between two or more
+                    host IDs.
+              required:
+                - isShared
+        description: The properties of the host to be mapped.
+        required: true
+      responses:
+        '200':
+          description: >-
+            Successfully updated the host mapping properties for the specified
+            host ID.
+        '201':
+          description: Successfully added the host mapping to the specified host ID.
+        '400':
+          description: Invalid parameter with request payload.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '401': *ref_1
+        '409':
+          description: A conflict in the host ID-to-host name mapping was detected.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': *ref_5
+    delete:
+      description: >
+        Deletes host mappings that are associated with the specified host ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|HOSTS|HOSTMAPPINGS|DELETE|`
+      tags:
+        - Hosts
+      responses:
+        '204':
+          description: Successfully deleted the host mapping for the specified host ID.
+        '401': *ref_1
+        '404':
+          description: The specified host mapping was not found.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '406': *ref_3
+  '/config/hosts/{hostId}/configurations':
+    parameters:
+      - *ref_7
+    get:
+      description: >
+        Get all configuration settings from a host
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|HOST-PROPERTIES|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Hosts
+      responses:
+        '200':
+          description: >-
+            Successfully returned the list of configuration settings from the
+            requested host.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_29
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_13
+                      type: object
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                                  description: The href to get the configuration item
+                              required:
+                                - href
+                          required:
+                            - self
+                        type:
+                          type: string
+                          description: The type of object.
+                          enum:
+                            - hostConfiguration
+                        id:
+                          type: string
+                          description: The name of the configuration setting.
+                        attributes:
+                          type: object
+                          description: The value(s) of the configuration setting.
+                          properties:
+                            value:
+                              type: array
+                              items:
+                                type: string
+                          required:
+                            - value
+                      required:
+                        - type
+                        - id
+                        - attributes
+                required:
+                  - data
+        '401':
+          description: Authentication failed.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '404': *ref_11
+        '500': *ref_6
+    post:
+      description: >
+        Add a new configuration setting on a host
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|HOST-PROPERTIES|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Hosts
+      parameters:
+        - *ref_4
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_14
+              type: object
+              properties:
+                data: *ref_13
+              required:
+                - data
+        description: The configuration setting to be added.
+        required: true
+      responses:
+        '204':
+          description: Successfully added the configuration setting on the requested host.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '401':
+          description: Authentication failed.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '404': *ref_11
+        '409':
+          description: The host configuration setting already exists.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': *ref_6
+  '/config/hosts/{hostId}/configurations/{configurationName}':
+    parameters:
+      - *ref_7
+      - name: configurationName
+        in: path
+        required: true
+        description: The name of the host configuration setting to delete.
+        schema:
+          type: string
+    get:
+      description: >
+        Get a configuration setting from a host
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|HOST-PROPERTIES|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Hosts
+      responses:
+        '200':
+          description: >-
+            Successfully returned the configuration setting from the requested
+            host.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_30
+                type: object
+                properties:
+                  data: *ref_13
+                required:
+                  - data
+        '401':
+          description: Authentication failed.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '404': *ref_11
+        '500': *ref_6
+    put:
+      description: >
+        Update a configuration setting on a host
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|HOST-PROPERTIES|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Hosts
+      parameters:
+        - *ref_4
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: *ref_14
+        description: The updated configuration setting definition.
+        required: true
+      responses:
+        '204':
+          description: >-
+            Successfully updated the configuration setting on the requested
+            host.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '401':
+          description: Authentication failed.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '404': *ref_11
+        '500': *ref_6
+    delete:
+      description: >
+        Delete a configuration setting on a host or return to its default
+        setting.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|HOST-PROPERTIES|`\
+
+        Requires Operation: `|OPERATIONS|DELETE|`
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Hosts
+      parameters:
+        - *ref_4
+      responses:
+        '204':
+          description: >-
+            Successfully deleted the configuration setting on the requested
+            host.
+        '401':
+          description: Authentication failed.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '404': *ref_11
+        '500': *ref_6
+  '/config/hosts/{hostId}/configurations-add-servers':
+    parameters:
+      - *ref_7
+  /config/drive-name-rules:
+    get:
+      description: >
+        Get all drive name rules set for hosts and the GLOBAL rule.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|STORAGE|TAPE-DEVICES|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Drive Name Rules
+      responses:
+        '200':
+          description: Successfully returned all drive name rules.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_34
+                type: object
+                required:
+                  - links
+                  - data
+                properties:
+                  links:
+                    type: object
+                    properties:
+                      self: &ref_19
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                  data:
+                    type: array
+                    items: &ref_17
+                      type: object
+                      required:
+                        - id
+                        - type
+                        - attributes
+                      properties:
+                        id: &ref_15
+                          type: string
+                          format: byte
+                          description: >
+                            A unique ID for the drive name rule. 
+
+
+                            The ID is a base64 generated string based on
+                            "<host-name>:<is-global>" value.
+
+                            (e.g. for "media.server.host.net:false" the ID
+                            equals to "bWVkaWEuc2VydmVyLmhvc3QubmV0OmZhbHNl").
+
+
+                            The hostname for the GLOBAL rule is assumed to be
+                            `null` 
+
+                            (i.e. GLOBAL rule ID is always based on "null:true"
+                            and equals to "bnVsbDp0cnVl").
+                        type:
+                          type: string
+                          enum:
+                            - driveNameRule
+                        attributes: &ref_16
+                          type: object
+                          required:
+                            - hostName
+                            - rule
+                          properties:
+                            hostName:
+                              type: string
+                              nullable: true
+                              description: >-
+                                Host for which this rule is set or `null` for
+                                the GLOBAL rule.
+                            rule: &ref_36
+                              type: array
+                              items:
+                                type: object
+                                description: Array of drive name rule elements.
+                                required:
+                                  - element
+                                  - value
+                                properties:
+                                  element:
+                                    type: string
+                                    enum:
+                                      - FIELD
+                                      - TEXT
+                                    description: Type of drive name rule element.
+                                  value:
+                                    type: string
+                                    description: >
+                                      Field id for rule element type "FIELD"
+                                      (case-sensitive).
+
+                                      Raw text for rule element type "TEXT".
+                              example:
+                                - element: FIELD
+                                  value: VEND
+                                - element: TEXT
+                                  value: Custom Text
+                                - element: FIELD
+                                  value: PROD
+                                - element: TEXT
+                                  value: Custom Text
+                                - element: FIELD
+                                  value: IDX
+        '401': *ref_1
+        '406': *ref_3
+        '500': *ref_6
+    post:
+      description: >
+        Creates or replaces (if already exists) the drive name rule for the
+        specified host 
+
+        or the GLOBAL one if no host (or `null`) specified.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|STORAGE|TAPE-DEVICES|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Drive Name Rules
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_35
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    id: *ref_15
+                    type:
+                      type: string
+                      enum:
+                        - driveNameRule
+                    attributes: *ref_16
+        required: true
+      responses:
+        '200':
+          description: Successfully updated drive name rule.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_18
+                type: object
+                required:
+                  - data
+                properties:
+                  data: *ref_17
+        '201':
+          description: Successfully created drive name rule.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_18
+        '400': *ref_10
+        '401': *ref_1
+        '404':
+          description: The specified host was not found.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '406': *ref_3
+        '409':
+          description: >
+            Resource objects `id` is malformed: 
+
+            do not match the host name specified or incorrect GLOBAL id is
+            specified.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': *ref_5
+        '500': *ref_6
+  '/config/drive-name-rules/{ruleId}':
+    parameters:
+      - name: ruleId
+        in: path
+        required: true
+        description: The ID of the drive name rule.
+        schema:
+          type: string
+    delete:
+      description: >
+        Deletes the drive name rule with the specified identifier. Deleting the
+        global rule resets it to the default value.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|STORAGE|TAPE-DEVICES|`\
+
+        Requires Operation: `|OPERATIONS|DELETE|`
+      tags:
+        - Drive Name Rules
+      responses:
+        '204':
+          description: Successfully deleted the drive name rule.
+        '401': *ref_1
+        '404':
+          description: The drive name rule with the specified id was not found.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': *ref_6
+  /config/drive-name-rule-fields:
+    get:
+      description: >
+        Get valid drive name rule fields. Drive name rule fields are required
+        for drive name rules creation.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|STORAGE|TAPE-DEVICES|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Drive Name Rules
+      responses:
+        '200':
+          description: Successfully returned valid drive name rule fields.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_37
+                type: object
+                required:
+                  - links
+                  - data
+                properties:
+                  links:
+                    type: object
+                    properties:
+                      self: *ref_19
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - type
+                        - attributes
+                      properties:
+                        id:
+                          type: string
+                          description: Key of a drive name rule field.
+                          example: HN
+                        type:
+                          type: string
+                          enum:
+                            - driveNameRuleField
+                        attributes:
+                          type: object
+                          required:
+                            - text
+                          properties:
+                            text:
+                              type: string
+                              description: Human-readable field designation
+                              example: host name
+        '401': *ref_1
+        '406': *ref_3
+        '500': *ref_6
+  /config/hosts-pending-renewal:
+    get:
+      description: >
+        Lists all hosts with pending certificate renewal, in case of CA
+        migration
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|CERTIFICATE-MANAGEMENT|CERTIFICATE-AUTHORITIES|`\
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|CERTIFICATE-MANAGEMENT|CERTIFICATE-AUTHORITIES|MIGRATE-CA|`\
+
+        OR\
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|CERTIFICATE-MANAGEMENT|CERTIFICATE-AUTHORITIES|VIEW-HOSTS-MIGRATE-CA|`
+      tags:
+        - Hosts
+      responses:
+        '200':
+          description: |
+            Successfully fetched list of hosts pending certificate renewal.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_32
+                description: >-
+                  Successfully fetched list of hosts pending certificate
+                  renewal.
+                type: object
+                required:
+                  - data
+                  - meta
+                  - links
+                properties:
+                  data:
+                    type: array
+                    items: &ref_33
+                      description: 'Details of host (hostid, hostname, nbuversion).'
+                      type: object
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                        type:
+                          description: The type of the response payload.
+                          type: string
+                          enum:
+                            - hostPendingRenewal
+                        id:
+                          type: string
+                          description: The host ID of the host.
+                        attributes:
+                          description: The attributes of the response payload.
+                          type: object
+                          required:
+                            - hostName
+                            - nbuVersion
+                          properties:
+                            hostName:
+                              type: string
+                              description: The name of the host machine..
+                            nbuVersion:
+                              type: string
+                              description: NBU version installed on host.
+        '401': *ref_1
+        '406': *ref_3
+        '500': *ref_6
+components:
+  parameters:
+    hostId: *ref_7
+    hostName:
+      name: hostName
+      in: path
+      description: The host name of the host.
+      required: true
+      schema:
+        type: string
+  schemas:
+    dteClientModeEnum:
+      type: string
+      description: >
+        * 'UNDEFINED' - Either host does not support DTE or DTE mode is not
+        reflected for the client.
+
+        * 'OFF' - DTE is disabled at host level.
+
+        * 'ON' - DTE is enabled at host level.
+
+        * 'AUTOMATIC' - The host will honour the global or image level value for
+        DTE configuration.
+      enum:
+        - UNDEFINED
+        - 'OFF'
+        - 'ON'
+        - AUTOMATIC
+    hostsResponse: *ref_8
+    hostResponse: *ref_2
+    postCreateHostRequest: *ref_20
+    mappingDetails: *ref_12
+    hostRobotsResponse:
+      description: The collection of the host's local robots.
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - id
+              - attributes
+            properties:
+              type:
+                type: string
+                description: The resource type for the host's robots.
+                enum:
+                  - hostRobot
+              id:
+                description: Specifies the serial number of the device.
+                type: string
+              attributes:
+                type: object
+                properties:
+                  deviceHost:
+                    type: string
+                    description: The host to which the device is attached.
+                  controlHost:
+                    type: string
+                    description: >-
+                      The name of the control host, if a remote host controls
+                      the robot.
+                  inquiryInfo:
+                    type: string
+                    description: >
+                      Specifies the device information that is returned from the
+                      device. For example, vendor ID,
+
+                      product ID, and product revision.
+                  port:
+                    type: integer
+                    nullable: true
+                    description: Specifies the port of the device.
+                  bus:
+                    type: integer
+                    nullable: true
+                    description: Specifies the bus of the device.
+                  target:
+                    type: integer
+                    nullable: true
+                    description: Specifies the target of the device.
+                  lun:
+                    type: integer
+                    nullable: true
+                    description: Specifies the logical unit number of the device.
+                  roboticPath:
+                    type: string
+                    nullable: true
+                    description: >
+                      For the robots that are attached to UNIX hosts: Specifies
+                      the path for the robot if one exists.
+
+                      For example, /dev/sg/c2t5l0. This property does not apply
+                      to Windows hosts.
+    daHostPropertiesResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - attributes
+              - id
+            properties:
+              type:
+                type: string
+                description: Represents a response with device allocation host properties.
+                enum:
+                  - daHostProperties
+              id:
+                type: string
+                description: Represents the host ID.
+              attributes: &ref_21
+                type: object
+                description: >-
+                  This is an optional entity valid for primary servers. The
+                  object encapsulates fields of the Device Allocation Host
+                  Summary.
+                properties:
+                  deviceAllocationHost:
+                    type: string
+                    description: Device allocation host.
+                  hostName:
+                    type: string
+                    description: Host name of the registered host.
+                  registeredDrives:
+                    type: integer
+                    description: Number of registered drives.
+                  reservedDrives:
+                    type: integer
+                    description: Number of reserved drives.
+                  available:
+                    type: boolean
+                    description: Availability status.
+                  scanAbility:
+                    type: integer
+                    description: Scan ability factor.
+                    default: 5
+                    minimum: 0
+                    maximum: 9
+                  scanning:
+                    type: boolean
+                    description: >-
+                      Scan status (if the host is scan host for at least one SSO
+                      drive).
+                required:
+                  - deviceAllocationHost
+                  - hostName
+                  - registeredDrives
+                  - reservedDrives
+                  - available
+                  - scanAbility
+                  - scanning
+    daHostProperties: *ref_21
+    patchHostProperties: *ref_22
+    putHostCommentDetails: *ref_23
+    postRecreateHostRequest:
+      type: object
+      properties:
+        uuid:
+          type: string
+          description: The UUID of the host.
+        hostName:
+          type: string
+          description: The name of the host.
+        osVersion:
+          type: string
+          description: The operating system of the host.
+        osReleaseVersion:
+          type: string
+          description: The release version of the operating system of the host.
+        osType:
+          type: string
+          description: The operating system type of the host.
+        cpuArchitecture:
+          type: string
+          description: The CPU architecture of the host.
+        masterServer:
+          type: string
+          description: The NetBackup master server that is associated with the host.
+        installedEEBs:
+          type: string
+          description: The NetBackup EEBs installed on the host.
+        installedPackages:
+          type: string
+          description: The NetBackup packages installed on the host.
+        nbuVersion:
+          type: string
+          description: The NetBackup version on the host.
+        hwDescription:
+          type: string
+          description: The hardware description of the host.
+        vxUpdatePlatform:
+          type: string
+          description: The VxUpdate recognized platform name of the host.
+        isSecureEnabled:
+          type: boolean
+          description: Specifies whether the host can communicate securely or not.
+        trustVersion:
+          type: string
+          description: >
+            The trust version of the host. Trust version can be used to
+            determine the CAs trusted by that particular host.
+        servers:
+          type: array
+          description: The list of servers associated with the host.
+          items:
+            type: string
+        hostMappings:
+          type: array
+          description: The list of host mappings that are associated with the host.
+          items:
+            type: object
+            properties:
+              mappedHostName:
+                type: string
+                description: >-
+                  The name of the mapped host for which the details are
+                  provided.
+        machineType:
+          type: string
+          description: Specifies whether the host is virtual or physical machine.
+          enum:
+            - UNKNOWN
+            - PHYSICAL
+            - VIRTUAL
+        hypervisorType:
+          type: string
+          description: Specifies the type of hypervisor to which this host belongs to.
+          enum:
+            - NONE
+            - VMWARE
+            - HYPERV
+            - VXVI
+            - HYPER_SCALE
+            - RHV
+            - AHV
+            - AZURE_STACK
+            - OPEN_STACK
+        dteClientMode:
+          type: string
+          description: Client DTE configuration on host.
+          enum:
+            - UNDEFINED
+            - 'OFF'
+            - 'ON'
+            - AUTOMATIC
+        serviceUser:
+          type: string
+          description: >-
+            This is an optional field. It is a service account used for running
+            services with non-privileged mode.
+      required:
+        - uuid
+        - hostName
+    hostMappingsDetails: *ref_24
+    addMappingsRequest:
+      description: >-
+        Adds the host ID-to-host mappings from the given list for the specified
+        host ID.
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          description: The payload for adding the mappings.
+          type: object
+          required:
+            - type
+            - id
+            - attributes
+          properties:
+            type:
+              description: The type of the add mappings request.
+              type: string
+              enum:
+                - addMappingsRequest
+            id:
+              type: string
+              description: The request identifier.
+            attributes:
+              description: Contains the payload attributes.
+              type: object
+              required:
+                - mappings
+              properties:
+                mappings:
+                  type: array
+                  description: >-
+                    The list of host ID-to-host name mappings that are to be
+                    added.
+                  items:
+                    type: string
+                    description: The name of the mapping that is to be added.
+      example:
+        data:
+          type: addMappingsRequest
+          id: 123
+          attributes:
+            mappings:
+              - xyz.com
+              - ABC
+    putAddHostMapping: *ref_25
+    hostCertificateListResponse: *ref_26
+    hostCertificateDetails: *ref_9
+    hostCertificateResponse: *ref_27
+    hostReportResponse: *ref_28
+    hostStatus:
+      type: object
+      properties:
+        connectionDecision:
+          type: string
+          enum:
+            - CONTINUE
+            - DROP
+          description: >-
+            Specifies whether the connection between the hosts should proceed or
+            should be dropped. The master server sends either of the following
+            connection decisions: CONTINUE, DROP
+
+            Communication between the hosts is proceeded or dropped depending on
+            the connection decision.
+        hostId:
+          type: string
+          description: The host ID of the peer host.
+        subjectName:
+          type: string
+          description: The subject name that is available in the peer host certificate.
+        timeToLiveInMin:
+          type: integer
+          description: >
+            The time duration (in minutes) for which the response provided by
+            the URI is valid.
+        errorCode:
+          type: integer
+          description: The NetBackup error code.
+        errorMessage:
+          type: string
+          description: NetBackup error code string that describes the error code.
+        skipUpdateCache:
+          type: boolean
+          description: >-
+            Specifies whether the information received in the response should be
+            updated in cache memory on the client or the update should be
+            skipped.
+      required:
+        - connectionDecision
+        - timeToLiveInMin
+        - errorCode
+        - errorMessage
+        - skipUpdateCache
+    peerHostInfo:
+      type: object
+      properties:
+        hostName:
+          type: string
+          description: The name of the peer host that is used for the connection.
+        hostId:
+          type: string
+          description: The host ID of the discovered peer host.
+        subjectName:
+          type: string
+          description: The subject name that is available in the peer host certificate.
+      required:
+        - hostName
+    hostConfigurationsResponse: *ref_29
+    hostConfigurationDefinition: *ref_13
+    hostConfigurationRequest: *ref_14
+    hostConfigurationResponse: *ref_30
+    serverConfigurationRequest:
+      type: object
+      properties:
+        data: &ref_31
+          type: object
+          properties:
+            type:
+              type: string
+              description: The type of object.
+              enum:
+                - serverConfiguration
+            attributes:
+              type: object
+              description: The value(s) of the Server configurations.
+              properties:
+                servers:
+                  type: array
+                  description: The list of Servers.
+                  items:
+                    type: string
+                    description: The hostname of a Server.
+              required:
+                - servers
+          required:
+            - type
+            - attributes
+      required:
+        - data
+    serverConfigurationDefinition: *ref_31
+    getHostsPendingRenewal: *ref_32
+    hostPendingRenewal: *ref_33
+    validateCacheDeviceRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - validateCacheDeviceRequest
+            attributes:
+              type: object
+              properties:
+                volumePath:
+                  type: string
+                  description: >-
+                    The path of the volume to validate for use as a cache
+                    device.
+    validateCacheDeviceResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              description: The UUID of the host.
+            type:
+              type: string
+              enum:
+                - validateCacheDeviceResponse
+            attributes:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Specifies the status of the cache device.
+                  enum:
+                    - UNKNOWN
+                    - AVAILABLE
+                    - NOT_AVAILABLE
+                    - NOT_FOUND
+    driveNameRulesResponse: *ref_34
+    driveNameRuleResponse: *ref_18
+    postDriveNameRuleRequest: *ref_35
+    driveNameRuleResource: *ref_17
+    driveNameRuleId: *ref_15
+    driveNameRuleResourceAttributes: *ref_16
+    driveNameRule: *ref_36
+    driveNameRuleFieldsResponse: *ref_37
+    linkObject: *ref_19

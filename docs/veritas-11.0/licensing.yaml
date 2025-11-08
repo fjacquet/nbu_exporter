@@ -1,0 +1,877 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Licensing API
+  version: '13.0'
+  description: >
+    The NetBackup Capacity Licensing Data Usage API obtains the details of the
+    front-end data usage of the NetBackup primary servers and clients.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Primary
+paths:
+  /licensing/capacity:
+    get:
+      description: >
+        Returns the front-end data usage details for the NetBackup primary
+        servers in the environment, based on the
+
+        specified filters. If no filters are specified, information is returned
+        for the last 10 NetBackup master servers
+
+        that were queried.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|LICENSING|USAGE|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|
+      tags:
+        - Capacity
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |masterServer|eq|Specifies the NetBackup primary server
+            name.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[limit]'
+          description: The number of results on one page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: 'page[offset]'
+          description: The record number offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: success response.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_8
+                type: object
+                properties:
+                  data: &ref_9
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        id:
+                          type: string
+                        attributes:
+                          type: object
+                          properties:
+                            masterConsumptionMB:
+                              type: number
+                              format: double
+                            clientDetails: &ref_1
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  clientName:
+                                    type: string
+                                  clientConsumptionMB:
+                                    type: number
+                                    format: double
+                                  policyDetails: &ref_10
+                                    type: array
+                                    items:
+                                      type: object
+                                      properties:
+                                        backupId:
+                                          type: string
+                                        policyName:
+                                          type: string
+                                        masterServer:
+                                          type: string
+                                        policyType:
+                                          type: string
+                                        policyConsumptionMB:
+                                          type: number
+                                          format: double
+                                      required:
+                                        - backupId
+                                        - policyName
+                                        - masterServer
+                                        - policyType
+                                        - policyConsumptionMB
+                                required:
+                                  - clientName
+                                  - clientConsumptionMB
+                      required:
+                        - type
+                        - id
+                        - attributes
+                  meta:
+                    type: object
+                    properties:
+                      pagination: &ref_11
+                        type: object
+                        properties:
+                          prev:
+                            type: integer
+                            format: int64
+                          next:
+                            type: integer
+                            format: int64
+                          first:
+                            type: integer
+                            format: int64
+                          last:
+                            type: integer
+                            format: int64
+                          count:
+                            type: integer
+                            format: int64
+                          offset:
+                            type: integer
+                            format: int64
+                          limit:
+                            type: integer
+                            format: int64
+                    required:
+                      - pagination
+                required:
+                  - data
+                  - meta
+        '401': &ref_2
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_0
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '404': &ref_3
+          description: No entity found.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': &ref_4
+          description: >
+            Unsupported Media Type. The media type specified in the
+            `Content-Type` header is not supported by this API.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': &ref_5
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+  /licensing/capacity/client-details:
+    get:
+      description: >
+        Returns the front-end data usage details for NetBackup clients, based on
+        the specified filters. If no filters
+
+        are specified, information is returned for the last 10 clients that were
+        queried.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|LICENSING|USAGE|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|
+      tags:
+        - Capacity
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |masterServer|eq|Specifies the NetBackup primary server
+            name.|string|
+
+            |clientName|eq|Specifies the NetBackup client name. This is a
+            required input parameter.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully returned client details.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404': *ref_3
+        '415': *ref_4
+        '500': *ref_5
+  /licensing/entitlements:
+    post:
+      description: >
+        Adds an entitlement to NetBackup.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|LICENSING|`\
+
+        Requires Operation:  `|OPERATIONS|ADD|`
+      tags:
+        - Entitlements
+      parameters:
+        - name: X-NetBackup-Remove-Conflicts
+          description: >-
+            The flag indicates if the conflicting licenses need to be removed
+            when an entitlement for NetBackup is added.
+          in: header
+          required: false
+          schema:
+            type: boolean
+      requestBody:
+        content:
+          multipart/vnd.netbackup+form-data;version=13.0:
+            schema:
+              type: object
+              properties:
+                file:
+                  description: The NetBackup license file.
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        '201':
+          description: Successfully added the entitlement to NetBackup.
+          headers:
+            Location:
+              description: The link to the newly added NetBackup license information.
+              schema:
+                type: string
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_7
+                description: The response on a successful listing of the entitlements.
+                type: object
+                required:
+                  - data
+                properties:
+                  data: &ref_6
+                    type: object
+                    properties:
+                      links:
+                        type: object
+                        properties:
+                          self:
+                            type: object
+                            properties:
+                              href:
+                                type: string
+                      type:
+                        description: The type of the response payload.
+                        type: string
+                        enum:
+                          - entitlementDetails
+                      id:
+                        type: string
+                        description: >-
+                          The unique entitlement ID associated with each
+                          NetBackup license.
+                      attributes:
+                        description: The attributes of entitlement.
+                        type: object
+                        required:
+                          - entitlementId
+                          - fulfillmentId
+                          - licenseFormat
+                          - iplProductId
+                          - account
+                          - productName
+                          - productId
+                          - productVersion
+                          - productDescription
+                          - platform
+                          - serviceStartDate
+                          - serviceExpiration
+                          - signDate
+                          - startDate
+                          - endDate
+                          - licenseMeter
+                          - licenseType
+                          - licenseCount
+                          - countMultiplier
+                          - warnPolicy
+                          - gracePolicy
+                          - countPolicy
+                          - svcPolicy
+                          - status
+                          - entitledVersion
+                          - serviceContractNumber
+                          - coverageType
+                          - supportId
+                          - countGracePeriod
+                          - countGracePercentage
+                          - reporting
+                          - meterId
+                          - stackingGroup
+                          - reportingCategory
+                          - reportingFrequency
+                          - features
+                        properties:
+                          entitlementId:
+                            type: string
+                            description: >-
+                              The unique ID that indicates the purchase serial
+                              number associated with the entitlement.
+                          fulfillmentId:
+                            type: string
+                            description: >-
+                              The unique ID that indicates the purchase
+                              fulfillment number associated with the
+                              entitlement.
+                          licenseFormat:
+                            type: integer
+                            description: The license file format.
+                          iplProductId:
+                            type: string
+                            description: The IPL product ID.
+                          account:
+                            type: string
+                            description: The account associated with the entitlement.
+                          productName:
+                            type: string
+                            description: >-
+                              The name of the license SKU associated with the
+                              entitlement.
+                          productId:
+                            type: string
+                            description: The product ID.
+                            enum:
+                              - NETBACKUP
+                              - NETBACKUP_SERVER
+                              - NETBACKUP_ENTERPRISE_SERVER
+                          productVersion:
+                            type: string
+                            description: The version number of the product.
+                          productDescription:
+                            type: string
+                            description: The license SKU description.
+                          platform:
+                            type: string
+                            description: The supported platforms.
+                            enum:
+                              - ANY
+                              - ANY_UNIX
+                              - ANY_WINDOWS
+                              - LINUX
+                              - WINDOWS_64
+                          serviceStartDate:
+                            type: string
+                            format: date-time
+                            description: The service start date.
+                          serviceExpiration:
+                            type: string
+                            format: date-time
+                            description: The service expiration date.
+                          signDate:
+                            type: string
+                            format: date-time
+                            description: The entitlement signing date.
+                          startDate:
+                            type: string
+                            format: date-time
+                            description: The entitlement start date.
+                          endDate:
+                            type: string
+                            format: date-time
+                            description: The entitlement end date.
+                          licenseMeter:
+                            type: string
+                            description: The license meter.
+                            enum:
+                              - FETB
+                              - FETB_PLUS
+                              - CPU
+                              - SERVER
+                          licenseType:
+                            type: string
+                            description: The type of license.
+                            enum:
+                              - PERPETUAL
+                              - SUBSCRIPTION
+                              - TEMP_PRODUCTION_UPGRADE
+                              - MAINTENANCE
+                              - PARTNER_PROGRAM
+                              - NOT_FOR_RESALE
+                              - DEMO
+                          licenseCount:
+                            type: integer
+                            format: int64
+                            description: The license count.
+                          countMultiplier:
+                            type: number
+                            format: float
+                            description: The count multiplier.
+                          warnPolicy:
+                            type: integer
+                            description: >-
+                              The warning policy for the entitlement. This field
+                              specifies the number of days after which the
+                              warning period starts.
+                          gracePolicy:
+                            type: integer
+                            description: >-
+                              The grace period policy for the entitlement. This
+                              field specifies the number of days after which the
+                              grace period ends.
+                          countPolicy:
+                            type: string
+                            description: The count policy.
+                            enum:
+                              - NONE
+                              - SOFT
+                              - HARD
+                              - HARD_RESTART
+                          svcPolicy:
+                            type: string
+                            description: The service policy.
+                            enum:
+                              - NONE
+                              - SOFT
+                              - HARD
+                              - HARD_RESTART
+                          status:
+                            type: string
+                            description: The license status of the entitlement.
+                            enum:
+                              - ACTIVE
+                              - EXPIRED
+                          entitledVersion:
+                            type: string
+                            description: The entitlement version.
+                          serviceContractNumber:
+                            type: string
+                            description: The contract number of service agreement.
+                          coverageType:
+                            type: string
+                            description: The type of coverage.
+                          supportId:
+                            type: string
+                            description: The support identification number.
+                          countGracePeriod:
+                            type: integer
+                            description: The grace period in days for license count.
+                          countGracePercentage:
+                            type: integer
+                            description: The grace percentage of the license count.
+                          reporting:
+                            type: string
+                            description: The report type.
+                          meterId:
+                            type: string
+                            description: The meter ID.
+                          stackingGroup:
+                            type: integer
+                            description: The license stacking group.
+                          entitlementLicenseMeter:
+                            type: string
+                            description: The license meter of the entitlement.
+                          reportingCategory:
+                            type: string
+                            description: The reporting category.
+                          reportingFrequency:
+                            type: integer
+                            description: The reporting frequency in days.
+                          features:
+                            description: The list of features enabled for the entitlement.
+                            type: array
+                            items:
+                              type: string
+                              description: The name of the feature.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '401': *ref_2
+        '409':
+          description: >-
+            License with the specified entitlement ID already exists in
+            NetBackup.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': *ref_4
+        '422':
+          description: The license file is not valid.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': *ref_5
+    get:
+      description: >
+        Displays details of all entitlements added to NetBackup.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|LICENSING|`\
+
+        Requires Operation:  `|OPERATIONS|VIEW|`
+      tags:
+        - Entitlements
+      parameters:
+        - name: 'page[limit]'
+          description: The number of licenses on one page.
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: 'page[offset]'
+          description: The offset of license page.
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |entitlementId|contains|Specifies the purchase serial number
+            associated with the entitlement.|string|
+
+            |productName|contains|Specifies the name of the product associated
+            with the entitlement.|string|
+
+            |status|eq|Specifies the license status of the product.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'On success, displays the details of entitlements added to NetBackup.'
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_12
+                description: >-
+                  The response on a successful listing of details for all the
+                  entitlements.
+                type: object
+                required:
+                  - data
+                properties:
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        description: Link to the current page.
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        description: Link to the first page.
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        description: Link to the last page.
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        description: Link to the next page.
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        description: Link to the previous page.
+                        properties:
+                          href:
+                            type: string
+                  data:
+                    type: array
+                    items: *ref_6
+        '401': *ref_2
+        '500': *ref_5
+  '/licensing/entitlements/{entitlementId}':
+    get:
+      description: >
+        Displays details of the specified entitlement.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|LICENSING|`\
+
+        Requires Operation:  `|OPERATIONS|VIEW|`
+      tags:
+        - Entitlements
+      parameters:
+        - name: entitlementId
+          in: path
+          required: true
+          description: The entitlement ID of the NetBackup license.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'On success, displays the details of the specified entitlement.'
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_7
+        '401': *ref_2
+        '404':
+          description: The license with specified entitlement ID does not exist.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': *ref_5
+    delete:
+      description: >
+        Deletes a specific NetBackup license from NetBackup.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|LICENSING|`\
+
+        Requires Operation:  `|OPERATIONS|DELETE|`
+      tags:
+        - Entitlements
+      parameters:
+        - name: entitlementId
+          in: path
+          required: true
+          description: The entitlement ID of the NetBackup license.
+          schema:
+            type: string
+      responses:
+        '204':
+          description: The specified entitlement is deleted successfully.
+        '401': *ref_2
+        '404':
+          description: The license with specified entitlement ID does not exist.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': *ref_5
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    masterResponse: *ref_8
+    masterDetailsResponse: *ref_9
+    clientDetailsResponse: *ref_1
+    policyDetailsResponse: *ref_10
+    paginationValues: *ref_11
+    masterDetailsConsolidation:
+      type: object
+      properties:
+        mastersCount:
+          type: number
+        consolidatedMasterConsumptionMB:
+          type: number
+          format: double
+      required:
+        - mastersCount
+        - consolidatedMasterConsumptionMB
+    getEntitlementDetails: *ref_7
+    getAllEntitlementDetails: *ref_12
+    entitlementDetails: *ref_6
+    entitlementSummaryDetails:
+      description: The response on a successful listing of consolidated expiration details.
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              description: The id of the response payload.
+              type: string
+              enum:
+                - entitlementSummary
+            type:
+              description: The type of the response payload.
+              type: string
+              enum:
+                - entitlementSummary
+            attributes:
+              type: object
+              required:
+                - entitlementId
+                - licenseType
+                - lifeCycleState
+                - serviceExpiration
+                - endDate
+                - status
+                - daysLeftForServiceExpiration
+                - daysLeftForServiceEnd
+                - entitledCapacityInMB
+                - usedCapacityInMB
+              properties:
+                entitlementId:
+                  type: string
+                  description: >-
+                    The unique ID that indicates the purchase serial number
+                    associated with the entitlement.
+                licenseType:
+                  type: string
+                  description: The type of license.
+                  enum:
+                    - PERPETUAL
+                    - SUBSCRIPTION
+                    - TEMP_PRODUCTION_UPGRADE
+                    - MAINTENANCE
+                    - PARTNER_PROGRAM
+                    - NOT_FOR_RESALE
+                    - DEMO
+                lifeCycleState:
+                  type: string
+                  description: The lifecycle state of the product.
+                  enum:
+                    - ACTIVE
+                    - EXPIRING
+                    - EXPIRED
+                    - GRACEPERIOD
+                serviceExpiration:
+                  type: string
+                  format: date-time
+                  description: The farthest expiration date.
+                endDate:
+                  type: string
+                  format: date-time
+                  description: The farthest end date.
+                status:
+                  type: string
+                  description: The license status of the product.
+                  enum:
+                    - ACTIVE
+                    - EXPIRED
+                daysLeftForServiceExpiration:
+                  type: integer
+                  format: int64
+                  description: The number of days left for expiration of the product.
+                daysLeftForServiceEnd:
+                  type: integer
+                  format: int64
+                  description: The number of days left for end date of the product.
+                entitledCapacityInMB:
+                  type: integer
+                  format: int64
+                  description: The total units of entitled capacity.
+                usedCapacityInMB:
+                  type: integer
+                  format: int64
+                  description: The total units of used capacity.
+  responses:
+    errorUnprocessableEntity:
+      description: Unprocessable Entity. License type combination cannot co-exist.
+      content:
+        application/vnd.netbackup+json;version=13.0:
+          schema: *ref_0
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []
