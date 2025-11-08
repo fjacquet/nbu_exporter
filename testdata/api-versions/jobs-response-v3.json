@@ -1,0 +1,107 @@
+{
+  "data": [
+    {
+      "type": "job",
+      "id": "12345",
+      "links": {
+        "self": {
+          "href": "/netbackup/admin/jobs/12345"
+        }
+      },
+      "attributes": {
+        "jobId": 12345,
+        "parentJobId": 0,
+        "jobType": "BACKUP",
+        "jobSubType": "FULL",
+        "policyType": "VMWARE",
+        "policyName": "VMware-Policy-1",
+        "scheduleType": "FULL",
+        "scheduleName": "Full-Schedule",
+        "clientName": "vm-client-01.example.com",
+        "controlHost": "master.example.com",
+        "jobOwner": "admin",
+        "jobGroup": "default",
+        "backupId": "backup_12345_1234567890_FULL",
+        "destinationStorageUnitName": "disk-pool-1",
+        "destinationMediaServerName": "media-server-01.example.com",
+        "dataMovement": "STANDARD",
+        "priority": 9999,
+        "compression": 0,
+        "status": 0,
+        "state": "DONE",
+        "numberOfFiles": 1250,
+        "estimatedFiles": 1200,
+        "kilobytesTransferred": 52428800,
+        "kilobytesToTransfer": 52428800,
+        "transferRate": 102400,
+        "percentComplete": 100,
+        "transportType": "LAN",
+        "startTime": "2024-11-08T10:00:00Z",
+        "endTime": "2024-11-08T11:30:00Z",
+        "lastUpdateTime": "2024-11-08T11:30:00Z",
+        "elapsedTime": "PT1H30M"
+      }
+    },
+    {
+      "type": "job",
+      "id": "12346",
+      "links": {
+        "self": {
+          "href": "/netbackup/admin/jobs/12346"
+        }
+      },
+      "attributes": {
+        "jobId": 12346,
+        "parentJobId": 0,
+        "jobType": "RESTORE",
+        "jobSubType": "RESTORE",
+        "policyType": "STANDARD",
+        "policyName": "Standard-Policy-1",
+        "clientName": "client-02.example.com",
+        "controlHost": "master.example.com",
+        "jobOwner": "operator",
+        "jobGroup": "default",
+        "backupId": "backup_12340_1234567800_FULL",
+        "sourceStorageUnitName": "disk-pool-1",
+        "sourceMediaServerName": "media-server-01.example.com",
+        "dataMovement": "STANDARD",
+        "priority": 50000,
+        "compression": 0,
+        "status": 1,
+        "state": "ACTIVE",
+        "numberOfFiles": 500,
+        "estimatedFiles": 500,
+        "kilobytesTransferred": 10485760,
+        "kilobytesToTransfer": 20971520,
+        "transferRate": 51200,
+        "percentComplete": 50,
+        "transportType": "LAN",
+        "startTime": "2024-11-08T12:00:00Z",
+        "lastUpdateTime": "2024-11-08T12:15:00Z",
+        "elapsedTime": "PT15M"
+      }
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "count": 2,
+      "offset": 0,
+      "limit": 100,
+      "first": 0,
+      "last": 1,
+      "page": 1,
+      "pages": 1
+    }
+  },
+  "links": {
+    "self": {
+      "href": "/netbackup/admin/jobs?page[limit]=100&page[offset]=0"
+    },
+    "first": {
+      "href": "/netbackup/admin/jobs?page[limit]=100&page[offset]=0"
+    },
+    "last": {
+      "href": "/netbackup/admin/jobs?page[limit]=100&page[offset]=0"
+    }
+  }
+}

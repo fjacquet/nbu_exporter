@@ -76,8 +76,8 @@
     - Verify API version metric is exposed correctly
     - _Requirements: 10.1, 10.2_
 
-- [ ] 5. Create test data for all API versions
-  - [ ] 5.1 Add mock response files
+- [x] 5. Create test data for all API versions
+  - [x] 5.1 Add mock response files
     - Create `testdata/api-versions/` directory
     - Add `jobs-response-v3.json` for NetBackup 10.0 format
     - Add `jobs-response-v12.json` for NetBackup 10.5 format
@@ -88,28 +88,28 @@
     - Add `error-406-response.json` for version not supported error
     - _Requirements: 10.2_
 
-  - [ ] 5.2 Verify response compatibility
+  - [x] 5.2 Verify response compatibility
     - Ensure all mock responses match actual NetBackup API responses
     - Verify common fields are present in all versions
     - Document version-specific optional fields
     - _Requirements: 3.4, 4.4, 8.3_
 
-- [ ] 6. Update integration tests for multi-version support
-  - [ ] 6.1 Enhance existing integration tests
+- [x] 6. Update integration tests for multi-version support
+  - [x] 6.1 Enhance existing integration tests
     - Update `internal/exporter/integration_test.go` to test all versions
     - Add test cases for version detection with mock servers
     - Add test cases for fallback behavior
     - Add test cases for configuration override
     - _Requirements: 10.3_
 
-  - [ ] 6.2 Add version-specific integration tests
+  - [x] 6.2 Add version-specific integration tests
     - Test jobs API compatibility across all versions
     - Test storage API compatibility across all versions
     - Verify metrics consistency across versions
     - Test authentication with all versions
     - _Requirements: 3.1, 3.2, 3.3, 4.1, 4.2, 4.3, 5.1, 5.2, 10.3_
 
-  - [ ] 6.3 Verify test coverage
+  - [x] 6.3 Verify test coverage
     - Run coverage analysis on new code
     - Ensure ≥80% coverage for API client and parser modules
     - Document any uncovered edge cases
