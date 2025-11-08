@@ -12,7 +12,9 @@ nbuserver:
     domainType: "NT"
     host: "master.my.domain"
     port: "1556"
-    apiVersion: "12.0"  # NetBackup API version (12.0 for NetBackup 10.5+)
+    apiVersion: "13.0"  # Optional: NetBackup API version (13.0, 12.0, or 3.0)
+                        # If omitted, the exporter will automatically detect the version
+                        # See docs/config-examples/ for more configuration examples
     apiKey: "my-api-key"
     contentType: "application/vnd.netbackup+json; version=3.0"
     insecureSkipVerify: false  # Set to true to skip TLS certificate verification (not recommended for production)

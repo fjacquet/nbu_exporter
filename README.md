@@ -23,9 +23,19 @@ A production-ready Prometheus exporter that collects backup job statistics and s
 ### Prerequisites
 
 - Go 1.23.4 or later
-- Veritas NetBackup 10.5 or later (API version 12.0+)
+- Veritas NetBackup 10.0 or later (see version support matrix below)
 - Access to NetBackup REST API
 - NetBackup API key (generated from NBU UI)
+
+### Version Support Matrix
+
+| NetBackup Version | API Version | Support Status | Notes |
+|-------------------|-------------|----------------|-------|
+| 11.0+             | 13.0        | ✅ Fully Supported | Latest version with all features |
+| 10.5              | 12.0        | ✅ Fully Supported | Current stable version |
+| 10.0 - 10.4       | 3.0         | ✅ Legacy Support | Basic functionality maintained |
+
+**Automatic Version Detection**: The exporter automatically detects the highest supported API version available on your NetBackup server. No manual configuration required unless you need to override the detected version.
 
 ### Installation
 
@@ -60,7 +70,8 @@ nbuserver:
     domainType: "NT"
     host: "master.my.domain"
     port: "1556"
-    apiVersion: "12.0"  # NetBackup API version (12.0 for NetBackup 10.5+)
+    apiVersion: "13.0"  # Optional: NetBackup API version (13.0, 12.0, or 3.0)
+                        # If omitted, the exporter will automatically detect the version
     apiKey: "your-api-key-here"
     contentType: "application/vnd.netbackup+json; version=3.0"
     insecureSkipVerify: false  # Set to true only for testing environments
@@ -235,6 +246,68 @@ Run with debugger:
 dlv debug . -- --config config.yaml --debug
 ```
 
+## API Version Configuration
+
+### Automatic Version Detection
+
+By default, the exporter automatically detects the highest supported API version available on your NetBackup server. This happens at startup and follows this detection order:
+
+1. **Try API 13.0** (NetBackup 11.0+)
+2. **Try API 12.0** (NetBackup 10.5)
+3. **Try API 3.0** (NetBackup 10.0-10.4)
+
+The exporter uses the first version that responds successfully. This allows you to deploy the same exporter binary across different NetBackup environments without configuration changes.
+
+**Startup Log Example:**
+
+```
+INFO[0000] Starting NBU Exporter
+INFO[0001] Attempting API version detection
+DEBUG[0001] Trying API version 13.0
+INFO[0002] Detected NetBackup API version: 13.0
+INFO[0002] Successfully connected to NetBackup API
+```
+
+### Manual Version Configuration
+
+You can explicitly specify the API version in your configuration file to:
+
+- Skip automatic detection for faster startup
+- Override detection for testing or troubleshooting
+- Lock to a specific version for consistency
+
+**Example configurations:**
+
+```yaml
+# NetBackup 11.0 - Explicit version
+nbuserver:
+    apiVersion: "13.0"
+    # ... other settings
+
+# NetBackup 10.5 - Explicit version
+nbuserver:
+    apiVersion: "12.0"
+    # ... other settings
+
+# NetBackup 10.0-10.4 - Explicit version
+nbuserver:
+    apiVersion: "3.0"
+    # ... other settings
+
+# Automatic detection - Omit apiVersion field
+nbuserver:
+    # apiVersion not specified - will auto-detect
+    # ... other settings
+```
+
+### Version Detection Behavior
+
+- **Detection Time**: Adds 1-3 seconds to startup (one lightweight API call per version attempt)
+- **Retry Logic**: Automatically retries transient failures with exponential backoff
+- **Error Handling**: Distinguishes between version incompatibility (HTTP 406) and other errors
+- **Authentication**: Fails immediately on authentication errors (HTTP 401) without trying other versions
+- **Logging**: Each version attempt is logged for troubleshooting
+
 ## Configuration Reference
 
 ### Server Section
@@ -257,7 +330,7 @@ dlv debug . -- --config config.yaml --debug
 | `domainType` | string | Yes | - | Domain type (NT, vx, etc.) |
 | `host` | string | Yes | - | NetBackup master server hostname |
 | `port` | string | Yes | - | API port (typically 1556) |
-| `apiVersion` | string | Yes | "12.0" | NetBackup API version (12.0 for NetBackup 10.5+) |
+| `apiVersion` | string | No | Auto-detect | NetBackup API version (13.0, 12.0, or 3.0). If omitted, automatically detects the highest supported version. |
 | `apiKey` | string | Yes | - | NetBackup API key |
 | `contentType` | string | Yes | - | API content type header |
 | `insecureSkipVerify` | bool | No | false | Skip TLS certificate verification (not recommended for production) |
@@ -316,6 +389,98 @@ Error: failed to fetch storage data: HTTP 401 Unauthorized
 
 Solution: Verify your API key is valid and has appropriate permissions.
 
+### Version-Related Issues
+
+**Version detection failed**
+
+```bash
+ERROR: Failed to detect compatible NetBackup API version.
+Attempted versions: 13.0, 12.0, 3.0
+Last error: HTTP 406 Not Acceptable
+```
+
+**Possible causes:**
+1. NetBackup server is running a version older than 10.0
+2. Network connectivity issues between exporter and NetBackup server
+3. API endpoint is not accessible or blocked by firewall
+4. Authentication credentials are invalid
+
+**Troubleshooting steps:**
+
+1. **Verify NetBackup version:**
+   ```bash
+   # On NetBackup master server
+   bpgetconfig -g | grep VERSION
+   ```
+
+2. **Check network connectivity:**
+   ```bash
+   curl -k https://nbu-master:1556/netbackup/
+   ```
+
+3. **Verify API accessibility:**
+   ```bash
+   curl -k -H "Authorization: YOUR_API_KEY" \
+        -H "Accept: application/vnd.netbackup+json;version=13.0" \
+        https://nbu-master:1556/netbackup/admin/jobs?page[limit]=1
+   ```
+
+4. **Try manual version configuration:**
+   ```yaml
+   nbuserver:
+       apiVersion: "12.0"  # Try 12.0 or 3.0 based on your NetBackup version
+   ```
+
+**Configured version not supported**
+
+```bash
+ERROR: Configured API version 13.0 is not supported by the NetBackup server (HTTP 406 Not Acceptable).
+```
+
+**Solution:** Your NetBackup server doesn't support the configured API version. Either:
+
+1. **Remove the apiVersion field** to enable automatic detection:
+   ```yaml
+   nbuserver:
+       # apiVersion: "13.0"  # Comment out or remove this line
+       host: "master.my.domain"
+       # ... other settings
+   ```
+
+2. **Specify a compatible version** based on your NetBackup version:
+   - NetBackup 11.0+ → `apiVersion: "13.0"`
+   - NetBackup 10.5 → `apiVersion: "12.0"`
+   - NetBackup 10.0-10.4 → `apiVersion: "3.0"`
+
+**Version mismatch after NetBackup upgrade**
+
+If you've upgraded NetBackup and the exporter is still using an old API version:
+
+1. **Remove explicit version configuration** to enable auto-detection:
+   ```yaml
+   nbuserver:
+       # Remove or comment out apiVersion field
+   ```
+
+2. **Restart the exporter** to trigger version detection
+
+3. **Verify detected version** in startup logs:
+   ```
+   INFO[0002] Detected NetBackup API version: 13.0
+   ```
+
+**Slow startup with version detection**
+
+If automatic version detection is causing slow startup (1-3 seconds):
+
+1. **Configure explicit version** to skip detection:
+   ```yaml
+   nbuserver:
+       apiVersion: "13.0"  # Use your NetBackup's API version
+   ```
+
+2. **Verify faster startup** - should connect immediately without detection attempts
+
 ### Debug Mode
 
 Enable debug logging to troubleshoot issues:
@@ -333,7 +498,56 @@ Debug mode provides:
 
 ## Migration from Previous Versions
 
-### Breaking Change: Configuration Typo Fix
+### Multi-Version API Support (Latest)
+
+The exporter now supports NetBackup 10.0, 10.5, and 11.0 with automatic API version detection.
+
+**Key Features:**
+- **Automatic Detection**: No manual version configuration required
+- **Multi-Version Support**: Works with API versions 3.0, 12.0, and 13.0
+- **Backward Compatible**: Existing configurations continue to work
+- **Intelligent Fallback**: Automatically tries versions in descending order (13.0 → 12.0 → 3.0)
+
+**Migration Options:**
+
+**Option 1: Use Automatic Detection (Recommended)**
+
+Remove or comment out the `apiVersion` field to enable automatic detection:
+
+```yaml
+nbuserver:
+    # apiVersion: "12.0"  # Remove or comment out
+    host: "master.my.domain"
+    # ... other settings
+```
+
+**Option 2: Keep Explicit Version**
+
+Your existing configuration will continue to work without changes:
+
+```yaml
+nbuserver:
+    apiVersion: "12.0"  # Explicit version still supported
+    host: "master.my.domain"
+    # ... other settings
+```
+
+**Option 3: Update to Latest Version**
+
+For NetBackup 11.0 environments, update to the latest API version:
+
+```yaml
+nbuserver:
+    apiVersion: "13.0"  # NetBackup 11.0+
+    host: "master.my.domain"
+    # ... other settings
+```
+
+**No Breaking Changes**: All existing configurations remain valid. The `apiVersion` field is now optional instead of required.
+
+See the [Migration Guide](docs/netbackup-11-migration.md) for detailed upgrade instructions.
+
+### Breaking Change: Configuration Typo Fix (Previous Version)
 
 The configuration field `scrappingInterval` has been corrected to `scrapingInterval`.
 
@@ -349,26 +563,10 @@ server:
     scrapingInterval: "1h"
 ```
 
-### New Configuration Options
+### Configuration Options History
 
 - `insecureSkipVerify`: Optional TLS verification control (defaults to `false`)
-- `apiVersion`: NetBackup API version specification (required for NetBackup 10.5+, defaults to "12.0")
-
-### NetBackup 10.5 API Support
-
-The exporter now supports NetBackup 10.5 with API version 12.0. Key changes:
-
-- **Required Configuration**: Add `apiVersion: "12.0"` to the `nbuserver` section
-- **Version Header**: The exporter includes the API version in the Accept header for all requests
-- **Backward Compatibility**: Existing configurations will default to version "12.0"
-- **Minimum Version**: NetBackup 10.5 or later is required
-
-**Migration Steps:**
-
-1. Ensure your NetBackup server is version 10.5 or later
-2. Add `apiVersion: "12.0"` to your `config.yaml` under the `nbuserver` section
-3. Restart the exporter
-4. Verify metrics collection is working correctly
+- `apiVersion`: NetBackup API version specification (now optional with auto-detection, previously required)
 
 See [CHANGELOG.md](CHANGELOG.md) for complete migration details.
 
