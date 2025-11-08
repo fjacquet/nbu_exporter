@@ -140,7 +140,7 @@ func (s *Server) Shutdown() error {
 // the application is running.
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "OK\n")
+	_, _ = fmt.Fprintf(w, "OK\n")
 }
 
 // validateConfig checks if the configuration file exists, loads it, and validates its contents.
@@ -241,7 +241,7 @@ func main() {
 
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to configuration file (required)")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Enable debug mode")
-	rootCmd.MarkPersistentFlagRequired("config")
+	_ = rootCmd.MarkPersistentFlagRequired("config")
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)

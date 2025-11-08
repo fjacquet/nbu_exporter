@@ -35,7 +35,9 @@ func ReadFile(cfg *models.Config, filepath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open config file %s: %w", filepath, err)
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	decoder := yaml.NewDecoder(f)
 	if err := decoder.Decode(cfg); err != nil {

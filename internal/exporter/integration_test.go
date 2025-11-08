@@ -103,7 +103,7 @@ func TestJobMetricsCollection(t *testing.T) {
 		offsetStr := r.URL.Query().Get("page[offset]")
 		offsetInt := 0
 		if offsetStr != "" {
-			fmt.Sscanf(offsetStr, "%d", &offsetInt)
+			_, _ = fmt.Sscanf(offsetStr, "%d", &offsetInt)
 		}
 
 		response := &models.Jobs{}

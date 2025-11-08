@@ -140,7 +140,7 @@ func TestNbuClient_FetchData_Success(t *testing.T) {
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(response)
+				_ = json.NewEncoder(w).Encode(response)
 			}))
 			defer server.Close()
 
@@ -217,7 +217,7 @@ func TestNbuClient_FetchData_NotAcceptableError(t *testing.T) {
 
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(tt.statusCode)
-				json.NewEncoder(w).Encode(errorResponse)
+				_ = json.NewEncoder(w).Encode(errorResponse)
 			}))
 			defer server.Close()
 
@@ -344,7 +344,7 @@ func TestNbuClient_AuthorizationHeaderUnchanged(t *testing.T) {
 				}
 
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(mockAPIResponse{})
+				_ = json.NewEncoder(w).Encode(mockAPIResponse{})
 			}))
 			defer server.Close()
 
