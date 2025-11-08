@@ -25,12 +25,12 @@ func TestEndToEndWorkflowAPI130(t *testing.T) {
 	// Create mock server that responds to API 13.0 requests
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
-		
+
 		// Verify API version in Accept header
 		if !strings.Contains(acceptHeader, "version=13.0") {
 			w.WriteHeader(http.StatusNotAcceptable)
-			json.NewEncoder(w).Encode(map[string]string{
-				"errorCode": "UNSUPPORTED_API_VERSION",
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"errorCode":    "UNSUPPORTED_API_VERSION",
 				"errorMessage": "API version not supported",
 			})
 			return
@@ -59,7 +59,7 @@ func TestEndToEndWorkflowAPI130(t *testing.T) {
 				}],
 				"meta": {"pagination": {"first": 0, "last": 0, "limit": 1, "offset": 0, "next": 0}}
 			}`
-			w.Write([]byte(jobsResponse))
+			_, _ = w.Write([]byte(jobsResponse))
 
 		case strings.Contains(r.URL.Path, "/storage/storage-units"):
 			// Return storage response with sample data
@@ -80,7 +80,7 @@ func TestEndToEndWorkflowAPI130(t *testing.T) {
 				}],
 				"meta": {"pagination": {"first": 0, "last": 0, "limit": 100, "offset": 0}}
 			}`
-			w.Write([]byte(storageResponse))
+			_, _ = w.Write([]byte(storageResponse))
 
 		default:
 			w.WriteHeader(http.StatusNotFound)
@@ -136,12 +136,12 @@ func TestEndToEndWorkflowAPI120(t *testing.T) {
 	// Create mock server that responds to API 12.0 requests
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
-		
+
 		// Verify API version in Accept header
 		if !strings.Contains(acceptHeader, "version=12.0") {
 			w.WriteHeader(http.StatusNotAcceptable)
-			json.NewEncoder(w).Encode(map[string]string{
-				"errorCode": "UNSUPPORTED_API_VERSION",
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"errorCode":    "UNSUPPORTED_API_VERSION",
 				"errorMessage": "API version not supported",
 			})
 			return
@@ -169,7 +169,7 @@ func TestEndToEndWorkflowAPI120(t *testing.T) {
 				}],
 				"meta": {"pagination": {"first": 0, "last": 0, "limit": 1, "offset": 0, "next": 0}}
 			}`
-			w.Write([]byte(jobsResponse))
+			_, _ = w.Write([]byte(jobsResponse))
 
 		case strings.Contains(r.URL.Path, "/storage/storage-units"):
 			w.Header().Set("Content-Type", "application/json")
@@ -189,7 +189,7 @@ func TestEndToEndWorkflowAPI120(t *testing.T) {
 				}],
 				"meta": {"pagination": {"first": 0, "last": 0}}
 			}`
-			w.Write([]byte(storageResponse))
+			_, _ = w.Write([]byte(storageResponse))
 
 		default:
 			w.WriteHeader(http.StatusNotFound)
@@ -222,12 +222,12 @@ func TestEndToEndFallbackScenario(t *testing.T) {
 	// Create mock server that only supports API 3.0
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
-		
+
 		// Only accept API 3.0
 		if strings.Contains(acceptHeader, "version=13.0") || strings.Contains(acceptHeader, "version=12.0") {
 			w.WriteHeader(http.StatusNotAcceptable)
-			json.NewEncoder(w).Encode(map[string]string{
-				"errorCode": "UNSUPPORTED_API_VERSION",
+			_ = json.NewEncoder(w).Encode(map[string]string{
+				"errorCode":    "UNSUPPORTED_API_VERSION",
 				"errorMessage": "API version not supported",
 			})
 			return
@@ -256,7 +256,7 @@ func TestEndToEndFallbackScenario(t *testing.T) {
 					}],
 					"meta": {"pagination": {"first": 0, "last": 0, "limit": 1, "offset": 0, "next": 0}}
 				}`
-				w.Write([]byte(jobsResponse))
+				_, _ = w.Write([]byte(jobsResponse))
 
 			case strings.Contains(r.URL.Path, "/storage/storage-units"):
 				w.Header().Set("Content-Type", "application/json")
@@ -276,7 +276,7 @@ func TestEndToEndFallbackScenario(t *testing.T) {
 					}],
 					"meta": {"pagination": {"first": 0, "last": 0}}
 				}`
-				w.Write([]byte(storageResponse))
+				_, _ = w.Write([]byte(storageResponse))
 
 			default:
 				w.WriteHeader(http.StatusNotFound)
@@ -322,8 +322,8 @@ func TestEndToEndErrorScenarios(t *testing.T) {
 			name: "Authentication Error",
 			serverBehavior: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusUnauthorized)
-				json.NewEncoder(w).Encode(map[string]string{
-					"errorCode": "INVALID_CREDENTIALS",
+				_ = json.NewEncoder(w).Encode(map[string]string{
+					"errorCode":    "INVALID_CREDENTIALS",
 					"errorMessage": "Invalid API key",
 				})
 			},
@@ -334,8 +334,8 @@ func TestEndToEndErrorScenarios(t *testing.T) {
 			name: "Server Error with Retry",
 			serverBehavior: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusInternalServerError)
-				json.NewEncoder(w).Encode(map[string]string{
-					"errorCode": "INTERNAL_ERROR",
+				_ = json.NewEncoder(w).Encode(map[string]string{
+					"errorCode":    "INTERNAL_ERROR",
 					"errorMessage": "Internal server error",
 				})
 			},
@@ -357,7 +357,7 @@ func TestEndToEndErrorScenarios(t *testing.T) {
 			serverBehavior: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte("invalid json"))
+				_, _ = w.Write([]byte("invalid json"))
 			},
 			expectError:   true,
 			errorContains: "unmarshal",
@@ -393,7 +393,7 @@ func TestEndToEndErrorScenarios(t *testing.T) {
 // TestEndToEndMetricsConsistency verifies metrics are consistent across API versions
 func TestEndToEndMetricsConsistency(t *testing.T) {
 	versions := []string{"3.0", "12.0", "13.0"}
-	
+
 	for _, version := range versions {
 		t.Run(fmt.Sprintf("API_%s", strings.ReplaceAll(version, ".", "_")), func(t *testing.T) {
 			server := createVersionedMockServer(t, version)
@@ -439,7 +439,7 @@ func TestEndToEndGracefulDegradation(t *testing.T) {
 		case strings.Contains(r.URL.Path, "/storage/storage-units"):
 			// Storage endpoint fails
 			w.WriteHeader(http.StatusInternalServerError)
-			
+
 		case strings.Contains(r.URL.Path, "/admin/jobs"):
 			// Jobs endpoint succeeds with data
 			w.Header().Set("Content-Type", "application/json")
@@ -461,8 +461,8 @@ func TestEndToEndGracefulDegradation(t *testing.T) {
 				}],
 				"meta": {"pagination": {"first": 0, "last": 0, "limit": 1, "offset": 0, "next": 0}}
 			}`
-			w.Write([]byte(jobsResponse))
-			
+			_, _ = w.Write([]byte(jobsResponse))
+
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -518,7 +518,7 @@ func createTestConfigTLS(serverURL, apiVersion string) models.Config {
 func createVersionedMockServer(t *testing.T, version string) *httptest.Server {
 	return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
-		
+
 		if !strings.Contains(acceptHeader, fmt.Sprintf("version=%s", version)) {
 			w.WriteHeader(http.StatusNotAcceptable)
 			return
@@ -545,7 +545,7 @@ func createVersionedMockServer(t *testing.T, version string) *httptest.Server {
 				}],
 				"meta": {"pagination": {"first": 0, "last": 0, "limit": 1, "offset": 0, "next": 0}}
 			}`, version)
-			w.Write([]byte(jobsResponse))
+			_, _ = w.Write([]byte(jobsResponse))
 
 		case strings.Contains(r.URL.Path, "/storage/storage-units"):
 			w.Header().Set("Content-Type", "application/json")
@@ -565,7 +565,7 @@ func createVersionedMockServer(t *testing.T, version string) *httptest.Server {
 				}],
 				"meta": {"pagination": {"first": 0, "last": 0}}
 			}`, version, version)
-			w.Write([]byte(storageResponse))
+			_, _ = w.Write([]byte(storageResponse))
 
 		default:
 			w.WriteHeader(http.StatusNotFound)

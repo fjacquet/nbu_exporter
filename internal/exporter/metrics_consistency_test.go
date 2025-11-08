@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -138,7 +138,7 @@ func TestMetricsConsistency_LabelValues(t *testing.T) {
 		// Create mock server
 		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(jobData)
+			_ = json.NewEncoder(w).Encode(jobData)
 		}))
 		defer server.Close()
 
@@ -339,11 +339,11 @@ func createMockServerWithJobs(version string) *httptest.Server {
 		if strings.Contains(r.URL.Path, "/admin/jobs") {
 			response := createTestJobData()
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
 			response := createTestStorageData()
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -356,14 +356,14 @@ func createMockServerWithStorage(version string) *httptest.Server {
 		if strings.Contains(r.URL.Path, "/storage/storage-units") {
 			response := createTestStorageData()
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		} else if strings.Contains(r.URL.Path, "/admin/jobs") {
 			// Return empty jobs response
 			response := map[string]interface{}{
 				"data": []interface{}{},
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -378,14 +378,14 @@ func createTestJobData() map[string]interface{} {
 				"type": "job",
 				"id":   "1",
 				"attributes": map[string]interface{}{
-					"jobId":                 1,
-					"jobType":               "BACKUP",
-					"policyType":            "Standard",
-					"status":                0, // 0 = success/done
-					"state":                 "DONE",
-					"kilobytesTransferred":  1024000,
-					"startTime":             time.Now().Add(-1 * time.Hour).Format(time.RFC3339),
-					"endTime":               time.Now().Format(time.RFC3339),
+					"jobId":                1,
+					"jobType":              "BACKUP",
+					"policyType":           "Standard",
+					"status":               0, // 0 = success/done
+					"state":                "DONE",
+					"kilobytesTransferred": 1024000,
+					"startTime":            time.Now().Add(-1 * time.Hour).Format(time.RFC3339),
+					"endTime":              time.Now().Format(time.RFC3339),
 				},
 			},
 		},
@@ -405,8 +405,8 @@ func createTestStorageData() map[string]interface{} {
 				"type": "storageUnit",
 				"id":   "disk-pool-1",
 				"attributes": map[string]interface{}{
-					"name":              "disk-pool-1",
-					"storageServerType": "DISK",
+					"name":               "disk-pool-1",
+					"storageServerType":  "DISK",
 					"totalCapacityBytes": 1000000000000,
 					"usedCapacityBytes":  500000000000,
 					"freeCapacityBytes":  500000000000,

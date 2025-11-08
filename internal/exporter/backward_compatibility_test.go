@@ -43,7 +43,7 @@ func TestBackwardCompatibility_ExplicitVersion120(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -90,7 +90,7 @@ func TestBackwardCompatibility_ExplicitVersion30(t *testing.T) {
 			},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -143,7 +143,7 @@ func TestBackwardCompatibility_MissingVersion(t *testing.T) {
 				},
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 			return
 		} else if contains(acceptHeader, "version=3.0") {
 			attemptedVersions = append(attemptedVersions, "3.0")
@@ -246,7 +246,7 @@ func TestBackwardCompatibility_CollectorInitialization(t *testing.T) {
 				"data": []interface{}{},
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		}))
 		defer server.Close()
 
@@ -275,7 +275,7 @@ func TestBackwardCompatibility_CollectorInitialization(t *testing.T) {
 				"data": []interface{}{},
 			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		}))
 		defer server.Close()
 

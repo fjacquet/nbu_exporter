@@ -55,25 +55,25 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/fjacquet/nbu_exporter/internal/exporter/client.go (69.0%)</option>
+				<option value="file0">github.com/fjacquet/nbu_exporter/internal/exporter/client.go (71.7%)</option>
 				
 				<option value="file1">github.com/fjacquet/nbu_exporter/internal/exporter/metrics.go (50.0%)</option>
 				
 				<option value="file2">github.com/fjacquet/nbu_exporter/internal/exporter/netbackup.go (95.7%)</option>
 				
-				<option value="file3">github.com/fjacquet/nbu_exporter/internal/exporter/prometheus.go (95.5%)</option>
+				<option value="file3">github.com/fjacquet/nbu_exporter/internal/exporter/prometheus.go (97.7%)</option>
 				
 				<option value="file4">github.com/fjacquet/nbu_exporter/internal/exporter/version_detector.go (94.0%)</option>
 				
-				<option value="file5">github.com/fjacquet/nbu_exporter/internal/logging/logging.go (0.0%)</option>
+				<option value="file5">github.com/fjacquet/nbu_exporter/internal/logging/logging.go (84.6%)</option>
 				
-				<option value="file6">github.com/fjacquet/nbu_exporter/internal/models/Config.go (52.1%)</option>
+				<option value="file6">github.com/fjacquet/nbu_exporter/internal/models/Config.go (97.9%)</option>
 				
-				<option value="file7">github.com/fjacquet/nbu_exporter/internal/utils/date.go (0.0%)</option>
+				<option value="file7">github.com/fjacquet/nbu_exporter/internal/utils/date.go (100.0%)</option>
 				
-				<option value="file8">github.com/fjacquet/nbu_exporter/internal/utils/file.go (0.0%)</option>
+				<option value="file8">github.com/fjacquet/nbu_exporter/internal/utils/file.go (100.0%)</option>
 				
-				<option value="file9">github.com/fjacquet/nbu_exporter/internal/utils/pause.go (0.0%)</option>
+				<option value="file9">github.com/fjacquet/nbu_exporter/internal/utils/pause.go (100.0%)</option>
 				
 				<option value="file10">github.com/fjacquet/nbu_exporter/main.go (0.0%)</option>
 				
@@ -108,6 +108,7 @@ import (
         "crypto/tls"
         "encoding/json"
         "fmt"
+        "strings"
         "time"
 
         "github.com/fjacquet/nbu_exporter/internal/logging"
@@ -153,7 +154,7 @@ type NbuClient struct {
 //
 //        cfg := models.Config{...}
 //        client := NewNbuClient(cfg)
-func NewNbuClient(cfg models.Config) *NbuClient <span class="cov8" title="123">{
+func NewNbuClient(cfg models.Config) *NbuClient <span class="cov8" title="131">{
         client := resty.New().
                 SetTLSClientConfig(&amp;tls.Config{
                         InsecureSkipVerify: cfg.NbuServer.InsecureSkipVerify,
@@ -224,7 +225,7 @@ func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config) (
 }
 
 // getHeaders returns the standard headers for NBU API requests.
-func (c *NbuClient) getHeaders() map[string]string <span class="cov10" title="234">{
+func (c *NbuClient) getHeaders() map[string]string <span class="cov10" title="242">{
         // Construct versioned Accept header for NetBackup API 10.5+
         acceptHeader := fmt.Sprintf("application/vnd.netbackup+json;version=%s", c.cfg.NbuServer.APIVersion)
 
@@ -253,7 +254,7 @@ func (c *NbuClient) getHeaders() map[string]string <span class="cov10" title="23
 //
 //        var jobs models.Jobs
 //        err := client.FetchData(ctx, "https://nbu:1556/admin/jobs", &amp;jobs)
-func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{}) error <span class="cov9" title="157">{
+func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{}) error <span class="cov9" title="165">{
         resp, err := c.client.R().
                 SetContext(ctx).
                 SetHeaders(c.getHeaders()).
@@ -263,7 +264,7 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
                 return fmt.Errorf("HTTP request to %s failed: %w", url, err)
         }</span>
 
-        <span class="cov9" title="155">if resp.IsError() </span><span class="cov5" title="16">{
+        <span class="cov9" title="162">if resp.IsError() </span><span class="cov5" title="16">{
                 // Handle 406 Not Acceptable - API version not supported
                 if resp.StatusCode() == 406 </span><span class="cov3" title="6">{
                         errMsg := fmt.Sprintf(
@@ -293,11 +294,41 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
                 <span class="cov4" title="10">return fmt.Errorf("HTTP request to %s returned status %d: %s", url, resp.StatusCode(), resp.Status())</span>
         }
 
-        <span class="cov9" title="139">if err := json.Unmarshal(resp.Body(), target); err != nil </span><span class="cov1" title="1">{
-                return fmt.Errorf("failed to unmarshal response from %s: %w", url, err)
-        }</span>
+        // Validate Content-Type before attempting to unmarshal
+        <span class="cov9" title="146">contentType := resp.Header().Get("Content-Type")
+        if contentType != "" &amp;&amp; !strings.Contains(contentType, "application/json") &amp;&amp; !strings.Contains(contentType, "application/vnd.netbackup+json") </span><span class="cov4" title="7">{
+                // Server returned non-JSON content (likely HTML error page)
+                bodyPreview := string(resp.Body())
+                if len(bodyPreview) &gt; 200 </span><span class="cov0" title="0">{
+                        bodyPreview = bodyPreview[:200] + "..."
+                }</span>
+                
+                <span class="cov4" title="7">errMsg := fmt.Sprintf(
+                        "NetBackup server returned non-JSON response (Content-Type: %s).\n\n"+
+                                "This usually indicates:\n"+
+                                "1. Wrong API endpoint URL (check 'uri' in config.yaml)\n"+
+                                "2. Authentication failure (verify API key is valid)\n"+
+                                "3. Server configuration issue (check NetBackup REST API is enabled)\n\n"+
+                                "Request URL: %s\n"+
+                                "Response preview: %s",
+                        contentType,
+                        url,
+                        bodyPreview,
+                )
+                logging.LogError(errMsg)
+                return fmt.Errorf("server returned %s instead of JSON: %s", contentType, bodyPreview)</span>
+        }
 
-        <span class="cov9" title="138">return nil</span>
+        <span class="cov9" title="139">if err := json.Unmarshal(resp.Body(), target); err != nil </span><span class="cov3" title="4">{
+                // Provide more context for JSON unmarshaling errors
+                bodyPreview := string(resp.Body())
+                if len(bodyPreview) &gt; 200 </span><span class="cov0" title="0">{
+                        bodyPreview = bodyPreview[:200] + "..."
+                }</span>
+                <span class="cov3" title="4">return fmt.Errorf("failed to unmarshal JSON response from %s: %w\nResponse preview: %s", url, err, bodyPreview)</span>
+        }
+
+        <span class="cov9" title="136">return nil</span>
 }
 
 // DetectAPIVersion attempts to detect and validate the NetBackup API version by making
@@ -398,13 +429,13 @@ type JobStatusKey struct {
 
 // String returns a pipe-delimited string representation suitable for use as a map key.
 // Format: "name|type|size"
-func (k StorageMetricKey) String() string <span class="cov10" title="138">{
+func (k StorageMetricKey) String() string <span class="cov10" title="137">{
         return k.Name + "|" + k.Type + "|" + k.Size
 }</span>
 
 // String returns a pipe-delimited string representation suitable for use as a map key.
 // Format: "action|policyType|status"
-func (k JobMetricKey) String() string <span class="cov9" title="137">{
+func (k JobMetricKey) String() string <span class="cov10" title="137">{
         return k.Action + "|" + k.PolicyType + "|" + k.Status
 }</span>
 
@@ -482,11 +513,11 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
                 QueryParamOffset: "0",
         })
 
-        if err := client.FetchData(ctx, url, &amp;storages); err != nil </span><span class="cov4" title="5">{
+        if err := client.FetchData(ctx, url, &amp;storages); err != nil </span><span class="cov4" title="6">{
                 return fmt.Errorf("failed to fetch storage data: %w", err)
         }</span>
 
-        <span class="cov9" title="57">for _, data := range storages.Data </span><span class="cov9" title="70">{
+        <span class="cov9" title="56">for _, data := range storages.Data </span><span class="cov9" title="69">{
                 // Skip tape storage units
                 if data.Attributes.StorageType == storageTypeTape </span><span class="cov5" title="7">{
                         continue</span>
@@ -502,7 +533,7 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
                 storageMetrics[usedKey.String()] = float64(data.Attributes.UsedCapacityBytes)</span>
         }
 
-        <span class="cov9" title="57">log.Debugf("Fetched storage data for %d storage units", len(storages.Data))
+        <span class="cov9" title="55">log.Debugf("Fetched storage data for %d storage units", len(storages.Data))
         return nil</span>
 }
 
@@ -548,16 +579,16 @@ func FetchJobDetails(
 
         url := client.cfg.BuildURL(jobsPath, queryParams)
 
-        if err := client.FetchData(ctx, url, &amp;jobs); err != nil </span><span class="cov3" title="3">{
+        if err := client.FetchData(ctx, url, &amp;jobs); err != nil </span><span class="cov3" title="4">{
                 return -1, fmt.Errorf("failed to fetch job details at offset %d: %w", offset, err)
         }</span>
 
         // No more jobs to process
-        <span class="cov9" title="73">if len(jobs.Data) == 0 </span><span class="cov5" title="9">{
+        <span class="cov9" title="71">if len(jobs.Data) == 0 </span><span class="cov5" title="8">{
                 return -1, nil
         }</span>
 
-        <span class="cov9" title="64">job := jobs.Data[0]
+        <span class="cov9" title="63">job := jobs.Data[0]
 
         // Create structured metric keys
         jobKey := JobMetricKey{
@@ -614,13 +645,13 @@ func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, o
                         return ctx.Err()</span>
                 default:<span class="cov10" title="76">
                         nextOffset, err := fetchFunc(ctx, offset)
-                        if err != nil </span><span class="cov3" title="3">{
+                        if err != nil </span><span class="cov3" title="4">{
                                 return err
                         }</span>
-                        <span class="cov9" title="73">offset = nextOffset</span>
+                        <span class="cov9" title="72">offset = nextOffset</span>
                 }
         }
-        <span class="cov9" title="63">return nil</span>
+        <span class="cov9" title="61">return nil</span>
 }
 
 // FetchAllJobs aggregates job statistics by iterating over all paginated job data within
@@ -825,7 +856,7 @@ func (c *NbuCollector) Collect(ch chan&lt;- prometheus.Metric) <span class="cov8
 
         // Collect storage metrics
         storageMetrics := make(map[string]float64)
-        if err := FetchStorage(ctx, c.client, storageMetrics); err != nil </span><span class="cov1" title="1">{
+        if err := FetchStorage(ctx, c.client, storageMetrics); err != nil </span><span class="cov2" title="2">{
                 log.Errorf("Failed to fetch storage metrics: %v", err)
                 // Continue to try fetching job metrics even if storage fails
         }</span>
@@ -835,13 +866,13 @@ func (c *NbuCollector) Collect(ch chan&lt;- prometheus.Metric) <span class="cov8
         jobsCount := make(map[string]float64)
         jobsStatusCount := make(map[string]float64)
 
-        if err := FetchAllJobs(ctx, c.client, jobsSize, jobsCount, jobsStatusCount, c.cfg.Server.ScrapingInterval); err != nil </span><span class="cov0" title="0">{
+        if err := FetchAllJobs(ctx, c.client, jobsSize, jobsCount, jobsStatusCount, c.cfg.Server.ScrapingInterval); err != nil </span><span class="cov1" title="1">{
                 log.Errorf("Failed to fetch job metrics: %v", err)
                 // Continue to expose whatever metrics we have
         }</span>
 
         // Expose storage metrics
-        <span class="cov8" title="49">for key, value := range storageMetrics </span><span class="cov10" title="94">{
+        <span class="cov8" title="49">for key, value := range storageMetrics </span><span class="cov10" title="92">{
                 labels := strings.Split(key, "|")
                 ch &lt;- prometheus.MustNewConstMetric(
                         c.nbuDiskSize,
@@ -852,7 +883,7 @@ func (c *NbuCollector) Collect(ch chan&lt;- prometheus.Metric) <span class="cov8
         }</span>
 
         // Expose job size metrics
-        <span class="cov8" title="49">for key, value := range jobsSize </span><span class="cov8" title="45">{
+        <span class="cov8" title="49">for key, value := range jobsSize </span><span class="cov8" title="44">{
                 labels := strings.Split(key, "|")
                 ch &lt;- prometheus.MustNewConstMetric(
                         c.nbuJobsSize,
@@ -1145,19 +1176,19 @@ var programName = os.Args[0] + "-" + version
 
 // LogInfo logs an informational message with the programName field.
 // This function should be used to log informational messages during program execution.
-func LogInfo(msg string) <span class="cov0" title="0">{
+func LogInfo(msg string) <span class="cov8" title="4">{
         log.WithFields(log.Fields{"job": programName}).Info(msg)
 }</span>
 
 // LogPanic logs the provided error and exits the program with a non-zero exit code.
 // This function should be used to handle critical errors that prevent the program from continuing.
-func LogPanic(err error) <span class="cov0" title="0">{
+func LogPanic(err error) <span class="cov1" title="1">{
         log.WithFields(log.Fields{"job": programName}).Panic(err)
 }</span>
 
 // LogPanicMsg logs the provided message and exits the program with a non-zero exit code.
 // This function should be used to handle critical errors that prevent the program from continuing.
-func LogPanicMsg(msg string) <span class="cov0" title="0">{
+func LogPanicMsg(msg string) <span class="cov1" title="1">{
         log.WithFields(log.Fields{"job": programName}).Panic(msg)
 }</span>
 
@@ -1170,7 +1201,7 @@ func HandleError(err error) <span class="cov0" title="0">{
 
 // LogError logs the provided error message with the programName field.
 // This function should be used to log recoverable errors that do not terminate the program.
-func LogError(msg string) <span class="cov0" title="0">{
+func LogError(msg string) <span class="cov1" title="1">{
         log.WithFields(log.Fields{"job": programName}).Error(msg)
 }</span>
 
@@ -1181,12 +1212,12 @@ func LogError(msg string) <span class="cov0" title="0">{
 //   - logName: Path to the log file (will be created if it doesn't exist)
 //
 // Returns an error if the log file cannot be opened or created.
-func PrepareLogs(logName string) error <span class="cov0" title="0">{
+func PrepareLogs(logName string) error <span class="cov10" title="5">{
         logFile, err := os.OpenFile(logName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov4" title="2">{
                 return fmt.Errorf("failed to open log file: %v", err)
         }</span>
-        <span class="cov0" title="0">mw := io.MultiWriter(os.Stdout, logFile)
+        <span class="cov7" title="3">mw := io.MultiWriter(os.Stdout, logFile)
         log.SetOutput(mw)
         log.SetFormatter(&amp;log.JSONFormatter{PrettyPrint: true})
         return nil</span>
@@ -1249,9 +1280,9 @@ type Config struct {
 // SetDefaults sets default values for optional configuration fields.
 // Currently sets the default API version to "13.0" (NetBackup 11.0) if not specified.
 // This method is called automatically by Validate() before validation checks.
-func (c *Config) SetDefaults() <span class="cov8" title="20">{
+func (c *Config) SetDefaults() <span class="cov10" title="32">{
         // Set default API version for NetBackup 11.0
-        if c.NbuServer.APIVersion == "" </span><span class="cov4" title="4">{
+        if c.NbuServer.APIVersion == "" </span><span class="cov8" title="16">{
                 c.NbuServer.APIVersion = APIVersion130
         }</span>
 }
@@ -1269,72 +1300,72 @@ func (c *Config) SetDefaults() <span class="cov8" title="20">{
 // have appropriate default values.
 //
 // Returns an error describing the first validation failure encountered.
-func (c *Config) Validate() error <span class="cov8" title="18">{
+func (c *Config) Validate() error <span class="cov9" title="30">{
         // Set defaults before validation
         c.SetDefaults()
 
         // Validate server configuration
-        if c.Server.Port == "" </span><span class="cov0" title="0">{
+        if c.Server.Port == "" </span><span class="cov1" title="1">{
                 return errors.New("server port is required")
         }</span>
-        <span class="cov8" title="18">if port, err := strconv.Atoi(c.Server.Port); err != nil || port &lt; 1 || port &gt; 65535 </span><span class="cov0" title="0">{
+        <span class="cov9" title="29">if port, err := strconv.Atoi(c.Server.Port); err != nil || port &lt; 1 || port &gt; 65535 </span><span class="cov3" title="3">{
                 return fmt.Errorf("invalid server port: %s", c.Server.Port)
         }</span>
-        <span class="cov8" title="18">if c.Server.Host == "" </span><span class="cov0" title="0">{
+        <span class="cov9" title="26">if c.Server.Host == "" </span><span class="cov1" title="1">{
                 return errors.New("server host is required")
         }</span>
-        <span class="cov8" title="18">if c.Server.URI == "" </span><span class="cov0" title="0">{
+        <span class="cov9" title="25">if c.Server.URI == "" </span><span class="cov1" title="1">{
                 return errors.New("server URI is required")
         }</span>
-        <span class="cov8" title="18">if _, err := time.ParseDuration(c.Server.ScrapingInterval); err != nil </span><span class="cov0" title="0">{
+        <span class="cov9" title="24">if _, err := time.ParseDuration(c.Server.ScrapingInterval); err != nil </span><span class="cov1" title="1">{
                 return fmt.Errorf("invalid scraping interval: %w", err)
         }</span>
 
         // Validate NBU server configuration
-        <span class="cov8" title="18">if c.NbuServer.Host == "" </span><span class="cov0" title="0">{
+        <span class="cov9" title="23">if c.NbuServer.Host == "" </span><span class="cov1" title="1">{
                 return errors.New("NBU server host is required")
         }</span>
-        <span class="cov8" title="18">if c.NbuServer.Port == "" </span><span class="cov0" title="0">{
+        <span class="cov9" title="22">if c.NbuServer.Port == "" </span><span class="cov1" title="1">{
                 return errors.New("NBU server port is required")
         }</span>
-        <span class="cov8" title="18">if port, err := strconv.Atoi(c.NbuServer.Port); err != nil || port &lt; 1 || port &gt; 65535 </span><span class="cov0" title="0">{
+        <span class="cov8" title="21">if port, err := strconv.Atoi(c.NbuServer.Port); err != nil || port &lt; 1 || port &gt; 65535 </span><span class="cov0" title="0">{
                 return fmt.Errorf("invalid NBU server port: %s", c.NbuServer.Port)
         }</span>
-        <span class="cov8" title="18">if c.NbuServer.Scheme != "http" &amp;&amp; c.NbuServer.Scheme != "https" </span><span class="cov0" title="0">{
+        <span class="cov8" title="21">if c.NbuServer.Scheme != "http" &amp;&amp; c.NbuServer.Scheme != "https" </span><span class="cov1" title="1">{
                 return fmt.Errorf("invalid NBU server scheme: %s (must be http or https)", c.NbuServer.Scheme)
         }</span>
-        <span class="cov8" title="18">if c.NbuServer.APIKey == "" </span><span class="cov0" title="0">{
+        <span class="cov8" title="20">if c.NbuServer.APIKey == "" </span><span class="cov1" title="1">{
                 return errors.New("NBU server API key is required")
         }</span>
 
         // Validate API version format and check against supported versions
-        <span class="cov8" title="18">if c.NbuServer.APIVersion != "" </span><span class="cov8" title="18">{
+        <span class="cov8" title="19">if c.NbuServer.APIVersion != "" </span><span class="cov8" title="19">{
                 apiVersionPattern := regexp.MustCompile(`^\d+\.\d+$`)
                 if !apiVersionPattern.MatchString(c.NbuServer.APIVersion) </span><span class="cov4" title="4">{
                         return fmt.Errorf("invalid API version format: %s (must be in format X.Y, e.g., 13.0)", c.NbuServer.APIVersion)
                 }</span>
 
                 // Check if the version is in the supported list
-                <span class="cov7" title="14">supported := false
-                for _, version := range SupportedAPIVersions </span><span class="cov10" title="30">{
-                        if c.NbuServer.APIVersion == version </span><span class="cov6" title="9">{
+                <span class="cov8" title="15">supported := false
+                for _, version := range SupportedAPIVersions </span><span class="cov9" title="31">{
+                        if c.NbuServer.APIVersion == version </span><span class="cov6" title="10">{
                                 supported = true
                                 break</span>
                         }
                 }
-                <span class="cov7" title="14">if !supported </span><span class="cov5" title="5">{
+                <span class="cov8" title="15">if !supported </span><span class="cov5" title="5">{
                         return fmt.Errorf("unsupported API version: %s (supported versions: %v)", c.NbuServer.APIVersion, SupportedAPIVersions)
                 }</span>
         }
 
-        <span class="cov6" title="9">return nil</span>
+        <span class="cov6" title="10">return nil</span>
 }
 
 // GetNBUBaseURL returns the complete base URL for the NetBackup server.
 // Format: scheme://host:port/uri
 //
 // Example: "https://nbu-master.example.com:1556/netbackup"
-func (c *Config) GetNBUBaseURL() string <span class="cov0" title="0">{
+func (c *Config) GetNBUBaseURL() string <span class="cov5" title="6">{
         return fmt.Sprintf("%s://%s:%s%s", c.NbuServer.Scheme, c.NbuServer.Host, c.NbuServer.Port, c.NbuServer.URI)
 }</span>
 
@@ -1342,7 +1373,7 @@ func (c *Config) GetNBUBaseURL() string <span class="cov0" title="0">{
 // Format: host:port
 //
 // Example: "0.0.0.0:2112"
-func (c *Config) GetServerAddress() string <span class="cov0" title="0">{
+func (c *Config) GetServerAddress() string <span class="cov2" title="2">{
         return fmt.Sprintf("%s:%s", c.Server.Host, c.Server.Port)
 }</span>
 
@@ -1352,7 +1383,7 @@ func (c *Config) GetServerAddress() string <span class="cov0" title="0">{
 // Example: "5m" -&gt; 5 * time.Minute
 //
 // Returns an error if the interval string cannot be parsed.
-func (c *Config) GetScrapingDuration() (time.Duration, error) <span class="cov0" title="0">{
+func (c *Config) GetScrapingDuration() (time.Duration, error) <span class="cov5" title="5">{
         return time.ParseDuration(c.Server.ScrapingInterval)
 }</span>
 
@@ -1362,11 +1393,11 @@ func (c *Config) GetScrapingDuration() (time.Duration, error) <span class="cov0"
 // Example: "abcd1234efgh5678" -&gt; "abcd****5678"
 //
 // For keys shorter than 8 characters, returns "****".
-func (c *Config) MaskAPIKey() string <span class="cov0" title="0">{
-        if len(c.NbuServer.APIKey) &lt;= 8 </span><span class="cov0" title="0">{
+func (c *Config) MaskAPIKey() string <span class="cov5" title="6">{
+        if len(c.NbuServer.APIKey) &lt;= 8 </span><span class="cov3" title="3">{
                 return "****"
         }</span>
-        <span class="cov0" title="0">return c.NbuServer.APIKey[:4] + "****" + c.NbuServer.APIKey[len(c.NbuServer.APIKey)-4:]</span>
+        <span class="cov3" title="3">return c.NbuServer.APIKey[:4] + "****" + c.NbuServer.APIKey[len(c.NbuServer.APIKey)-4:]</span>
 }
 
 // BuildURL constructs a complete URL from the base URL, path, and query parameters.
@@ -1383,14 +1414,14 @@ func (c *Config) MaskAPIKey() string <span class="cov0" title="0">{
 //            "page[offset]": "0",
 //        })
 //        // Returns: "https://nbu:1556/netbackup/admin/jobs?page[limit]=100&amp;page[offset]=0"
-func (c *Config) BuildURL(path string, queryParams map[string]string) string <span class="cov0" title="0">{
+func (c *Config) BuildURL(path string, queryParams map[string]string) string <span class="cov4" title="4">{
         u, _ := url.Parse(c.GetNBUBaseURL())
         u.Path = path
         q := u.Query()
-        for key, value := range queryParams </span><span class="cov0" title="0">{
+        for key, value := range queryParams </span><span class="cov5" title="5">{
                 q.Set(key, value)
         }</span>
-        <span class="cov0" title="0">u.RawQuery = q.Encode()
+        <span class="cov4" title="4">u.RawQuery = q.Encode()
         return u.String()</span>
 }
 </pre>
@@ -1405,7 +1436,7 @@ import (
 
 // ConvertTimeToNBUDate converts a time.Time value to RFC3339Nano format
 // for use in NetBackup API queries.
-func ConvertTimeToNBUDate(t time.Time) string <span class="cov0" title="0">{
+func ConvertTimeToNBUDate(t time.Time) string <span class="cov10" title="6">{
         return t.Format(time.RFC3339Nano)
 }</span>
 </pre>
@@ -1422,7 +1453,7 @@ import (
 )
 
 // FileExists checks if the given file exists and is accessible.
-func FileExists(filename string) bool <span class="cov0" title="0">{
+func FileExists(filename string) bool <span class="cov7" title="4">{
         _, err := os.Stat(filename)
         return !os.IsNotExist(err)
 }</span>
@@ -1442,21 +1473,21 @@ func FileExists(filename string) bool <span class="cov0" title="0">{
 //
 //        var cfg models.Config
 //        err := ReadFile(&amp;cfg, "config.yaml")
-func ReadFile(cfg *models.Config, filepath string) error <span class="cov0" title="0">{
+func ReadFile(cfg *models.Config, filepath string) error <span class="cov10" title="6">{
         f, err := os.Open(filepath)
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov4" title="2">{
                 return fmt.Errorf("failed to open config file %s: %w", filepath, err)
         }</span>
-        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+        <span class="cov7" title="4">defer func() </span><span class="cov7" title="4">{
                 _ = f.Close()
         }</span>()
 
-        <span class="cov0" title="0">decoder := yaml.NewDecoder(f)
-        if err := decoder.Decode(cfg); err != nil </span><span class="cov0" title="0">{
+        <span class="cov7" title="4">decoder := yaml.NewDecoder(f)
+        if err := decoder.Decode(cfg); err != nil </span><span class="cov4" title="2">{
                 return fmt.Errorf("failed to decode config file %s: %w", filepath, err)
         }</span>
 
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov4" title="2">return nil</span>
 }
 </pre>
 		
@@ -1471,15 +1502,15 @@ import (
 
 // Pause sleeps for the duration specified by the interval string.
 // If there is an error parsing the duration, it will panic with the error message.
-func Pause(interval string) <span class="cov0" title="0">{
+func Pause(interval string) <span class="cov10" title="8">{
         var duration time.Duration
         var errMsg error
         duration, errMsg = time.ParseDuration(interval)
-        if errMsg != nil </span><span class="cov0" title="0">{
+        if errMsg != nil </span><span class="cov7" title="4">{
                 logging.LogPanic(errMsg)
         }</span>
 
-        <span class="cov0" title="0">time.Sleep(duration)</span>
+        <span class="cov7" title="4">time.Sleep(duration)</span>
 }
 </pre>
 		

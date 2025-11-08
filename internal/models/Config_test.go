@@ -1,7 +1,9 @@
 package models
 
 import (
+	"strings"
 	"testing"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -390,6 +392,502 @@ func TestAPIVersionConstants(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.constant != tt.expected {
 				t.Errorf("%s = %s, want %s", tt.name, tt.constant, tt.expected)
+			}
+		})
+	}
+}
+
+func TestConfig_GetNBUBaseURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   Config
+		expected string
+	}{
+		{
+			name: "standard HTTPS URL",
+			config: Config{
+				NbuServer: struct {
+					Port               string `yaml:"port"`
+					Scheme             string `yaml:"scheme"`
+					URI                string `yaml:"uri"`
+					Domain             string `yaml:"domain"`
+					DomainType         string `yaml:"domainType"`
+					Host               string `yaml:"host"`
+					APIKey             string `yaml:"apiKey"`
+					APIVersion         string `yaml:"apiVersion"`
+					ContentType        string `yaml:"contentType"`
+					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+				}{
+					Scheme: "https",
+					Host:   "nbu-master.example.com",
+					Port:   "1556",
+					URI:    "/netbackup",
+				},
+			},
+			expected: "https://nbu-master.example.com:1556/netbackup",
+		},
+		{
+			name: "HTTP URL with different port",
+			config: Config{
+				NbuServer: struct {
+					Port               string `yaml:"port"`
+					Scheme             string `yaml:"scheme"`
+					URI                string `yaml:"uri"`
+					Domain             string `yaml:"domain"`
+					DomainType         string `yaml:"domainType"`
+					Host               string `yaml:"host"`
+					APIKey             string `yaml:"apiKey"`
+					APIVersion         string `yaml:"apiVersion"`
+					ContentType        string `yaml:"contentType"`
+					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+				}{
+					Scheme: "http",
+					Host:   "localhost",
+					Port:   "8080",
+					URI:    "/api",
+				},
+			},
+			expected: "http://localhost:8080/api",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.config.GetNBUBaseURL()
+			if result != tt.expected {
+				t.Errorf("GetNBUBaseURL() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestConfig_GetServerAddress(t *testing.T) {
+	tests := []struct {
+		name     string
+		config   Config
+		expected string
+	}{
+		{
+			name: "standard server address",
+			config: Config{
+				Server: struct {
+					Port             string `yaml:"port"`
+					Host             string `yaml:"host"`
+					URI              string `yaml:"uri"`
+					ScrapingInterval string `yaml:"scrapingInterval"`
+					LogName          string `yaml:"logName"`
+				}{
+					Host: "0.0.0.0",
+					Port: "2112",
+				},
+			},
+			expected: "0.0.0.0:2112",
+		},
+		{
+			name: "localhost with custom port",
+			config: Config{
+				Server: struct {
+					Port             string `yaml:"port"`
+					Host             string `yaml:"host"`
+					URI              string `yaml:"uri"`
+					ScrapingInterval string `yaml:"scrapingInterval"`
+					LogName          string `yaml:"logName"`
+				}{
+					Host: "localhost",
+					Port: "9090",
+				},
+			},
+			expected: "localhost:9090",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.config.GetServerAddress()
+			if result != tt.expected {
+				t.Errorf("GetServerAddress() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestConfig_GetScrapingDuration(t *testing.T) {
+	tests := []struct {
+		name        string
+		interval    string
+		expected    time.Duration
+		expectError bool
+	}{
+		{
+			name:        "5 minutes",
+			interval:    "5m",
+			expected:    5 * time.Minute,
+			expectError: false,
+		},
+		{
+			name:        "1 hour",
+			interval:    "1h",
+			expected:    1 * time.Hour,
+			expectError: false,
+		},
+		{
+			name:        "30 seconds",
+			interval:    "30s",
+			expected:    30 * time.Second,
+			expectError: false,
+		},
+		{
+			name:        "invalid format",
+			interval:    "invalid",
+			expected:    0,
+			expectError: true,
+		},
+		{
+			name:        "empty string",
+			interval:    "",
+			expected:    0,
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Server: struct {
+					Port             string `yaml:"port"`
+					Host             string `yaml:"host"`
+					URI              string `yaml:"uri"`
+					ScrapingInterval string `yaml:"scrapingInterval"`
+					LogName          string `yaml:"logName"`
+				}{
+					ScrapingInterval: tt.interval,
+				},
+			}
+
+			result, err := config.GetScrapingDuration()
+
+			if tt.expectError {
+				if err == nil {
+					t.Error("Expected error, got nil")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				if result != tt.expected {
+					t.Errorf("GetScrapingDuration() = %v, want %v", result, tt.expected)
+				}
+			}
+		})
+	}
+}
+
+func TestConfig_MaskAPIKey(t *testing.T) {
+	tests := []struct {
+		name     string
+		apiKey   string
+		expected string
+	}{
+		{
+			name:     "standard API key",
+			apiKey:   "abcd1234efgh5678ijkl",
+			expected: "abcd****ijkl",
+		},
+		{
+			name:     "short API key",
+			apiKey:   "short",
+			expected: "****",
+		},
+		{
+			name:     "exactly 8 characters",
+			apiKey:   "12345678",
+			expected: "****",
+		},
+		{
+			name:     "9 characters",
+			apiKey:   "123456789",
+			expected: "1234****6789",
+		},
+		{
+			name:     "empty string",
+			apiKey:   "",
+			expected: "****",
+		},
+		{
+			name:     "very long key",
+			apiKey:   "abcdefghijklmnopqrstuvwxyz0123456789",
+			expected: "abcd****6789",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				NbuServer: struct {
+					Port               string `yaml:"port"`
+					Scheme             string `yaml:"scheme"`
+					URI                string `yaml:"uri"`
+					Domain             string `yaml:"domain"`
+					DomainType         string `yaml:"domainType"`
+					Host               string `yaml:"host"`
+					APIKey             string `yaml:"apiKey"`
+					APIVersion         string `yaml:"apiVersion"`
+					ContentType        string `yaml:"contentType"`
+					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+				}{
+					APIKey: tt.apiKey,
+				},
+			}
+
+			result := config.MaskAPIKey()
+			if result != tt.expected {
+				t.Errorf("MaskAPIKey() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestConfig_BuildURL(t *testing.T) {
+	config := Config{
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			Scheme: "https",
+			Host:   "nbu-master",
+			Port:   "1556",
+			URI:    "/netbackup",
+		},
+	}
+
+	tests := []struct {
+		name        string
+		path        string
+		queryParams map[string]string
+		contains    []string
+	}{
+		{
+			name:        "simple path without query params",
+			path:        "/admin/jobs",
+			queryParams: map[string]string{},
+			contains: []string{
+				"https://nbu-master:1556/admin/jobs",
+			},
+		},
+		{
+			name: "path with single query param",
+			path: "/admin/jobs",
+			queryParams: map[string]string{
+				"page[limit]": "100",
+			},
+			contains: []string{
+				"https://nbu-master:1556/admin/jobs",
+				"page%5Blimit%5D=100",
+			},
+		},
+		{
+			name: "path with multiple query params",
+			path: "/storage/storage-units",
+			queryParams: map[string]string{
+				"page[limit]":  "50",
+				"page[offset]": "0",
+				"filter[type]": "DISK",
+			},
+			contains: []string{
+				"https://nbu-master:1556/storage/storage-units",
+				"page%5Blimit%5D=50",
+				"page%5Boffset%5D=0",
+				"filter%5Btype%5D=DISK",
+			},
+		},
+		{
+			name: "path with special characters in params",
+			path: "/admin/jobs",
+			queryParams: map[string]string{
+				"filter[startTime]": "2024-11-08T10:00:00Z",
+			},
+			contains: []string{
+				"https://nbu-master:1556/admin/jobs",
+				"filter%5BstartTime%5D=2024-11-08T10%3A00%3A00Z",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := config.BuildURL(tt.path, tt.queryParams)
+
+			for _, expected := range tt.contains {
+				if !strings.Contains(result, expected) {
+					t.Errorf("BuildURL() result does not contain %q\nGot: %s", expected, result)
+				}
+			}
+		})
+	}
+}
+
+func TestConfig_Validate_ServerFields(t *testing.T) {
+	baseConfig := func() Config {
+		return Config{
+			Server: struct {
+				Port             string `yaml:"port"`
+				Host             string `yaml:"host"`
+				URI              string `yaml:"uri"`
+				ScrapingInterval string `yaml:"scrapingInterval"`
+				LogName          string `yaml:"logName"`
+			}{
+				Port:             "2112",
+				Host:             "localhost",
+				URI:              "/metrics",
+				ScrapingInterval: "5m",
+			},
+			NbuServer: struct {
+				Port               string `yaml:"port"`
+				Scheme             string `yaml:"scheme"`
+				URI                string `yaml:"uri"`
+				Domain             string `yaml:"domain"`
+				DomainType         string `yaml:"domainType"`
+				Host               string `yaml:"host"`
+				APIKey             string `yaml:"apiKey"`
+				APIVersion         string `yaml:"apiVersion"`
+				ContentType        string `yaml:"contentType"`
+				InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			}{
+				Port:   "1556",
+				Scheme: "https",
+				URI:    "/netbackup",
+				Host:   "nbu-master",
+				APIKey: "test-key",
+			},
+		}
+	}
+
+	tests := []struct {
+		name      string
+		modify    func(*Config)
+		wantError bool
+		errMsg    string
+	}{
+		{
+			name:      "valid config",
+			modify:    func(c *Config) {},
+			wantError: false,
+		},
+		{
+			name: "missing server port",
+			modify: func(c *Config) {
+				c.Server.Port = ""
+			},
+			wantError: true,
+			errMsg:    "server port is required",
+		},
+		{
+			name: "invalid server port - too high",
+			modify: func(c *Config) {
+				c.Server.Port = "99999"
+			},
+			wantError: true,
+			errMsg:    "invalid server port",
+		},
+		{
+			name: "invalid server port - negative",
+			modify: func(c *Config) {
+				c.Server.Port = "-1"
+			},
+			wantError: true,
+			errMsg:    "invalid server port",
+		},
+		{
+			name: "invalid server port - non-numeric",
+			modify: func(c *Config) {
+				c.Server.Port = "abc"
+			},
+			wantError: true,
+			errMsg:    "invalid server port",
+		},
+		{
+			name: "missing server host",
+			modify: func(c *Config) {
+				c.Server.Host = ""
+			},
+			wantError: true,
+			errMsg:    "server host is required",
+		},
+		{
+			name: "missing server URI",
+			modify: func(c *Config) {
+				c.Server.URI = ""
+			},
+			wantError: true,
+			errMsg:    "server URI is required",
+		},
+		{
+			name: "invalid scraping interval",
+			modify: func(c *Config) {
+				c.Server.ScrapingInterval = "invalid"
+			},
+			wantError: true,
+			errMsg:    "invalid scraping interval",
+		},
+		{
+			name: "missing NBU host",
+			modify: func(c *Config) {
+				c.NbuServer.Host = ""
+			},
+			wantError: true,
+			errMsg:    "NBU server host is required",
+		},
+		{
+			name: "missing NBU port",
+			modify: func(c *Config) {
+				c.NbuServer.Port = ""
+			},
+			wantError: true,
+			errMsg:    "NBU server port is required",
+		},
+		{
+			name: "invalid NBU scheme",
+			modify: func(c *Config) {
+				c.NbuServer.Scheme = "ftp"
+			},
+			wantError: true,
+			errMsg:    "invalid NBU server scheme",
+		},
+		{
+			name: "missing API key",
+			modify: func(c *Config) {
+				c.NbuServer.APIKey = ""
+			},
+			wantError: true,
+			errMsg:    "NBU server API key is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := baseConfig()
+			tt.modify(&config)
+
+			err := config.Validate()
+
+			if tt.wantError {
+				if err == nil {
+					t.Error("Expected error, got nil")
+				} else if tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("Expected error containing %q, got %q", tt.errMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
 			}
 		})
 	}

@@ -33,7 +33,7 @@ func TestPerformance_StartupTimeWithVersionDetection(t *testing.T) {
 			"data": []interface{}{},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -66,7 +66,7 @@ func TestPerformance_StartupTimeWithExplicitVersion(t *testing.T) {
 			"data": []interface{}{},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -106,7 +106,7 @@ func TestPerformance_CompareStartupTimes(t *testing.T) {
 			"data": []interface{}{},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -157,11 +157,11 @@ func TestPerformance_RuntimePerformance(t *testing.T) {
 			if strings.Contains(r.URL.Path, "/admin/jobs") {
 				response := createTestJobData()
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(response)
+				_ = json.NewEncoder(w).Encode(response)
 			} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
 				response := createTestStorageData()
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(response)
+				_ = json.NewEncoder(w).Encode(response)
 			} else {
 				w.WriteHeader(http.StatusNotFound)
 			}
@@ -232,11 +232,11 @@ func TestPerformance_ConnectionReuse(t *testing.T) {
 		if strings.Contains(r.URL.Path, "/admin/jobs") {
 			response := createTestJobData()
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
 			response := createTestStorageData()
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		}
 	}))
 	defer server.Close()
@@ -282,11 +282,11 @@ func TestPerformance_MemoryUsage(t *testing.T) {
 			if strings.Contains(r.URL.Path, "/admin/jobs") {
 				response := createTestJobData()
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(response)
+				_ = json.NewEncoder(w).Encode(response)
 			} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
 				response := createTestStorageData()
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(response)
+				_ = json.NewEncoder(w).Encode(response)
 			}
 		}))
 		defer server.Close()
@@ -320,11 +320,11 @@ func TestPerformance_ConcurrentScrapes(t *testing.T) {
 		if strings.Contains(r.URL.Path, "/admin/jobs") {
 			response := createTestJobData()
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
 			response := createTestStorageData()
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(response)
+			_ = json.NewEncoder(w).Encode(response)
 		}
 	}))
 	defer server.Close()
@@ -386,7 +386,7 @@ func BenchmarkCollectorCreation(b *testing.B) {
 			"data": []interface{}{},
 		}
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -418,11 +418,11 @@ func BenchmarkMetricCollection(b *testing.B) {
 				if strings.Contains(r.URL.Path, "/admin/jobs") {
 					response := createTestJobData()
 					w.Header().Set("Content-Type", "application/json")
-					json.NewEncoder(w).Encode(response)
+					_ = json.NewEncoder(w).Encode(response)
 				} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
 					response := createTestStorageData()
 					w.Header().Set("Content-Type", "application/json")
-					json.NewEncoder(w).Encode(response)
+					_ = json.NewEncoder(w).Encode(response)
 				}
 			}))
 			defer server.Close()

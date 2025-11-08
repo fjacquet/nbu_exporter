@@ -202,7 +202,7 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 		if len(bodyPreview) > 200 {
 			bodyPreview = bodyPreview[:200] + "..."
 		}
-		
+
 		errMsg := fmt.Sprintf(
 			"NetBackup server returned non-JSON response (Content-Type: %s).\n\n"+
 				"This usually indicates:\n"+

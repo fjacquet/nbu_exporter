@@ -382,13 +382,6 @@ func TestNbuClient_AuthorizationHeaderUnchanged(t *testing.T) {
 	}
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // TestNbuClient_HeaderConstruction_AllVersions tests that headers are correctly
 // constructed for all three supported API versions (3.0, 12.0, 13.0)
 func TestNbuClient_HeaderConstruction_AllVersions(t *testing.T) {
@@ -698,7 +691,7 @@ func TestNbuClient_FetchData_HTMLResponse(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", tt.contentType)
 				w.WriteHeader(tt.statusCode)
-				w.Write([]byte(tt.body))
+				_, _ = w.Write([]byte(tt.body))
 			}))
 			defer server.Close()
 
@@ -772,7 +765,7 @@ func TestNbuClient_FetchData_InvalidJSON(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(200)
-				w.Write([]byte(tt.body))
+				_, _ = w.Write([]byte(tt.body))
 			}))
 			defer server.Close()
 
