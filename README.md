@@ -2,10 +2,11 @@
 
 A production-ready Prometheus exporter that collects backup job statistics and storage metrics from Veritas NetBackup REST API, exposing them for monitoring and visualization in Grafana.
 
+![CI](https://github.com/fjacquet/nbu_exporter/actions/workflows/ci.yml/badge.svg)
 ![Code Analysis](https://github.com/fjacquet/nbu_exporter/actions/workflows/codeql-analysis.yml/badge.svg)
 [![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=fjacquet_nbu_exporter&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=fjacquet_nbu_exporter)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=fjacquet_nbu_exporter&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=fjacquet_nbu_exporter)
-![Go build](https://github.com/fjacquet/nbu_exporter/actions/workflows/go.yml/badge.svg)
+[![Documentation](https://img.shields.io/badge/docs-github%20pages-blue)](https://fjacquet.github.io/nbu_exporter/)
 
 ## Features
 
