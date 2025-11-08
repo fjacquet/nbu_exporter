@@ -81,7 +81,7 @@ type Jobs struct {
 			Cancellable                int       `json:"cancellable"`
 			JobQueueReason             int       `json:"jobQueueReason"`
 			JobQueueResource           string    `json:"jobQueueResource"`
-			KilobytesDataTransferred   int       `json:"kilobytesDataTransferred"`
+			KilobytesDataTransferred   int       `json:"kilobytesDataTransferred,omitempty"`
 			ElapsedTime                string    `json:"elapsedTime"`
 			OffHostType                string    `json:"offHostType"`
 		} `json:"attributes"`

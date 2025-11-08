@@ -1,0 +1,162 @@
+{
+  "data": [
+    {
+      "type": "storageUnit",
+      "id": "disk-pool-1",
+      "links": {
+        "self": {
+          "href": "/netbackup/storage/storage-units/disk-pool-1"
+        }
+      },
+      "attributes": {
+        "name": "disk-pool-1",
+        "storageType": "DISK",
+        "storageSubType": "AdvancedDisk",
+        "storageServerType": "MEDIA_SERVER",
+        "useAnyAvailableMediaServer": true,
+        "accelerator": false,
+        "instantAccessEnabled": false,
+        "isCloudSTU": false,
+        "freeCapacityBytes": 5368709120000,
+        "totalCapacityBytes": 10737418240000,
+        "usedCapacityBytes": 5368709120000,
+        "maxFragmentSizeMegabytes": 2048,
+        "maxConcurrentJobs": 4,
+        "onDemandOnly": false,
+        "storageCategory": "PRIMARY",
+        "replicationCapable": true,
+        "replicationSourceCapable": true,
+        "replicationTargetCapable": false,
+        "snapshot": false,
+        "mirror": false,
+        "independent": true,
+        "primary": true,
+        "scaleOutEnabled": false,
+        "wormCapable": false,
+        "useWorm": false
+      },
+      "relationships": {
+        "diskPool": {
+          "links": {
+            "related": {
+              "href": "/netbackup/storage/disk-pools/dp-1"
+            }
+          },
+          "data": {
+            "type": "diskPool",
+            "id": "dp-1"
+          }
+        }
+      }
+    },
+    {
+      "type": "storageUnit",
+      "id": "cloud-stu-1",
+      "links": {
+        "self": {
+          "href": "/netbackup/storage/storage-units/cloud-stu-1"
+        }
+      },
+      "attributes": {
+        "name": "cloud-stu-1",
+        "storageType": "CLOUD",
+        "storageSubType": "CloudCatalyst",
+        "storageServerType": "MEDIA_SERVER",
+        "useAnyAvailableMediaServer": false,
+        "accelerator": true,
+        "instantAccessEnabled": true,
+        "isCloudSTU": true,
+        "freeCapacityBytes": 107374182400000,
+        "totalCapacityBytes": 214748364800000,
+        "usedCapacityBytes": 107374182400000,
+        "maxFragmentSizeMegabytes": 4096,
+        "maxConcurrentJobs": 8,
+        "onDemandOnly": false,
+        "storageCategory": "CLOUD",
+        "replicationCapable": true,
+        "replicationSourceCapable": false,
+        "replicationTargetCapable": true,
+        "snapshot": true,
+        "mirror": false,
+        "independent": false,
+        "primary": false,
+        "scaleOutEnabled": true,
+        "wormCapable": true,
+        "useWorm": true
+      },
+      "relationships": {
+        "diskPool": {
+          "links": {
+            "related": {
+              "href": "/netbackup/storage/disk-pools/dp-2"
+            }
+          },
+          "data": {
+            "type": "diskPool",
+            "id": "dp-2"
+          }
+        }
+      }
+    },
+    {
+      "type": "storageUnit",
+      "id": "tape-stu-1",
+      "links": {
+        "self": {
+          "href": "/netbackup/storage/storage-units/tape-stu-1"
+        }
+      },
+      "attributes": {
+        "name": "tape-stu-1",
+        "storageType": "TAPE",
+        "storageSubType": "LTO",
+        "storageServerType": "MEDIA_SERVER",
+        "useAnyAvailableMediaServer": false,
+        "accelerator": false,
+        "instantAccessEnabled": false,
+        "isCloudSTU": false,
+        "freeCapacityBytes": 0,
+        "totalCapacityBytes": 0,
+        "usedCapacityBytes": 0,
+        "maxFragmentSizeMegabytes": 0,
+        "maxConcurrentJobs": 2,
+        "onDemandOnly": true
+      },
+      "relationships": {
+        "diskPool": {
+          "links": {
+            "related": {
+              "href": ""
+            }
+          },
+          "data": {
+            "type": "",
+            "id": ""
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "count": 3,
+      "offset": 0,
+      "limit": 100,
+      "first": 0,
+      "last": 2,
+      "page": 1,
+      "pages": 1
+    }
+  },
+  "links": {
+    "self": {
+      "href": "/netbackup/storage/storage-units?page[limit]=100&page[offset]=0"
+    },
+    "first": {
+      "href": "/netbackup/storage/storage-units?page[limit]=100&page[offset]=0"
+    },
+    "last": {
+      "href": "/netbackup/storage/storage-units?page[limit]=100&page[offset]=0"
+    }
+  }
+}

@@ -1,38 +1,32 @@
 package utils
 
 import (
+	"fmt"
 	"os"
 
-	"github.com/fjacquet/nbu_exporter/internal/logging"
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"gopkg.in/yaml.v2"
 )
 
-// test if a file exists
-//
-// fileExists checks if the given file exists.
-// It returns true if the file exists, and false otherwise.
+// FileExists checks if the given file exists.
 func FileExists(filename string) bool {
 	_, err := os.Stat(filename)
 	return !os.IsNotExist(err)
 }
 
-// readFile do read a yaml file
 // ReadFile reads the configuration from the specified YAML file.
-//
-// It opens the file, creates a YAML decoder, and decodes the configuration into the provided Config struct.
-// If any errors occur during the process, they are passed to the ProcessError function.
-func ReadFile(Cfg *models.Config, filepath string) {
+// It returns an error if the file cannot be opened or parsed.
+func ReadFile(cfg *models.Config, filepath string) error {
 	f, err := os.Open(filepath)
 	if err != nil {
-		logging.HandleError(err)
+		return fmt.Errorf("failed to open config file %s: %w", filepath, err)
 	}
 	defer f.Close()
 
 	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(Cfg)
-	if err != nil {
-		logging.HandleError(err)
-		return
+	if err := decoder.Decode(cfg); err != nil {
+		return fmt.Errorf("failed to decode config file %s: %w", filepath, err)
 	}
+
+	return nil
 }

@@ -24,6 +24,18 @@ type Storages struct {
 			MaxFragmentSizeMegabytes   int    `json:"maxFragmentSizeMegabytes"`
 			MaxConcurrentJobs          int    `json:"maxConcurrentJobs"`
 			OnDemandOnly               bool   `json:"onDemandOnly"`
+			// NetBackup 10.5 API optional fields
+			StorageCategory          string `json:"storageCategory,omitempty"`
+			ReplicationCapable       bool   `json:"replicationCapable,omitempty"`
+			ReplicationSourceCapable bool   `json:"replicationSourceCapable,omitempty"`
+			ReplicationTargetCapable bool   `json:"replicationTargetCapable,omitempty"`
+			Snapshot                 bool   `json:"snapshot,omitempty"`
+			Mirror                   bool   `json:"mirror,omitempty"`
+			Independent              bool   `json:"independent,omitempty"`
+			Primary                  bool   `json:"primary,omitempty"`
+			ScaleOutEnabled          bool   `json:"scaleOutEnabled,omitempty"`
+			WormCapable              bool   `json:"wormCapable,omitempty"`
+			UseWorm                  bool   `json:"useWorm,omitempty"`
 		} `json:"attributes,omitempty"`
 		Relationships struct {
 			DiskPool struct {

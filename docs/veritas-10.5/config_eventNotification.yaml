@@ -1,0 +1,337 @@
+openapi: 3.0.0
+info:
+  title: Workload Event Notification Configuration
+  version: '12.0'
+  description: |
+    API set for configuration of workload event notifications.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+components:
+  schemas:
+    eventListenerConfigRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              description: The resource type.
+              enum:
+                - cosCreateEventListenerConfig
+            attributes:
+              type: object
+              required:
+                - configName
+                - cloudObjectStoreAccountName
+                - hostName
+                - provider
+                - authType
+                - credName
+                - port
+              properties:
+                configName:
+                  type: string
+                  description: >-
+                    The name of the configuration for the event listener
+                    service.
+                cloudObjectStoreAccountName:
+                  type: string
+                  description: The name of the Cloud object store account.
+                hostName:
+                  type: string
+                  description: >-
+                    The host to use for creating the configuration for the event
+                    listener service.
+                provider:
+                  type: string
+                  description: The name of the cloud provider.
+                authType:
+                  type: string
+                  description: The name of the authentication type.
+                credName:
+                  type: string
+                  description: The name of the credential.
+                port:
+                  type: integer
+                  description: The port to be used for the event listener service.
+    eventListenerConfigRestartRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              description: The resource type.
+              enum:
+                - cosRestartEventListenerConfig
+            attributes:
+              type: object
+              required:
+                - configName
+              properties:
+                configName:
+                  type: string
+                  description: >-
+                    The name of the configuration for the event listener
+                    service.
+    updateEventListenerConfigRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              description: The resource type.
+              enum:
+                - cosCreateEventListenerConfig
+            attributes:
+              type: object
+              required:
+                - configName
+                - credName
+              properties:
+                configName:
+                  type: string
+                  description: >-
+                    The name of the configuration for the event listener
+                    service.
+                credName:
+                  type: string
+                  description: The name of the credential.
+    eventListenerPostConfigResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - id
+            - attributes
+          properties:
+            type:
+              type: string
+              enum:
+                - cosEventListenerConfigResponse
+            id:
+              type: string
+              description: The unique name of the event notification configuration..
+            attributes:
+              type: object
+              required:
+                - configName
+                - configStatus
+                - configStatusMessage
+              properties:
+                configName:
+                  type: string
+                  description: >-
+                    The name of the configuration for the event listener
+                    service.
+                configStatus:
+                  type: string
+                  enum:
+                    - SUCCESS
+                    - FAILED
+                    - IN_PROGRESS
+                    - DOWN
+                  description: Status of the created event listener service configuration.
+                configStatusMessage:
+                  type: string
+                  description: >-
+                    Status message of the created event listener service
+                    configuration.
+    eventListenerGetConfigResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - id
+            - attributes
+          properties:
+            type:
+              type: string
+              enum:
+                - cosEventListenerConfigResponse
+            id:
+              type: string
+              description: The unique name of the event notification configuration.
+            attributes:
+              type: object
+              required:
+                - configName
+                - cloudObjectStoreAccountName
+                - provider
+                - authType
+                - hostName
+                - credName
+                - eventDbCredName
+                - eventListenerEndpointUrl
+                - eventListenerSSLCert
+                - configStatus
+                - configCreatedDateTime
+                - lastUpdatedDateTimeEventConfiguration
+                - port
+              properties:
+                configName:
+                  type: string
+                  description: >-
+                    The name of the configuration for the event listener
+                    service.
+                cloudObjectStoreAccountName:
+                  type: string
+                  description: The name of the Cloud object store account.
+                provider:
+                  type: string
+                  description: The name of the cloud provider.
+                authType:
+                  type: string
+                  description: The name of the authentication type.
+                hostName:
+                  type: string
+                  description: >-
+                    The host to use for creating the configuration for the event
+                    listener service.
+                credName:
+                  type: string
+                  description: The name of the credential.
+                eventDbCredName:
+                  type: string
+                  description: The credential name for the event database.
+                eventListenerEndpointUrl:
+                  type: string
+                  description: >-
+                    The endpoint URL of the event listener to configure in
+                    cloud.
+                eventListenerSSLCert:
+                  type: string
+                  description: The event listener SSL certificate.
+                configStatus:
+                  type: string
+                  description: Status of the created event listener service configuration.
+                configCreatedDateTime:
+                  type: string
+                  format: date-time
+                  description: Config creation time of the event listener service.
+                lastUpdatedDateTimeEventConfiguration:
+                  type: string
+                  format: date-time
+                  description: Last updated time of the event listener service.
+                port:
+                  type: integer
+                  description: The port to be used for the event listener service.
+    eventListenerGetAllConfigResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+              - type
+              - id
+              - attributes
+            properties:
+              type:
+                type: string
+                enum:
+                  - cosEventListenerConfigResponse
+              id:
+                type: string
+                description: The unique name of the event notification configuration.
+              attributes:
+                type: object
+                required:
+                  - configName
+                  - cloudObjectStoreAccountName
+                  - provider
+                  - authType
+                  - hostName
+                  - credName
+                  - eventDbCredName
+                  - eventListenerEndpointUrl
+                  - eventListenerSSLCert
+                  - configStatus
+                  - configCreatedDateTime
+                  - lastUpdatedDateTimeEventConfiguration
+                  - port
+                properties:
+                  configName:
+                    type: string
+                    description: >-
+                      The name of the configuration for the event listener
+                      service.
+                  cloudObjectStoreAccountName:
+                    type: string
+                    description: The name of the Cloud object store account.
+                  provider:
+                    type: string
+                    description: The name of the cloud provider.
+                  authType:
+                    type: string
+                    description: The name of the authentication type.
+                  hostName:
+                    type: string
+                    description: >-
+                      The host to use for creating the configuration for the
+                      event listener service.
+                  credName:
+                    type: string
+                    description: The name of the credential.
+                  eventDbCredName:
+                    type: string
+                    description: The credential name for the event database.
+                  eventListenerEndpointUrl:
+                    type: string
+                    description: >-
+                      The endpoint URL of the event listener to configure in
+                      cloud.
+                  eventListenerSSLCert:
+                    type: string
+                    description: The event listener SSL certificate.
+                  configStatus:
+                    type: string
+                    description: >-
+                      Status of the created event listener service
+                      configuration.
+                  configCreatedDateTime:
+                    type: string
+                    format: date-time
+                    description: Config creation time of the event listener service.
+                  lastUpdatedDateTimeEventConfiguration:
+                    type: string
+                    format: date-time
+                    description: Last updated time of the event listener service.
+                  port:
+                    type: integer
+                    description: The port to be used for the event listener service.

@@ -1,0 +1,107 @@
+{
+  "examples": {
+    "unauthorized": {
+      "description": "401 Unauthorized - Invalid or missing API key",
+      "response": {
+        "errorCode": 2060003,
+        "errorMessage": "Authentication failed. The API key is invalid or has expired.",
+        "errorDetails": [
+          "Verify that the API key is correct and has not expired",
+          "Generate a new API key if necessary"
+        ]
+      }
+    },
+    "notAcceptable": {
+      "description": "406 Not Acceptable - API version not supported",
+      "response": {
+        "errorCode": 2060006,
+        "errorMessage": "The requested API version is not supported by this NetBackup server.",
+        "errorDetails": [
+          "The Accept header specifies version 12.0, but this server only supports versions up to 11.0",
+          "Update the API version in your configuration or upgrade the NetBackup server"
+        ]
+      }
+    },
+    "notFound": {
+      "description": "404 Not Found - Resource does not exist",
+      "response": {
+        "errorCode": 2060004,
+        "errorMessage": "The requested resource was not found.",
+        "errorDetails": [
+          "The storage unit 'disk-pool-99' does not exist",
+          "Verify the resource identifier and try again"
+        ]
+      }
+    },
+    "badRequest": {
+      "description": "400 Bad Request - Invalid request parameters",
+      "response": {
+        "errorCode": 2060001,
+        "errorMessage": "The request contains invalid parameters.",
+        "attributeErrors": {
+          "page[limit]": "Value must be between 1 and 100",
+          "filter": "Invalid OData filter syntax"
+        },
+        "errorDetails": [
+          "Check the API documentation for valid parameter values",
+          "Ensure filter expressions follow OData standards"
+        ]
+      }
+    },
+    "internalServerError": {
+      "description": "500 Internal Server Error - Unexpected system error",
+      "response": {
+        "errorCode": 2060005,
+        "errorMessage": "An unexpected system error occurred while processing the request.",
+        "errorDetails": [
+          "Contact your NetBackup administrator",
+          "Check the NetBackup logs for more information"
+        ]
+      }
+    },
+    "unsupportedMediaType": {
+      "description": "415 Unsupported Media Type - Invalid Content-Type header",
+      "response": {
+        "errorCode": 2060007,
+        "errorMessage": "The media type specified in the Content-Type header is not supported.",
+        "errorDetails": [
+          "Expected: application/vnd.netbackup+json;version=12.0",
+          "Received: application/json"
+        ]
+      }
+    },
+    "forbidden": {
+      "description": "403 Forbidden - Insufficient permissions",
+      "response": {
+        "errorCode": 2060008,
+        "errorMessage": "You do not have permission to perform this operation.",
+        "errorDetails": [
+          "Required permission: |STORAGE|STORAGE-UNITS|VIEW|",
+          "Contact your NetBackup administrator to request access"
+        ]
+      }
+    },
+    "serviceUnavailable": {
+      "description": "503 Service Unavailable - NetBackup service is temporarily unavailable",
+      "response": {
+        "errorCode": 2060009,
+        "errorMessage": "The NetBackup service is temporarily unavailable.",
+        "errorDetails": [
+          "The NetBackup master server is currently restarting",
+          "Please try again in a few minutes"
+        ]
+      }
+    },
+    "rateLimitExceeded": {
+      "description": "429 Too Many Requests - Rate limit exceeded",
+      "response": {
+        "errorCode": 2060010,
+        "errorMessage": "Too many requests. Rate limit exceeded.",
+        "errorDetails": [
+          "Maximum 100 requests per minute allowed",
+          "Please wait before making additional requests"
+        ]
+      }
+    }
+  }
+}

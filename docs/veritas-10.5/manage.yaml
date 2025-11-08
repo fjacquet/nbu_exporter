@@ -1,0 +1,862 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Manage API
+  version: '12.0'
+  description: >
+    The NetBackup Manage APIs provide access to the alerting operations. The
+    APIs can generate alerts, fetch alert details, and send alert notifications.
+    The APIs also provide a facility to exclude the status codes for which you
+    do not want to send alert notifications.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+paths:
+  /manage/alerts:
+    get:
+      description: >
+        Retrieves the list of alerts based on the specified filters. If no
+        filters are specified, information for 10
+
+        alerts is retrieved, sorted in descending order by the time they were
+        created.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|EMAIL-NOTIFICATIONS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Alerts
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |alertId|eq ne lt gt le ge|The alert ID|integer|
+
+            |severity|eq ne|The severity of the alert. Possible values:
+            INFO,WARNING,ERROR|string|
+
+            |category|eq ne|The category of the alert. Possible values:
+            JOB|string|
+
+            |subCategory|eq ne|The subcategory of the alert. Possible values:
+            STANDARD,PROXY,NONSTANDARD,APOLLO-WBAK,ORACLE,ANY,INFORMIX-ON-BAR,SYBASE,MS-SHAREPOINT,MS-WINDOWS,NETWARE,
+            DATATOOLS-SQL-BACKTRACK,AUSPEX-FASTBACK,OS2,MS-SQL-SERVER,MS-EXCHANGE-SERVER,SAP,DB2,NDMP,FLASHBACKUP,SPLIT-MIRROR,AFS,DFS,
+            DATASTORE,LOTUS-NOTES,TERADATA,OPENVMS,MPE/iX,FLASHBACKUP-WINDOWS,VAULT,BE-MS-SQL-SERVER,BE-MS-EXCHANGE-SERVER,MACINTOSH,
+            DISK
+            STAGING,NBU-CATALOG,GENERIC,CMS-DATABASE,PUREDISK-EXPORT,ENTERPRISE-VAULT,VMWARE,HYPER-V,NBU-SEARCHSERVER,HYPERSCALE,
+            BIGDATA,CLOUD,DEPLOYMENT|string|
+
+            |createdDateTime|eq ne lt gt le ge|The created date time of the
+            alert.|date-time|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: The alert record number offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: 'page[limit]'
+          description: The number of records on one page after the offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          description: >
+            Sorts values of the specified property in ascending order. Use
+            `-sort` to sort the values in descending order.
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully fetched the list of alerts.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_11
+                type: object
+                properties:
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                  data:
+                    type: array
+                    items: &ref_12
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          description: The response for the alert.
+                          enum:
+                            - alert
+                        id:
+                          type: string
+                        links:
+                          type: object
+                          properties:
+                            self: &ref_1
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                        attributes: &ref_2
+                          type: object
+                          properties:
+                            titleId:
+                              type: integer
+                              description: The title ID for the alert.
+                            title:
+                              type: string
+                              description: The title of the alert.
+                            descriptionId:
+                              type: integer
+                              description: The ID for the description of the alert.
+                            description:
+                              type: string
+                              description: The description of the alert.
+                            category:
+                              type: string
+                              description: The category that applies to the alert.
+                              enum:
+                                - JOB
+                            subCategory:
+                              type: string
+                              description: The subcategory that applies to the alert.
+                              enum:
+                                - STANDARD
+                                - PROXY
+                                - NONSTANDARD
+                                - APOLLO-WBAK
+                                - ORACLE
+                                - ANY
+                                - INFORMIX-ON-BAR
+                                - SYBASE
+                                - MS-SHAREPOINT
+                                - MS-WINDOWS
+                                - NETWARE
+                                - DATATOOLS-SQL-BACKTRACK
+                                - AUSPEX-FASTBACK
+                                - OS2
+                                - MS-SQL-SERVER
+                                - MS-EXCHANGE-SERVER
+                                - SAP
+                                - DB2
+                                - NDMP
+                                - FLASHBACKUP
+                                - SPLIT-MIRROR
+                                - AFS
+                                - DFS
+                                - DATASTORE
+                                - LOTUS-NOTES
+                                - TERADATA
+                                - OPENVMS
+                                - MPE/iX
+                                - FLASHBACKUP-WINDOWS
+                                - VAULT
+                                - BE-MS-SQL-SERVER
+                                - BE-MS-EXCHANGE-SERVER
+                                - MACINTOSH
+                                - DISK STAGING
+                                - NBU-CATALOG
+                                - GENERIC
+                                - CMS-DATABASE
+                                - PUREDISK-EXPORT
+                                - ENTERPRISE-VAULT
+                                - VMWARE
+                                - HYPER-V
+                                - NBU-SEARCHSERVER
+                                - HYPERSCALE
+                                - BIGDATA
+                                - CLOUD
+                                - DEPLOYMENT
+                            severity:
+                              type: string
+                              description: |
+                                The severity of alert.
+                              enum:
+                                - INFO
+                                - WARNING
+                                - ERROR
+                            context:
+                              type: string
+                              description: Indicates the reason the alert was generated.
+                              enum:
+                                - GENERAL
+                                - JOB_STATE_FAILED
+                                - JOB_STATE_SUSPEND
+                                - JOB_TYPE_BACKUP
+                                - CREDENTIAL
+                            createdDateTime:
+                              type: string
+                              description: A UTC timestamp of when the alert was created.
+                            tags:
+                              type: array
+                              description: The tags that are associated with the alert.
+                              items:
+                                type: string
+                            systemDefined:
+                              type: boolean
+                              description: >-
+                                Indicates if the alert was system-generated or
+                                user-defined.
+                            params:
+                              type: object
+                              additionalProperties:
+                                type: string
+                              description: The list of alert parameters.
+                    description: The list of alerts.
+                  meta:
+                    type: object
+                    properties:
+                      pagination:
+                        type: object
+                        properties:
+                          prev:
+                            type: integer
+                          next:
+                            type: integer
+                          first:
+                            type: integer
+                          last:
+                            type: integer
+                          count:
+                            type: integer
+                          page:
+                            type: integer
+                          offset:
+                            type: integer
+                          pages:
+                            type: integer
+                          limit:
+                            type: integer
+                example:
+                  links:
+                    self:
+                      href: >-
+                        /manage/alerts?page[offset]=0&page[limit]=10&sort
+                        =-createdDateTime
+                    next:
+                      href: >-
+                        /manage/alerts?page[offset]=10&page[limit]=10&sort=-createdDateTime
+                    prev:
+                      href: >-
+                        /manage/alerts?page[offset]=10&page[limit]=10&sort=-createdDateTime
+                    first:
+                      href: >-
+                        /manage/alerts?page[offset]=0&page[limit]=10&sort=-createdDateTime
+                    last:
+                      href: >-
+                        /manage/alerts?page[offset]=70&page[limit]=10&sort=-createdDateTime
+                  data:
+                    - type: alert
+                      id: 2
+                      links:
+                        self:
+                          href: /manage/alerts/2
+                      attributes:
+                        titleId: 1
+                        title: 'Job details are as follows:'
+                        descriptionId: 1
+                        description: Job 4 failed with status code 2074 on client
+                        category: JOB
+                        subCategory: WINDOWS
+                        severity: ERROR
+                        context: JOB_STATE_FAILED
+                        createdDateTime: 2018-04-26T13:41:31.751Z
+                        tags:
+                          - JOB
+                          - '2074'
+                        systemDefined: true
+                        params:
+                          scheduleName: TE_FULL
+                          clientName: client
+                          status: '2074'
+                          jobId: '4'
+                          policyType: WINDOWS_NT
+                          jobType: BACKUP
+                          erroMsg: Disk volume is down
+                          startTime: 2018-04-26T09:20:32.000Z
+                          endTime: 2018-04-26T09:22:33.000Z
+                          parentJobId: '66'
+                  meta:
+                    pagination:
+                      prev: 0
+                      next: 10
+                      first: 0
+                      last: 70
+                      count: 0
+                      page: 0
+                      offset: 0
+                      pages: 8
+                      limit: 0
+        '400': &ref_8
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_0
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '401': &ref_3
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_0
+        '500': &ref_4
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_0
+  '/manage/alerts/{alertId}':
+    get:
+      description: >
+        Get alert based on specified alertId.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|EMAIL-NOTIFICATIONS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Alerts
+      parameters:
+        - name: alertId
+          in: path
+          description: The ID of the alert to fetch.
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+      responses:
+        '200':
+          description: Successfully fetched the alert for the specified alertId.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_9
+                type: object
+                required:
+                  - data
+                properties:
+                  data: &ref_10
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        description: The response for the alert. Must be set to `alert`.
+                        enum:
+                          - alert
+                      id:
+                        type: string
+                      links:
+                        type: object
+                        properties:
+                          self: *ref_1
+                      attributes: *ref_2
+                description: The JSON object for alert.
+                example:
+                  data:
+                    type: alert
+                    id: 2
+                    links:
+                      self:
+                        href: /manage/alerts/2
+                    attributes:
+                      titleId: 1
+                      title: 'Job details are as follows:'
+                      descriptionId: 1
+                      description: Job 4 failed with status code 2074 on client
+                      category: JOB
+                      subCategory: MS-WINDOWS
+                      severity: ERROR
+                      context: JOB_STATE_FAILED
+                      createdDateTime: 2018-04-26T13:41:31.751Z
+                      tags:
+                        - JOB
+                        - '2074'
+                      systemDefined: true
+                      params:
+                        scheduleName: TE_FULL
+                        clientName: client
+                        status: '2074'
+                        jobId: '4'
+                        policyType: WINDOWS_NT
+                        jobType: BACKUP
+                        erroMsg: Disk volume is down
+                        startTime: 2018-04-26T09:20:32.000Z
+                        endTime: 2018-04-26T09:22:33.000Z
+        '401': *ref_3
+        '404': &ref_6
+          description: No entity found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_0
+        '500': *ref_4
+  /manage/notification-categories:
+    get:
+      description: >
+        Fetches the exclusion status of all alert categories and the list of
+        respective status codes for which alert
+
+        notifications are not sent. If no filters are specified, information for
+        10 record is retrieved, sorted in
+
+        ascending order by the ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|EMAIL-NOTIFICATIONS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Notification Categories
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |id|eq ne lt gt le ge|The alert category ID.|integer|
+
+            |category|eq ne|The category of the alert. Possible values:
+            JOB|string|
+
+            |categoryExcluded|eq ne|The flag that determines if the category is
+            excluded from a send alert notification.|boolean|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: The record number offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: 'page[limit]'
+          description: The number of records on one page after the offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: sort
+          description: >
+            Sorts values of the specified property in ascending order. Use
+            `-sort` to sort the values in descending order.
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >
+            Returned the exclusion status of all alert categories and the list
+            of respective status codes for which alert notifications are not
+            sent.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_13
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_5
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          description: Fetches the list of excluded status codes.
+                          enum:
+                            - notificationCategory
+                        id:
+                          type: string
+                        links:
+                          type: object
+                          properties:
+                            self: *ref_1
+                        attributes: &ref_16
+                          type: object
+                          properties:
+                            category:
+                              type: string
+                              description: The alert category.
+                              enum:
+                                - JOB
+                                - KMS
+                                - MSDP
+                            categoryExcluded:
+                              type: boolean
+                              description: >-
+                                Determines whether alert notifications should be
+                                sent for the specified alert category or not.
+                            excludedStatusCodes:
+                              type: string
+                              minimum: 0
+                              maximum: 9999
+                              description: >-
+                                Specify the status codes to be excluded as comma
+                                delimited. Specify the range to be excluded with
+                                a hyphen.
+                              example: '2074, 219, 4400-4430'
+                            createdDateTime:
+                              type: string
+                              description: A UTC timestamp of when the record was created.
+                            lastUpdatedDateTime:
+                              type: string
+                              description: A UTC timestamp of when the record was updated.
+                    description: The list of notification categories.
+                  meta:
+                    type: object
+                    properties:
+                      pagination:
+                        type: object
+                        properties:
+                          pages:
+                            type: integer
+                          offset:
+                            type: integer
+                          last:
+                            type: integer
+                          prev:
+                            type: integer
+                          next:
+                            type: integer
+                          first:
+                            type: integer
+                          count:
+                            type: integer
+                          page:
+                            type: integer
+                          limit:
+                            type: integer
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                example:
+                  data:
+                    - type: notificationCategory
+                      id: 1
+                      links:
+                        self:
+                          href: >-
+                            https://localhost:1556/netbackup/manage/notification-categories/1
+                      attributes:
+                        category: JOB
+                        categoryExcluded: false
+                        excludedStatusCodes: '2074, 219, 4400-4430'
+                        createdDateTime: 2018-05-04T10:18:36.271Z
+                        lastUpdatedDateTime: 2018-05-07T07:39:59.181Z
+                  meta:
+                    pagination:
+                      pages: 1
+                      offset: 0
+                      last: 0
+                      first: 0
+                      count: 2
+                      page: 0
+                      limit: 10
+                  links:
+                    self:
+                      href: >-
+                        https://localhost:1556/netbackup/manage/notification-categories?page[offset]=0&page[limit]=10&sort=-id
+                    first:
+                      href: >-
+                        https://localhost:1556/netbackup/manage/notification-categories?page[offset]=0&page[limit]=10&sort=-id
+                    last:
+                      href: >-
+                        https://localhost:1556/netbackup/manage/notification-categories?page[offset]=0&page[limit]=10&sort=-id
+        '401': *ref_3
+        '500': *ref_4
+  '/manage/notification-categories/{categoryId}':
+    get:
+      description: >
+        Fetches the exclusion status of the specified alert category and the
+        list of respective status codes for which
+
+        alert notifications are not sent.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|EMAIL-NOTIFICATIONS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Notification Categories
+      parameters:
+        - name: categoryId
+          in: path
+          description: The ID of the alert category.
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+      responses:
+        '200':
+          description: >
+            Returned the exclusion status of the specified alert category and
+            the list of respective status codes for which alert notifications
+            are not sent.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_7
+                type: object
+                properties:
+                  data: *ref_5
+                example:
+                  data:
+                    type: notificationCategory
+                    id: 1
+                    links:
+                      self:
+                        href: >-
+                          https://localhost:1556/netbackup/manage/notification-categories/1
+                    attributes:
+                      category: JOB
+                      categoryExcluded: false
+                      excludedStatusCodes: '2074, 219, 4400-4430'
+                      createdDateTime: 2018-05-04T10:18:36.271Z
+                      lastUpdatedDateTime: 2018-05-07T07:39:59.181Z
+        '401': *ref_3
+        '404': *ref_6
+        '500': *ref_4
+    patch:
+      description: >
+        Updates the exclusion status of the specified alert category and the
+        list of respective status codes for which
+
+        alert notifications are not sent.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|EMAIL-NOTIFICATIONS|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Notification Categories
+      parameters:
+        - name: categoryId
+          in: path
+          description: The ID of the alert category.
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 2147483647
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_14
+              properties:
+                data:
+                  type: object
+                  required:
+                    - attributes
+                    - id
+                    - type
+                  properties:
+                    type:
+                      type: string
+                      description: Specify the status codes to be excluded.
+                      enum:
+                        - notificationCategory
+                    id:
+                      type: string
+                    attributes: &ref_15
+                      type: object
+                      properties:
+                        categoryExcluded:
+                          type: boolean
+                          description: >-
+                            Determines whether alert notifications should be
+                            sent for the specified alert category or not.
+                        excludedStatusCodes:
+                          type: string
+                          minimum: 0
+                          maximum: 9999
+                          description: >-
+                            Specify the status codes to be excluded as comma
+                            delimited. Specify the range to be excluded with a
+                            hyphen.
+                          example: '2074, 219, 4400-4430'
+              example:
+                data:
+                  type: notificationCategory
+                  id: '1'
+                  attributes:
+                    categoryExcluded: false
+                    excludedStatusCodes: '2074, 219, 4400-4430'
+        description: Request data to be updated.
+        required: true
+      responses:
+        '200':
+          description: >
+            Updated the exclusion status of the specified alert category and the
+            list of respective status codes for which alert notifications are
+            not sent.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_7
+        '400': *ref_8
+        '401': *ref_3
+        '404': *ref_6
+        '500': *ref_4
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    createAlertResponse: *ref_9
+    alertResponseData: *ref_10
+    sseAlertResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items: *ref_10
+          description: The list of alerts.
+    alertResponse: *ref_11
+    alertDetailsResponseData: *ref_12
+    alertDetails: *ref_2
+    getNotificationCategoriesResponse: *ref_13
+    patchNotificationCategoryRequest: *ref_14
+    notificationCategoryData: *ref_5
+    patchNotificationAttributes: *ref_15
+    notificationCategoryAttributes: *ref_16
+    getNotificationCategoryResponse: *ref_7
+    linkObject: *ref_1
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []

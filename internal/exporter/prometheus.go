@@ -1,18 +1,21 @@
 package exporter
 
 import (
+	"context"
 	"strings"
+	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
-// Define a struct for you collector that contains pointers
-// to prometheus descriptors for each metric you wish to expose.
-// Note you can also include fields of other types if they provide utility
-// but we just won't be exposing them as metrics.
+const collectionTimeout = 2 * time.Minute
+
+// NbuCollector implements the Prometheus Collector interface for NetBackup metrics.
 type NbuCollector struct {
 	cfg                models.Config
+	client             *NbuClient
 	nbuDiskSize        *prometheus.Desc
 	nbuResponseTime    *prometheus.Desc
 	nbuJobsSize        *prometheus.Desc
@@ -20,82 +23,127 @@ type NbuCollector struct {
 	nbuJobsStatusCount *prometheus.Desc
 }
 
-// NewNbuCollector You must create a constructor for you collector that
-// initializes every descriptor and returns a pointer to the collector
+// NewNbuCollector creates a new NetBackup collector with the provided configuration.
 func NewNbuCollector(cfg models.Config) *NbuCollector {
+	client := NewNbuClient(cfg)
+
+	// Attempt to detect API version during initialization
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if detectedVersion, err := client.DetectAPIVersion(ctx); err != nil {
+		log.Warnf("Failed to detect NetBackup API version: %v", err)
+		log.Infof("Using configured API version: %s", cfg.NbuServer.APIVersion)
+	} else {
+		log.Infof("Successfully connected to NetBackup API version: %s", detectedVersion)
+	}
 
 	return &NbuCollector{
-		cfg: cfg, // Injected configuration
+		cfg:    cfg,
+		client: client,
 		nbuResponseTime: prometheus.NewDesc(
 			"nbu_response_time_ms",
-			"The server response time in millisecond",
-			nil, nil),
+			"The server response time in milliseconds",
+			nil, nil,
+		),
 		nbuDiskSize: prometheus.NewDesc(
 			"nbu_disk_bytes",
 			"The quantity of storage bytes",
-			[]string{"name", "type", "size"}, nil),
+			[]string{"name", "type", "size"}, nil,
+		),
 		nbuJobsSize: prometheus.NewDesc(
 			"nbu_jobs_bytes",
 			"The quantity of processed bytes",
-			[]string{"action", "policy_type", "status"}, nil),
+			[]string{"action", "policy_type", "status"}, nil,
+		),
 		nbuJobsCount: prometheus.NewDesc(
 			"nbu_jobs_count",
 			"The quantity of jobs",
-			[]string{"action", "policy_type", "status"}, nil),
+			[]string{"action", "policy_type", "status"}, nil,
+		),
 		nbuJobsStatusCount: prometheus.NewDesc(
 			"nbu_status_count",
 			"The quantity per status",
-			[]string{"action", "status"}, nil),
+			[]string{"action", "status"}, nil,
+		),
 	}
 }
 
-//	Describe Each and every collector must implement the Describe function.
-//
-// It essentially writes all descriptors to the prometheus desc channel.
-func (collector *NbuCollector) Describe(ch chan<- *prometheus.Desc) {
-
-	//Update this section with the each metric you create for a given collector
-	ch <- collector.nbuDiskSize
-	ch <- collector.nbuResponseTime
-	ch <- collector.nbuJobsSize
-	ch <- collector.nbuJobsCount
-	ch <- collector.nbuJobsStatusCount
-
+// Describe sends the descriptors of each metric to the provided channel.
+func (c *NbuCollector) Describe(ch chan<- *prometheus.Desc) {
+	ch <- c.nbuDiskSize
+	ch <- c.nbuResponseTime
+	ch <- c.nbuJobsSize
+	ch <- c.nbuJobsCount
+	ch <- c.nbuJobsStatusCount
 }
 
-// Collect implements required collect function for all promehteus collectors
-func (collector *NbuCollector) Collect(ch chan<- prometheus.Metric) {
+// Collect fetches metrics from NetBackup and sends them to the provided channel.
+func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
+	ctx, cancel := context.WithTimeout(context.Background(), collectionTimeout)
+	defer cancel()
 
-	//Implement logic here to determine proper metric value to return to prometheus
-	//for each descriptor or call other functions that do so.
+	// Collect storage metrics
+	storageMetrics := make(map[string]float64)
+	if err := FetchStorage(ctx, c.client, storageMetrics); err != nil {
+		log.Errorf("Failed to fetch storage metrics: %v", err)
+		// Continue to try fetching job metrics even if storage fails
+	}
 
-	var disks = make(map[string]float64)
-	fetchStorage(disks, collector.cfg)
-	var jobsSize = make(map[string]float64)
-	var jobsCount = make(map[string]float64)
-	var jobsStatusCount = make(map[string]float64)
-	fetchAllJobs(jobsSize, jobsCount, jobsStatusCount, collector.cfg)
+	// Collect job metrics
+	jobsSize := make(map[string]float64)
+	jobsCount := make(map[string]float64)
+	jobsStatusCount := make(map[string]float64)
 
-	//Write latest value for each metric in the prometheus metric channel.
-	//Note that you can pass CounterValue, GaugeValue, or UntypedValue types here
-	for key, value := range disks {
+	if err := FetchAllJobs(ctx, c.client, jobsSize, jobsCount, jobsStatusCount, c.cfg.Server.ScrapingInterval); err != nil {
+		log.Errorf("Failed to fetch job metrics: %v", err)
+		// Continue to expose whatever metrics we have
+	}
+
+	// Expose storage metrics
+	for key, value := range storageMetrics {
 		labels := strings.Split(key, "|")
-		ch <- prometheus.MustNewConstMetric(collector.nbuDiskSize, prometheus.GaugeValue, value, labels[0], labels[1], labels[2])
+		ch <- prometheus.MustNewConstMetric(
+			c.nbuDiskSize,
+			prometheus.GaugeValue,
+			value,
+			labels[0], labels[1], labels[2],
+		)
 	}
 
+	// Expose job size metrics
 	for key, value := range jobsSize {
 		labels := strings.Split(key, "|")
-		ch <- prometheus.MustNewConstMetric(collector.nbuJobsSize, prometheus.GaugeValue, value, labels[0], labels[1], labels[2])
+		ch <- prometheus.MustNewConstMetric(
+			c.nbuJobsSize,
+			prometheus.GaugeValue,
+			value,
+			labels[0], labels[1], labels[2],
+		)
 	}
 
+	// Expose job count metrics
 	for key, value := range jobsCount {
 		labels := strings.Split(key, "|")
-		ch <- prometheus.MustNewConstMetric(collector.nbuJobsCount, prometheus.GaugeValue, value, labels[0], labels[1], labels[2])
+		ch <- prometheus.MustNewConstMetric(
+			c.nbuJobsCount,
+			prometheus.GaugeValue,
+			value,
+			labels[0], labels[1], labels[2],
+		)
 	}
 
+	// Expose job status count metrics
 	for key, value := range jobsStatusCount {
 		labels := strings.Split(key, "|")
-		ch <- prometheus.MustNewConstMetric(collector.nbuJobsStatusCount, prometheus.GaugeValue, value, labels[0], labels[1])
+		ch <- prometheus.MustNewConstMetric(
+			c.nbuJobsStatusCount,
+			prometheus.GaugeValue,
+			value,
+			labels[0], labels[1],
+		)
 	}
 
+	log.Debugf("Collected %d storage, %d job size, %d job count, %d status metrics",
+		len(storageMetrics), len(jobsSize), len(jobsCount), len(jobsStatusCount))
 }
