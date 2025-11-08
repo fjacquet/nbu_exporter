@@ -1,7 +1,18 @@
+// Package models defines data structures for NetBackup API responses.
 package models
 
 import "time"
 
+// Jobs represents the response structure from the NetBackup /admin/jobs API endpoint.
+// It contains job data, pagination metadata, and hypermedia links following the JSON:API specification.
+//
+// The structure supports pagination and includes comprehensive job attributes such as:
+//   - Job identification (ID, type, parent job)
+//   - Policy and schedule information
+//   - Status and state tracking
+//   - Data transfer statistics
+//   - Timing information (start, end, elapsed)
+//   - Storage and media server details
 type Jobs struct {
 	Data []struct {
 		Links struct {
@@ -81,7 +92,7 @@ type Jobs struct {
 			Cancellable                int       `json:"cancellable"`
 			JobQueueReason             int       `json:"jobQueueReason"`
 			JobQueueResource           string    `json:"jobQueueResource"`
-			KilobytesDataTransferred   int       `json:"kilobytesDataTransferred"`
+			KilobytesDataTransferred   int       `json:"kilobytesDataTransferred,omitempty"`
 			ElapsedTime                string    `json:"elapsedTime"`
 			OffHostType                string    `json:"offHostType"`
 		} `json:"attributes"`

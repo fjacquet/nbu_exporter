@@ -1,5 +1,17 @@
+// Package models defines data structures for NetBackup API responses.
 package models
 
+// Storages represents the response structure from the NetBackup /storage/storage-units API endpoint.
+// It contains storage unit data, pagination metadata, and hypermedia links following the JSON:API specification.
+//
+// The structure includes comprehensive storage unit attributes such as:
+//   - Storage identification (name, type, subtype)
+//   - Capacity information (free, used, total bytes)
+//   - Storage capabilities (replication, snapshot, WORM)
+//   - Configuration settings (max concurrent jobs, fragment size)
+//   - Relationships to disk pools
+//
+// Storage types include DISK, CLOUD, and TAPE units, each with type-specific attributes.
 type Storages struct {
 	Data []struct {
 		Links struct {
@@ -24,6 +36,18 @@ type Storages struct {
 			MaxFragmentSizeMegabytes   int    `json:"maxFragmentSizeMegabytes"`
 			MaxConcurrentJobs          int    `json:"maxConcurrentJobs"`
 			OnDemandOnly               bool   `json:"onDemandOnly"`
+			// NetBackup 10.5 API optional fields
+			StorageCategory          string `json:"storageCategory,omitempty"`
+			ReplicationCapable       bool   `json:"replicationCapable,omitempty"`
+			ReplicationSourceCapable bool   `json:"replicationSourceCapable,omitempty"`
+			ReplicationTargetCapable bool   `json:"replicationTargetCapable,omitempty"`
+			Snapshot                 bool   `json:"snapshot,omitempty"`
+			Mirror                   bool   `json:"mirror,omitempty"`
+			Independent              bool   `json:"independent,omitempty"`
+			Primary                  bool   `json:"primary,omitempty"`
+			ScaleOutEnabled          bool   `json:"scaleOutEnabled,omitempty"`
+			WormCapable              bool   `json:"wormCapable,omitempty"`
+			UseWorm                  bool   `json:"useWorm,omitempty"`
 		} `json:"attributes,omitempty"`
 		Relationships struct {
 			DiskPool struct {

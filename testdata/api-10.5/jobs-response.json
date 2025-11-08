@@ -1,0 +1,278 @@
+{
+  "data": [
+    {
+      "type": "job",
+      "id": "12345",
+      "links": {
+        "self": {
+          "href": "/netbackup/admin/jobs/12345"
+        },
+        "file-lists": {
+          "href": "/netbackup/admin/jobs/12345/file-lists"
+        },
+        "try-logs": {
+          "href": "/netbackup/admin/jobs/12345/try-logs"
+        }
+      },
+      "attributes": {
+        "jobId": 12345,
+        "parentJobId": 0,
+        "activeProcessId": 54321,
+        "jobType": "BACKUP",
+        "jobSubType": "FULL",
+        "policyType": "VMWARE",
+        "policyName": "VMware-Policy-1",
+        "scheduleType": "FULL",
+        "scheduleName": "Full-Schedule",
+        "clientName": "vm-client-01.example.com",
+        "controlHost": "master.example.com",
+        "jobOwner": "admin",
+        "jobGroup": "default",
+        "backupId": "backup_12345_1234567890_FULL",
+        "sourceMediaId": "",
+        "sourceStorageUnitName": "",
+        "sourceMediaServerName": "",
+        "destinationMediaId": "media-001",
+        "destinationStorageUnitName": "disk-pool-1",
+        "destinationMediaServerName": "media-server-01.example.com",
+        "dataMovement": "STANDARD",
+        "streamNumber": 1,
+        "copyNumber": 1,
+        "priority": 9999,
+        "compression": 0,
+        "status": 0,
+        "state": "DONE",
+        "numberOfFiles": 1250,
+        "estimatedFiles": 1200,
+        "kilobytesTransferred": 52428800,
+        "kilobytesDataTransferred": 48234567,
+        "kilobytesToTransfer": 52428800,
+        "transferRate": 102400,
+        "percentComplete": 100,
+        "restartable": 0,
+        "suspendable": 0,
+        "resumable": 0,
+        "frozenImage": 0,
+        "transportType": "LAN",
+        "dedupRatio": 2.5,
+        "currentOperation": 0,
+        "robotName": "",
+        "vaultName": "",
+        "profileName": "",
+        "sessionId": 987654,
+        "numberOfTapeToEject": 0,
+        "submissionType": 0,
+        "acceleratorOptimization": 0,
+        "dumpHost": "",
+        "instanceDatabaseName": "",
+        "auditUserName": "admin",
+        "auditDomainName": "DOMAIN",
+        "auditDomainType": 0,
+        "restoreBackupIDs": "",
+        "startTime": "2024-11-08T10:00:00Z",
+        "endTime": "2024-11-08T11:30:00Z",
+        "activeTryStartTime": "2024-11-08T10:00:00Z",
+        "lastUpdateTime": "2024-11-08T11:30:00Z",
+        "initiatorId": "admin",
+        "retentionLevel": 1,
+        "try": 1,
+        "cancellable": 0,
+        "jobQueueReason": 0,
+        "jobQueueResource": "",
+        "elapsedTime": "PT1H30M",
+        "offHostType": "STANDARD"
+      }
+    },
+    {
+      "type": "job",
+      "id": "12346",
+      "links": {
+        "self": {
+          "href": "/netbackup/admin/jobs/12346"
+        },
+        "file-lists": {
+          "href": "/netbackup/admin/jobs/12346/file-lists"
+        },
+        "try-logs": {
+          "href": "/netbackup/admin/jobs/12346/try-logs"
+        }
+      },
+      "attributes": {
+        "jobId": 12346,
+        "parentJobId": 0,
+        "activeProcessId": 54322,
+        "jobType": "RESTORE",
+        "jobSubType": "RESTORE",
+        "policyType": "STANDARD",
+        "policyName": "Standard-Policy-1",
+        "scheduleType": "",
+        "scheduleName": "",
+        "clientName": "client-02.example.com",
+        "controlHost": "master.example.com",
+        "jobOwner": "operator",
+        "jobGroup": "default",
+        "backupId": "backup_12340_1234567800_FULL",
+        "sourceMediaId": "media-001",
+        "sourceStorageUnitName": "disk-pool-1",
+        "sourceMediaServerName": "media-server-01.example.com",
+        "destinationMediaId": "",
+        "destinationStorageUnitName": "",
+        "destinationMediaServerName": "",
+        "dataMovement": "STANDARD",
+        "streamNumber": 1,
+        "copyNumber": 1,
+        "priority": 50000,
+        "compression": 0,
+        "status": 1,
+        "state": "ACTIVE",
+        "numberOfFiles": 500,
+        "estimatedFiles": 500,
+        "kilobytesTransferred": 10485760,
+        "kilobytesDataTransferred": 9876543,
+        "kilobytesToTransfer": 20971520,
+        "transferRate": 51200,
+        "percentComplete": 50,
+        "restartable": 1,
+        "suspendable": 1,
+        "resumable": 0,
+        "frozenImage": 0,
+        "transportType": "LAN",
+        "dedupRatio": 1.0,
+        "currentOperation": 14,
+        "robotName": "",
+        "vaultName": "",
+        "profileName": "",
+        "sessionId": 987655,
+        "numberOfTapeToEject": 0,
+        "submissionType": 0,
+        "acceleratorOptimization": 0,
+        "dumpHost": "",
+        "instanceDatabaseName": "",
+        "auditUserName": "operator",
+        "auditDomainName": "DOMAIN",
+        "auditDomainType": 0,
+        "restoreBackupIDs": "backup_12340_1234567800_FULL",
+        "startTime": "2024-11-08T12:00:00Z",
+        "endTime": "0001-01-01T00:00:00Z",
+        "activeTryStartTime": "2024-11-08T12:00:00Z",
+        "lastUpdateTime": "2024-11-08T12:15:00Z",
+        "initiatorId": "operator",
+        "retentionLevel": 0,
+        "try": 1,
+        "cancellable": 1,
+        "jobQueueReason": 0,
+        "jobQueueResource": "",
+        "elapsedTime": "PT15M",
+        "offHostType": "STANDARD"
+      }
+    },
+    {
+      "type": "job",
+      "id": "12347",
+      "links": {
+        "self": {
+          "href": "/netbackup/admin/jobs/12347"
+        },
+        "file-lists": {
+          "href": "/netbackup/admin/jobs/12347/file-lists"
+        },
+        "try-logs": {
+          "href": "/netbackup/admin/jobs/12347/try-logs"
+        }
+      },
+      "attributes": {
+        "jobId": 12347,
+        "parentJobId": 0,
+        "activeProcessId": 0,
+        "jobType": "BACKUP",
+        "jobSubType": "INCR",
+        "policyType": "STANDARD",
+        "policyName": "Standard-Policy-2",
+        "scheduleType": "INCR",
+        "scheduleName": "Incremental-Schedule",
+        "clientName": "client-03.example.com",
+        "controlHost": "master.example.com",
+        "jobOwner": "admin",
+        "jobGroup": "default",
+        "backupId": "",
+        "sourceMediaId": "",
+        "sourceStorageUnitName": "",
+        "sourceMediaServerName": "",
+        "destinationMediaId": "",
+        "destinationStorageUnitName": "disk-pool-1",
+        "destinationMediaServerName": "media-server-01.example.com",
+        "dataMovement": "STANDARD",
+        "streamNumber": 1,
+        "copyNumber": 1,
+        "priority": 9999,
+        "compression": 0,
+        "status": 150,
+        "state": "DONE",
+        "numberOfFiles": 0,
+        "estimatedFiles": 100,
+        "kilobytesTransferred": 0,
+        "kilobytesToTransfer": 0,
+        "transferRate": 0,
+        "percentComplete": 0,
+        "restartable": 0,
+        "suspendable": 0,
+        "resumable": 0,
+        "frozenImage": 0,
+        "transportType": "LAN",
+        "dedupRatio": 0.0,
+        "currentOperation": 0,
+        "robotName": "",
+        "vaultName": "",
+        "profileName": "",
+        "sessionId": 0,
+        "numberOfTapeToEject": 0,
+        "submissionType": 0,
+        "acceleratorOptimization": 0,
+        "dumpHost": "",
+        "instanceDatabaseName": "",
+        "auditUserName": "admin",
+        "auditDomainName": "DOMAIN",
+        "auditDomainType": 0,
+        "restoreBackupIDs": "",
+        "startTime": "2024-11-08T08:00:00Z",
+        "endTime": "2024-11-08T08:05:00Z",
+        "activeTryStartTime": "2024-11-08T08:00:00Z",
+        "lastUpdateTime": "2024-11-08T08:05:00Z",
+        "initiatorId": "admin",
+        "retentionLevel": 1,
+        "try": 1,
+        "cancellable": 0,
+        "jobQueueReason": 0,
+        "jobQueueResource": "",
+        "elapsedTime": "PT5M",
+        "offHostType": "STANDARD"
+      }
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "count": 3,
+      "offset": 0,
+      "limit": 100,
+      "first": 0,
+      "last": 2,
+      "page": 1,
+      "pages": 1,
+      "next": 0
+    }
+  },
+  "links": {
+    "self": {
+      "href": "/netbackup/admin/jobs?page[limit]=100&page[offset]=0"
+    },
+    "first": {
+      "href": "/netbackup/admin/jobs?page[limit]=100&page[offset]=0"
+    },
+    "last": {
+      "href": "/netbackup/admin/jobs?page[limit]=100&page[offset]=0"
+    },
+    "next": {
+      "href": ""
+    }
+  }
+}

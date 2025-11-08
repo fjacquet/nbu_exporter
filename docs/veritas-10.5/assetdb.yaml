@@ -1,0 +1,1264 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Asset API
+  version: '12.0'
+  description: The NetBackup Asset API provides access to NetBackup asset information.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+paths:
+  /assets:
+    get:
+      deprecated: true
+      description: >
+        **This API has been removed.**
+
+
+        This API is no longer used for asset or asset group related operations
+        in NetBackup and has been removed from the product.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+      tags:
+        - Assets
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |providerGeneratedID|eq ne gt ge lt le and or not () contains
+            endswith startswith tolower toupper|ID given to an asset by its
+            workload.|string|
+
+            |displayName|eq ne gt ge lt le and or not () contains endswith
+            startswith tolower toupper|Specifies an asset's name.|string|
+
+            |description|eq ne gt ge lt le and or not () contains endswith
+            startswith tolower toupper|Describes an asset.|string|
+
+            |version|eq ne gt ge lt le and or not () contains endswith
+            startswith tolower toupper|Specifies version number.|string|
+
+            |firstDiscoveredTime|eq ne gt ge lt le and or not () contains
+            endswith startswith tolower toupper|Specifies the first time an
+            asset was discovered in ISO 8601 format.|date-time|
+
+            |lastDiscoveredTime|eq ne gt ge lt le and or not () contains
+            endswith startswith tolower toupper|Specifies the most recent time
+            an asset was discovered in ISO 8601 format.|date-time|
+
+            |assetType|eq ne gt ge lt le and or not () contains endswith
+            startswith tolower toupper|Specifies asset type. Could be a host,
+            application, disk, etc.|string|
+
+            |workloadType|eq ne gt ge lt le and or not () contains endswith
+            startswith tolower toupper|Specifies the workload type. Possible
+            values: Cloud VMware RHV|string|
+
+            |extendedAttributes/{extendedAttributeName}|eq ne gt ge lt le and or
+            not () contains endswith startswith tolower toupper|Specifies the
+            dynamic extended attribute key and value.|object|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: The asset record number offset.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: 'page[limit]'
+          description: 'The number of records on one page, after the offset.'
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: sort
+          description: >-
+            Sort in ascending order on the specified property. Prefix with "-"
+            for descending order.
+          in: query
+          required: false
+          schema:
+            type: string
+            default: '-lastDiscoveredTime'
+        - name: include
+          description: >
+            Appends a section in the response payload with details about the
+            relationships that are specified in the  include query.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - assetGroups
+      responses:
+        '410': &ref_2
+          headers:
+            X-NetBackup-Warning:
+              schema:
+                type: string
+              description: This API has been removed.
+          description: |
+            The resource has been permanently removed.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_0
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '500': &ref_3
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_0
+        '503': &ref_4
+          description: The server is busy.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_0
+    post:
+      deprecated: true
+      x-internal: false
+      description: >
+        **This API has been removed.**
+
+
+        This API is no longer used for asset or asset group related operations
+        in NetBackup and has been removed from the product.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+      tags:
+        - Assets
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_10
+              type: object
+              description: >-
+                Creates a record in the database to store asset details that
+                come from the workload engine.
+              required:
+                - data
+              properties:
+                data:
+                  type: array
+                  items:
+                    properties:
+                      id:
+                        type: string
+                        description: The provider generated identifier.
+                      type:
+                        type: string
+                        description: >-
+                          The type of data being represented. This property must
+                          be set to 'asset'.
+                      attributes: &ref_13
+                        type: object
+                        required:
+                          - workloadType
+                          - lastDiscoveredTime
+                          - providerGeneratedId
+                          - assetType
+                          - masters
+                        properties:
+                          workloadType:
+                            type: string
+                            description: The workload type to which this asset belongs.
+                            maxLength: 64
+                          firstDiscoveredTime:
+                            type: string
+                            format: date-time
+                            description: >-
+                              The ISO 8601 formatted time at which the asset was
+                              first discovered.
+                          lastDiscoveredTime:
+                            type: string
+                            format: date-time
+                            description: >-
+                              The ISO 8601 formatted time at which the asset was
+                              last discovered.
+                          displayName:
+                            type: string
+                            description: >-
+                              The display name of this asset in the NetBackup
+                              Web UI.
+                            maxLength: 1024
+                          providerGeneratedId:
+                            type: string
+                            description: >
+                              The provider identifier, which is unique within
+                              the workloadType context that is provided by the
+                              workload.
+                            maxLength: 1024
+                          assetType:
+                            type: string
+                            description: >-
+                              The type of the asset that is provided by the
+                              workload.
+                            maxLength: 128
+                          version:
+                            type: string
+                            description: The version of the asset.
+                            maxLength: 128
+                          description:
+                            type: string
+                            description: The description of the asset.
+                          createdBy: &ref_14
+                            type: string
+                            enum:
+                              - DISCOVERY
+                              - IMPORT
+                            description: >
+                              Indicates how the asset's data was obtained. If
+                              this isn't present in the payload, it is assumed
+                              that the asset was discovered.
+                          protectionMethods:
+                            type: array
+                            description: >-
+                              The protection methods that are available for this
+                              asset.
+                            items:
+                              type: object
+                              properties:
+                                protectionMethodName:
+                                  type: string
+                                  maxLength: 128
+                          masters:
+                            type: array
+                            description: >
+                              The list of NetBackup master servers associated
+                              with this asset. When an asset is updated with new
+                              master servers, they will be appended to the
+                              existing list of master servers.
+                            items: &ref_1
+                              type: object
+                              required:
+                                - hostName
+                                - uuid
+                              properties:
+                                hostName:
+                                  type: string
+                                  maxLength: 1024
+                                uuid:
+                                  type: string
+                                  maxLength: 1024
+                                ipAddress:
+                                  type: string
+                                  maxLength: 20
+                          discoveryHosts:
+                            type: array
+                            description: >
+                              The list of NetBackup hosts that have discovered
+                              this asset. When an asset is updated with new
+                              discovery hosts, they will be appended to the
+                              existing list of discovery hosts.
+                            items: *ref_1
+                          extendedAttributes:
+                            description: >
+                              The workload attributes that can be searched.
+                              Values are truncated if they exceed the
+                              character-length limit.
+                            type: object
+                            maxLength: 2048
+                            additionalProperties: &ref_15
+                              description: >-
+                                The value can be either a string or an array of
+                                strings.
+                          properties:
+                            type: string
+                            description: >-
+                              All the workload-specific data. This data cannot
+                              be searched.
+                    required:
+                      - id
+                      - type
+                      - attributes
+        description: >-
+          Specifies the JSON body that contains asset information. This request
+          payload may not exceed 2 MB.
+        required: true
+      responses:
+        '410': *ref_2
+        '500': *ref_3
+        '503': *ref_4
+  '/assets/{GUID}':
+    get:
+      deprecated: true
+      description: >
+        **This API has been removed.**
+
+
+        This API is no longer used for asset or asset group related operations
+        in NetBackup and has been removed from the product.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+      tags:
+        - Assets
+      parameters:
+        - name: GUID
+          description: An asset's global unique identifier.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: include
+          description: >
+            Appends a section(s) in the response payload with details about the
+            relationships that are specified in the  include query.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - assetGroups
+        - &ref_5
+          name: meta
+          description: >
+            Appends a metadata section(s) in the response payload with details
+            that correspond to the given meta arguments.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - permissions
+      responses:
+        '410': *ref_2
+        '500': *ref_3
+        '503': *ref_4
+  '/assets/{GUID}/asset-groups':
+    get:
+      deprecated: true
+      description: >
+        **This API has been removed.**
+
+
+        This API is no longer used for asset or asset group related operations
+        in NetBackup and has been removed from the product.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+      tags:
+        - Assets
+      parameters:
+        - name: GUID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '410': *ref_2
+        '500': *ref_3
+        '503': *ref_4
+  /asset-groups:
+    get:
+      deprecated: true
+      description: >
+        This API has been deprecated.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+
+
+        Retrieves the list of asset groups based on the specified filters. If no
+        filters are specified, information for
+
+        the newest 10 asset groups are retrieved, sorted in ascending order by
+        their displayName.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+
+
+        Namespace: Asset group-specific namespaces need to have the required
+        operations granted. \
+
+        VMware workload - `|ASSETS|VMWARE|GROUPS|{group_identifier}|` AND
+                          `|ASSETS|VMWARE|VCENTER|{vcenter_identifier}|` OR
+                          `|ASSETS|VMWARE|ESX|{esx_identifier}|` \
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `group_identifier` namespace in the API response.
+                                                        `GET /asset-service/workloads/{workload}/assets?meta=accessControlId&filter=assetType eq 'vmGroup'`) \
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `vcenter_identifier` namespace in the API response.
+                                                        `GET /config/servers/vmservers?meta=accessControlId`) \
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `esx_identifier` namespace in the API response.
+                                                        `GET /config/servers/vmservers?meta=accessControlId`)
+
+        RHV workload - `|ASSETS|RHV|RHVMGR|{rhv
+        server}|VMGROUP|{group_identifier}|` \
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `rhv server` namespace in the API response.
+                                                        `GET /config/servers/vmservers?meta=accessControlId`) \
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `group_identifier` namespace in the API response.
+                                                        `GET /asset-service/workloads/{workload}/assets?meta=accessControlId&filter=assetType eq 'vmGroup'`)
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Asset Groups
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |id|eq ne|Specifies the asset group's GUID.|string|
+
+            |displayName|eq ne ge gt le lt contains startswith
+            endswith|Specifies the asset group's display name.|string|
+
+            |description|eq ne ge gt le lt contains startswith
+            endswith|Specifies the asset group's description.|string|
+
+            |createdDateTime|eq ne ge gt le lt|The asset group's creation time
+            in ISO 8601 format.|date-time|
+
+            |lastModifiedDateTime|eq ne ge gt le lt|The asset group's last
+            modified time in ISO 8601 format.|date-time|
+
+            |assetType|eq ne ge gt le lt contains startswith endswith|Specifies
+            the group's asset type.|string|
+
+            |workloadType|eq ne ge gt le lt contains startswith
+            endswith|Specifies the group's workload type.|string|
+
+            |filterConstraint|eq ne ge gt le lt contains startswith
+            endswith|Specifies the filter constraint.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: The asset group record number offset.
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: 'page[limit]'
+          description: The maximum number of asset group records on one page.
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: sort
+          description: >-
+            Sort in ascending order on the specified property. Prefix with '-'
+            for descending order.
+          in: query
+          schema:
+            type: string
+            default: displayName
+      responses:
+        '200':
+          headers:
+            X-NetBackup-Warning:
+              schema:
+                type: string
+              description: This API has been deprecated.
+          description: Retrieved the asset groups based on the applied filters.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_16
+                type: object
+                required:
+                  - links
+                  - data
+                  - meta
+                properties:
+                  links: &ref_11
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                  meta:
+                    type: object
+                    properties:
+                      pagination: &ref_12
+                        type: object
+                        properties:
+                          count:
+                            type: integer
+                          pages:
+                            type: integer
+                          page:
+                            type: integer
+                          offset:
+                            type: integer
+                          limit:
+                            type: integer
+                          first:
+                            type: integer
+                          last:
+                            type: integer
+                          next:
+                            type: integer
+                          prev:
+                            type: integer
+                  data:
+                    type: array
+                    items: &ref_6
+                      type: object
+                      required:
+                        - links
+                        - type
+                        - id
+                        - attributes
+                      properties:
+                        links:
+                          type: object
+                          description: Contains links to related APIs.
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                        type:
+                          type: string
+                          description: >-
+                            The type of resource. This should always be
+                            "assetGroup".
+                        id:
+                          type: string
+                          description: >-
+                            The global unique identifier (GUID) of the asset
+                            group.
+                        attributes: &ref_19
+                          type: object
+                          required:
+                            - displayName
+                            - oDataQueryFilter
+                            - createdDateTime
+                            - lastModifiedDateTime
+                            - assetType
+                            - workloadType
+                            - filterConstraint
+                          properties:
+                            displayName:
+                              type: string
+                              description: The display name of the asset group.
+                            description:
+                              type: string
+                              description: The description of the asset group.
+                            createdDateTime:
+                              type: string
+                              format: date-time
+                              description: >-
+                                The timestamp that indicates when the asset
+                                group was created, in ISO 8601 format.
+                            lastModifiedDateTime:
+                              type: string
+                              format: date-time
+                              description: >-
+                                The timestamp that indicates when the asset
+                                group was last modified, in ISO 8601 format.
+                            oDataQueryFilter:
+                              type: string
+                              description: The filter criteria in OData query format.
+                            vipQueryFilter:
+                              type: string
+                              description: >-
+                                The filter criteria in VIP query format,
+                                converted from the oDataQueryFilter.
+                            assetType:
+                              type: string
+                              description: >-
+                                The name of the asset type contained within this
+                                asset group.
+                            workloadType:
+                              type: string
+                              enum:
+                                - VMWARE
+                                - RHV
+                              description: >-
+                                The name of the workload type contained within
+                                this asset group.
+                            filterConstraint:
+                              type: string
+                              description: >
+                                The filter constraint. For VMware workloads,
+                                this indicates the vCenter or the ESXi host
+                                name. For RHV workloads, this indicates the
+                                rhvManager name. For CLOUD workloads, this
+                                indicates the name of the vendor.
+                            assetGroupSubscriptions:
+                              type: array
+                              description: >-
+                                The list of protection plans this asset group is
+                                subscribed to.
+                              items:
+                                type: object
+                                description: Asset group subscription details.
+                                properties:
+                                  sloName:
+                                    type: string
+                                    description: >-
+                                      Name of the protection plan protecting the
+                                      asset group.
+                                  sloId:
+                                    type: string
+                                    description: >-
+                                      The unique ID of the protection plan
+                                      protecting the asset group.
+                                  subscriptionId:
+                                    type: string
+                                    description: >-
+                                      The unique ID of the asset group's
+                                      subscription to the protection plan.
+                                  policyName:
+                                    type: string
+                                    description: >-
+                                      The NetBackup policy that is used when the
+                                      asset group is protected.
+                                required:
+                                  - sloName
+                                  - sloId
+                                  - subscriptionId
+                                  - policyName
+                        meta:
+                          type: object
+                          description: Non-standard meta-information about the asset group.
+                          properties:
+                            permissions: &ref_18
+                              type: array
+                              description: >-
+                                List of object level permissions the user has
+                                for this asset.
+                              items:
+                                type: string
+        '400':
+          description: Invalid filter criteria.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_0
+        '401': &ref_7
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_0
+        '406': &ref_8
+          description: >-
+            Invalid `Accept` type. Make sure your `Accept` header matches what
+            this API produces.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_0
+    post:
+      deprecated: true
+      description: >
+        **This API has been removed.**
+
+
+        This API is no longer used for asset or asset group related operations
+        in NetBackup and has been removed from the product.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+      tags:
+        - Asset Groups
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_20
+              type: object
+              description: Creates a record in the database to store asset group details.
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    attributes: &ref_21
+                      type: object
+                      required:
+                        - displayName
+                        - assetType
+                        - workloadType
+                        - filterConstraint
+                      properties:
+                        displayName:
+                          type: string
+                          description: >-
+                            The display name of the asset group. Maximum 256
+                            characters.
+                        description:
+                          type: string
+                          description: >-
+                            The description of the asset group. Maximum 1024
+                            characters.
+                        oDataQueryFilter:
+                          type: string
+                          description: >
+                            The filter criteria in OData query format. Maximum
+                            4096 characters. If no filter is supplied, all
+                            assets matching the filter constraint will be
+                            included.
+                        assetType:
+                          type: string
+                          description: >-
+                            The name of the asset type contained within this
+                            asset group.
+                          enum:
+                            - VIRTUAL_MACHINE
+                            - REDHAT_VIRTUAL_MACHINE
+                            - HOST
+                            - DISK
+                            - APPLICATION
+                            - FILE_SYSTEM
+                        workloadType:
+                          type: string
+                          description: >-
+                            The name of the workload type contained within this
+                            asset group.
+                          enum:
+                            - VMWARE
+                            - RHV
+                        filterConstraint:
+                          type: string
+                          description: >
+                            The filter constraint. For VMware workloads, this
+                            value indicates the vCenter or the ESXi host name.
+                            For RHV workloads, this value indicates the
+                            rhvManager name. For Cloud workloads, this value
+                            indicates the name of the vendor.
+                    type:
+                      type: string
+                      description: This should always be set to "assetGroup"
+                  required:
+                    - attributes
+                    - type
+        description: >
+          Specifies the JSON body that contains asset information. This request
+          payload may not exceed 2 MB in size.
+        required: true
+      responses:
+        '410': *ref_2
+        '500': *ref_3
+        '503': *ref_4
+  /preview-asset-group:
+    post:
+      deprecated: true
+      description: >
+        **This API has been removed.**
+
+
+        This API is no longer used for asset or asset group related operations
+        in NetBackup and has been removed from the product.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+      tags:
+        - Asset Groups
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_22
+              type: object
+              description: >
+                Specifies the necessary information to preview the list of
+                assets for an asset group before it is created.
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    attributes:
+                      type: object
+                      required:
+                        - workloadType
+                        - assetType
+                        - filterConstraint
+                      properties:
+                        oDataQueryFilter:
+                          type: string
+                          description: >
+                            The filter criteria in OData query format. Maximum
+                            4096 characters. If no filter is supplied, all
+                            assets matching the filter constraint will be
+                            returned.
+                        workloadType:
+                          type: string
+                          description: >-
+                            The name of the workload type contained within this
+                            asset group.
+                          enum:
+                            - VMWARE
+                            - RHV
+                        assetType:
+                          type: string
+                          description: The type of asset contained within this asset group.
+                          enum:
+                            - VIRTUAL_MACHINE
+                            - HOST
+                            - DISK
+                            - APPLICATION
+                            - FILE_SYSTEM
+                        filterConstraint:
+                          type: string
+                          description: >
+                            The filter constraint. For VMware workloads, this
+                            value indicates the vCenter or the ESXi host name.
+                            For RHV workloads, this value indicates the
+                            rhvManager name. For Cloud workloads, this value
+                            indicates the name of the vendor.
+                        pageOffset:
+                          description: The page offset for pagination.
+                          type: integer
+                          default: 0
+                        pageLimit:
+                          description: The number of asset records on one page.
+                          type: integer
+                          default: 10
+                        sort:
+                          description: >-
+                            Sort in ascending order on the specified property.
+                            Prefix  with '-' for descending order.
+                          type: string
+                          default: '-lastDiscoveredTime'
+                    type:
+                      type: string
+                      enum:
+                        - assetGroupPreview
+                      description: The type of data being represented.
+                  required:
+                    - attributes
+                    - type
+        description: >-
+          Specifies the details needed to preview the list of assets for this
+          asset group.
+        required: true
+      responses:
+        '410': *ref_2
+        '500': *ref_3
+        '503': *ref_4
+  '/asset-groups/{assetGroupGuid}':
+    get:
+      deprecated: true
+      description: >
+        This API has been deprecated.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+
+
+        Retrieves the details of the asset group.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+
+
+        Namespace: Asset group-specific namespaces need to have the required
+        operations granted. \
+
+        VMware workload - `|ASSETS|VMWARE|GROUPS|{group_identifier}|` AND
+                          `|ASSETS|VMWARE|VCENTER|{vcenter_identifier}|` OR
+                          `|ASSETS|VMWARE|ESX|{esx_identifier}|` \
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `group_identifier` namespace in the API response.
+                                                        `GET /asset-service/workloads/{workload}/assets/{assetGroupGuid}?meta=accessControlId`) \
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `vcenter_identifier` namespace in the API response.
+                                                        `GET /config/servers/vmservers?meta=accessControlId`) \
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `esx_identifier` namespace in the API response.
+                                                        `GET /config/servers/vmservers?meta=accessControlId`)
+
+        RHV workload - `|ASSETS|RHV|RHVMGR|{rhv
+        server}|VMGROUP|{group_identifier}|` \
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `rhv server` namespace in the API response.
+                                                        `GET /config/servers/vmservers?meta=accessControlId`) \
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `group_identifier` namespace in the API response.
+                                                        `GET /asset-service/workloads/{workload}/assets/{assetGroupGuid}?meta=accessControlId`)
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Asset Groups
+      parameters:
+        - &ref_9
+          name: assetGroupGuid
+          description: An asset group's global unique identifier.
+          in: path
+          required: true
+          schema:
+            type: string
+        - *ref_5
+      responses:
+        '200':
+          headers:
+            X-NetBackup-Warning:
+              schema:
+                type: string
+              description: This API has been deprecated.
+          description: Request successful.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_17
+                type: object
+                properties:
+                  data: *ref_6
+                required:
+                  - data
+        '400':
+          description: Malformed asset group GUID.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_0
+        '401': *ref_7
+        '404':
+          description: No asset group was found based on the given GUID.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_0
+        '406': *ref_8
+    patch:
+      deprecated: true
+      description: >
+        **This API has been removed.**
+
+
+        This API is no longer used for asset or asset group related operations
+        in NetBackup and has been removed from the product.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+      tags:
+        - Asset Groups
+      parameters:
+        - *ref_9
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_23
+              type: object
+              description: >-
+                Specifies all or some fields of an asset group record in the
+                database to be updated.
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      description: >-
+                        The type of resource. This should always be
+                        "assetGroup".
+                      enum:
+                        - assetGroup
+                    id:
+                      type: string
+                      description: The global unique identifier (GUID) of the asset group.
+                    attributes: &ref_24
+                      type: object
+                      properties:
+                        displayName:
+                          description: The new display name of the asset group.
+                          type: string
+                        description:
+                          description: The new description of the asset group.
+                          type: string
+                        odataFilterCriteria:
+                          description: The new filter criteria in OData query format.
+                          type: string
+                  required:
+                    - attributes
+        description: >
+          Specifies the JSON body that contains the updated asset information.
+          This request payload may not exceed 2 MB in size.
+        required: true
+      responses:
+        '410': *ref_2
+        '500': *ref_3
+        '503': *ref_4
+    delete:
+      deprecated: true
+      description: >
+        **This API has been removed.**
+
+
+        This API is no longer used for asset or asset group related operations
+        in NetBackup and has been removed from the product.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+      tags:
+        - Asset Groups
+      parameters:
+        - *ref_9
+      responses:
+        '410': *ref_2
+        '500': *ref_3
+        '503': *ref_4
+  /assets/asset-cleanup:
+    post:
+      deprecated: true
+      description: >
+        **This API has been removed.**
+
+
+        This API is no longer used for asset or asset group related operations
+        in NetBackup and has been removed from the product.
+
+        See [Asset Service Getting Started
+        Guide](https://www.veritas.com/content/support/en_US/doc-viewer.141221222-141221259-0.index.html)
+        for the possible replacements of this functionality.
+      tags:
+        - Assets
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_25
+              type: object
+              description: >-
+                Specifies the request body for cleaning up assets in the
+                database.
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - assetCleanup
+                      description: The type of data being represented.
+                    attributes:
+                      type: object
+                      properties:
+                        cleanupTime:
+                          type: string
+                          format: date-time
+                          description: >
+                            Specifies an ISO-8601 formatted time. Assets from
+                            the given list that were discovered before this time
+                            are eligible to be deleted.
+                        assetIds:
+                          type: array
+                          description: >-
+                            The list of global unique identifiers (GUID) of the
+                            assets to be deleted.
+                          items:
+                            type: string
+                      required:
+                        - cleanupTime
+                        - assetIds
+                  required:
+                    - type
+                    - attributes
+        description: Specifies the JSON body that contains asset cleanup information.
+        required: true
+      responses:
+        '410': *ref_2
+        '500': *ref_3
+        '503': *ref_4
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    assetGroupGuid: *ref_9
+    meta: *ref_5
+  schemas:
+    postAssetsRequest: *ref_10
+    allLinks: *ref_11
+    paginationAttributes: *ref_12
+    assetAttributesRequest: *ref_13
+    createdBy: *ref_14
+    AnyValue: *ref_15
+    machine: *ref_1
+    getAssetGroupsResponse: *ref_16
+    assetGroupDetail: *ref_17
+    assetGroup: *ref_6
+    permissionsList: *ref_18
+    assetGroupAttributes: *ref_19
+    postAssetGroupRequest: *ref_20
+    createAssetGroupAttributes: *ref_21
+    postAssetGroupPreviewRequest: *ref_22
+    patchAssetGroupRequest: *ref_23
+    updateAssetGroupAttributes: *ref_24
+    postAssetCleanupRequest: *ref_25
+    fieldsViewResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              enum:
+                - view
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              required:
+                - workload
+                - view
+                - fieldDescriptions
+              properties:
+                workload:
+                  type: string
+                  enum:
+                    - VMWARE
+                    - RHV
+                    - CLOUD
+                view:
+                  type: string
+                  enum:
+                    - RBAC
+                    - DISPLAY
+                    - ASSET_GROUP
+                fieldDescriptions:
+                  type: array
+                  items: &ref_26
+                    type: object
+                    required:
+                      - fieldName
+                      - fieldType
+                      - displayName
+                      - properties
+                    properties:
+                      fieldName:
+                        description: The name of the field.
+                        type: string
+                      fieldType:
+                        description: The name of the type of the field.
+                        type: string
+                      displayName:
+                        description: >-
+                          An alternate name for the field.  Same as fieldName if
+                          there is none.
+                        type: string
+                      properties:
+                        description: Array of other optional properties used by the viewer.
+                        type: array
+                        items:
+                          type: string
+    fieldDescriptions: *ref_26
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []

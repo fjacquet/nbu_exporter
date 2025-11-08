@@ -1,137 +1,147 @@
+// Package exporter provides data fetching and processing logic for NetBackup API endpoints.
+// It handles pagination, metric aggregation, and data transformation for Prometheus metrics.
 package exporter
 
 import (
-	"crypto/tls"
-	"encoding/json"
+	"context"
 	"fmt"
-	"net/url"
+	"strconv"
 	"time"
 
-	"github.com/fjacquet/nbu_exporter/internal/logging"
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/fjacquet/nbu_exporter/internal/utils"
-	"github.com/go-resty/resty/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
-	pageLimit           = "100"
-	timeout             = 1 * time.Minute
-	contentType         = "application/json"
-	queryParamLimit     = "page[limit]"
-	queryParamOffset    = "page[offset]"
-	queryParamSort      = "sort"
-	queryParamFilter    = "filter"
-	headerAccept        = "Accept"
-	headerAuthorization = "Authorization"
+	pageLimit        = "100"                    // Default page size for API pagination
+	storageTypeTape  = "Tape"                   // Storage type identifier for tape units (excluded from metrics)
+	storagePath      = "/storage/storage-units" // API endpoint for storage unit data
+	jobsPath         = "/admin/jobs"            // API endpoint for job data
+	sizeTypeFree     = "free"                   // Metric dimension for free capacity
+	sizeTypeUsed     = "used"                   // Metric dimension for used capacity
+	bytesPerKilobyte = 1024                     // Conversion factor from kilobytes to bytes
 )
 
-// createHTTPClient initializes and returns a Resty client configured for HTTP requests.
-func createHTTPClient() *resty.Client {
-	return resty.New().
-		SetTLSClientConfig(&tls.Config{InsecureSkipVerify: true}).
-		SetTimeout(timeout)
-}
-
-// buildURL constructs a complete URL from base, path, and query parameters.
-func buildURL(baseURL, path string, queryParams map[string]string) string {
-	u, _ := url.Parse(baseURL)
-	u.Path = path
-	q := u.Query()
-	for key, value := range queryParams {
-		q.Set(key, value)
-	}
-	u.RawQuery = q.Encode()
-	return u.String()
-}
-
-// fetchData sends an HTTP GET request and unmarshals the response body into the target object.
-func fetchData(client *resty.Client, url string, headers map[string]string, target interface{}) error {
-	resp, err := client.R().
-		SetHeaders(headers).
-		Get(url)
-	if err != nil {
-		return fmt.Errorf("HTTP request to %s failed: %w", url, err)
-	}
-	if err := json.Unmarshal(resp.Body(), target); err != nil {
-		return fmt.Errorf("failed to unmarshal response from %s: %w", url, err)
-	}
-	return nil
-}
-
-// fetchStorage retrieves and processes storage unit information.
-func fetchStorage(disks map[string]float64, cfg models.Config) error {
+// FetchStorage retrieves storage unit information from the NetBackup API and populates
+// the provided metrics map with capacity data. It fetches all storage units and extracts
+// free and used capacity metrics for non-tape storage.
+//
+// Tape storage units are excluded from metrics as they don't report meaningful capacity values.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - client: Configured NetBackup API client
+//   - storageMetrics: Map to populate with storage metrics (key format: "name|type|size")
+//
+// The function populates storageMetrics with entries like:
+//   - "disk-pool-1|MEDIA_SERVER|free" -> 5368709120000 (bytes)
+//   - "disk-pool-1|MEDIA_SERVER|used" -> 5368709120000 (bytes)
+//
+// Returns an error if the API request fails or response cannot be parsed.
+func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[string]float64) error {
 	var storages models.Storages
-	nbuRoot := fmt.Sprintf("%s://%s:%s%s", cfg.NbuServer.Scheme, cfg.NbuServer.Host, cfg.NbuServer.Port, cfg.NbuServer.URI)
 
-	url := buildURL(nbuRoot, "/storage/storage-units", map[string]string{
-		queryParamLimit:  pageLimit,
-		queryParamOffset: "0",
+	url := client.cfg.BuildURL(storagePath, map[string]string{
+		QueryParamLimit:  pageLimit,
+		QueryParamOffset: "0",
 	})
 
-	headers := map[string]string{
-		headerAccept:        contentType,
-		headerAuthorization: cfg.NbuServer.APIKey,
-	}
-
-	err := fetchData(createHTTPClient(), url, headers, &storages)
-	if err != nil {
-		logging.LogError(fmt.Sprintf("Error fetching storage data: %v", err))
-		return err
+	if err := client.FetchData(ctx, url, &storages); err != nil {
+		return fmt.Errorf("failed to fetch storage data: %w", err)
 	}
 
 	for _, data := range storages.Data {
-		if data.Attributes.StorageType == "Tape" {
+		// Skip tape storage units
+		if data.Attributes.StorageType == storageTypeTape {
 			continue
 		}
 
 		stuName := data.Attributes.Name
 		stuType := data.Attributes.StorageServerType
-		disks[fmt.Sprintf("%s|%s|free", stuName, stuType)] = float64(data.Attributes.FreeCapacityBytes)
-		disks[fmt.Sprintf("%s|%s|used", stuName, stuType)] = float64(data.Attributes.UsedCapacityBytes)
+
+		freeKey := StorageMetricKey{Name: stuName, Type: stuType, Size: sizeTypeFree}
+		usedKey := StorageMetricKey{Name: stuName, Type: stuType, Size: sizeTypeUsed}
+
+		storageMetrics[freeKey.String()] = float64(data.Attributes.FreeCapacityBytes)
+		storageMetrics[usedKey.String()] = float64(data.Attributes.UsedCapacityBytes)
 	}
+
+	log.Debugf("Fetched storage data for %d storage units", len(storages.Data))
 	return nil
 }
 
-// fetchJobDetails retrieves and processes job details for a specific offset.
-func fetchJobDetails(client *resty.Client, jobsSize, jobsCount, jobsStatusCount map[string]float64, offset int, cfg models.Config) (int, error) {
+// FetchJobDetails retrieves a single job record at the specified pagination offset and
+// updates the provided metrics maps with job statistics. This function is designed to be
+// called repeatedly during pagination to process all jobs within a time window.
+//
+// The function fetches one job at a time (limit=1) to enable efficient pagination and
+// filters jobs by endTime to only include jobs completed after startTime.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - client: Configured NetBackup API client
+//   - jobsSize: Map to accumulate bytes transferred per job type/status
+//   - jobsCount: Map to accumulate job counts per job type/status
+//   - jobsStatusCount: Map to accumulate job counts per action/status
+//   - offset: Pagination offset for the current request
+//   - startTime: Filter to only include jobs completed after this time
+//
+// Returns:
+//   - Next pagination offset (or -1 if no more jobs)
+//   - Error if the API request fails
+//
+// The function updates metrics maps with keys like:
+//   - jobsSize["BACKUP|VMWARE|0"] += bytes transferred
+//   - jobsCount["BACKUP|VMWARE|0"] += 1
+//   - jobsStatusCount["BACKUP|0"] += 1
+func FetchJobDetails(
+	ctx context.Context,
+	client *NbuClient,
+	jobsSize, jobsCount, jobsStatusCount map[string]float64,
+	offset int,
+	startTime time.Time,
+) (int, error) {
 	var jobs models.Jobs
-	nbuRoot := fmt.Sprintf("%s://%s:%s%s", cfg.NbuServer.Scheme, cfg.NbuServer.Host, cfg.NbuServer.Port, cfg.NbuServer.URI)
 
-	duration, err := time.ParseDuration("-" + cfg.Server.ScrappingInterval)
-	if err != nil {
-		return -1, fmt.Errorf("invalid scrapping interval: %w", err)
-	}
-
-	startTime := time.Now().Add(duration).UTC()
 	queryParams := map[string]string{
-		queryParamLimit:  "1",
-		queryParamOffset: fmt.Sprintf("%d", offset),
-		queryParamSort:   "jobId",
-		queryParamFilter: fmt.Sprintf("endTime%%20gt%%20%s", utils.ConvertTimeToNBUDate(startTime)),
+		QueryParamLimit:  "1",
+		QueryParamOffset: strconv.Itoa(offset),
+		QueryParamSort:   "jobId",
+		QueryParamFilter: fmt.Sprintf("endTime%%20gt%%20%s", utils.ConvertTimeToNBUDate(startTime)),
 	}
 
-	url := buildURL(nbuRoot, "/admin/jobs", queryParams)
-	headers := map[string]string{
-		headerAccept:        contentType,
-		headerAuthorization: cfg.NbuServer.APIKey,
+	url := client.cfg.BuildURL(jobsPath, queryParams)
+
+	if err := client.FetchData(ctx, url, &jobs); err != nil {
+		return -1, fmt.Errorf("failed to fetch job details at offset %d: %w", offset, err)
 	}
 
-	if err := fetchData(client, url, headers, &jobs); err != nil {
-		return -1, err
-	}
-
+	// No more jobs to process
 	if len(jobs.Data) == 0 {
 		return -1, nil
 	}
 
 	job := jobs.Data[0]
-	key := fmt.Sprintf("%s|%s|%d", job.Attributes.JobType, job.Attributes.PolicyType, job.Attributes.Status)
-	key2 := fmt.Sprintf("%s|%d", job.Attributes.JobType, job.Attributes.Status)
 
-	jobsCount[key]++
-	jobsStatusCount[key2]++
-	jobsSize[key] += float64(job.Attributes.KilobytesTransferred * 1024)
+	// Create structured metric keys
+	jobKey := JobMetricKey{
+		Action:     job.Attributes.JobType,
+		PolicyType: job.Attributes.PolicyType,
+		Status:     strconv.Itoa(job.Attributes.Status),
+	}
 
+	statusKey := JobStatusKey{
+		Action: job.Attributes.JobType,
+		Status: strconv.Itoa(job.Attributes.Status),
+	}
+
+	// Update metrics
+	jobsCount[jobKey.String()]++
+	jobsStatusCount[statusKey.String()]++
+	jobsSize[jobKey.String()] += float64(job.Attributes.KilobytesTransferred * bytesPerKilobyte)
+
+	// Check if we've reached the last page
 	if jobs.Meta.Pagination.Offset == jobs.Meta.Pagination.Last {
 		return -1, nil
 	}
@@ -139,23 +149,88 @@ func fetchJobDetails(client *resty.Client, jobsSize, jobsCount, jobsStatusCount 
 	return jobs.Meta.Pagination.Next, nil
 }
 
-// handlePagination iterates over paginated responses and processes them.
-func handlePagination(fetchFunc func(offset int) (int, error)) error {
+// HandlePagination provides a generic pagination handler that repeatedly calls a fetch function
+// until all pages have been processed. It handles context cancellation and propagates errors
+// from the fetch function.
+//
+// The fetch function should:
+//   - Accept a context and offset parameter
+//   - Return the next offset (or -1 when pagination is complete)
+//   - Return an error if the fetch operation fails
+//
+// Parameters:
+//   - ctx: Context for cancellation (checked before each page fetch)
+//   - fetchFunc: Function to fetch and process a single page of results
+//
+// Returns an error if:
+//   - Context is cancelled (ctx.Err())
+//   - The fetch function returns an error
+//
+// Example:
+//
+//	err := HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
+//	    return FetchJobDetails(ctx, client, metrics, offset, startTime)
+//	})
+func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, offset int) (int, error)) error {
 	offset := 0
 	for offset != -1 {
-		nextOffset, err := fetchFunc(offset)
-		if err != nil {
-			return err
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			nextOffset, err := fetchFunc(ctx, offset)
+			if err != nil {
+				return err
+			}
+			offset = nextOffset
 		}
-		offset = nextOffset
 	}
 	return nil
 }
 
-// fetchAllJobs aggregates job statistics by iterating over paginated job data.
-func fetchAllJobs(jobsSize, jobsCount, jobsStatusCount map[string]float64, cfg models.Config) error {
-	client := createHTTPClient()
-	return handlePagination(func(offset int) (int, error) {
-		return fetchJobDetails(client, jobsSize, jobsCount, jobsStatusCount, offset, cfg)
+// FetchAllJobs aggregates job statistics by iterating over all paginated job data within
+// the configured time window. It calculates the start time based on the scraping interval
+// and fetches all jobs that completed after that time.
+//
+// The function uses pagination to efficiently process large job datasets and populates
+// three metrics maps with aggregated statistics:
+//   - jobsSize: Total bytes transferred per job type/policy/status
+//   - jobsCount: Number of jobs per job type/policy/status
+//   - jobsStatusCount: Number of jobs per action/status (simplified aggregation)
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - client: Configured NetBackup API client
+//   - jobsSize: Map to populate with bytes transferred metrics
+//   - jobsCount: Map to populate with job count metrics
+//   - jobsStatusCount: Map to populate with status count metrics
+//   - scrapingInterval: Duration string (e.g., "5m", "1h") defining the time window
+//
+// Returns an error if:
+//   - The scraping interval cannot be parsed
+//   - Any API request fails during pagination
+//
+// Example:
+//
+//	jobsSize := make(map[string]float64)
+//	jobsCount := make(map[string]float64)
+//	jobsStatusCount := make(map[string]float64)
+//	err := FetchAllJobs(ctx, client, jobsSize, jobsCount, jobsStatusCount, "5m")
+func FetchAllJobs(
+	ctx context.Context,
+	client *NbuClient,
+	jobsSize, jobsCount, jobsStatusCount map[string]float64,
+	scrapingInterval string,
+) error {
+	duration, err := time.ParseDuration("-" + scrapingInterval)
+	if err != nil {
+		return fmt.Errorf("invalid scraping interval %s: %w", scrapingInterval, err)
+	}
+
+	startTime := time.Now().Add(duration).UTC()
+	log.Debugf("Fetching jobs since %s", startTime.Format(time.RFC3339))
+
+	return HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
+		return FetchJobDetails(ctx, client, jobsSize, jobsCount, jobsStatusCount, offset, startTime)
 	})
 }
