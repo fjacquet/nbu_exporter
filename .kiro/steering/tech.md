@@ -2,7 +2,8 @@
 
 ## Language & Runtime
 
-- **Go**: Version 1.23.4
+- **Go**: Version 1.25 (latest stable: 1.25.4 as of November 2025)
+  - Official downloads: https://go.dev/dl/
 - **Build System**: Go modules with Makefile automation
 
 ## Core Dependencies

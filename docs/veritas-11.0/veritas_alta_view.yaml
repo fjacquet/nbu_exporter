@@ -1,0 +1,770 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Alta View API
+  version: '13.0'
+  description: |
+    The NetBackup Alta View APIs provide access to Veritas Alta View resources.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+paths:
+  /alta-view/servers:
+    post:
+      description: >
+        Adds Veritas Alta View to NetBackup.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`
+
+
+        Following permissions are also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|SERVICE-PRINCIPAL|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Veritas Alta View
+      requestBody:
+        description: The request body of the server to be created.
+        content:
+          multipart/vnd.netbackup+form-data;version=13.0:
+            schema:
+              type: object
+              required:
+                - file
+                - proxyEnabled
+                - proxyId
+              properties:
+                file:
+                  description: The Alta View registration file.
+                  type: string
+                  format: binary
+                proxyEnabled:
+                  type: boolean
+                  description: >-
+                    Specifies that a proxy server is used for communication with
+                    the Alta View Server.
+                proxyId:
+                  type: integer
+                  description: >-
+                    Specifies the id of proxy server if used for communication
+                    with the Alta View Server.
+        required: true
+      responses:
+        '201':
+          description: |
+            Successfully added the Veritas Alta View.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_14
+                type: object
+                required:
+                  - data
+                properties:
+                  data: &ref_15
+                    type: object
+                    required:
+                      - id
+                      - type
+                      - attributes
+                    properties:
+                      id:
+                        type: string
+                        description: The enterprise ID of Veritas Alta View Platform.
+                      type:
+                        type: string
+                        description: Represents Veritas Alta View Platform object.
+                        enum:
+                          - altaviewServer
+                      attributes:
+                        type: object
+                        required:
+                          - server
+                          - customerId
+                          - proxyEnabled
+                          - dataCenter
+                          - dataCollection
+                        properties:
+                          server:
+                            type: string
+                            description: The Hostname or IP of Veritas Alta View Platform.
+                          customerId:
+                            type: string
+                            description: The id of registered customer in Alta View.
+                          proxyEnabled:
+                            type: boolean
+                            description: >-
+                              Specifies that a proxy server is used for
+                              communication with the Alta View Server.
+                          dataCenter:
+                            type: string
+                            description: The data center of Veritas Alta View Platform.
+                          dataCollection:
+                            type: boolean
+                            description: >-
+                              Specifies that data collection is enabled for
+                              Veritas Alta View Platform.
+                      relationships: &ref_1
+                        type: object
+                        properties:
+                          proxyServer:
+                            properties:
+                              data: &ref_18
+                                type: object
+                                properties:
+                                  type:
+                                    type: string
+                                    enum:
+                                      - proxyServer
+                                  id:
+                                    type: string
+                                required:
+                                  - type
+                                  - id
+                            required:
+                              - data
+        '400': &ref_6
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_0
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '401': &ref_2
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '404': &ref_4
+          description: No entity found.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '409':
+          description: The Veritas Alta View Platform is already added.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': &ref_7
+          description: >
+            Unsupported Media Type. The media type specified in the
+            `Content-Type` header is not supported by this API.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': &ref_3
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+    get:
+      description: >
+        Retrieve the details of Alta View.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Veritas Alta View
+      responses:
+        '200':
+          description: |
+            Successfully retrieved the Veritas Alta View details.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_16
+                type: object
+                required:
+                  - data
+                properties:
+                  data: &ref_17
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - type
+                        - attributes
+                      properties:
+                        id:
+                          type: string
+                          description: The enterprise ID of Veritas Alta View Platform.
+                        type:
+                          type: string
+                          description: Represents Veritas Alta View Platform object.
+                          enum:
+                            - altaviewServer
+                        attributes:
+                          type: object
+                          required:
+                            - server
+                            - customerId
+                            - proxyEnabled
+                            - dataCenter
+                          properties:
+                            server:
+                              type: string
+                              description: >-
+                                The Hostname or IP of Veritas Alta View
+                                Platform.
+                            customerId:
+                              type: string
+                              description: The id of registered customer in Alta View.
+                            proxyEnabled:
+                              type: boolean
+                              description: >-
+                                Specifies that a proxy server is used for
+                                communication with the Alta View Server.
+                            dataCenter:
+                              type: string
+                              description: The data center of Veritas Alta View Platform.
+                        relationships: *ref_1
+        '401': *ref_2
+        '500': *ref_3
+  '/alta-view/servers/{altaviewServerId}':
+    delete:
+      description: >
+        Delete the details of Alta View.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|DELETE|`
+
+
+        Following permissions are also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|SERVICE-PRINCIPAL|`\
+
+        Requires Operation: `|OPERATIONS|DELETE|`
+      tags:
+        - Veritas Alta View
+      parameters:
+        - &ref_5
+          name: altaviewServerId
+          in: path
+          description: The id of Alta View server
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: |
+            Successfully deleted the Veritas Alta View details.
+        '401': *ref_2
+        '404': *ref_4
+        '500': *ref_3
+    patch:
+      description: >
+        Update the proxy configuration of Alta View.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+
+
+        Following permissions are also required if API key is also expired.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|SERVICE-PRINCIPAL|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`\
+
+        Requires Operation: `|OPERATIONS|DELETE|`
+      tags:
+        - Veritas Alta View
+      parameters:
+        - *ref_5
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_10
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      description: The resource type to be created.
+                      enum:
+                        - updateAltaViewServer
+                    attributes: &ref_11
+                      type: object
+                      properties:
+                        proxyEnabled:
+                          type: boolean
+                          description: >-
+                            Specifies that a proxy server is used for
+                            communication with the Alta View Server.
+                        proxyId:
+                          type: string
+                          description: >
+                            Specifies the id of proxy server if used for
+                            communication with the Alta View Server.
+        description: Specifies the JSON body that contains the updated Alta View details.
+        required: true
+      responses:
+        '204':
+          description: |
+            Successfully updated the Veritas Alta View details.
+        '400': *ref_6
+        '401': *ref_2
+        '404': *ref_4
+        '500': *ref_3
+  /alta-view/data-collection/status:
+    post:
+      description: >
+        Saves the state of data collection from NetBackup primary.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+
+
+        Following permissions are also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|SERVICE-PRINCIPAL|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Veritas Alta View
+      requestBody:
+        description: The request body datacollection status.
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_19
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - dcInfo
+                    attributes: &ref_21
+                      type: object
+                      description: State of data collection from NetBackup primary.
+                      properties:
+                        hostName:
+                          type: string
+                          description: The host name for the communicating host.
+                        state:
+                          type: string
+                          description: >-
+                            Indicates the state of the host. Possible values are
+                            null, ACTIVATED, DEACTIVATED.
+                          enum:
+                            - ACTIVATED
+                            - DEACTIVATED
+        required: true
+      responses:
+        '204':
+          description: |
+            Successfully saved the state for data collection.
+        '400': *ref_6
+        '401': *ref_2
+        '415': *ref_7
+        '500': *ref_3
+    get:
+      description: >
+        Retrieves the state of data collection from NetBackup primary.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+
+
+        Following permissions are also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|SERVICE-PRINCIPAL|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Veritas Alta View
+      responses:
+        '200':
+          description: Status of data collection from NetBackup primary.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_20
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - dcState
+                      id:
+                        type: string
+                      attributes: &ref_22
+                        type: object
+                        description: State of data collection from NetBackup primary.
+                        properties:
+                          state:
+                            type: string
+                            description: >-
+                              Indicates the state of the host. Possible values
+                              are null, ACTIVATED, DEACTIVATED.
+                            enum:
+                              - ACTIVATED
+                              - DEACTIVATED
+                          connectionState:
+                            type: string
+                            description: >-
+                              Indicates the WebSocket connection state. Possible
+                              values are null, CONNECTED, DISCONNECTED.
+                            enum:
+                              - CONNECT
+                              - DISCONNECTED
+                          closeStatus:
+                            type: string
+                            description: >
+                              Indicates the close status with which the
+                              websocket socket is closed.
+                            enum:
+                              - NORMAL_CLOSURE
+                              - GOING_AWAY
+                              - PROTOCOL_ERROR
+                              - CANNOT_ACCEPT
+                              - NO_STATUS_CODE
+                              - CLOSED_ABNORMALLY
+                              - NOT_CONSISTENT
+                              - VIOLATED_POLICY
+                              - TOO_BIG
+                              - NO_EXTENSION
+                              - UNEXPECTED_CONDITION
+                              - SERVICE_RESTART
+                              - TRY_AGAIN_LATER
+                              - TLS_HANDSHAKE_FAILURE
+                              - GENERIC_CLOSE
+                              - REFRESH_TOKEN_EXPIRED
+                              - REFRESH_TOKEN_ALREADY_CONSUMED
+                              - REFRESH_TOKEN_INVALID
+                              - ALTA_SERVER_ERROR
+                              - ALTA_CREDENTIAL_NOT_FOUND
+                          closeReason:
+                            type: string
+                            description: >
+                              Indicates the close reason with which the
+                              websocket is closed
+        '401': *ref_2
+        '406':
+          description: >-
+            Invalid `Accept` type. Make sure your `Accept` header matches what
+            this API produces.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': *ref_3
+components:
+  parameters:
+    altaviewServer:
+      name: altaviewServer
+      in: path
+      description: The host name of Alta View.
+      required: true
+      schema:
+        type: string
+    altaviewServerId: *ref_5
+  schemas:
+    altaviewCACertList:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items: &ref_8
+            type: object
+            required:
+              - id
+              - type
+              - attributes
+              - links
+            properties:
+              id:
+                type: string
+                description: The certificate authority (CA) fingerprint of Alta View.
+              type:
+                type: string
+                description: The resource type.
+                enum:
+                  - altaviewCACert
+              attributes: &ref_9
+                type: object
+                properties:
+                  fingerprint:
+                    type: string
+                    description: The certificate authority (CA) fingerprint of Alta View.
+                  subjectDN:
+                    type: string
+                    description: The subject distinguished name.
+                  server:
+                    type: string
+                    description: The host name of Alta View.
+                  isRootCATrusted:
+                    type: boolean
+                    default: false
+                    description: >-
+                      If `true`, indicates that the certificate issuer is
+                      trusted by NetBackup master server.
+                  issuedTo:
+                    type: string
+                    description: >-
+                      Common name of the entity to whom the certificate has been
+                      issued.
+                  issuedBy:
+                    type: string
+                    description: Common name of the entity who has issued the certificate.
+                  validFrom:
+                    type: string
+                    format: date-time
+                    description: >-
+                      The start date and time of the validity of certificate in
+                      ISO 8601 timestamp.
+                  validTo:
+                    type: string
+                    format: date-time
+                    description: >-
+                      The end date and time of the certificate in ISO 8601
+                      timestamp.
+                required:
+                  - fingerprint
+                  - server
+              links:
+                type: object
+                properties:
+                  self:
+                    type: object
+                    description: Link to the resource.
+                    properties:
+                      href:
+                        type: string
+    altaviewCACert: *ref_8
+    altaviewCACertAttributes: *ref_9
+    updateAltaViewServerRequest: *ref_10
+    updateAltaViewServerData: *ref_11
+    configureAltaViewServerRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              description: The resource type to be created.
+              enum:
+                - newAltaViewServer
+            attributes: &ref_12
+              type: object
+              required:
+                - registration-payload
+              properties:
+                registration-payload:
+                  type: string
+                  description: The registration data for Alta View Platform.
+                proxyEnabled:
+                  type: boolean
+                  default: false
+                  description: >-
+                    Specifies that a proxy server is used for communication with
+                    the Alta View Server.
+                proxyId:
+                  type: integer
+                  description: >
+                    Specifies the id of proxy server if used for communication
+                    with the Alta View Server. This should be populated only if
+                    proxyEnabled is true.
+    altaviewServerData: *ref_12
+    updateAltaViewDataCenterRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              description: The resource type to be created.
+              enum:
+                - updateAltaViewDataCenter
+            attributes: &ref_13
+              type: object
+              required:
+                - altaviewServer
+                - dataCenter
+              properties:
+                altaviewServer:
+                  type: string
+                  description: The Host name or IP of Veritas Alta View Platform.
+                dataCenter:
+                  type: string
+                  description: The data center of Veritas Alta View Platform.
+    updateAltaViewDataCenter: *ref_13
+    configureAltaViewServerResponse: *ref_14
+    altaviewServerResponse: *ref_15
+    listAltaViewServerResponse: *ref_16
+    getAltaViewServerResponseDetails: *ref_17
+    altaviewCACertResponseAttributes:
+      type: object
+      properties:
+        fingerprint:
+          type: string
+          description: The certificate authority (CA) fingerprint of Alta View.
+        server:
+          type: string
+          description: The host name of Alta View.
+        isRootCATrusted:
+          type: boolean
+          default: false
+          description: >-
+            If `true`, indicates that the certificate issuer is trusted by
+            NetBackup master server.
+    altaviewServerRelations: *ref_1
+    proxyServerRelationDefinition: *ref_18
+    dataCollectionRequest: *ref_19
+    tokenGenerationRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - tokenGenerateRequest
+            attributes:
+              type: object
+              required:
+                - token
+              description: Request data for access and refresh token pair generation.
+              properties:
+                token:
+                  type: string
+                  description: >-
+                    Temporary token to consume for access and refresh token pair
+                    generation.
+    dataCollectionResponse: *ref_20
+    dataCollectionInfo: *ref_21
+    dataCollectionStatus: *ref_22
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []

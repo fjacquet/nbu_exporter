@@ -5,6 +5,7 @@ package exporter
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ const collectionTimeout = 2 * time.Minute // Maximum time allowed for metric col
 //   - Storage unit capacity (free/used bytes) for disk-based storage
 //   - Job statistics (count, bytes transferred) aggregated by type, policy, and status
 //   - Job status counts aggregated by action and status code
+//   - API version information
 //
 // Metrics are collected on-demand when Prometheus scrapes the /metrics endpoint.
 type NbuCollector struct {
@@ -33,11 +35,12 @@ type NbuCollector struct {
 	nbuJobsSize        *prometheus.Desc
 	nbuJobsCount       *prometheus.Desc
 	nbuJobsStatusCount *prometheus.Desc
+	nbuAPIVersion      *prometheus.Desc
 }
 
 // NewNbuCollector creates a new NetBackup collector with the provided configuration.
-// It initializes the HTTP client, attempts to detect the API version, and registers
-// Prometheus metric descriptors.
+// It initializes the HTTP client, performs automatic API version detection if needed,
+// and registers Prometheus metric descriptors.
 //
 // The collector creates the following metrics:
 //   - nbu_disk_bytes: Storage capacity in bytes (labels: name, type, size)
@@ -46,26 +49,42 @@ type NbuCollector struct {
 //   - nbu_status_count: Job counts by status (labels: action, status)
 //   - nbu_response_time_ms: API response time in milliseconds
 //
-// If API version detection fails during initialization, a warning is logged but the
-// collector continues to function using the configured API version.
+// Version Detection:
+//   - If apiVersion is not configured, automatic detection is performed
+//   - Detection tries versions in descending order: 13.0 → 12.0 → 3.0
+//   - If detection fails, an error is returned and collector creation fails
+//   - If apiVersion is explicitly configured, detection is bypassed
 //
 // Example:
 //
 //	cfg := models.Config{...}
-//	collector := NewNbuCollector(cfg)
+//	collector, err := NewNbuCollector(cfg)
+//	if err != nil {
+//	    log.Fatalf("Failed to create collector: %v", err)
+//	}
 //	prometheus.MustRegister(collector)
-func NewNbuCollector(cfg models.Config) *NbuCollector {
+func NewNbuCollector(cfg models.Config) (*NbuCollector, error) {
+	// Create base client
 	client := NewNbuClient(cfg)
 
-	// Attempt to detect API version during initialization
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// Perform version detection if apiVersion is not explicitly configured
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if detectedVersion, err := client.DetectAPIVersion(ctx); err != nil {
-		log.Warnf("Failed to detect NetBackup API version: %v", err)
-		log.Infof("Using configured API version: %s", cfg.NbuServer.APIVersion)
+	if cfg.NbuServer.APIVersion == "" {
+		log.Info("API version not configured, performing automatic detection")
+		detector := NewAPIVersionDetector(client, &cfg)
+		detectedVersion, err := detector.DetectVersion(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("automatic API version detection failed: %w", err)
+		}
+
+		// Update configuration with detected version
+		cfg.NbuServer.APIVersion = detectedVersion
+		client.cfg.NbuServer.APIVersion = detectedVersion
+		log.Infof("Detected NetBackup API version: %s", detectedVersion)
 	} else {
-		log.Infof("Successfully connected to NetBackup API version: %s", detectedVersion)
+		log.Infof("Using configured NetBackup API version: %s", cfg.NbuServer.APIVersion)
 	}
 
 	return &NbuCollector{
@@ -96,7 +115,12 @@ func NewNbuCollector(cfg models.Config) *NbuCollector {
 			"The quantity per status",
 			[]string{"action", "status"}, nil,
 		),
-	}
+		nbuAPIVersion: prometheus.NewDesc(
+			"nbu_api_version",
+			"The NetBackup API version currently in use",
+			[]string{"version"}, nil,
+		),
+	}, nil
 }
 
 // Describe sends the descriptors of each metric to the provided channel.
@@ -108,6 +132,7 @@ func (c *NbuCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.nbuJobsSize
 	ch <- c.nbuJobsCount
 	ch <- c.nbuJobsStatusCount
+	ch <- c.nbuAPIVersion
 }
 
 // Collect fetches metrics from NetBackup and sends them to the provided channel.
@@ -185,6 +210,14 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 			labels[0], labels[1],
 		)
 	}
+
+	// Expose API version metric
+	ch <- prometheus.MustNewConstMetric(
+		c.nbuAPIVersion,
+		prometheus.GaugeValue,
+		1,
+		c.cfg.NbuServer.APIVersion,
+	)
 
 	log.Debugf("Collected %d storage, %d job size, %d job count, %d status metrics",
 		len(storageMetrics), len(jobsSize), len(jobsCount), len(jobsStatusCount))

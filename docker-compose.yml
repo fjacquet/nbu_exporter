@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  nbu_exporter:
+    build: .
+    image: nbu_exporter:latest
+    container_name: nbu_exporter
+    ports:
+      - "2112:2112"
+    volumes:
+      # Mount configuration file (read-only)
+      - ./config.yaml:/etc/nbu_exporter/config.yaml:ro
+      # Mount log directory for persistent logs
+      - ./log:/var/log/nbu_exporter
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:2112/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Optional: Set resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    # Optional: Environment variables
+    # environment:
+    #   - NBU_API_KEY=${NBU_API_KEY}
+    #   - TZ=UTC
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge

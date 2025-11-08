@@ -1,0 +1,14 @@
+{
+  "errorCode": 2060006,
+  "errorMessage": "The requested API version is not supported by this NetBackup server.",
+  "errorDetails": [
+    "The Accept header specifies an API version that is not available on this server",
+    "This NetBackup server supports API versions: 3.0, 12.0",
+    "The requested version was: 13.0",
+    "Update the API version in your configuration to a supported version",
+    "Or upgrade the NetBackup server to support the requested API version"
+  ],
+  "attributeErrors": {
+    "Accept": "application/vnd.netbackup+json;version=13.0 is not supported"
+  }
+}

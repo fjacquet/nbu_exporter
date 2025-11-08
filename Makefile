@@ -4,12 +4,23 @@ CLI_BIN = nbu_exporter
 # Default target: build both binaries
 all: cli test docker
 
+# Ensure code quality: format, test, and build
+sure:
+	go fmt ./...
+	go test ./...
+	go build ./...
+	golangci-lint run 
+
 test:
-	go test
+	go test ./...
 
 # Build the CLI binary
 cli:
 	go build -o bin/$(CLI_BIN) .
+
+# Build with version information
+build-release:
+	go build -ldflags="-s -w" -o bin/$(CLI_BIN) .
 
 
 # Build the Docker image
@@ -19,7 +30,7 @@ docker:
 	fi
 	docker build -t $(CLI_BIN) .
 
-.PHONY: docker clean run-cli run-web run-docker
+.PHONY: all cli test docker clean run-cli run-docker sure build-release test-coverage
 
 # Clean up build artifacts
 clean:
@@ -34,4 +45,9 @@ run-cli: $(CLI_BIN)
 
 # Run the Docker container
 run-docker: docker
-	docker run -d -p 8080:8080 --name $(CLI_BIN) $(CLI_BIN)
+	docker run -d -p 2112:2112 --name $(CLI_BIN) $(CLI_BIN)
+
+# Run tests with coverage
+test-coverage:
+	go test ./... -coverprofile=coverage.out -covermode=atomic
+	go tool cover -html=coverage.out -o coverage.html

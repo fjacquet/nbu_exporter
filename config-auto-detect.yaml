@@ -1,0 +1,22 @@
+---
+# Example configuration with automatic API version detection
+# The exporter will try versions in order: 13.0 -> 12.0 -> 3.0
+server:
+    host: "localhost"
+    port: "2112"
+    uri: "/metrics"
+    scrapingInterval: "1h"
+    logName: "log/nbu-exporter.log"
+nbuserver:
+    scheme: "https"
+    uri: "/netbackup"
+    domain: "my.domain"
+    domainType: "NT"
+    host: "master.my.domain"
+    port: "1556"
+    # apiVersion: omitted for automatic detection
+    # The exporter will automatically detect the correct API version
+    # by trying: 13.0 (NBU 11.0) -> 12.0 (NBU 10.5) -> 3.0 (NBU 10.0-10.4)
+    apiKey: "my-api-key"
+    contentType: "application/vnd.netbackup+json"  # Version will be added automatically
+    insecureSkipVerify: false  # Set to true to skip TLS certificate verification (not recommended for production)

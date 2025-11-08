@@ -17,6 +17,9 @@ RUN go build -o nbu_exporter
 # Stage 2: Runtime
 FROM alpine:latest
 
+# Install ca-certificates for HTTPS connections
+RUN apk --no-cache add ca-certificates
+
 # Set up the working directory
 WORKDIR /root/
 
@@ -24,12 +27,14 @@ WORKDIR /root/
 COPY --from=builder /app/nbu_exporter /usr/bin/nbu_exporter
 
 # Copy the configuration file (if needed)
-COPY config.yaml /etc/config.yaml
+COPY config.yaml /etc/nbu_exporter/config.yaml
 
-# Expose the default port
-EXPOSE 8080
+# Create log directory
+RUN mkdir -p /var/log/nbu_exporter
+
+# Expose the default port (configurable via config.yaml)
+EXPOSE 2112
 
 # Run the exporter with the default configuration
-# ENTRYPOINT ["/usr/bin/nbu_exporter"]
-ENTRYPOINT ["/bin/sh"]
-# CMD ["/usr/bin/nbu_exporter", "--config", "/etc/config.yaml"]
+ENTRYPOINT ["/usr/bin/nbu_exporter"]
+CMD ["--config", "/etc/nbu_exporter/config.yaml"]

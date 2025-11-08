@@ -1,0 +1,1737 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Authentication API
+  version: '13.0'
+  description: >
+    The NetBackup Authentication API provides authentication by means of a JSON
+    Web Token (JWT) that is used when making the API requests.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+paths:
+  /login:
+    post:
+      description: >
+        Authenticates the users with either the user name and the password or
+        the user name and API Key.
+
+        A JSON Web Token (JWT) is returned that is used for all subsequent API
+        requests.
+
+
+        **Access Control:**\
+
+        Enforcement Type: `None`
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_9
+              type: object
+              properties:
+                domainType:
+                  type: string
+                  enum:
+                    - NT
+                    - vx
+                    - unixpwd
+                    - ldap
+                  description: >
+                    The domain type associated with the user. In the case of
+                    user login through API key, domain type is a mandatory field
+                    and you must enter `vx` as the domain type.
+                domainName:
+                  type: string
+                  description: >
+                    The domain name associated with the user. In the case of
+                    user login through API key, domain name is a mandatory field
+                    and you must enter `vrts.apikey` as the domain name.
+                userName:
+                  type: string
+                  description: The user account name.
+                password:
+                  type: string
+                  description: The password of the user account or the API key.
+              required:
+                - userName
+                - password
+        required: true
+      responses:
+        '201':
+          description: Successfully logged in.
+          headers:
+            Set-Cookie:
+              description: Header setting the Authorization cookie.
+              schema:
+                type: string
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_8
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: The token to use for subsequent API requests.
+                  tokenType:
+                    type: string
+                    description: The token type for the token that is returned.
+                  validity:
+                    type: integer
+                    description: The time in seconds that this token will be valid.
+                required:
+                  - token
+                  - tokenType
+                  - validity
+        '400': &ref_1
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_0
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '401':
+          description: 'The user name, password or API Key is wrong.'
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '406': &ref_2
+          description: >-
+            Invalid `Accept` type. Make sure your `Accept` header matches what
+            this API produces.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': &ref_6
+          description: >
+            Unsupported Media Type. The media type specified in the
+            `Content-Type` header is not supported by this API.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+  /user-profiles:
+    get:
+      description: >
+        Retrieves profiles of the users who have logged in to NetBackup in the
+        past.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|USER-PROFILES|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|
+
+
+        You can retrieve your user profile irrespective of whether you have the
+        View User Profile permission or not.
+
+        If you have the View User Profile permission, you can retrieve profiles
+        of other users.
+      tags:
+        - User Profile
+      security:
+        - apiKeyAuth: []
+        - jwtAuth: []
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |userName|eq|The name of the user.|string|
+
+            |userDomainName|eq|The domain name of the user.|string|
+
+            |userDomainType|eq|The domain type of the user. Possible values: NT,
+            VX, UNIXPWD, LDAP, NIS, NIS_PLUS, SAML, SMARTCARD|string|
+
+            |emailId|eq ne|The email address of the user.|string|
+
+            |emailNotificationFlag|eq|The email notification attribute where
+            each bit represents a distinct boolean flag that is associated with
+            the type of email notification the user should receive.|integer|
+
+            |roleFlag|eq|The role attribute where each bit represents a distinct
+            boolean flag for the NetBackup role that is associated with the
+            user.|integer|
+
+            |userId|eq|The unique ID of the user in the directory service or the
+            local domain.|string|
+
+            |lastLoginDateTime|ge le|The date and time of the last login of the
+            user. The value is in date-time in ISO 8601 format.|date-time|
+
+            |lastModifiedDateTime|ge le|The date and time when the user profile
+            was last modified. The value is in date-time in ISO 8601
+            format.|date-time|
+
+            |createdDateTime|ge le|The date and time when the user profile was
+            created. The value is in date-time in ISO 8601 format.|date-time|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[limit]'
+          description: The number of user profile records that are displayed on one page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: 'page[offset]'
+          description: The user profile record offset on the page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: sort
+          description: >
+            Sorts the records in an ascending order. Use '-' as a prefix to sort
+            the records in an descending order.
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved the user profiles.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_15
+                description: >-
+                  The response on a successful listing of details for all the
+                  user profiles.
+                type: object
+                required:
+                  - data
+                  - meta
+                  - links
+                properties:
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                  data:
+                    type: array
+                    items: &ref_3
+                      type: object
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                        type:
+                          type: string
+                          enum:
+                            - userProfileResponse
+                        id:
+                          type: string
+                        attributes:
+                          type: object
+                          properties:
+                            userName:
+                              type: string
+                              description: The name of the user.
+                            userDomainName:
+                              type: string
+                              description: The domain name of the user.
+                            userDomainType:
+                              type: string
+                              description: The domain type of the user.
+                              enum:
+                                - NT
+                                - VX
+                                - UNIXPWD
+                                - LDAP
+                                - NIS
+                                - NIS_PLUS
+                                - SAML
+                                - SMARTCARD
+                            emailId:
+                              type: string
+                              description: A valid email address of the user.
+                            emailNotificationFlag:
+                              type: integer
+                              format: int64
+                              description: >
+                                The email notification attribute where each bit
+                                represents a distinct boolean flag
+
+                                that is associated with the type of email
+                                notification the user should receive.
+
+                                Bit position 0 - Ticket created
+
+                                Bit position 1 - Ticket updated
+
+                                For example:
+
+                                Value 0 - 00 - No email notification to be sent.
+
+                                Value 1 - 01 - Email notification to be sent
+                                when ticket is created only.
+
+                                Value 2 - 10 - Email notification to be sent
+                                when ticket is updated only.
+
+                                Value 3 - 11 - Email notification to be sent
+                                when ticket is created or updated.
+                            roleFlag:
+                              type: integer
+                              format: int64
+                              description: >
+                                The role attribute where each bit represents a
+                                distinct boolean flag for the
+
+                                NetBackup role that is associated with the user.
+
+                                Bit position 0 - MPA (multi-person
+                                authorization) Approver role.
+
+                                For example:
+
+                                Value 0 - Binary 00 - User is a MPA
+                                (multi-person authorization) Approver.
+
+                                Value 1 - Binary 01 - User is not a MPA
+                                (multi-person authorization) Approver.
+                            userId:
+                              type: string
+                              description: >-
+                                The unique ID of the user in the directory
+                                service or the local domain.
+                            lastLoginDateTime:
+                              type: string
+                              format: date-time
+                              description: |
+                                The date and time of the last login of the user.
+                                The value is in date-time in ISO 8601 format.
+                            lastModifiedDateTime:
+                              type: string
+                              format: date-time
+                              description: >
+                                The date and time when the user profile was last
+                                modified.
+
+                                The value is in date-time in ISO 8601 format.
+                            createdDateTime:
+                              type: string
+                              format: date-time
+                              description: >
+                                The date and time when the user profile was
+                                created.
+
+                                The value is in date-time in ISO 8601 format.
+                          required:
+                            - userName
+                            - userDomainName
+                            - userDomainType
+                            - emailId
+                            - emailNotificationFlag
+                            - roleFlag
+                            - userId
+                            - lastLoginDateTime
+                            - lastModifiedDateTime
+                            - createdDateTime
+                  meta:
+                    type: object
+                    properties:
+                      pagination:
+                        type: object
+                        properties:
+                          count:
+                            type: integer
+                          first:
+                            type: integer
+                          last:
+                            type: integer
+                          next:
+                            type: integer
+                          prev:
+                            type: integer
+                          page:
+                            type: integer
+                          pages:
+                            type: integer
+                          offset:
+                            type: integer
+                          limit:
+                            type: integer
+        '400': *ref_1
+        '401': &ref_4
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '406': *ref_2
+        '500': &ref_5
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+  '/user-profiles/{id}':
+    get:
+      description: >
+        Retrieves the user profile with the specified ID of a user.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|USER-PROFILES|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|
+
+
+        You can retrieve your user profile irrespective of whether you have the
+        View User Profile permission or not.
+
+        If you have the View User Profile permission, you can retrieve profile
+        of other users.
+      tags:
+        - User Profile
+      security:
+        - apiKeyAuth: []
+        - jwtAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique ID of the user profile.
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: >-
+            Successfully retrieved the user profile with the specified ID of the
+            user.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_7
+                description: >-
+                  The response on a successful listing of details for a user
+                  profile.
+                type: object
+                required:
+                  - data
+                properties:
+                  data: *ref_3
+        '401': *ref_4
+        '404':
+          description: Profile for the specified user does not exist.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '406': *ref_2
+        '500': *ref_5
+    patch:
+      description: >
+        Updates the profile of the specified user.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|USER-PROFILES|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|
+
+
+        You can update your user profile irrespective of whether you have the
+        Update User Profile permission or not.
+
+        If you have the Update User Profile permission, you can update profile
+        of other users.
+      tags:
+        - User Profile
+      security:
+        - apiKeyAuth: []
+        - jwtAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The unique ID of the user profile.
+          schema:
+            type: string
+        - name: X-NetBackup-Audit-Reason
+          in: header
+          description: >
+            Audit reason for the action being performed. This value must be
+            URL-encoded. Maximum 512 bytes, in UTF-8 encoding. The remaining
+            bytes are truncated.
+          schema:
+            type: string
+          required: false
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_16
+              description: The request data to update the user profile.
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  description: >-
+                    The request payload that contains the user profile
+                    information of a user.
+                  type: object
+                  required:
+                    - type
+                    - id
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      description: The type of the update request for a user profile.
+                      enum:
+                        - userProfileUpdateRequest
+                    id:
+                      type: string
+                      description: The unique ID of the user profile record.
+                    attributes:
+                      description: The attributes of the update request for a user profile.
+                      type: object
+                      properties:
+                        emailId:
+                          type: string
+                          description: A valid email addresses of the user.
+                        emailNotificationFlag:
+                          type: integer
+                          format: int64
+                          description: >
+                            The email notification attribute where each bit
+                            represents a distinct
+
+                            boolean flag that is associated with the type of
+                            email notification
+
+                            the user should receive.
+
+                            Bit position 0 - Ticket created
+
+                            Bit position 1 - Ticket updated
+
+                            For example:
+
+                            Value 0 - 00 - No email notification to be sent.
+
+                            Value 1 - 01 - Email notification to be sent when
+                            ticket is created only.
+
+                            Value 2 - 10 - Email notification to be sent when
+                            ticket is updated only.
+
+                            Value 3 - 11 - Email notification to be sent when
+                            ticket is created or updated.
+      responses:
+        '204':
+          description: >-
+            Successfully updated the user profile with the specified ID of the
+            user.
+        '400': *ref_1
+        '401': *ref_4
+        '404':
+          description: The user profile with the specified id of the user does not exist.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '406': *ref_2
+        '415': *ref_6
+        '500': *ref_5
+  /self-profile:
+    get:
+      description: >
+        Retrieves the user profile associated with the user specified in the JWT
+        subject.
+
+
+        **Access Control**\
+
+        Enforcement Type: `None`
+      tags:
+        - User Profile
+      security:
+        - apiKeyAuth: []
+        - jwtAuth: []
+      responses:
+        '200':
+          description: >-
+            Successfully retrieved the profile of the user specified in the JWT
+            subject.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_7
+        '401': *ref_4
+        '406': *ref_2
+        '500': *ref_5
+  /logout:
+    post:
+      description: >
+        Removes the current access token (JWT), which invalidates that token for
+        future API calls.
+
+
+        **Access Control**\
+
+        Enforcement Type: `None`
+      tags:
+        - Authentication
+      parameters:
+        - name: X-NetBackup-Audit-Reason
+          in: header
+          description: The audit reason for logout.
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Logout successful.
+        '401': *ref_4
+        '406': *ref_2
+  /tokenkey:
+    get:
+      description: >
+        Gets the public key that can be used to validate the JSON Web Token
+        (JWT).
+
+
+        **Access Control**\
+
+        Enforcement Type: `None`
+      tags:
+        - Authentication
+      security: []
+      responses:
+        '200':
+          description: Successfully retrieved the token key.
+          content:
+            text/vnd.netbackup+html;version=13.0:
+              schema:
+                type: string
+                description: JSON Web Token public key.
+        '406':
+          description: >-
+            Invalid `Accept` type. Make sure your Accept header matches what
+            this API produces.
+          content:
+            text/vnd.netbackup+html;version=13.0:
+              schema:
+                type: string
+  /authorization-context:
+    get:
+      description: |
+        Lists the JWT claims.
+
+        **Access Control**\
+        Enforcement Type: `None`
+      tags:
+        - Authentication
+      parameters:
+        - in: query
+          name: meta
+          description: >
+            Appends additional metadata for the resources to the response. The
+            meta parameter is a comma-separated list of metadata values. The
+            "messages" metadata value adds localization metadata in the meta
+            section of each system-defined resource.
+          schema:
+            type: string
+            enum:
+              - messages
+          required: false
+        - name: include
+          description: |
+            Includes the information associated with this authorization context.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - authContextRoles
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_12
+                description: Details of JWT claims.
+                type: object
+                properties:
+                  data: &ref_13
+                    type: object
+                    required:
+                      - type
+                    properties:
+                      links:
+                        type: object
+                      meta:
+                        type: object
+                      id:
+                        type: string
+                      type:
+                        type: string
+                      attributes:
+                        type: object
+                        properties:
+                          subject:
+                            description: 'Contain domain name, username, and domain type.'
+                            type: string
+                          issuer:
+                            description: JWT issuer.
+                            type: string
+                          issuedAt:
+                            description: The date of the JWT was issued.
+                            type: string
+                            format: date-time
+                          expireDate:
+                            description: Expiration date of the JWT.
+                            type: string
+                            format: date-time
+                          authToken:
+                            description: >-
+                              The internal NetBackup authorization token issued
+                              by the gateway.
+                            type: string
+                          isAdmin:
+                            description: >-
+                              Indicate if the subject of the JWT is an admin
+                              user.
+                            type: boolean
+                          isMachine:
+                            description: Indicate if the subject of the JWT is a machine.
+                            type: boolean
+                          permissions:
+                            description: >-
+                              The mapping of API permissions to object
+                              collection IDs.
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                permission:
+                                  type: string
+                                collections:
+                                  type: array
+                                  items:
+                                    type: string
+                                  description: >-
+                                    Array of object collection IDs for which the
+                                    user had this permission.
+                      relationships:
+                        type: object
+                        required:
+                          - authContextRoles
+                        properties:
+                          authContextRoles:
+                            description: >-
+                              The roles associated with this authorization
+                              context.
+                            type: object
+                            properties:
+                              data:
+                                type: array
+                                items: &ref_17
+                                  description: >-
+                                    A resource identifier object that represents
+                                    an individual resource and includes only its
+                                    identifying properties.
+                                  type: object
+                                  required:
+                                    - id
+                                    - type
+                                  properties:
+                                    id:
+                                      type: string
+                                    type:
+                                      type: string
+                                      enum:
+                                        - authContextRole
+        '401': *ref_4
+        '404':
+          description: Resource not found.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': *ref_5
+        '503':
+          description: The server is busy.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+  /user-sessions:
+    delete:
+      description: >
+        Logs out all users. Removes the current access tokens (JWT) issued to
+        all users, which invalidates them for all
+
+        future API calls.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|USERS|USER-SESSIONS|`\
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|USERS|USER-SESSIONS|CLOSE-ALL|`
+      tags:
+        - User Sessions
+      responses:
+        '204':
+          description: Successfully logged out all users.
+        '401': *ref_4
+    get:
+      description: >
+        Obtains the details for all active user sessions.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|USERS|USER-SESSIONS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - User Sessions
+      responses:
+        '200':
+          description: Successfully returned the details for all active user sessions.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_14
+                description: Details for active user session.
+                type: object
+                properties:
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        properties:
+                          href:
+                            type: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - user-session-v4
+                        id:
+                          type: string
+                        attributes:
+                          type: object
+                          properties:
+                            userName:
+                              type: string
+                            domainName:
+                              type: string
+                            domainType:
+                              type: string
+                            expiresAt:
+                              type: string
+                              format: date-time
+                            signedInAt:
+                              type: string
+                              format: date-time
+                  meta:
+                    type: object
+                    properties:
+                      pagination:
+                        type: object
+                        properties:
+                          prev:
+                            type: integer
+                          next:
+                            type: integer
+                          first:
+                            type: integer
+                          last:
+                            type: integer
+                          count:
+                            type: integer
+                          page:
+                            type: integer
+                          offset:
+                            type: integer
+                          pages:
+                            type: integer
+                          limit:
+                            type: integer
+        '401': *ref_4
+  /ping:
+    get:
+      description: |
+        Test the connection with the master server.
+
+        **Access Control**\
+        Enforcement Type: `None`
+      tags:
+        - Utilities
+      security: []
+      responses:
+        '200':
+          description: Ping successful. Master server time in milliseconds.
+          headers:
+            X-NetBackup-API-Version:
+              description: The current API version of this server.
+              schema:
+                type: string
+          content:
+            text/vnd.netbackup+plain;version=13.0:
+              schema:
+                type: string
+                description: Master server time in milliseconds.
+                example: 1519397648169
+        '406':
+          description: >-
+            Invalid `Accept` type. Make sure your Accept header matches what
+            this API produces.
+          content:
+            text/vnd.netbackup+plain;version=13.0:
+              schema:
+                type: string
+  /sso/login:
+    get:
+      description: >
+        Authenticates the user with the Single Sign-On (SSO) method.
+
+        Various protocols, such as SAML2 and Oidc, are supported based on the
+        selected identity provider.
+
+        This user is redirected to the identity provider for authentication.
+
+
+        **Access Control**\
+
+        Enforcement Type: `None`
+      tags:
+        - Authentication
+      security: []
+      parameters:
+        - name: webuiurl
+          in: query
+          description: >-
+            The URL used to open the NetBackup web UI when the user selects the
+            Single Sign-On method.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully redirected to the identity provider.
+          content:
+            application/xhtml+xml:
+              schema: &ref_10
+                type: object
+                description: >-
+                  The HTML form that contains the URL for redirecting to the
+                  identity provider.
+        '400': *ref_1
+  /sso/saml2/metadata:
+    get:
+      description: |
+        Returns the XML metadata for the service provider.
+
+        **Access Control**\
+        Enforcement Type: `None`
+      tags:
+        - Authentication
+      security: []
+      responses:
+        '200':
+          description: Successfully generated the service provider metadata.
+          headers:
+            Content-Disposition:
+              description: >
+                The Content-Disposition type and file name of service provider
+                metadata. For example: Content-Disposition: attachment;
+                filename=sp-metadata.xml
+              schema:
+                type: string
+          content:
+            application/vnd.netbackup+octet-stream;version=13.0:
+              schema:
+                type: string
+                format: binary
+        '400': *ref_1
+  /sso/loginwithtoken:
+    post:
+      description: >
+        Generates the JSON Web Token (JWT) for the Single Sign-On (SSO) method
+        with a temporary token.
+
+        A JWT is returned that is used for all subsequent API requests.
+
+
+        **Access Control**\
+
+        Enforcement Type: `None`
+      tags:
+        - Authentication
+      security: []
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_11
+              type: object
+              properties:
+                tempToken:
+                  type: string
+                  description: >-
+                    The temporary token that is used to get the authorization
+                    response.
+              required:
+                - tempToken
+        required: true
+      responses:
+        '201':
+          description: The user was successfully signed on.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_8
+          headers:
+            Set-Cookie:
+              description: Header setting the Authorization cookie.
+              schema:
+                type: string
+        '400': *ref_1
+        '401':
+          description: Authentication failed.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    appdetailsResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          appName:
+            type: string
+            description: Web services application name.
+          status:
+            type: string
+            description: Current run-time status of the application.
+        required:
+          - appName
+          - status
+    userPassLoginRequest: *ref_9
+    loginResponse: *ref_8
+    ssoLoginResponse: *ref_10
+    loginwithtokenRequest: *ref_11
+    saml2CallbackForm:
+      type: object
+      properties:
+        SAMLResponse:
+          type: string
+          description: The SAML authentication response from the identity provider.
+        RelayState:
+          type: string
+          description: The identifier that represents the link to the NetBackup web UI URL.
+      required:
+        - SAMLResponse
+        - RelayState
+    loginWithCertResponse:
+      description: The response on a successful login using the machine certificate.
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          description: >-
+            The response payload upon successful login using machine
+            certificate.
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              description: The type of the login response.
+              type: string
+              enum:
+                - loginWithCertResponse
+            attributes:
+              description: The attributes of the loginwithcert response.
+              type: object
+              required:
+                - token
+                - tokenType
+                - validity
+                - trustVersion
+                - isRenewRequired
+              properties:
+                token:
+                  type: string
+                  description: The token to use for subsequent API requests.
+                tokenType:
+                  type: string
+                  description: The token type for the token that is returned.
+                validity:
+                  type: integer
+                  description: The time in seconds that this token will be valid.
+                trustVersion:
+                  type: string
+                  description: >
+                    The trust version of the master server. CA addition or
+                    removal changes the trust version of the master server.
+                isRenewRequired:
+                  type: boolean
+                  description: >
+                    "It will be set to 'true' in case the ROOT CA of the input
+                    certificate chain is not the same as ROOT CA on the
+                    NetBackup master server."
+    authorizationContextResource: *ref_12
+    authorizationContext: *ref_13
+    authContextRole:
+      type: object
+      required:
+        - type
+        - attributes
+      properties:
+        links:
+          type: object
+          properties:
+            self:
+              type: object
+              description: Link to the resource.
+              properties:
+                href:
+                  type: string
+        type:
+          type: string
+          enum:
+            - authContextRole
+        id:
+          type: integer
+          description: The unique identifier of the role.
+        attributes:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              description: >-
+                The name of the role assigned to the principal subject of the
+                authorization context.
+              type: string
+    getActiveUsers: *ref_14
+    userAuthenticationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The name of the user or hostid of host.
+        password:
+          type: string
+          description: The JWT token assigned to user or host.
+      required:
+        - username
+        - password
+    vhostAuthorizationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The name of the user or hostid of host.
+        vhost:
+          type: string
+          description: The name of the virtual host containing the resource.
+        ip:
+          type: string
+          description: The client ip address.
+      required:
+        - username
+        - vhost
+        - ip
+    resourceAuthorizationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The name of the user or hostid of host.
+        vhost:
+          type: string
+          description: The name of the virtual host containing the resource.
+        resource:
+          type: string
+          description: The type of resource.
+          enum:
+            - EXCHANGE
+            - QUEUE
+            - TOPIC
+        name:
+          type: string
+          description: The name of the resource.
+        routing_key:
+          type: string
+          description: >
+            The routing key of a published message (when the permission is
+            write) or binding key of the queue binding (when the permission is
+            read).
+        permission:
+          type: string
+          description: The access level to the resource.
+          enum:
+            - configure
+            - write
+            - read
+      required:
+        - username
+        - vhost
+        - resource
+        - name
+        - permission
+    userAuthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          description: Returns status as word `allow` or `deny`.
+          enum:
+            - allow
+            - deny
+      required:
+        - status
+    allUserProfileResponse: *ref_15
+    userProfileResponse: *ref_7
+    userProfile: *ref_3
+    userProfileUpdateRequest: *ref_16
+    postUnlockUsersDetails:
+      type: object
+      properties:
+        userName:
+          type: string
+          description: The name of the user to be unlocked.
+        domainName:
+          type: string
+          description: >-
+            The domain name that is associated with the user. Specify the short
+            name of the domain. For example: 'testDomain' instead of
+            'testDomain.example.com'.
+        domainType:
+          type: string
+          description: >-
+            The domain type that is associated with the user. This value is
+            currently ignored.
+      required:
+        - userName
+    sseUserTokensResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - id
+            - attributes
+          properties:
+            id:
+              type: string
+              description: Authorization token value.
+            type:
+              type: string
+              enum:
+                - userTokenStatus
+            attributes:
+              type: object
+              properties:
+                isActive:
+                  type: boolean
+                  description: >-
+                    Returns false only if the user's token is not active
+                    anymore.
+              required:
+                - isActive
+      required:
+        - data
+    resourceIdentifierObject: *ref_17
+    accessCodeStatusEnum:
+      type: string
+      enum:
+        - NONE
+        - APPROVED
+        - REJECTED
+        - EXPIRED
+    codeBasedSessionPostRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - codeBasedSessionUserInfo
+            attributes:
+              type: object
+              properties:
+                requestorUserName:
+                  type: string
+                  description: >
+                    The machine users username requesting access to NetBackup
+                    session.
+
+                    This username may not be aware to NetBackup as an OS user.
+                    The VNETD daemon fill this information during API call.
+                requestorUserID:
+                  type: string
+                  description: The user ID of machine user.
+                requestorComment:
+                  type: string
+                  description: The requestor comment for code based session access.
+                isOSAdmin:
+                  type: boolean
+                  description: >
+                    This flag indicates whether the user requesting the
+                    NetBackup session is an OS administrator.
+
+                    The VNETD dameon will populate this parameter during the API
+                    call.
+                isImpersonated:
+                  type: boolean
+                  description: >-
+                    Specifies if the session access is self approval or
+                    delegate.
+                sessionType:
+                  type: string
+                  description: Spcifies the type of NetBackup user session.
+                  enum:
+                    - CLI-SESSION
+    codeBasedSessionPostResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+              description: The session id generated for current NetBackup session.
+            type:
+              type: string
+              enum:
+                - codeBasedSessionAccessCodeInfo
+            attributes:
+              type: object
+              properties:
+                sessionId:
+                  type: string
+                  description: The session id generated for current NetBackup session.
+                sessionType:
+                  type: string
+                  description: The session type of NetBackup user session.
+                  enum:
+                    - CLI-SESSION
+                accessCode:
+                  type: string
+                  description: The code to display to the user.
+                expiresIn:
+                  type: integer
+                  description: The length of time in seconds that the access code is valid.
+    codeBasedSessionGetResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+              description: The session id generated for current NetBackup session.
+            type:
+              type: string
+              enum:
+                - codeBasedSessionAccessCodeDetailInfo
+            attributes:
+              type: object
+              properties:
+                sessionType:
+                  type: string
+                  description: Specifies NetBackup user session type.
+                  enum:
+                    - CLI-SESSION
+                accessCode:
+                  type: string
+                  description: The access code of the session.
+                requestorUserName:
+                  type: string
+                  description: The NetBackup session requestor username.
+                requestorUserID:
+                  type: string
+                  description: The NetBackup session requestor user ID.
+                requestorComment:
+                  type: string
+                  description: The requestor comment for code based session access.
+                approvedBy:
+                  type: string
+                  description: >
+                    The session approver deatils. Contain domain name, user name
+                    and domain type.
+                hostName:
+                  type: string
+                  description: The hostname of the NetBackup host.
+                isOSAdmin:
+                  type: boolean
+                  description: Specifies if the session requestor user is OS admin or not.
+                isImpersonated:
+                  type: boolean
+                  description: >-
+                    Specifies if the session access is self approval or
+                    delegate.
+                createdBefore:
+                  type: integer
+                  description: The number of seconds lapsed from access code creation.
+                status:
+                  type: string
+                  description: The status of the access code.
+                  enum:
+                    - NONE
+                    - APPROVED
+                    - REJECTED
+                    - EXPIRED
+    codeBasedSessionStatusResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+              enum:
+                - codeBasedSessionAccessCodeStatus
+            attributes:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: The status of the session related with session ID.
+                  enum:
+                    - NONE
+                    - APPROVED
+                    - REJECTED
+                    - EXPIRED
+                approverUserInfo: &ref_18
+                  type: object
+                  properties:
+                    userName:
+                      type: string
+                      description: The username of the NetBackup session approver.
+                    domainName:
+                      type: string
+                      description: The domain name of the NetNackup session approver.
+                    domainType:
+                      type: string
+                      description: The domain type of the NetBackup session approver.
+    codeBasedSessionApproveRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+              enum:
+                - codeBasedSessionApproveRequest
+            attributes:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: The status of the access code.
+                  enum:
+                    - NONE
+                    - APPROVED
+                    - REJECTED
+                    - EXPIRED
+                sessionExpiry:
+                  type: integer
+                  description: The approved session will expire after a number of seconds.
+                reviewerComment:
+                  type: string
+                  description: The approver comment to grant code based session access.
+    codeBasedSessionTokenResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+              enum:
+                - codeBasedSessionJwtInfo
+            attributes:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: The token to use for subsequent API requests.
+                tokenType:
+                  type: string
+                  description: The token type for the token that is returned.
+                  enum:
+                    - CLI-SESSION
+                validity:
+                  type: integer
+                  description: The time in seconds that this token will be valid.
+                approverUserInfo: *ref_18
+    codeBasedSessionApproverInfo: *ref_18
+    identityTokenResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+              enum:
+                - identityTokenResponse
+            attributes:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: >-
+                    The JWT token signed by NetBackup representing a subject's
+                    identity information.
+                tokenType:
+                  type: string
+                  description: The token type for the token that is returned.
+                  enum:
+                    - IDENTITY
+                validity:
+                  type: integer
+                  description: The time in seconds that this token will be valid.
+    jwtClaimsResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - id
+            - type
+            - attributes
+          properties:
+            id:
+              type: string
+            type:
+              type: string
+              enum:
+                - jwtClaimsInfo
+            attributes:
+              type: object
+              properties:
+                iss:
+                  type: string
+                  description: The issuer of the JWT.
+                jti:
+                  type: string
+                  description: The JTI (JWT ID) claim.
+                iat:
+                  type: string
+                  format: date-time
+                  description: >-
+                    The UTC timestamp when the JWT was issued. (ISO 8601
+                    formatted time)
+                exp:
+                  type: string
+                  format: date-time
+                  description: >-
+                    The UTC timestamp when the JWT expires. (ISO 8601 formatted
+                    time)
+                sub:
+                  type: string
+                  description: The subject claim in JWT.
+    validateTokenRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              enum:
+                - validateTokenRequest
+            attributes:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: A JWT signed by NetBackup.
+              required:
+                - token
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []

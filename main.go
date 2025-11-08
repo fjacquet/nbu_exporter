@@ -77,11 +77,16 @@ func NewServer(cfg models.Config) *Server {
 //   - Metrics endpoint at the configured URI (default: /metrics)
 //   - Health check endpoint at /health
 //
-// Returns an error if collector registration fails. The HTTP server runs
+// Returns an error if collector creation or registration fails. The HTTP server runs
 // asynchronously and logs fatal errors if startup fails.
 func (s *Server) Start() error {
-	// Register NetBackup collector
-	collector := exporter.NewNbuCollector(s.cfg)
+	// Create NetBackup collector with version detection
+	collector, err := exporter.NewNbuCollector(s.cfg)
+	if err != nil {
+		return fmt.Errorf("failed to create collector: %w", err)
+	}
+
+	// Register collector with Prometheus
 	if err := s.registry.Register(collector); err != nil {
 		return fmt.Errorf("failed to register collector: %w", err)
 	}
@@ -140,7 +145,7 @@ func (s *Server) Shutdown() error {
 // the application is running.
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "OK\n")
+	_, _ = fmt.Fprintf(w, "OK\n")
 }
 
 // validateConfig checks if the configuration file exists, loads it, and validates its contents.
@@ -241,7 +246,7 @@ func main() {
 
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to configuration file (required)")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Enable debug mode")
-	rootCmd.MarkPersistentFlagRequired("config")
+	_ = rootCmd.MarkPersistentFlagRequired("config")
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)

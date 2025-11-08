@@ -1,0 +1,36 @@
+---
+# Configuration Example: NetBackup 11.0 with Explicit API Version 13.0
+#
+# Use this configuration when:
+# - Running NetBackup 11.0 or later
+# - You want to explicitly specify API version 13.0
+# - You want to skip automatic version detection for faster startup
+#
+# NetBackup Version: 11.0+
+# API Version: 13.0
+# Detection: Disabled (explicit version)
+
+server:
+    host: "localhost"
+    port: "2112"
+    uri: "/metrics"
+    scrapingInterval: "1h"  # Time window for job collection (e.g., "30m", "1h", "2h")
+    logName: "log/nbu-exporter.log"
+
+nbuserver:
+    scheme: "https"
+    uri: "/netbackup"
+    domain: "my.domain"
+    domainType: "NT"
+    host: "nbu11-master.my.domain"  # NetBackup 11.0 master server
+    port: "1556"
+    apiVersion: "13.0"  # Explicit API version for NetBackup 11.0
+    apiKey: "your-api-key-here"  # Generate from NetBackup UI
+    contentType: "application/vnd.netbackup+json; version=3.0"
+    insecureSkipVerify: false  # Set to true only for testing environments
+
+# Notes:
+# - Replace "your-api-key-here" with your actual NetBackup API key
+# - Replace "nbu11-master.my.domain" with your NetBackup master server hostname
+# - Adjust scrapingInterval based on your monitoring needs
+# - Keep insecureSkipVerify: false for production environments

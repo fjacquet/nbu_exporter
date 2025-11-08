@@ -32,7 +32,7 @@ func TestStorageMetricsCollection(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/vnd.netbackup+json;version=12.0")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(storageResponse)
+		_ = json.NewEncoder(w).Encode(storageResponse)
 	}))
 	defer server.Close()
 
@@ -103,7 +103,7 @@ func TestJobMetricsCollection(t *testing.T) {
 		offsetStr := r.URL.Query().Get("page[offset]")
 		offsetInt := 0
 		if offsetStr != "" {
-			fmt.Sscanf(offsetStr, "%d", &offsetInt)
+			_, _ = fmt.Sscanf(offsetStr, "%d", &offsetInt)
 		}
 
 		response := &models.Jobs{}
@@ -211,7 +211,7 @@ func TestJobMetricsCollection(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/vnd.netbackup+json;version=12.0")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -385,7 +385,7 @@ func TestPaginationHandling(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/vnd.netbackup+json;version=12.0")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -518,7 +518,7 @@ func TestFilteringByTime(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/vnd.netbackup+json;version=12.0")
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(response)
+		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
@@ -793,3 +793,5 @@ func createTestConfig(serverURL, apiVersion string) models.Config {
 
 	return cfg
 }
+
+// TestVersionDetectionWithMockServers tests automatic version detection with mock servers
