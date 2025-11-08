@@ -28,7 +28,7 @@ func createVersionTestServer(acceptedVersion string) *httptest.Server {
 			// Version matches - return success
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(mockJobsResponse{
+			_ = json.NewEncoder(w).Encode(mockJobsResponse{
 				Data: []struct {
 					ID string `json:"id"`
 				}{},
@@ -221,7 +221,7 @@ func TestAPIVersionDetector_TryVersion_RetryLogic(t *testing.T) {
 				// Success after N failures
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(mockJobsResponse{
+				_ = json.NewEncoder(w).Encode(mockJobsResponse{
 					Data: []struct {
 						ID string `json:"id"`
 					}{},
@@ -293,7 +293,7 @@ func TestAPIVersionDetector_TryVersion_HTTPStatusCodes(t *testing.T) {
 				w.WriteHeader(tt.statusCode)
 				if tt.statusCode == http.StatusOK {
 					w.Header().Set("Content-Type", "application/json")
-					json.NewEncoder(w).Encode(mockJobsResponse{
+					_ = json.NewEncoder(w).Encode(mockJobsResponse{
 						Data: []struct {
 							ID string `json:"id"`
 						}{},

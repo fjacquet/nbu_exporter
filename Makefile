@@ -4,6 +4,13 @@ CLI_BIN = nbu_exporter
 # Default target: build both binaries
 all: cli test docker
 
+# Ensure code quality: format, test, and build
+sure:
+	go fmt ./...
+	go test ./...
+	go build ./...
+	golangci-lint run 
+
 test:
 	go test
 
@@ -19,7 +26,7 @@ docker:
 	fi
 	docker build -t $(CLI_BIN) .
 
-.PHONY: docker clean run-cli run-web run-docker
+.PHONY: docker clean run-cli run-web run-docker sure
 
 # Clean up build artifacts
 clean:

@@ -55,21 +55,21 @@
     - Verify retry logic integration
     - _Requirements: 10.1, 10.4_
 
-- [ ] 4. Update collector initialization with version detection
-  - [ ] 4.1 Integrate version detection into collector
+- [x] 4. Update collector initialization with version detection
+  - [x] 4.1 Integrate version detection into collector
     - Modify `NewNbuCollector()` in `internal/exporter/prometheus.go`
     - Add version detection call when apiVersion is not configured
     - Log detected version at INFO level
     - Handle version detection failures gracefully
     - _Requirements: 1.1, 1.3, 1.4_
 
-  - [ ] 4.2 Add API version metric
+  - [x] 4.2 Add API version metric
     - Create new Prometheus gauge metric `nbu_api_version`
     - Expose current API version as metric with version label
     - Update metric in collector's `Describe()` and `Collect()` methods
     - _Requirements: 8.5_
 
-  - [ ] 4.3 Write unit tests for collector initialization
+  - [x] 4.3 Write unit tests for collector initialization
     - Test collector creation with explicit version configuration
     - Test collector creation with automatic version detection
     - Test error handling when version detection fails
@@ -77,106 +77,106 @@
     - _Requirements: 10.1, 10.2_
 
 - [ ] 5. Create test data for all API versions
-- [ ] 5.1 Add mock response files
-  - Create `testdata/api-versions/` directory
-  - Add `jobs-response-v3.json` for NetBackup 10.0 format
-  - Add `jobs-response-v12.json` for NetBackup 10.5 format
-  - Add `jobs-response-v13.json` for NetBackup 11.0 format
-  - Add `storage-response-v3.json` for NetBackup 10.0 format
-  - Add `storage-response-v12.json` for NetBackup 10.5 format
-  - Add `storage-response-v13.json` for NetBackup 11.0 format
-  - Add `error-406-response.json` for version not supported error
-  - _Requirements: 10.2_
+  - [ ] 5.1 Add mock response files
+    - Create `testdata/api-versions/` directory
+    - Add `jobs-response-v3.json` for NetBackup 10.0 format
+    - Add `jobs-response-v12.json` for NetBackup 10.5 format
+    - Add `jobs-response-v13.json` for NetBackup 11.0 format
+    - Add `storage-response-v3.json` for NetBackup 10.0 format
+    - Add `storage-response-v12.json` for NetBackup 10.5 format
+    - Add `storage-response-v13.json` for NetBackup 11.0 format
+    - Add `error-406-response.json` for version not supported error
+    - _Requirements: 10.2_
 
-- [ ] 5.2 Verify response compatibility
-  - Ensure all mock responses match actual NetBackup API responses
-  - Verify common fields are present in all versions
-  - Document version-specific optional fields
-  - _Requirements: 3.4, 4.4, 8.3_
+  - [ ] 5.2 Verify response compatibility
+    - Ensure all mock responses match actual NetBackup API responses
+    - Verify common fields are present in all versions
+    - Document version-specific optional fields
+    - _Requirements: 3.4, 4.4, 8.3_
 
 - [ ] 6. Update integration tests for multi-version support
-- [ ] 6.1 Enhance existing integration tests
-  - Update `internal/exporter/integration_test.go` to test all versions
-  - Add test cases for version detection with mock servers
-  - Add test cases for fallback behavior
-  - Add test cases for configuration override
-  - _Requirements: 10.3_
+  - [ ] 6.1 Enhance existing integration tests
+    - Update `internal/exporter/integration_test.go` to test all versions
+    - Add test cases for version detection with mock servers
+    - Add test cases for fallback behavior
+    - Add test cases for configuration override
+    - _Requirements: 10.3_
 
-- [ ] 6.2 Add version-specific integration tests
-  - Test jobs API compatibility across all versions
-  - Test storage API compatibility across all versions
-  - Verify metrics consistency across versions
-  - Test authentication with all versions
-  - _Requirements: 3.1, 3.2, 3.3, 4.1, 4.2, 4.3, 5.1, 5.2, 10.3_
+  - [ ] 6.2 Add version-specific integration tests
+    - Test jobs API compatibility across all versions
+    - Test storage API compatibility across all versions
+    - Verify metrics consistency across versions
+    - Test authentication with all versions
+    - _Requirements: 3.1, 3.2, 3.3, 4.1, 4.2, 4.3, 5.1, 5.2, 10.3_
 
-- [ ] 6.3 Verify test coverage
-  - Run coverage analysis on new code
-  - Ensure ≥80% coverage for API client and parser modules
-  - Document any uncovered edge cases
-  - _Requirements: 10.5_
+  - [ ] 6.3 Verify test coverage
+    - Run coverage analysis on new code
+    - Ensure ≥80% coverage for API client and parser modules
+    - Document any uncovered edge cases
+    - _Requirements: 10.5_
 
 - [ ] 7. Update documentation
-- [ ] 7.1 Update README
-  - Add version support matrix (NetBackup 10.0-11.0)
-  - Document apiVersion configuration parameter with examples
-  - Add automatic version detection explanation
-  - Update troubleshooting section with version-related issues
-  - _Requirements: 2.5, 8.4_
+  - [ ] 7.1 Update README
+    - Add version support matrix (NetBackup 10.0-11.0)
+    - Document apiVersion configuration parameter with examples
+    - Add automatic version detection explanation
+    - Update troubleshooting section with version-related issues
+    - _Requirements: 2.5, 8.4_
 
-- [ ] 7.2 Create migration guide
-  - Document upgrade path from current implementation
-  - Provide examples for different deployment scenarios
-  - Add rollback procedure
-  - Include troubleshooting for common version issues
-  - _Requirements: 2.5_
+  - [ ] 7.2 Create migration guide
+    - Document upgrade path from current implementation
+    - Provide examples for different deployment scenarios
+    - Add rollback procedure
+    - Include troubleshooting for common version issues
+    - _Requirements: 2.5_
 
-- [ ] 7.3 Update configuration examples
-  - Add example config with explicit version (13.0)
-  - Add example config with automatic detection (no version field)
-  - Add example config for backward compatibility (12.0, 3.0)
-  - Document version detection behavior
-  - _Requirements: 2.5_
+  - [ ] 7.3 Update configuration examples
+    - Add example config with explicit version (13.0)
+    - Add example config with automatic detection (no version field)
+    - Add example config for backward compatibility (12.0, 3.0)
+    - Document version detection behavior
+    - _Requirements: 2.5_
 
 - [ ] 8. Validate backward compatibility
-- [ ] 8.1 Test with existing configurations
-  - Test with config containing apiVersion: "12.0"
-  - Test with config missing apiVersion field
-  - Test with config containing apiVersion: "3.0"
-  - Verify no breaking changes to existing deployments
-  - _Requirements: 2.1, 2.4, 8.1, 8.2_
+  - [ ] 8.1 Test with existing configurations
+    - Test with config containing apiVersion: "12.0"
+    - Test with config missing apiVersion field
+    - Test with config containing apiVersion: "3.0"
+    - Verify no breaking changes to existing deployments
+    - _Requirements: 2.1, 2.4, 8.1, 8.2_
 
-- [ ] 8.2 Verify metrics consistency
-  - Compare metrics output across all API versions
-  - Verify metric names remain unchanged
-  - Verify label names and values remain consistent
-  - Test existing Grafana dashboards with new exporter
-  - _Requirements: 8.1, 8.2, 8.3_
+  - [ ] 8.2 Verify metrics consistency
+    - Compare metrics output across all API versions
+    - Verify metric names remain unchanged
+    - Verify label names and values remain consistent
+    - Test existing Grafana dashboards with new exporter
+    - _Requirements: 8.1, 8.2, 8.3_
 
-- [ ] 8.3 Performance validation
-  - Measure startup time with version detection
-  - Measure startup time with explicit configuration
-  - Verify no runtime performance degradation
-  - Test connection reuse across versions
-  - _Requirements: 9.1, 9.2, 9.4, 9.5_
+  - [ ] 8.3 Performance validation
+    - Measure startup time with version detection
+    - Measure startup time with explicit configuration
+    - Verify no runtime performance degradation
+    - Test connection reuse across versions
+    - _Requirements: 9.1, 9.2, 9.4, 9.5_
 
 - [ ] 9. Final integration and deployment preparation
-- [ ] 9.1 End-to-end testing
-  - Test complete workflow with NetBackup 11.0 (API 13.0)
-  - Test complete workflow with NetBackup 10.5 (API 12.0)
-  - Test fallback scenario (13.0 → 12.0 → 3.0)
-  - Test error scenarios and recovery
-  - _Requirements: All requirements_
+  - [ ] 9.1 End-to-end testing
+    - Test complete workflow with NetBackup 11.0 (API 13.0)
+    - Test complete workflow with NetBackup 10.5 (API 12.0)
+    - Test fallback scenario (13.0 → 12.0 → 3.0)
+    - Test error scenarios and recovery
+    - _Requirements: All requirements_
 
-- [ ] 9.2 Update build and deployment artifacts
-  - Update Makefile if needed
-  - Update Dockerfile if needed
-  - Verify binary builds successfully
-  - Test Docker image with all configurations
-  - _Requirements: N/A (deployment)_
+  - [ ] 9.2 Update build and deployment artifacts
+    - Update Makefile if needed
+    - Update Dockerfile if needed
+    - Verify binary builds successfully
+    - Test Docker image with all configurations
+    - _Requirements: N/A (deployment)_
 
-- [ ] 9.3 Prepare release notes
-  - Document new features (multi-version support, auto-detection)
-  - Document configuration changes
-  - Document migration steps
-  - List known issues or limitations
-  - _Requirements: N/A (documentation)_
+  - [ ] 9.3 Prepare release notes
+    - Document new features (multi-version support, auto-detection)
+    - Document configuration changes
+    - Document migration steps
+    - List known issues or limitations
+    - _Requirements: N/A (documentation)_

@@ -77,11 +77,16 @@ func NewServer(cfg models.Config) *Server {
 //   - Metrics endpoint at the configured URI (default: /metrics)
 //   - Health check endpoint at /health
 //
-// Returns an error if collector registration fails. The HTTP server runs
+// Returns an error if collector creation or registration fails. The HTTP server runs
 // asynchronously and logs fatal errors if startup fails.
 func (s *Server) Start() error {
-	// Register NetBackup collector
-	collector := exporter.NewNbuCollector(s.cfg)
+	// Create NetBackup collector with version detection
+	collector, err := exporter.NewNbuCollector(s.cfg)
+	if err != nil {
+		return fmt.Errorf("failed to create collector: %w", err)
+	}
+
+	// Register collector with Prometheus
 	if err := s.registry.Register(collector); err != nil {
 		return fmt.Errorf("failed to register collector: %w", err)
 	}
