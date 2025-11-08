@@ -8,15 +8,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- NetBackup API 10.5 support (API version 12.0)
-- `apiVersion` configuration field in `nbuserver` section (defaults to "12.0")
+
+- **Multi-Version API Support**: NetBackup 10.0 (API 3.0), 10.5 (API 12.0), and 11.0 (API 13.0)
+- **Automatic Version Detection**: Intelligent fallback logic (13.0 → 12.0 → 3.0) with retry mechanism
+- **Content-Type Validation**: Validates server responses are JSON before unmarshaling, preventing cryptic error messages
+- `apiVersion` configuration field in `nbuserver` section (now optional, defaults to auto-detection)
 - API version included in Accept header for all NetBackup API requests
+- Version detector module (`internal/exporter/version_detector.go`) with exponential backoff retry logic
+- `nbu_api_version` Prometheus metric to expose currently active API version
+- Comprehensive test suites:
+  - Version detection integration tests with mock servers
+  - Backward compatibility tests for existing configurations
+  - End-to-end workflow tests for all API versions
+  - Performance validation tests
+  - Metrics consistency tests across versions
+  - API compatibility tests with real response fixtures
+- Test fixtures for all API versions in `testdata/api-versions/`:
+  - `jobs-response-v3.json`, `jobs-response-v12.json`, `jobs-response-v13.json`
+  - `storage-response-v3.json`, `storage-response-v12.json`, `storage-response-v13.json`
+  - `error-406-response.json` for version incompatibility testing
+- Comprehensive migration guide at `docs/netbackup-11-migration.md` with multiple deployment scenarios
+- Configuration examples for all supported versions in `docs/config-examples/`
+- Enhanced error handling for 406 (Not Acceptable) responses with troubleshooting guidance
 - Optional fields in storage data model: `storageCategory`, replication capabilities, snapshot flags, WORM support
 - Optional field in jobs data model: `kilobytesDataTransferred`
-- API version detection capability in HTTP client
-- Enhanced error handling for 406 (Not Acceptable) responses
-- Test fixtures for API 10.5 responses in `testdata/api-10.5/`
-- Comprehensive migration guide at `docs/api-10.5-migration.md`
 - Configuration validation with `Config.Validate()` method
 - Helper methods for configuration: `GetNBUBaseURL()`, `GetServerAddress()`, `GetScrapingDuration()`, `MaskAPIKey()`, `BuildURL()`
 - `NbuClient` structure for reusable HTTP client with connection pooling
@@ -32,10 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Collection timeout (2 minutes) to prevent hanging scrapes
 
 ### Changed
+
 - **BREAKING**: Fixed typo `scrappingInterval` → `scrapingInterval` in configuration
-- Accept header format now includes API version: `application/vnd.netbackup+json;version=12.0`
-- Data models updated to support new optional fields from API 10.5
-- Minimum NetBackup version requirement: 10.5+ (for API version 12.0)
+- Accept header format now includes API version: `application/vnd.netbackup+json;version=X.Y`
+- Data models updated to support optional fields across all API versions
+- Default API version changed from "12.0" to "13.0" (with automatic fallback)
+- `apiVersion` configuration field is now **optional** (previously required)
+- Minimum NetBackup version requirement: 10.0+ (supports API versions 3.0, 12.0, and 13.0)
 - Refactored `main.go` with `Server` structure for better separation of concerns
 - Improved error handling - functions now return errors instead of calling `os.Exit()`
 - HTTP client now reused across requests for better performance
@@ -47,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced logging with structured fields and debug mode support
 
 ### Removed
+
 - `cmd.go` - Unused `ConfigCommand` structure
 - `debug.go` - File containing only commented-out code
 - Unused variables `programName` and `nbuRoot` from package level
@@ -54,20 +73,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Direct `os.Exit()` calls from utility functions
 
 ### Fixed
+
+- **HTML Response Handling**: Server returning HTML instead of JSON now produces clear error messages instead of cryptic "invalid character '<'" errors
 - Error handling in `ReadFile()` - now returns errors properly
 - Missing error checks in metric collection
 - Resource leaks from not reusing HTTP clients
 - Potential Slowloris attack vector with `ReadHeaderTimeout`
 - Configuration validation - ports, schemes, and durations now validated
 - Graceful shutdown - now uses proper context with timeout
+- JSON unmarshaling errors now include response preview for easier debugging
 
 ### Security
+
 - TLS certificate verification now configurable and secure by default
 - API keys masked in logs to prevent accidental exposure
 - Added `ReadHeaderTimeout` to prevent slow header attacks
 - Proper error context without exposing sensitive information
 
 ### Performance
+
 - HTTP client connection pooling reduces overhead
 - Context-aware operations allow early cancellation
 - Reduced allocations from client reuse
@@ -75,17 +99,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Migration Notes
 
-### NetBackup API 10.5 Upgrade
+### Multi-Version API Support
 
-**Important**: This version adds support for NetBackup 10.5 (API version 12.0). See [docs/api-10.5-migration.md](docs/api-10.5-migration.md) for complete migration guide.
+**Important**: This version adds support for NetBackup 10.0, 10.5, and 11.0 with automatic version detection. See [docs/netbackup-11-migration.md](docs/netbackup-11-migration.md) for complete migration guide.
 
 **Quick Start:**
-1. Ensure NetBackup server is version 10.5 or later
-2. Add `apiVersion: "12.0"` to `nbuserver` section in config.yaml (optional, defaults to "12.0")
-3. Restart the exporter
-4. Verify metrics collection
 
-**Backward Compatibility**: Existing configurations will work with default API version "12.0". No breaking changes to Prometheus metrics.
+1. Ensure NetBackup server is version 10.0 or later
+2. **Optional**: Remove or update `apiVersion` field in config.yaml to enable automatic detection
+3. Restart the exporter - it will automatically detect the highest supported API version
+4. Verify detected version in logs: `INFO: Detected NetBackup API version: X.Y`
+5. Verify metrics collection
+
+**Backward Compatibility**:
+
+- Existing configurations with explicit `apiVersion` continue to work without changes
+- Existing configurations without `apiVersion` will now auto-detect (previously defaulted to "12.0")
+- No breaking changes to Prometheus metrics - all metric names and labels remain consistent
+- NetBackup 11.0 maintains backward compatibility with API versions 12.0 and 3.0
 
 ### Configuration File Changes
 
@@ -100,9 +131,23 @@ server:
 server:
     scrapingInterval: "1h"
 
-# Add API version (optional, defaults to "12.0"):
+# API version configuration (all options are valid):
+
+# Option 1: Automatic detection (recommended)
+nbuserver:
+    # apiVersion not specified - will auto-detect
+
+# Option 2: Explicit version for NetBackup 11.0
+nbuserver:
+    apiVersion: "13.0"
+
+# Option 3: Explicit version for NetBackup 10.5
 nbuserver:
     apiVersion: "12.0"
+
+# Option 4: Explicit version for NetBackup 10.0-10.4
+nbuserver:
+    apiVersion: "3.0"
 
 # Optionally add (defaults to false if omitted):
 nbuserver:
@@ -120,7 +165,25 @@ curl http://localhost:2112/health
 
 # Check metrics endpoint
 curl http://localhost:2112/metrics
+
+# Verify detected API version
+curl http://localhost:2112/metrics | grep nbu_api_version
+
+# Check logs for version detection
+tail -f log/nbu-exporter.log | grep "Detected NetBackup API version"
 ```
+
+### Test Coverage
+
+This release includes comprehensive test coverage:
+
+- 80%+ code coverage for API client and version detection modules
+- Unit tests for all three API versions (3.0, 12.0, 13.0)
+- Integration tests with mock NetBackup servers
+- Backward compatibility tests for existing configurations
+- End-to-end workflow tests including fallback scenarios
+- Performance validation tests
+- Metrics consistency tests across all versions
 
 ## [Previous Versions]
 

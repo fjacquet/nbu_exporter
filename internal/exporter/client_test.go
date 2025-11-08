@@ -336,13 +336,18 @@ func TestNbuClient_AuthorizationHeaderUnchanged(t *testing.T) {
 	}
 
 	for _, apiKey := range apiKeys {
-		t.Run(fmt.Sprintf("preserves API key: %s", apiKey[:min(len(apiKey), 20)]), func(t *testing.T) {
+		displayKey := apiKey
+		if len(apiKey) > 20 {
+			displayKey = apiKey[:20]
+		}
+		t.Run(fmt.Sprintf("preserves API key: %s", displayKey), func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Verify Authorization header is exactly as provided
 				if r.Header.Get(HeaderAuthorization) != apiKey {
 					t.Errorf("Authorization header modified: got %v, want %v", r.Header.Get(HeaderAuthorization), apiKey)
 				}
 
+				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusOK)
 				_ = json.NewEncoder(w).Encode(mockAPIResponse{})
 			}))
@@ -635,6 +640,176 @@ func TestNbuClient_ConfigurationOverride(t *testing.T) {
 			if client.cfg.NbuServer.APIVersion != tt.wantVersion {
 				t.Errorf("Configuration override failed: got version %s, want %s",
 					client.cfg.NbuServer.APIVersion, tt.wantVersion)
+			}
+		})
+	}
+}
+
+// TestNbuClient_FetchData_HTMLResponse tests handling of HTML responses instead of JSON
+// This addresses the bug where server returns HTML error pages (e.g., 404, auth failures)
+// and we get "invalid character '<' looking for beginning of value" errors
+func TestNbuClient_FetchData_HTMLResponse(t *testing.T) {
+	tests := []struct {
+		name        string
+		statusCode  int
+		contentType string
+		body        string
+		expectError string
+	}{
+		{
+			name:        "HTML error page with 200 status",
+			statusCode:  200,
+			contentType: "text/html",
+			body:        "<html><body><h1>Error</h1><p>Something went wrong</p></body></html>",
+			expectError: "server returned text/html instead of JSON",
+		},
+		{
+			name:        "HTML 404 page",
+			statusCode:  200,
+			contentType: "text/html; charset=utf-8",
+			body:        "<!DOCTYPE html><html><head><title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>",
+			expectError: "server returned text/html; charset=utf-8 instead of JSON",
+		},
+		{
+			name:        "HTML login page (auth failure)",
+			statusCode:  200,
+			contentType: "text/html",
+			body:        "<html><body><form action='/login'>Please login</form></body></html>",
+			expectError: "server returned text/html instead of JSON",
+		},
+		{
+			name:        "XML response instead of JSON",
+			statusCode:  200,
+			contentType: "application/xml",
+			body:        "<?xml version='1.0'?><error><message>Invalid request</message></error>",
+			expectError: "server returned application/xml instead of JSON",
+		},
+		{
+			name:        "Plain text error",
+			statusCode:  200,
+			contentType: "text/plain",
+			body:        "Error: Invalid API endpoint",
+			expectError: "server returned text/plain instead of JSON",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", tt.contentType)
+				w.WriteHeader(tt.statusCode)
+				w.Write([]byte(tt.body))
+			}))
+			defer server.Close()
+
+			cfg := models.Config{
+				NbuServer: struct {
+					Port               string `yaml:"port"`
+					Scheme             string `yaml:"scheme"`
+					URI                string `yaml:"uri"`
+					Domain             string `yaml:"domain"`
+					DomainType         string `yaml:"domainType"`
+					Host               string `yaml:"host"`
+					APIKey             string `yaml:"apiKey"`
+					APIVersion         string `yaml:"apiVersion"`
+					ContentType        string `yaml:"contentType"`
+					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+				}{
+					APIVersion: "13.0",
+					APIKey:     "test-key",
+				},
+			}
+
+			client := NewNbuClient(cfg)
+			var result mockAPIResponse
+
+			err := client.FetchData(context.Background(), server.URL, &result)
+			if err == nil {
+				t.Error("FetchData() expected error for HTML response, got nil")
+				return
+			}
+
+			if !contains(err.Error(), tt.expectError) {
+				t.Errorf("FetchData() error = %v, should contain %v", err.Error(), tt.expectError)
+			}
+
+			// Verify error message includes helpful context
+			// Note: The detailed message is logged, but the returned error is shorter
+			// This is acceptable as long as the error clearly indicates non-JSON response
+			if !contains(err.Error(), "instead of JSON") && !contains(err.Error(), "Content-Type") {
+				t.Errorf("Error message should indicate non-JSON response, got: %v", err.Error())
+			}
+		})
+	}
+}
+
+// TestNbuClient_FetchData_InvalidJSON tests handling of malformed JSON responses
+func TestNbuClient_FetchData_InvalidJSON(t *testing.T) {
+	tests := []struct {
+		name        string
+		body        string
+		expectError string
+	}{
+		{
+			name:        "incomplete JSON",
+			body:        `{"data": [{"id": "1"`,
+			expectError: "failed to unmarshal JSON response",
+		},
+		{
+			name:        "invalid JSON syntax",
+			body:        `{data: invalid}`,
+			expectError: "failed to unmarshal JSON response",
+		},
+		{
+			name:        "empty response",
+			body:        ``,
+			expectError: "failed to unmarshal JSON response",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(200)
+				w.Write([]byte(tt.body))
+			}))
+			defer server.Close()
+
+			cfg := models.Config{
+				NbuServer: struct {
+					Port               string `yaml:"port"`
+					Scheme             string `yaml:"scheme"`
+					URI                string `yaml:"uri"`
+					Domain             string `yaml:"domain"`
+					DomainType         string `yaml:"domainType"`
+					Host               string `yaml:"host"`
+					APIKey             string `yaml:"apiKey"`
+					APIVersion         string `yaml:"apiVersion"`
+					ContentType        string `yaml:"contentType"`
+					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+				}{
+					APIVersion: "13.0",
+					APIKey:     "test-key",
+				},
+			}
+
+			client := NewNbuClient(cfg)
+			var result mockAPIResponse
+
+			err := client.FetchData(context.Background(), server.URL, &result)
+			if err == nil {
+				t.Error("FetchData() expected error for invalid JSON, got nil")
+				return
+			}
+
+			if !contains(err.Error(), tt.expectError) {
+				t.Errorf("FetchData() error = %v, should contain %v", err.Error(), tt.expectError)
+			}
+
+			// Verify error includes response preview for debugging
+			if !contains(err.Error(), "Response preview:") {
+				t.Error("Error message should include response preview for debugging")
 			}
 		})
 	}

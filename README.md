@@ -22,7 +22,7 @@ A production-ready Prometheus exporter that collects backup job statistics and s
 
 ### Prerequisites
 
-- Go 1.23.4 or later
+- Go 1.25 or later
 - Veritas NetBackup 10.0 or later (see version support matrix below)
 - Access to NetBackup REST API
 - NetBackup API key (generated from NBU UI)
@@ -35,7 +35,7 @@ A production-ready Prometheus exporter that collects backup job statistics and s
 | 10.5              | 12.0        | ✅ Fully Supported | Current stable version |
 | 10.0 - 10.4       | 3.0         | ✅ Legacy Support | Basic functionality maintained |
 
-**Automatic Version Detection**: The exporter automatically detects the highest supported API version available on your NetBackup server. No manual configuration required unless you need to override the detected version.
+**Automatic Version Detection**: The exporter automatically detects the highest supported API version available on your NetBackup server using intelligent fallback logic (13.0 → 12.0 → 3.0). No manual configuration required unless you need to override the detected version for testing or performance optimization.
 
 ### Installation
 
@@ -139,6 +139,10 @@ scrape_configs:
   - `size="free"` - Available capacity in bytes
   - `size="used"` - Used capacity in bytes
 
+### System Metrics
+
+- `nbu_api_version{version}` - Currently active NetBackup API version (13.0, 12.0, or 3.0)
+
 **Note**: Tape storage units are excluded from metrics collection.
 
 ## Grafana Dashboard
@@ -154,23 +158,81 @@ A pre-built Grafana dashboard is included in the `grafana/` directory:
 ### Build Docker Image
 
 ```bash
+# Using Makefile
 make docker
 
 # Or manually
 docker build -t nbu_exporter .
 ```
 
+The Docker image uses a multi-stage build for optimal size and includes:
+- Alpine Linux base for minimal footprint
+- CA certificates for HTTPS connections
+- Pre-configured log directory
+
 ### Run Container
 
 ```bash
-# Using Makefile
+# Using Makefile (runs on port 2112)
 make run-docker
 
-# Or manually
+# Or manually with custom configuration
 docker run -d \
-  -p 8080:8080 \
-  -v $(pwd)/config.yaml:/config.yaml \
-  nbu_exporter --config /config.yaml
+  --name nbu_exporter \
+  -p 2112:2112 \
+  -v $(pwd)/config.yaml:/etc/nbu_exporter/config.yaml \
+  -v $(pwd)/log:/var/log/nbu_exporter \
+  nbu_exporter
+
+# With automatic version detection
+docker run -d \
+  --name nbu_exporter \
+  -p 2112:2112 \
+  -v $(pwd)/config-auto-detect.yaml:/etc/nbu_exporter/config.yaml \
+  nbu_exporter
+
+# With environment variables (optional)
+docker run -d \
+  --name nbu_exporter \
+  -p 2112:2112 \
+  -e NBU_API_KEY=your-api-key \
+  -v $(pwd)/config.yaml:/etc/nbu_exporter/config.yaml \
+  nbu_exporter
+```
+
+### Docker Compose Example
+
+```yaml
+version: '3.8'
+services:
+  nbu_exporter:
+    image: nbu_exporter:latest
+    container_name: nbu_exporter
+    ports:
+      - "2112:2112"
+    volumes:
+      - ./config.yaml:/etc/nbu_exporter/config.yaml:ro
+      - ./log:/var/log/nbu_exporter
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:2112/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
+
+### Verify Container
+
+```bash
+# Check container logs
+docker logs nbu_exporter
+
+# Check metrics endpoint
+curl http://localhost:2112/metrics
+
+# Check health endpoint
+curl http://localhost:2112/health
 ```
 
 ## Development
@@ -221,8 +283,10 @@ make clean
 
 ### Testing
 
+The exporter includes comprehensive test coverage for multi-version API support:
+
 ```bash
-# Run tests
+# Run all tests
 go test ./...
 
 # Run tests with coverage
@@ -230,7 +294,21 @@ go test -cover ./...
 
 # Run tests with race detection
 go test -race ./...
+
+# Run specific test suites
+go test ./internal/exporter -run TestVersionDetection
+go test ./internal/exporter -run TestBackwardCompatibility
+go test ./internal/exporter -run TestEndToEnd
 ```
+
+**Test Coverage**:
+
+- Unit tests for version detection with mock servers
+- Integration tests for all API versions (3.0, 12.0, 13.0)
+- Backward compatibility tests for existing configurations
+- End-to-end workflow tests with fallback scenarios
+- Performance validation tests
+- Metrics consistency tests across versions
 
 ### Debugging
 
@@ -303,10 +381,11 @@ nbuserver:
 ### Version Detection Behavior
 
 - **Detection Time**: Adds 1-3 seconds to startup (one lightweight API call per version attempt)
-- **Retry Logic**: Automatically retries transient failures with exponential backoff
+- **Retry Logic**: Automatically retries transient failures with exponential backoff (max 3 attempts)
 - **Error Handling**: Distinguishes between version incompatibility (HTTP 406) and other errors
 - **Authentication**: Fails immediately on authentication errors (HTTP 401) without trying other versions
-- **Logging**: Each version attempt is logged for troubleshooting
+- **Logging**: Each version attempt is logged at DEBUG level for troubleshooting
+- **Fallback Order**: Tries versions in descending order: 13.0 → 12.0 → 3.0
 
 ## Configuration Reference
 
@@ -400,6 +479,7 @@ Last error: HTTP 406 Not Acceptable
 ```
 
 **Possible causes:**
+
 1. NetBackup server is running a version older than 10.0
 2. Network connectivity issues between exporter and NetBackup server
 3. API endpoint is not accessible or blocked by firewall
@@ -408,17 +488,20 @@ Last error: HTTP 406 Not Acceptable
 **Troubleshooting steps:**
 
 1. **Verify NetBackup version:**
+
    ```bash
    # On NetBackup master server
    bpgetconfig -g | grep VERSION
    ```
 
 2. **Check network connectivity:**
+
    ```bash
    curl -k https://nbu-master:1556/netbackup/
    ```
 
 3. **Verify API accessibility:**
+
    ```bash
    curl -k -H "Authorization: YOUR_API_KEY" \
         -H "Accept: application/vnd.netbackup+json;version=13.0" \
@@ -426,6 +509,7 @@ Last error: HTTP 406 Not Acceptable
    ```
 
 4. **Try manual version configuration:**
+
    ```yaml
    nbuserver:
        apiVersion: "12.0"  # Try 12.0 or 3.0 based on your NetBackup version
@@ -440,6 +524,7 @@ ERROR: Configured API version 13.0 is not supported by the NetBackup server (HTT
 **Solution:** Your NetBackup server doesn't support the configured API version. Either:
 
 1. **Remove the apiVersion field** to enable automatic detection:
+
    ```yaml
    nbuserver:
        # apiVersion: "13.0"  # Comment out or remove this line
@@ -457,6 +542,7 @@ ERROR: Configured API version 13.0 is not supported by the NetBackup server (HTT
 If you've upgraded NetBackup and the exporter is still using an old API version:
 
 1. **Remove explicit version configuration** to enable auto-detection:
+
    ```yaml
    nbuserver:
        # Remove or comment out apiVersion field
@@ -465,6 +551,7 @@ If you've upgraded NetBackup and the exporter is still using an old API version:
 2. **Restart the exporter** to trigger version detection
 
 3. **Verify detected version** in startup logs:
+
    ```
    INFO[0002] Detected NetBackup API version: 13.0
    ```
@@ -474,6 +561,7 @@ If you've upgraded NetBackup and the exporter is still using an old API version:
 If automatic version detection is causing slow startup (1-3 seconds):
 
 1. **Configure explicit version** to skip detection:
+
    ```yaml
    nbuserver:
        apiVersion: "13.0"  # Use your NetBackup's API version
@@ -503,6 +591,7 @@ Debug mode provides:
 The exporter now supports NetBackup 10.0, 10.5, and 11.0 with automatic API version detection.
 
 **Key Features:**
+
 - **Automatic Detection**: No manual version configuration required
 - **Multi-Version Support**: Works with API versions 3.0, 12.0, and 13.0
 - **Backward Compatible**: Existing configurations continue to work

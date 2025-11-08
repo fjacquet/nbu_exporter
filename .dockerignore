@@ -1,0 +1,46 @@
+# Git files
+.git
+.gitignore
+.github
+
+# Build artifacts
+bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+testdata/
+coverage.out
+coverage.html
+
+# Documentation
+*.md
+docs/
+grafana/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+log/
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# CI/CD
+.github/
+sonar-project.properties
+
+# Development files
+Makefile
+docker-compose.yml
+config-auto-detect.yaml

@@ -1,0 +1,1772 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>exporter: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/fjacquet/nbu_exporter/internal/exporter/client.go (69.0%)</option>
+				
+				<option value="file1">github.com/fjacquet/nbu_exporter/internal/exporter/metrics.go (50.0%)</option>
+				
+				<option value="file2">github.com/fjacquet/nbu_exporter/internal/exporter/netbackup.go (95.7%)</option>
+				
+				<option value="file3">github.com/fjacquet/nbu_exporter/internal/exporter/prometheus.go (95.5%)</option>
+				
+				<option value="file4">github.com/fjacquet/nbu_exporter/internal/exporter/version_detector.go (94.0%)</option>
+				
+				<option value="file5">github.com/fjacquet/nbu_exporter/internal/logging/logging.go (0.0%)</option>
+				
+				<option value="file6">github.com/fjacquet/nbu_exporter/internal/models/Config.go (52.1%)</option>
+				
+				<option value="file7">github.com/fjacquet/nbu_exporter/internal/utils/date.go (0.0%)</option>
+				
+				<option value="file8">github.com/fjacquet/nbu_exporter/internal/utils/file.go (0.0%)</option>
+				
+				<option value="file9">github.com/fjacquet/nbu_exporter/internal/utils/pause.go (0.0%)</option>
+				
+				<option value="file10">github.com/fjacquet/nbu_exporter/main.go (0.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">no coverage</span>
+				<span class="cov1">low coverage</span>
+				<span class="cov2">*</span>
+				<span class="cov3">*</span>
+				<span class="cov4">*</span>
+				<span class="cov5">*</span>
+				<span class="cov6">*</span>
+				<span class="cov7">*</span>
+				<span class="cov8">*</span>
+				<span class="cov9">*</span>
+				<span class="cov10">high coverage</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">// Package exporter provides HTTP client functionality and data fetching logic
+// for the NetBackup REST API. It handles API communication, pagination,
+// and metric collection for Prometheus exposition.
+package exporter
+
+import (
+        "context"
+        "crypto/tls"
+        "encoding/json"
+        "fmt"
+        "time"
+
+        "github.com/fjacquet/nbu_exporter/internal/logging"
+        "github.com/fjacquet/nbu_exporter/internal/models"
+        "github.com/go-resty/resty/v2"
+)
+
+const (
+        defaultTimeout = 1 * time.Minute    // Default timeout for HTTP requests
+        contentType    = "application/json" // Content type for API requests
+)
+
+// HTTP header names used in NetBackup API requests.
+const (
+        HeaderAccept        = "Accept"        // Accept header for content negotiation
+        HeaderAuthorization = "Authorization" // Authorization header for API key authentication
+)
+
+// Query parameter names used in NetBackup API pagination and filtering.
+const (
+        QueryParamLimit  = "page[limit]"  // Maximum number of results per page
+        QueryParamOffset = "page[offset]" // Starting offset for pagination
+        QueryParamSort   = "sort"         // Field to sort results by
+        QueryParamFilter = "filter"       // Filter expression for result filtering
+)
+
+// NbuClient handles HTTP communication with the NetBackup REST API.
+// It manages TLS configuration, request headers, and provides methods for
+// fetching data from various NetBackup API endpoints.
+type NbuClient struct {
+        client *resty.Client // HTTP client with TLS configuration
+        cfg    models.Config // Application configuration including API settings
+}
+
+// NewNbuClient creates a new NetBackup API client with the provided configuration.
+// It initializes the HTTP client with appropriate TLS settings and timeout values.
+//
+// The client is configured with:
+//   - TLS verification based on cfg.NbuServer.InsecureSkipVerify
+//   - Default timeout of 1 minute for all requests
+//
+// Example:
+//
+//        cfg := models.Config{...}
+//        client := NewNbuClient(cfg)
+func NewNbuClient(cfg models.Config) *NbuClient <span class="cov8" title="123">{
+        client := resty.New().
+                SetTLSClientConfig(&amp;tls.Config{
+                        InsecureSkipVerify: cfg.NbuServer.InsecureSkipVerify,
+                }).
+                SetTimeout(defaultTimeout)
+
+        return &amp;NbuClient{
+                client: client,
+                cfg:    cfg,
+        }
+}</span>
+
+// NewNbuClientWithVersionDetection creates a new NetBackup API client and automatically
+// detects the API version if not explicitly configured. This is the recommended way to
+// create a client when you want automatic version detection.
+//
+// The function:
+//   - Creates a new HTTP client with the provided configuration
+//   - If apiVersion is not set in config, performs automatic version detection
+//   - Updates the configuration with the detected version
+//   - Returns the configured client ready for use
+//
+// Parameters:
+//   - ctx: Context for version detection requests (supports cancellation and timeout)
+//   - cfg: Application configuration (will be modified if version detection occurs)
+//
+// Returns:
+//   - Configured NbuClient with detected or configured API version
+//   - Error if version detection fails or configuration is invalid
+//
+// Example:
+//
+//        cfg := models.Config{...}
+//        client, err := NewNbuClientWithVersionDetection(ctx, &amp;cfg)
+//        if err != nil {
+//            log.Fatalf("Failed to create client: %v", err)
+//        }
+func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config) (*NbuClient, error) <span class="cov2" title="3">{
+        // Create the base client
+        client := NewNbuClient(*cfg)
+
+        // If API version is not explicitly configured, perform version detection
+        if cfg.NbuServer.APIVersion == "" || cfg.NbuServer.APIVersion == models.APIVersion130 </span><span class="cov2" title="3">{
+                // Only perform detection if version is empty or set to default
+                // This allows users to explicitly configure a version to bypass detection
+                shouldDetect := cfg.NbuServer.APIVersion == ""
+
+                if shouldDetect </span><span class="cov2" title="3">{
+                        logging.LogInfo("API version not configured, performing automatic detection")
+                        detector := NewAPIVersionDetector(client, cfg)
+                        detectedVersion, err := detector.DetectVersion(ctx)
+                        if err != nil </span><span class="cov1" title="1">{
+                                return nil, fmt.Errorf("automatic API version detection failed: %w", err)
+                        }</span>
+
+                        // Update configuration with detected version
+                        <span class="cov2" title="2">cfg.NbuServer.APIVersion = detectedVersion
+                        client.cfg.NbuServer.APIVersion = detectedVersion
+                        logging.LogInfo(fmt.Sprintf("Automatically detected API version: %s", detectedVersion))</span>
+                } else<span class="cov0" title="0"> {
+                        logging.LogInfo(fmt.Sprintf("Using configured API version: %s", cfg.NbuServer.APIVersion))
+                }</span>
+        } else<span class="cov0" title="0"> {
+                logging.LogInfo(fmt.Sprintf("Using explicitly configured API version: %s (bypassing detection)", cfg.NbuServer.APIVersion))
+        }</span>
+
+        <span class="cov2" title="2">return client, nil</span>
+}
+
+// getHeaders returns the standard headers for NBU API requests.
+func (c *NbuClient) getHeaders() map[string]string <span class="cov10" title="234">{
+        // Construct versioned Accept header for NetBackup API 10.5+
+        acceptHeader := fmt.Sprintf("application/vnd.netbackup+json;version=%s", c.cfg.NbuServer.APIVersion)
+
+        return map[string]string{
+                HeaderAccept:        acceptHeader,
+                HeaderAuthorization: c.cfg.NbuServer.APIKey,
+        }
+}</span>
+
+// FetchData sends an HTTP GET request to the specified URL and unmarshals the JSON response
+// into the provided target interface. It handles API version negotiation, error responses,
+// and provides detailed error messages for common failure scenarios.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - url: Complete URL to fetch (including query parameters)
+//   - target: Pointer to struct where JSON response will be unmarshaled
+//
+// Returns an error if:
+//   - HTTP request fails (network error, timeout)
+//   - Server returns non-2xx status code
+//   - API version is not supported (HTTP 406)
+//   - JSON unmarshaling fails
+//
+// Example:
+//
+//        var jobs models.Jobs
+//        err := client.FetchData(ctx, "https://nbu:1556/admin/jobs", &amp;jobs)
+func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{}) error <span class="cov9" title="157">{
+        resp, err := c.client.R().
+                SetContext(ctx).
+                SetHeaders(c.getHeaders()).
+                Get(url)
+
+        if err != nil </span><span class="cov2" title="2">{
+                return fmt.Errorf("HTTP request to %s failed: %w", url, err)
+        }</span>
+
+        <span class="cov9" title="155">if resp.IsError() </span><span class="cov5" title="16">{
+                // Handle 406 Not Acceptable - API version not supported
+                if resp.StatusCode() == 406 </span><span class="cov3" title="6">{
+                        errMsg := fmt.Sprintf(
+                                "API version %s is not supported by the NetBackup server (HTTP 406 Not Acceptable).\n\n"+
+                                        "The server may be running a version of NetBackup that does not support API version %s.\n\n"+
+                                        "Supported API versions:\n"+
+                                        "  - 3.0  (NetBackup 10.0-10.4)\n"+
+                                        "  - 12.0 (NetBackup 10.5)\n"+
+                                        "  - 13.0 (NetBackup 11.0)\n\n"+
+                                        "Troubleshooting steps:\n"+
+                                        "1. Verify your NetBackup server version: bpgetconfig -g | grep VERSION\n"+
+                                        "2. Update the 'apiVersion' field in config.yaml to match your server version\n"+
+                                        "3. Or remove the 'apiVersion' field to enable automatic version detection\n\n"+
+                                        "Example configuration:\n"+
+                                        "  nbuserver:\n"+
+                                        "    apiVersion: \"12.0\"  # For NetBackup 10.5\n"+
+                                        "    # Or omit apiVersion for automatic detection\n\n"+
+                                        "Request URL: %s",
+                                c.cfg.NbuServer.APIVersion,
+                                c.cfg.NbuServer.APIVersion,
+                                url,
+                        )
+                        logging.LogError(errMsg)
+                        return fmt.Errorf("%s", errMsg)
+                }</span>
+
+                <span class="cov4" title="10">return fmt.Errorf("HTTP request to %s returned status %d: %s", url, resp.StatusCode(), resp.Status())</span>
+        }
+
+        <span class="cov9" title="139">if err := json.Unmarshal(resp.Body(), target); err != nil </span><span class="cov1" title="1">{
+                return fmt.Errorf("failed to unmarshal response from %s: %w", url, err)
+        }</span>
+
+        <span class="cov9" title="138">return nil</span>
+}
+
+// DetectAPIVersion attempts to detect and validate the NetBackup API version by making
+// a lightweight test request to the jobs endpoint. This helps identify API compatibility
+// issues early in the application lifecycle.
+//
+// The method tests connectivity using the configured API version and returns:
+//   - The configured API version string if successful
+//   - An error if the version is not supported or connectivity fails
+//
+// Common error scenarios:
+//   - HTTP 406: API version not supported by the NetBackup server
+//   - Network errors: Connectivity issues with the NetBackup server
+//
+// This method is typically called during collector initialization to provide early
+// feedback about API compatibility issues.
+//
+// Example:
+//
+//        version, err := client.DetectAPIVersion(ctx)
+//        if err != nil {
+//            log.Warnf("API version detection failed: %v", err)
+//        }
+func (c *NbuClient) DetectAPIVersion(ctx context.Context) (string, error) <span class="cov0" title="0">{
+        // Use a lightweight endpoint to test API connectivity
+        // We'll use the jobs endpoint with a very small limit
+        baseURL := c.cfg.GetNBUBaseURL()
+        testURL := fmt.Sprintf("%s/admin/jobs?page[limit]=1", baseURL)
+
+        resp, err := c.client.R().
+                SetContext(ctx).
+                SetHeaders(c.getHeaders()).
+                Get(testURL)
+
+        if err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("failed to detect API version: %w", err)
+        }</span>
+
+        // Check for version-specific error responses
+        <span class="cov0" title="0">if resp.StatusCode() == 406 </span><span class="cov0" title="0">{
+                // 406 Not Acceptable typically means the API version is not supported
+                return "", fmt.Errorf("API version %s not supported by NetBackup server (HTTP 406)", c.cfg.NbuServer.APIVersion)
+        }</span>
+
+        <span class="cov0" title="0">if resp.IsError() </span><span class="cov0" title="0">{
+                // Other errors might indicate connectivity issues, not version problems
+                return "", fmt.Errorf("API connectivity test failed with status %d: %s", resp.StatusCode(), resp.Status())
+        }</span>
+
+        // If we get here, the configured API version is working
+        <span class="cov0" title="0">return c.cfg.NbuServer.APIVersion, nil</span>
+}
+
+// Close releases resources associated with the HTTP client.
+// Note: Resty doesn't provide an explicit close method, so this clears the client reference
+// to allow garbage collection. Connection pooling is managed by the underlying http.Client.
+func (c *NbuClient) Close() <span class="cov0" title="0">{
+        // Resty doesn't have an explicit close, but we can clear the client
+        c.client = nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">// Package exporter provides metric key structures for organizing and aggregating
+// NetBackup metrics before exposition to Prometheus.
+package exporter
+
+// StorageMetricKey represents a unique identifier for storage unit metrics.
+// It combines the storage unit name, server type, and size dimension (free/used)
+// to create a composite key for metric aggregation in Prometheus.
+//
+// Example: StorageMetricKey{Name: "disk-pool-1", Type: "MEDIA_SERVER", Size: "free"}
+type StorageMetricKey struct {
+        Name string // Storage unit name (e.g., "disk-pool-1")
+        Type string // Storage server type (e.g., "MEDIA_SERVER")
+        Size string // Size dimension: "free" or "used"
+}
+
+// JobMetricKey represents a unique identifier for job-level metrics.
+// It combines job action, policy type, and status code to create a composite
+// key for aggregating job statistics by type and outcome.
+//
+// Example: JobMetricKey{Action: "BACKUP", PolicyType: "VMWARE", Status: "0"}
+type JobMetricKey struct {
+        Action     string // Job action type (e.g., "BACKUP", "RESTORE")
+        PolicyType string // Policy type (e.g., "VMWARE", "STANDARD")
+        Status     string // Job status code as string (e.g., "0" for success, "150" for failure)
+}
+
+// JobStatusKey represents a simplified identifier for job status metrics.
+// It combines job action and status code for high-level status aggregation
+// across all policy types.
+//
+// Example: JobStatusKey{Action: "BACKUP", Status: "0"}
+type JobStatusKey struct {
+        Action string // Job action type (e.g., "BACKUP", "RESTORE")
+        Status string // Job status code as string (e.g., "0" for success)
+}
+
+// String returns a pipe-delimited string representation suitable for use as a map key.
+// Format: "name|type|size"
+func (k StorageMetricKey) String() string <span class="cov10" title="138">{
+        return k.Name + "|" + k.Type + "|" + k.Size
+}</span>
+
+// String returns a pipe-delimited string representation suitable for use as a map key.
+// Format: "action|policyType|status"
+func (k JobMetricKey) String() string <span class="cov9" title="137">{
+        return k.Action + "|" + k.PolicyType + "|" + k.Status
+}</span>
+
+// String returns a pipe-delimited string representation suitable for use as a map key.
+// Format: "action|status"
+func (k JobStatusKey) String() string <span class="cov8" title="64">{
+        return k.Action + "|" + k.Status
+}</span>
+
+// Labels returns the metric labels as a slice in the order expected by Prometheus descriptors.
+// Returns: [name, type, size]
+func (k StorageMetricKey) Labels() []string <span class="cov0" title="0">{
+        return []string{k.Name, k.Type, k.Size}
+}</span>
+
+// Labels returns the metric labels as a slice in the order expected by Prometheus descriptors.
+// Returns: [action, policyType, status]
+func (k JobMetricKey) Labels() []string <span class="cov0" title="0">{
+        return []string{k.Action, k.PolicyType, k.Status}
+}</span>
+
+// Labels returns the metric labels as a slice in the order expected by Prometheus descriptors.
+// Returns: [action, status]
+func (k JobStatusKey) Labels() []string <span class="cov0" title="0">{
+        return []string{k.Action, k.Status}
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">// Package exporter provides data fetching and processing logic for NetBackup API endpoints.
+// It handles pagination, metric aggregation, and data transformation for Prometheus metrics.
+package exporter
+
+import (
+        "context"
+        "fmt"
+        "strconv"
+        "time"
+
+        "github.com/fjacquet/nbu_exporter/internal/models"
+        "github.com/fjacquet/nbu_exporter/internal/utils"
+        log "github.com/sirupsen/logrus"
+)
+
+const (
+        pageLimit        = "100"                    // Default page size for API pagination
+        storageTypeTape  = "Tape"                   // Storage type identifier for tape units (excluded from metrics)
+        storagePath      = "/storage/storage-units" // API endpoint for storage unit data
+        jobsPath         = "/admin/jobs"            // API endpoint for job data
+        sizeTypeFree     = "free"                   // Metric dimension for free capacity
+        sizeTypeUsed     = "used"                   // Metric dimension for used capacity
+        bytesPerKilobyte = 1024                     // Conversion factor from kilobytes to bytes
+)
+
+// FetchStorage retrieves storage unit information from the NetBackup API and populates
+// the provided metrics map with capacity data. It fetches all storage units and extracts
+// free and used capacity metrics for non-tape storage.
+//
+// Tape storage units are excluded from metrics as they don't report meaningful capacity values.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - client: Configured NetBackup API client
+//   - storageMetrics: Map to populate with storage metrics (key format: "name|type|size")
+//
+// The function populates storageMetrics with entries like:
+//   - "disk-pool-1|MEDIA_SERVER|free" -&gt; 5368709120000 (bytes)
+//   - "disk-pool-1|MEDIA_SERVER|used" -&gt; 5368709120000 (bytes)
+//
+// Returns an error if the API request fails or response cannot be parsed.
+func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[string]float64) error <span class="cov9" title="62">{
+        var storages models.Storages
+
+        url := client.cfg.BuildURL(storagePath, map[string]string{
+                QueryParamLimit:  pageLimit,
+                QueryParamOffset: "0",
+        })
+
+        if err := client.FetchData(ctx, url, &amp;storages); err != nil </span><span class="cov4" title="5">{
+                return fmt.Errorf("failed to fetch storage data: %w", err)
+        }</span>
+
+        <span class="cov9" title="57">for _, data := range storages.Data </span><span class="cov9" title="70">{
+                // Skip tape storage units
+                if data.Attributes.StorageType == storageTypeTape </span><span class="cov5" title="7">{
+                        continue</span>
+                }
+
+                <span class="cov9" title="63">stuName := data.Attributes.Name
+                stuType := data.Attributes.StorageServerType
+
+                freeKey := StorageMetricKey{Name: stuName, Type: stuType, Size: sizeTypeFree}
+                usedKey := StorageMetricKey{Name: stuName, Type: stuType, Size: sizeTypeUsed}
+
+                storageMetrics[freeKey.String()] = float64(data.Attributes.FreeCapacityBytes)
+                storageMetrics[usedKey.String()] = float64(data.Attributes.UsedCapacityBytes)</span>
+        }
+
+        <span class="cov9" title="57">log.Debugf("Fetched storage data for %d storage units", len(storages.Data))
+        return nil</span>
+}
+
+// FetchJobDetails retrieves a single job record at the specified pagination offset and
+// updates the provided metrics maps with job statistics. This function is designed to be
+// called repeatedly during pagination to process all jobs within a time window.
+//
+// The function fetches one job at a time (limit=1) to enable efficient pagination and
+// filters jobs by endTime to only include jobs completed after startTime.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - client: Configured NetBackup API client
+//   - jobsSize: Map to accumulate bytes transferred per job type/status
+//   - jobsCount: Map to accumulate job counts per job type/status
+//   - jobsStatusCount: Map to accumulate job counts per action/status
+//   - offset: Pagination offset for the current request
+//   - startTime: Filter to only include jobs completed after this time
+//
+// Returns:
+//   - Next pagination offset (or -1 if no more jobs)
+//   - Error if the API request fails
+//
+// The function updates metrics maps with keys like:
+//   - jobsSize["BACKUP|VMWARE|0"] += bytes transferred
+//   - jobsCount["BACKUP|VMWARE|0"] += 1
+//   - jobsStatusCount["BACKUP|0"] += 1
+func FetchJobDetails(
+        ctx context.Context,
+        client *NbuClient,
+        jobsSize, jobsCount, jobsStatusCount map[string]float64,
+        offset int,
+        startTime time.Time,
+) (int, error) <span class="cov10" title="76">{
+        var jobs models.Jobs
+
+        queryParams := map[string]string{
+                QueryParamLimit:  "1",
+                QueryParamOffset: strconv.Itoa(offset),
+                QueryParamSort:   "jobId",
+                QueryParamFilter: fmt.Sprintf("endTime%%20gt%%20%s", utils.ConvertTimeToNBUDate(startTime)),
+        }
+
+        url := client.cfg.BuildURL(jobsPath, queryParams)
+
+        if err := client.FetchData(ctx, url, &amp;jobs); err != nil </span><span class="cov3" title="3">{
+                return -1, fmt.Errorf("failed to fetch job details at offset %d: %w", offset, err)
+        }</span>
+
+        // No more jobs to process
+        <span class="cov9" title="73">if len(jobs.Data) == 0 </span><span class="cov5" title="9">{
+                return -1, nil
+        }</span>
+
+        <span class="cov9" title="64">job := jobs.Data[0]
+
+        // Create structured metric keys
+        jobKey := JobMetricKey{
+                Action:     job.Attributes.JobType,
+                PolicyType: job.Attributes.PolicyType,
+                Status:     strconv.Itoa(job.Attributes.Status),
+        }
+
+        statusKey := JobStatusKey{
+                Action: job.Attributes.JobType,
+                Status: strconv.Itoa(job.Attributes.Status),
+        }
+
+        // Update metrics
+        jobsCount[jobKey.String()]++
+        jobsStatusCount[statusKey.String()]++
+        jobsSize[jobKey.String()] += float64(job.Attributes.KilobytesTransferred * bytesPerKilobyte)
+
+        // Check if we've reached the last page
+        if jobs.Meta.Pagination.Offset == jobs.Meta.Pagination.Last </span><span class="cov9" title="54">{
+                return -1, nil
+        }</span>
+
+        <span class="cov5" title="10">return jobs.Meta.Pagination.Next, nil</span>
+}
+
+// HandlePagination provides a generic pagination handler that repeatedly calls a fetch function
+// until all pages have been processed. It handles context cancellation and propagates errors
+// from the fetch function.
+//
+// The fetch function should:
+//   - Accept a context and offset parameter
+//   - Return the next offset (or -1 when pagination is complete)
+//   - Return an error if the fetch operation fails
+//
+// Parameters:
+//   - ctx: Context for cancellation (checked before each page fetch)
+//   - fetchFunc: Function to fetch and process a single page of results
+//
+// Returns an error if:
+//   - Context is cancelled (ctx.Err())
+//   - The fetch function returns an error
+//
+// Example:
+//
+//        err := HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
+//            return FetchJobDetails(ctx, client, metrics, offset, startTime)
+//        })
+func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, offset int) (int, error)) error <span class="cov9" title="66">{
+        offset := 0
+        for offset != -1 </span><span class="cov10" title="76">{
+                select </span>{
+                case &lt;-ctx.Done():<span class="cov0" title="0">
+                        return ctx.Err()</span>
+                default:<span class="cov10" title="76">
+                        nextOffset, err := fetchFunc(ctx, offset)
+                        if err != nil </span><span class="cov3" title="3">{
+                                return err
+                        }</span>
+                        <span class="cov9" title="73">offset = nextOffset</span>
+                }
+        }
+        <span class="cov9" title="63">return nil</span>
+}
+
+// FetchAllJobs aggregates job statistics by iterating over all paginated job data within
+// the configured time window. It calculates the start time based on the scraping interval
+// and fetches all jobs that completed after that time.
+//
+// The function uses pagination to efficiently process large job datasets and populates
+// three metrics maps with aggregated statistics:
+//   - jobsSize: Total bytes transferred per job type/policy/status
+//   - jobsCount: Number of jobs per job type/policy/status
+//   - jobsStatusCount: Number of jobs per action/status (simplified aggregation)
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - client: Configured NetBackup API client
+//   - jobsSize: Map to populate with bytes transferred metrics
+//   - jobsCount: Map to populate with job count metrics
+//   - jobsStatusCount: Map to populate with status count metrics
+//   - scrapingInterval: Duration string (e.g., "5m", "1h") defining the time window
+//
+// Returns an error if:
+//   - The scraping interval cannot be parsed
+//   - Any API request fails during pagination
+//
+// Example:
+//
+//        jobsSize := make(map[string]float64)
+//        jobsCount := make(map[string]float64)
+//        jobsStatusCount := make(map[string]float64)
+//        err := FetchAllJobs(ctx, client, jobsSize, jobsCount, jobsStatusCount, "5m")
+func FetchAllJobs(
+        ctx context.Context,
+        client *NbuClient,
+        jobsSize, jobsCount, jobsStatusCount map[string]float64,
+        scrapingInterval string,
+) error <span class="cov9" title="66">{
+        duration, err := time.ParseDuration("-" + scrapingInterval)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("invalid scraping interval %s: %w", scrapingInterval, err)
+        }</span>
+
+        <span class="cov9" title="66">startTime := time.Now().Add(duration).UTC()
+        log.Debugf("Fetching jobs since %s", startTime.Format(time.RFC3339))
+
+        return HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) </span><span class="cov10" title="76">{
+                return FetchJobDetails(ctx, client, jobsSize, jobsCount, jobsStatusCount, offset, startTime)
+        }</span>)
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">// Package exporter implements the Prometheus Collector interface for NetBackup metrics.
+// It collects storage and job statistics from the NetBackup API and exposes them
+// in Prometheus format.
+package exporter
+
+import (
+        "context"
+        "fmt"
+        "strings"
+        "time"
+
+        "github.com/fjacquet/nbu_exporter/internal/models"
+        "github.com/prometheus/client_golang/prometheus"
+        log "github.com/sirupsen/logrus"
+)
+
+const collectionTimeout = 2 * time.Minute // Maximum time allowed for metric collection
+
+// NbuCollector implements the Prometheus Collector interface for NetBackup metrics.
+// It collects storage capacity and job statistics from the NetBackup API and exposes
+// them as Prometheus metrics.
+//
+// The collector fetches:
+//   - Storage unit capacity (free/used bytes) for disk-based storage
+//   - Job statistics (count, bytes transferred) aggregated by type, policy, and status
+//   - Job status counts aggregated by action and status code
+//   - API version information
+//
+// Metrics are collected on-demand when Prometheus scrapes the /metrics endpoint.
+type NbuCollector struct {
+        cfg                models.Config
+        client             *NbuClient
+        nbuDiskSize        *prometheus.Desc
+        nbuResponseTime    *prometheus.Desc
+        nbuJobsSize        *prometheus.Desc
+        nbuJobsCount       *prometheus.Desc
+        nbuJobsStatusCount *prometheus.Desc
+        nbuAPIVersion      *prometheus.Desc
+}
+
+// NewNbuCollector creates a new NetBackup collector with the provided configuration.
+// It initializes the HTTP client, performs automatic API version detection if needed,
+// and registers Prometheus metric descriptors.
+//
+// The collector creates the following metrics:
+//   - nbu_disk_bytes: Storage capacity in bytes (labels: name, type, size)
+//   - nbu_jobs_bytes: Bytes transferred by jobs (labels: action, policy_type, status)
+//   - nbu_jobs_count: Number of jobs (labels: action, policy_type, status)
+//   - nbu_status_count: Job counts by status (labels: action, status)
+//   - nbu_response_time_ms: API response time in milliseconds
+//
+// Version Detection:
+//   - If apiVersion is not configured, automatic detection is performed
+//   - Detection tries versions in descending order: 13.0 → 12.0 → 3.0
+//   - If detection fails, an error is returned and collector creation fails
+//   - If apiVersion is explicitly configured, detection is bypassed
+//
+// Example:
+//
+//        cfg := models.Config{...}
+//        collector, err := NewNbuCollector(cfg)
+//        if err != nil {
+//            log.Fatalf("Failed to create collector: %v", err)
+//        }
+//        prometheus.MustRegister(collector)
+func NewNbuCollector(cfg models.Config) (*NbuCollector, error) <span class="cov8" title="40">{
+        // Create base client
+        client := NewNbuClient(cfg)
+
+        // Perform version detection if apiVersion is not explicitly configured
+        ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+        defer cancel()
+
+        if cfg.NbuServer.APIVersion == "" </span><span class="cov3" title="3">{
+                log.Info("API version not configured, performing automatic detection")
+                detector := NewAPIVersionDetector(client, &amp;cfg)
+                detectedVersion, err := detector.DetectVersion(ctx)
+                if err != nil </span><span class="cov0" title="0">{
+                        return nil, fmt.Errorf("automatic API version detection failed: %w", err)
+                }</span>
+
+                // Update configuration with detected version
+                <span class="cov3" title="3">cfg.NbuServer.APIVersion = detectedVersion
+                client.cfg.NbuServer.APIVersion = detectedVersion
+                log.Infof("Detected NetBackup API version: %s", detectedVersion)</span>
+        } else<span class="cov8" title="37"> {
+                log.Infof("Using configured NetBackup API version: %s", cfg.NbuServer.APIVersion)
+        }</span>
+
+        <span class="cov8" title="40">return &amp;NbuCollector{
+                cfg:    cfg,
+                client: client,
+                nbuResponseTime: prometheus.NewDesc(
+                        "nbu_response_time_ms",
+                        "The server response time in milliseconds",
+                        nil, nil,
+                ),
+                nbuDiskSize: prometheus.NewDesc(
+                        "nbu_disk_bytes",
+                        "The quantity of storage bytes",
+                        []string{"name", "type", "size"}, nil,
+                ),
+                nbuJobsSize: prometheus.NewDesc(
+                        "nbu_jobs_bytes",
+                        "The quantity of processed bytes",
+                        []string{"action", "policy_type", "status"}, nil,
+                ),
+                nbuJobsCount: prometheus.NewDesc(
+                        "nbu_jobs_count",
+                        "The quantity of jobs",
+                        []string{"action", "policy_type", "status"}, nil,
+                ),
+                nbuJobsStatusCount: prometheus.NewDesc(
+                        "nbu_status_count",
+                        "The quantity per status",
+                        []string{"action", "status"}, nil,
+                ),
+                nbuAPIVersion: prometheus.NewDesc(
+                        "nbu_api_version",
+                        "The NetBackup API version currently in use",
+                        []string{"version"}, nil,
+                ),
+        }, nil</span>
+}
+
+// Describe sends the descriptors of each metric to the provided channel.
+// This method is required by the prometheus.Collector interface and is called
+// during collector registration to validate metric definitions.
+func (c *NbuCollector) Describe(ch chan&lt;- *prometheus.Desc) <span class="cov8" title="45">{
+        ch &lt;- c.nbuDiskSize
+        ch &lt;- c.nbuResponseTime
+        ch &lt;- c.nbuJobsSize
+        ch &lt;- c.nbuJobsCount
+        ch &lt;- c.nbuJobsStatusCount
+        ch &lt;- c.nbuAPIVersion
+}</span>
+
+// Collect fetches metrics from NetBackup and sends them to the provided channel.
+// This method is called by Prometheus on each scrape request and performs the following:
+//  1. Fetches storage unit capacity data
+//  2. Fetches job statistics within the configured time window
+//  3. Converts metrics to Prometheus format and sends to the channel
+//
+// The method uses a 2-minute timeout for the entire collection process and continues
+// to expose partial metrics even if some API calls fail. Errors are logged but do not
+// prevent metric exposition.
+//
+// This method is required by the prometheus.Collector interface.
+func (c *NbuCollector) Collect(ch chan&lt;- prometheus.Metric) <span class="cov8" title="49">{
+        ctx, cancel := context.WithTimeout(context.Background(), collectionTimeout)
+        defer cancel()
+
+        // Collect storage metrics
+        storageMetrics := make(map[string]float64)
+        if err := FetchStorage(ctx, c.client, storageMetrics); err != nil </span><span class="cov1" title="1">{
+                log.Errorf("Failed to fetch storage metrics: %v", err)
+                // Continue to try fetching job metrics even if storage fails
+        }</span>
+
+        // Collect job metrics
+        <span class="cov8" title="49">jobsSize := make(map[string]float64)
+        jobsCount := make(map[string]float64)
+        jobsStatusCount := make(map[string]float64)
+
+        if err := FetchAllJobs(ctx, c.client, jobsSize, jobsCount, jobsStatusCount, c.cfg.Server.ScrapingInterval); err != nil </span><span class="cov0" title="0">{
+                log.Errorf("Failed to fetch job metrics: %v", err)
+                // Continue to expose whatever metrics we have
+        }</span>
+
+        // Expose storage metrics
+        <span class="cov8" title="49">for key, value := range storageMetrics </span><span class="cov10" title="94">{
+                labels := strings.Split(key, "|")
+                ch &lt;- prometheus.MustNewConstMetric(
+                        c.nbuDiskSize,
+                        prometheus.GaugeValue,
+                        value,
+                        labels[0], labels[1], labels[2],
+                )
+        }</span>
+
+        // Expose job size metrics
+        <span class="cov8" title="49">for key, value := range jobsSize </span><span class="cov8" title="45">{
+                labels := strings.Split(key, "|")
+                ch &lt;- prometheus.MustNewConstMetric(
+                        c.nbuJobsSize,
+                        prometheus.GaugeValue,
+                        value,
+                        labels[0], labels[1], labels[2],
+                )
+        }</span>
+
+        // Expose job count metrics
+        <span class="cov8" title="49">for key, value := range jobsCount </span><span class="cov8" title="45">{
+                labels := strings.Split(key, "|")
+                ch &lt;- prometheus.MustNewConstMetric(
+                        c.nbuJobsCount,
+                        prometheus.GaugeValue,
+                        value,
+                        labels[0], labels[1], labels[2],
+                )
+        }</span>
+
+        // Expose job status count metrics
+        <span class="cov8" title="49">for key, value := range jobsStatusCount </span><span class="cov8" title="45">{
+                labels := strings.Split(key, "|")
+                ch &lt;- prometheus.MustNewConstMetric(
+                        c.nbuJobsStatusCount,
+                        prometheus.GaugeValue,
+                        value,
+                        labels[0], labels[1],
+                )
+        }</span>
+
+        // Expose API version metric
+        <span class="cov8" title="49">ch &lt;- prometheus.MustNewConstMetric(
+                c.nbuAPIVersion,
+                prometheus.GaugeValue,
+                1,
+                c.cfg.NbuServer.APIVersion,
+        )
+
+        log.Debugf("Collected %d storage, %d job size, %d job count, %d status metrics",
+                len(storageMetrics), len(jobsSize), len(jobsCount), len(jobsStatusCount))</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">// Package exporter provides API version detection functionality for NetBackup.
+// It implements automatic version detection with fallback logic to support
+// multiple NetBackup versions (10.0, 10.5, and 11.0).
+package exporter
+
+import (
+        "context"
+        "fmt"
+        "time"
+
+        "github.com/fjacquet/nbu_exporter/internal/models"
+        log "github.com/sirupsen/logrus"
+)
+
+// RetryConfig defines the configuration for retry logic with exponential backoff.
+// It controls how many times to retry transient failures and the delay between attempts.
+type RetryConfig struct {
+        MaxAttempts   int           // Maximum number of retry attempts
+        InitialDelay  time.Duration // Initial delay before first retry
+        MaxDelay      time.Duration // Maximum delay between retries
+        BackoffFactor float64       // Multiplier for exponential backoff
+}
+
+// DefaultRetryConfig provides sensible defaults for retry behavior.
+// - 3 attempts total (initial + 2 retries)
+// - 1 second initial delay
+// - 10 second maximum delay
+// - 2x backoff factor (exponential)
+var DefaultRetryConfig = RetryConfig{
+        MaxAttempts:   3,
+        InitialDelay:  1 * time.Second,
+        MaxDelay:      10 * time.Second,
+        BackoffFactor: 2.0,
+}
+
+// APIVersionDetector handles automatic detection of supported NetBackup API versions.
+// It tests versions in descending order (13.0 → 12.0 → 3.0) and returns the first
+// working version. This allows the exporter to work with NetBackup 10.0, 10.5, and 11.0
+// without manual configuration.
+type APIVersionDetector struct {
+        client      *NbuClient     // HTTP client for making test requests
+        cfg         *models.Config // Application configuration
+        retryConfig RetryConfig    // Retry configuration for transient failures
+}
+
+// NewAPIVersionDetector creates a new version detector with the provided client and configuration.
+// It uses the default retry configuration for handling transient failures.
+//
+// Parameters:
+//   - client: Configured NetBackup API client
+//   - cfg: Application configuration
+//
+// Returns a new APIVersionDetector instance.
+func NewAPIVersionDetector(client *NbuClient, cfg *models.Config) *APIVersionDetector <span class="cov8" title="29">{
+        return &amp;APIVersionDetector{
+                client:      client,
+                cfg:         cfg,
+                retryConfig: DefaultRetryConfig,
+        }
+}</span>
+
+// DetectVersion attempts to detect the highest supported API version by testing
+// versions in descending order (13.0 → 12.0 → 3.0). It returns the first version
+// that successfully responds to a test request.
+//
+// The detection process:
+// 1. Try API version 13.0 (NetBackup 11.0)
+// 2. If HTTP 406, try API version 12.0 (NetBackup 10.5)
+// 3. If HTTP 406, try API version 3.0 (NetBackup 10.0-10.4)
+// 4. If all fail, return detailed error with troubleshooting steps
+//
+// Authentication errors (HTTP 401) cause immediate failure as they indicate
+// a configuration problem, not a version compatibility issue.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//
+// Returns:
+//   - Detected API version string (e.g., "13.0")
+//   - Error if no compatible version is found or authentication fails
+//
+// Example:
+//
+//        detector := NewAPIVersionDetector(client, &amp;cfg)
+//        version, err := detector.DetectVersion(ctx)
+//        if err != nil {
+//            log.Fatalf("Version detection failed: %v", err)
+//        }
+//        log.Infof("Detected API version: %s", version)
+func (d *APIVersionDetector) DetectVersion(ctx context.Context) (string, error) <span class="cov7" title="18">{
+        log.Debug("Starting API version detection")
+
+        // Try each supported version in descending order
+        for _, version := range models.SupportedAPIVersions </span><span class="cov8" title="43">{
+                log.Debugf("Attempting API version %s", version)
+
+                if d.tryVersion(ctx, version) </span><span class="cov6" title="14">{
+                        log.Infof("Successfully detected API version: %s", version)
+                        return version, nil
+                }</span>
+        }
+
+        // If we get here, no version worked
+        <span class="cov3" title="4">return "", fmt.Errorf(
+                "failed to detect compatible NetBackup API version\n\n"+
+                        "Attempted versions: %v\n\n"+
+                        "Possible causes:\n"+
+                        "1. NetBackup server is running a version older than 10.0\n"+
+                        "2. Network connectivity issues\n"+
+                        "3. API endpoint is not accessible\n"+
+                        "4. Authentication credentials are invalid\n\n"+
+                        "Troubleshooting:\n"+
+                        "- Verify NetBackup server version: bpgetconfig -g | grep VERSION\n"+
+                        "- Check network connectivity to %s\n"+
+                        "- Verify API key is valid and not expired\n"+
+                        "- Try manually specifying apiVersion in config.yaml",
+                models.SupportedAPIVersions,
+                d.cfg.GetNBUBaseURL(),
+        )</span>
+}
+
+// tryVersion tests a specific API version by making a lightweight API call.
+// It uses the jobs endpoint with a limit of 1 to minimize server load.
+//
+// The method distinguishes between different error types:
+// - HTTP 406: Version not supported, try next version
+// - HTTP 401: Authentication error, fail immediately
+// - Network errors: Retry with exponential backoff
+// - Other errors: Log and try next version
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - version: API version to test (e.g., "13.0")
+//
+// Returns:
+//   - true if the version is supported and working
+//   - false if the version is not supported or encounters errors
+func (d *APIVersionDetector) tryVersion(ctx context.Context, version string) bool <span class="cov9" title="54">{
+        // Temporarily set the version in both the detector's config and the client's config
+        originalVersion := d.cfg.NbuServer.APIVersion
+        d.cfg.NbuServer.APIVersion = version
+        d.client.cfg.NbuServer.APIVersion = version
+        defer func() </span><span class="cov9" title="54">{
+                d.cfg.NbuServer.APIVersion = originalVersion
+                d.client.cfg.NbuServer.APIVersion = originalVersion
+        }</span>()
+
+        // Use a lightweight endpoint to test API connectivity
+        <span class="cov9" title="54">baseURL := d.cfg.GetNBUBaseURL()
+        testURL := fmt.Sprintf("%s/admin/jobs?page[limit]=1", baseURL)
+
+        // Implement retry logic with exponential backoff
+        delay := d.retryConfig.InitialDelay
+        for attempt := 1; attempt &lt;= d.retryConfig.MaxAttempts; attempt++ </span><span class="cov10" title="71">{
+                resp, err := d.client.client.R().
+                        SetContext(ctx).
+                        SetHeaders(d.client.getHeaders()).
+                        Get(testURL)
+
+                if err != nil </span><span class="cov6" title="12">{
+                        // Network error - retry with backoff
+                        log.Debugf("API version %s attempt %d/%d failed with network error: %v",
+                                version, attempt, d.retryConfig.MaxAttempts, err)
+
+                        if attempt &lt; d.retryConfig.MaxAttempts </span><span class="cov5" title="8">{
+                                log.Debugf("Retrying in %v...", delay)
+                                time.Sleep(delay)
+                                delay = time.Duration(float64(delay) * d.retryConfig.BackoffFactor)
+                                if delay &gt; d.retryConfig.MaxDelay </span><span class="cov0" title="0">{
+                                        delay = d.retryConfig.MaxDelay
+                                }</span>
+                                <span class="cov5" title="8">continue</span>
+                        }
+
+                        <span class="cov3" title="4">log.Warnf("API version %s failed after %d attempts: %v", version, d.retryConfig.MaxAttempts, err)
+                        return false</span>
+                }
+
+                // Check response status
+                <span class="cov9" title="59">switch resp.StatusCode() </span>{
+                case 200:<span class="cov7" title="18">
+                        // Success - this version works
+                        log.Debugf("API version %s is supported (HTTP 200)", version)
+                        return true</span>
+
+                case 401:<span class="cov3" title="4">
+                        // Authentication error - fail immediately, don't try other versions
+                        log.Errorf("Authentication failed (HTTP 401). Please verify your API key is valid.")
+                        return false</span>
+
+                case 406:<span class="cov7" title="24">
+                        // Version not supported - try next version
+                        log.Debugf("API version %s not supported by server (HTTP 406)", version)
+                        return false</span>
+
+                case 500, 502, 503, 504:<span class="cov6" title="12">
+                        // Transient server errors - retry with backoff
+                        log.Debugf("API version %s attempt %d/%d failed with transient error (HTTP %d)",
+                                version, attempt, d.retryConfig.MaxAttempts, resp.StatusCode())
+
+                        if attempt &lt; d.retryConfig.MaxAttempts </span><span class="cov5" title="9">{
+                                log.Debugf("Retrying in %v...", delay)
+                                time.Sleep(delay)
+                                delay = time.Duration(float64(delay) * d.retryConfig.BackoffFactor)
+                                if delay &gt; d.retryConfig.MaxDelay </span><span class="cov0" title="0">{
+                                        delay = d.retryConfig.MaxDelay
+                                }</span>
+                                <span class="cov5" title="9">continue</span>
+                        }
+
+                        <span class="cov3" title="3">log.Warnf("API version %s failed after %d attempts with HTTP %d",
+                                version, d.retryConfig.MaxAttempts, resp.StatusCode())
+                        return false</span>
+
+                default:<span class="cov1" title="1">
+                        // Other error - log and try next version
+                        log.Warnf("API version %s returned unexpected status %d: %s",
+                                version, resp.StatusCode(), resp.Status())
+                        return false</span>
+                }
+        }
+
+        <span class="cov0" title="0">return false</span>
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">// Package logging provides centralized logging functionality using logrus.
+// It configures structured logging with JSON formatting and provides
+// convenience functions for different log levels.
+package logging
+
+import (
+        "fmt"
+        "io"
+        "os"
+        "time"
+
+        log "github.com/sirupsen/logrus"
+)
+
+var currentTime = time.Now()
+var version = currentTime.Format("2006-01-02T15:04:05")
+
+// programName is used as a field in all log entries for identification
+var programName = os.Args[0] + "-" + version
+
+// LogInfo logs an informational message with the programName field.
+// This function should be used to log informational messages during program execution.
+func LogInfo(msg string) <span class="cov0" title="0">{
+        log.WithFields(log.Fields{"job": programName}).Info(msg)
+}</span>
+
+// LogPanic logs the provided error and exits the program with a non-zero exit code.
+// This function should be used to handle critical errors that prevent the program from continuing.
+func LogPanic(err error) <span class="cov0" title="0">{
+        log.WithFields(log.Fields{"job": programName}).Panic(err)
+}</span>
+
+// LogPanicMsg logs the provided message and exits the program with a non-zero exit code.
+// This function should be used to handle critical errors that prevent the program from continuing.
+func LogPanicMsg(msg string) <span class="cov0" title="0">{
+        log.WithFields(log.Fields{"job": programName}).Panic(msg)
+}</span>
+
+// HandleError logs the provided error and exits the program with a non-zero exit code.
+// This function should be used to handle critical errors that prevent the program from continuing.
+func HandleError(err error) <span class="cov0" title="0">{
+        log.WithFields(log.Fields{"job": programName}).Error(err)
+        os.Exit(2)
+}</span>
+
+// LogError logs the provided error message with the programName field.
+// This function should be used to log recoverable errors that do not terminate the program.
+func LogError(msg string) <span class="cov0" title="0">{
+        log.WithFields(log.Fields{"job": programName}).Error(msg)
+}</span>
+
+// PrepareLogs initializes the logging system with the specified log file.
+// It configures logging to write to both stdout and the log file with JSON formatting.
+//
+// Parameters:
+//   - logName: Path to the log file (will be created if it doesn't exist)
+//
+// Returns an error if the log file cannot be opened or created.
+func PrepareLogs(logName string) error <span class="cov0" title="0">{
+        logFile, err := os.OpenFile(logName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to open log file: %v", err)
+        }</span>
+        <span class="cov0" title="0">mw := io.MultiWriter(os.Stdout, logFile)
+        log.SetOutput(mw)
+        log.SetFormatter(&amp;log.JSONFormatter{PrettyPrint: true})
+        return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">// Package models defines the core data structures for the NBU exporter application.
+// It includes configuration models and API response structures that match the
+// NetBackup REST API JSON:API format.
+package models
+
+import (
+        "errors"
+        "fmt"
+        "net/url"
+        "regexp"
+        "strconv"
+        "time"
+)
+
+// Supported NetBackup API versions
+const (
+        // APIVersion30 represents NetBackup 10.0-10.4 API version
+        APIVersion30 = "3.0"
+        // APIVersion120 represents NetBackup 10.5 API version
+        APIVersion120 = "12.0"
+        // APIVersion130 represents NetBackup 11.0 API version
+        APIVersion130 = "13.0"
+)
+
+// SupportedAPIVersions contains all supported NetBackup API versions in descending order.
+// This list is used for version detection fallback (newest to oldest).
+var SupportedAPIVersions = []string{APIVersion130, APIVersion120, APIVersion30}
+
+// Config represents the complete application configuration for the NBU exporter.
+// It includes settings for the server and the NBU server.
+type Config struct {
+        Server struct {
+                Port             string `yaml:"port"`
+                Host             string `yaml:"host"`
+                URI              string `yaml:"uri"`
+                ScrapingInterval string `yaml:"scrapingInterval"`
+                LogName          string `yaml:"logName"`
+        } `yaml:"server"`
+
+        NbuServer struct {
+                Port               string `yaml:"port"`
+                Scheme             string `yaml:"scheme"`
+                URI                string `yaml:"uri"`
+                Domain             string `yaml:"domain"`
+                DomainType         string `yaml:"domainType"`
+                Host               string `yaml:"host"`
+                APIKey             string `yaml:"apiKey"`
+                APIVersion         string `yaml:"apiVersion"`
+                ContentType        string `yaml:"contentType"`
+                InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+        } `yaml:"nbuserver"`
+}
+
+// SetDefaults sets default values for optional configuration fields.
+// Currently sets the default API version to "13.0" (NetBackup 11.0) if not specified.
+// This method is called automatically by Validate() before validation checks.
+func (c *Config) SetDefaults() <span class="cov8" title="20">{
+        // Set default API version for NetBackup 11.0
+        if c.NbuServer.APIVersion == "" </span><span class="cov4" title="4">{
+                c.NbuServer.APIVersion = APIVersion130
+        }</span>
+}
+
+// Validate checks if the configuration is valid and returns an error if not.
+// It performs comprehensive validation of all configuration fields including:
+//   - Server settings (host, port, URI, scraping interval)
+//   - NetBackup server settings (host, port, scheme, API key, API version)
+//   - Port ranges (1-65535)
+//   - URL schemes (http/https only)
+//   - API version format (X.Y pattern)
+//   - API version is in the supported versions list
+//
+// This method calls SetDefaults() before validation to ensure optional fields
+// have appropriate default values.
+//
+// Returns an error describing the first validation failure encountered.
+func (c *Config) Validate() error <span class="cov8" title="18">{
+        // Set defaults before validation
+        c.SetDefaults()
+
+        // Validate server configuration
+        if c.Server.Port == "" </span><span class="cov0" title="0">{
+                return errors.New("server port is required")
+        }</span>
+        <span class="cov8" title="18">if port, err := strconv.Atoi(c.Server.Port); err != nil || port &lt; 1 || port &gt; 65535 </span><span class="cov0" title="0">{
+                return fmt.Errorf("invalid server port: %s", c.Server.Port)
+        }</span>
+        <span class="cov8" title="18">if c.Server.Host == "" </span><span class="cov0" title="0">{
+                return errors.New("server host is required")
+        }</span>
+        <span class="cov8" title="18">if c.Server.URI == "" </span><span class="cov0" title="0">{
+                return errors.New("server URI is required")
+        }</span>
+        <span class="cov8" title="18">if _, err := time.ParseDuration(c.Server.ScrapingInterval); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("invalid scraping interval: %w", err)
+        }</span>
+
+        // Validate NBU server configuration
+        <span class="cov8" title="18">if c.NbuServer.Host == "" </span><span class="cov0" title="0">{
+                return errors.New("NBU server host is required")
+        }</span>
+        <span class="cov8" title="18">if c.NbuServer.Port == "" </span><span class="cov0" title="0">{
+                return errors.New("NBU server port is required")
+        }</span>
+        <span class="cov8" title="18">if port, err := strconv.Atoi(c.NbuServer.Port); err != nil || port &lt; 1 || port &gt; 65535 </span><span class="cov0" title="0">{
+                return fmt.Errorf("invalid NBU server port: %s", c.NbuServer.Port)
+        }</span>
+        <span class="cov8" title="18">if c.NbuServer.Scheme != "http" &amp;&amp; c.NbuServer.Scheme != "https" </span><span class="cov0" title="0">{
+                return fmt.Errorf("invalid NBU server scheme: %s (must be http or https)", c.NbuServer.Scheme)
+        }</span>
+        <span class="cov8" title="18">if c.NbuServer.APIKey == "" </span><span class="cov0" title="0">{
+                return errors.New("NBU server API key is required")
+        }</span>
+
+        // Validate API version format and check against supported versions
+        <span class="cov8" title="18">if c.NbuServer.APIVersion != "" </span><span class="cov8" title="18">{
+                apiVersionPattern := regexp.MustCompile(`^\d+\.\d+$`)
+                if !apiVersionPattern.MatchString(c.NbuServer.APIVersion) </span><span class="cov4" title="4">{
+                        return fmt.Errorf("invalid API version format: %s (must be in format X.Y, e.g., 13.0)", c.NbuServer.APIVersion)
+                }</span>
+
+                // Check if the version is in the supported list
+                <span class="cov7" title="14">supported := false
+                for _, version := range SupportedAPIVersions </span><span class="cov10" title="30">{
+                        if c.NbuServer.APIVersion == version </span><span class="cov6" title="9">{
+                                supported = true
+                                break</span>
+                        }
+                }
+                <span class="cov7" title="14">if !supported </span><span class="cov5" title="5">{
+                        return fmt.Errorf("unsupported API version: %s (supported versions: %v)", c.NbuServer.APIVersion, SupportedAPIVersions)
+                }</span>
+        }
+
+        <span class="cov6" title="9">return nil</span>
+}
+
+// GetNBUBaseURL returns the complete base URL for the NetBackup server.
+// Format: scheme://host:port/uri
+//
+// Example: "https://nbu-master.example.com:1556/netbackup"
+func (c *Config) GetNBUBaseURL() string <span class="cov0" title="0">{
+        return fmt.Sprintf("%s://%s:%s%s", c.NbuServer.Scheme, c.NbuServer.Host, c.NbuServer.Port, c.NbuServer.URI)
+}</span>
+
+// GetServerAddress returns the complete server address for HTTP server binding.
+// Format: host:port
+//
+// Example: "0.0.0.0:2112"
+func (c *Config) GetServerAddress() string <span class="cov0" title="0">{
+        return fmt.Sprintf("%s:%s", c.Server.Host, c.Server.Port)
+}</span>
+
+// GetScrapingDuration parses and returns the scraping interval as a time.Duration.
+// The scraping interval defines the time window for job data collection.
+//
+// Example: "5m" -&gt; 5 * time.Minute
+//
+// Returns an error if the interval string cannot be parsed.
+func (c *Config) GetScrapingDuration() (time.Duration, error) <span class="cov0" title="0">{
+        return time.ParseDuration(c.Server.ScrapingInterval)
+}</span>
+
+// MaskAPIKey returns a masked version of the API key for safe logging.
+// Shows the first 4 and last 4 characters with asterisks in between.
+//
+// Example: "abcd1234efgh5678" -&gt; "abcd****5678"
+//
+// For keys shorter than 8 characters, returns "****".
+func (c *Config) MaskAPIKey() string <span class="cov0" title="0">{
+        if len(c.NbuServer.APIKey) &lt;= 8 </span><span class="cov0" title="0">{
+                return "****"
+        }</span>
+        <span class="cov0" title="0">return c.NbuServer.APIKey[:4] + "****" + c.NbuServer.APIKey[len(c.NbuServer.APIKey)-4:]</span>
+}
+
+// BuildURL constructs a complete URL from the base URL, path, and query parameters.
+// It properly encodes query parameters and handles URL construction.
+//
+// Parameters:
+//   - path: API endpoint path (e.g., "/admin/jobs")
+//   - queryParams: Map of query parameter names to values
+//
+// Example:
+//
+//        url := cfg.BuildURL("/admin/jobs", map[string]string{
+//            "page[limit]": "100",
+//            "page[offset]": "0",
+//        })
+//        // Returns: "https://nbu:1556/netbackup/admin/jobs?page[limit]=100&amp;page[offset]=0"
+func (c *Config) BuildURL(path string, queryParams map[string]string) string <span class="cov0" title="0">{
+        u, _ := url.Parse(c.GetNBUBaseURL())
+        u.Path = path
+        q := u.Query()
+        for key, value := range queryParams </span><span class="cov0" title="0">{
+                q.Set(key, value)
+        }</span>
+        <span class="cov0" title="0">u.RawQuery = q.Encode()
+        return u.String()</span>
+}
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">// Package utils provides utility functions for date conversion, file operations,
+// and timing utilities used throughout the NBU exporter application.
+package utils
+
+import (
+        "time"
+)
+
+// ConvertTimeToNBUDate converts a time.Time value to RFC3339Nano format
+// for use in NetBackup API queries.
+func ConvertTimeToNBUDate(t time.Time) string <span class="cov0" title="0">{
+        return t.Format(time.RFC3339Nano)
+}</span>
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">// Package utils provides utility functions for file operations and configuration management.
+package utils
+
+import (
+        "fmt"
+        "os"
+
+        "github.com/fjacquet/nbu_exporter/internal/models"
+        "gopkg.in/yaml.v2"
+)
+
+// FileExists checks if the given file exists and is accessible.
+func FileExists(filename string) bool <span class="cov0" title="0">{
+        _, err := os.Stat(filename)
+        return !os.IsNotExist(err)
+}</span>
+
+// ReadFile reads and parses a YAML configuration file into the provided Config struct.
+//
+// Parameters:
+//   - cfg: Pointer to Config struct to populate
+//   - filepath: Path to the YAML configuration file
+//
+// Returns an error if:
+//   - The file cannot be opened
+//   - The YAML cannot be parsed
+//   - The structure doesn't match the Config model
+//
+// Example:
+//
+//        var cfg models.Config
+//        err := ReadFile(&amp;cfg, "config.yaml")
+func ReadFile(cfg *models.Config, filepath string) error <span class="cov0" title="0">{
+        f, err := os.Open(filepath)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to open config file %s: %w", filepath, err)
+        }</span>
+        <span class="cov0" title="0">defer func() </span><span class="cov0" title="0">{
+                _ = f.Close()
+        }</span>()
+
+        <span class="cov0" title="0">decoder := yaml.NewDecoder(f)
+        if err := decoder.Decode(cfg); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to decode config file %s: %w", filepath, err)
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">// Package utils provides timing and delay utilities.
+package utils
+
+import (
+        "time"
+
+        "github.com/fjacquet/nbu_exporter/internal/logging"
+)
+
+// Pause sleeps for the duration specified by the interval string.
+// If there is an error parsing the duration, it will panic with the error message.
+func Pause(interval string) <span class="cov0" title="0">{
+        var duration time.Duration
+        var errMsg error
+        duration, errMsg = time.ParseDuration(interval)
+        if errMsg != nil </span><span class="cov0" title="0">{
+                logging.LogPanic(errMsg)
+        }</span>
+
+        <span class="cov0" title="0">time.Sleep(duration)</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">// NBU Exporter is a Prometheus exporter for Veritas NetBackup that collects
+// and exposes backup infrastructure metrics for monitoring and visualization.
+//
+// The exporter scrapes NetBackup API endpoints to collect:
+//   - Storage unit capacity metrics (free/used bytes)
+//   - Job statistics (count, bytes transferred, status)
+//
+// Metrics are exposed via HTTP endpoint for Prometheus scraping.
+//
+// Usage:
+//
+//        nbu_exporter --config config.yaml [--debug]
+//
+// Configuration is provided via YAML file specifying:
+//   - Server settings (host, port, metrics URI, scraping interval)
+//   - NetBackup server details (host, port, API key, API version)
+package main
+
+import (
+        "context"
+        "fmt"
+        "net/http"
+        "os"
+        "os/signal"
+        "syscall"
+        "time"
+
+        "github.com/fjacquet/nbu_exporter/internal/exporter"
+        "github.com/fjacquet/nbu_exporter/internal/logging"
+        "github.com/fjacquet/nbu_exporter/internal/models"
+        "github.com/fjacquet/nbu_exporter/internal/utils"
+        "github.com/prometheus/client_golang/prometheus"
+        "github.com/prometheus/client_golang/prometheus/promhttp"
+        log "github.com/sirupsen/logrus"
+        "github.com/spf13/cobra"
+)
+
+const (
+        programName       = "nbu_exporter"   // Application name
+        shutdownTimeout   = 10 * time.Second // Maximum time to wait for graceful shutdown
+        readHeaderTimeout = 5 * time.Second  // HTTP server read header timeout
+)
+
+var (
+        configFile string
+        debug      bool
+)
+
+// Server encapsulates the HTTP server and its dependencies for serving Prometheus metrics.
+// It manages the lifecycle of the HTTP server, Prometheus registry, and NetBackup collector.
+type Server struct {
+        cfg      models.Config        // Application configuration
+        httpSrv  *http.Server         // HTTP server instance
+        registry *prometheus.Registry // Prometheus metrics registry
+}
+
+// NewServer creates a new server instance with the provided configuration.
+// It initializes a new Prometheus registry for metric collection.
+//
+// Example:
+//
+//        cfg := models.Config{...}
+//        server := NewServer(cfg)
+//        server.Start()
+func NewServer(cfg models.Config) *Server <span class="cov0" title="0">{
+        return &amp;Server{
+                cfg:      cfg,
+                registry: prometheus.NewRegistry(),
+        }
+}</span>
+
+// Start initializes and starts the HTTP server with Prometheus metrics endpoint.
+// It registers the NetBackup collector, configures HTTP handlers, and starts
+// the server in a goroutine.
+//
+// The server exposes:
+//   - Metrics endpoint at the configured URI (default: /metrics)
+//   - Health check endpoint at /health
+//
+// Returns an error if collector creation or registration fails. The HTTP server runs
+// asynchronously and logs fatal errors if startup fails.
+func (s *Server) Start() error <span class="cov0" title="0">{
+        // Create NetBackup collector with version detection
+        collector, err := exporter.NewNbuCollector(s.cfg)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create collector: %w", err)
+        }</span>
+
+        // Register collector with Prometheus
+        <span class="cov0" title="0">if err := s.registry.Register(collector); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to register collector: %w", err)
+        }</span>
+
+        // Setup HTTP handlers
+        <span class="cov0" title="0">mux := http.NewServeMux()
+        mux.Handle(s.cfg.Server.URI, promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{}))
+        mux.HandleFunc("/health", s.healthHandler)
+
+        // Create HTTP server
+        s.httpSrv = &amp;http.Server{
+                Addr:              s.cfg.GetServerAddress(),
+                Handler:           mux,
+                ReadHeaderTimeout: readHeaderTimeout,
+        }
+
+        // Start server in goroutine
+        go func() </span><span class="cov0" title="0">{
+                log.Infof("Starting %s on %s%s", programName, s.cfg.GetServerAddress(), s.cfg.Server.URI)
+                if err := s.httpSrv.ListenAndServe(); err != nil &amp;&amp; err != http.ErrServerClosed </span><span class="cov0" title="0">{
+                        log.Fatalf("HTTP server error: %v", err)
+                }</span>
+        }()
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// Shutdown gracefully shuts down the HTTP server with a timeout.
+// It waits for active connections to complete before shutting down.
+//
+// The shutdown process:
+//  1. Stops accepting new connections
+//  2. Waits for active requests to complete (up to shutdownTimeout)
+//  3. Forces shutdown if timeout is exceeded
+//
+// Returns an error if shutdown fails or times out.
+func (s *Server) Shutdown() error <span class="cov0" title="0">{
+        if s.httpSrv == nil </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+
+        <span class="cov0" title="0">ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+        defer cancel()
+
+        log.Info("Shutting down server...")
+        if err := s.httpSrv.Shutdown(ctx); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("server shutdown failed: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">log.Info("Server stopped gracefully")
+        return nil</span>
+}
+
+// healthHandler provides a simple health check endpoint that returns HTTP 200 OK.
+// This endpoint can be used by load balancers and monitoring systems to verify
+// the application is running.
+func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        w.WriteHeader(http.StatusOK)
+        _, _ = fmt.Fprintf(w, "OK\n")
+}</span>
+
+// validateConfig checks if the configuration file exists, loads it, and validates its contents.
+//
+// Parameters:
+//   - configPath: Path to the YAML configuration file
+//
+// Returns:
+//   - Pointer to validated Config struct
+//   - Error if file doesn't exist, cannot be parsed, or validation fails
+func validateConfig(configPath string) (*models.Config, error) <span class="cov0" title="0">{
+        if !utils.FileExists(configPath) </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("config file not found: %s", configPath)
+        }</span>
+
+        <span class="cov0" title="0">var cfg models.Config
+        if err := utils.ReadFile(&amp;cfg, configPath); err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">if err := cfg.Validate(); err != nil </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf("invalid configuration: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">return &amp;cfg, nil</span>
+}
+
+// setupLogging initializes the logging system with the configured log file.
+// If debug mode is enabled, sets the log level to DEBUG for verbose output.
+//
+// Parameters:
+//   - cfg: Application configuration containing log file path
+//   - debugMode: If true, enables DEBUG level logging
+//
+// Returns an error if log file initialization fails.
+func setupLogging(cfg models.Config, debugMode bool) error <span class="cov0" title="0">{
+        if err := logging.PrepareLogs(cfg.Server.LogName); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to initialize logging: %w", err)
+        }</span>
+
+        <span class="cov0" title="0">if debugMode </span><span class="cov0" title="0">{
+                log.SetLevel(log.DebugLevel)
+                log.Debug("Debug mode enabled")
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
+
+// waitForShutdownSignal blocks until a shutdown signal (SIGINT or SIGTERM) is received.
+// This enables graceful shutdown when the application is terminated.
+//
+// Signals handled:
+//   - SIGINT (Ctrl+C)
+//   - SIGTERM (kill command)
+func waitForShutdownSignal() <span class="cov0" title="0">{
+        stop := make(chan os.Signal, 1)
+        signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+        &lt;-stop
+}</span>
+
+func main() <span class="cov0" title="0">{
+        rootCmd := &amp;cobra.Command{
+                Use:   programName,
+                Short: "Prometheus exporter for Veritas NetBackup",
+                Long:  "NBU Exporter collects metrics from NetBackup API and exposes them in Prometheus format",
+                RunE: func(cmd *cobra.Command, args []string) error </span><span class="cov0" title="0">{
+                        // Validate and load configuration
+                        cfg, err := validateConfig(configFile)
+                        if err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+
+                        // Setup logging
+                        <span class="cov0" title="0">if err := setupLogging(*cfg, debug); err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+
+                        <span class="cov0" title="0">log.Infof("Starting %s...", programName)
+                        log.Infof("NBU server: %s", cfg.GetNBUBaseURL())
+                        log.Infof("Scraping interval: %s", cfg.Server.ScrapingInterval)
+                        if debug </span><span class="cov0" title="0">{
+                                log.Infof("API Key: %s", cfg.MaskAPIKey())
+                        }</span>
+
+                        // Create and start server
+                        <span class="cov0" title="0">server := NewServer(*cfg)
+                        if err := server.Start(); err != nil </span><span class="cov0" title="0">{
+                                return err
+                        }</span>
+
+                        // Wait for shutdown signal
+                        <span class="cov0" title="0">waitForShutdownSignal()
+
+                        // Graceful shutdown
+                        return server.Shutdown()</span>
+                },
+        }
+
+        <span class="cov0" title="0">rootCmd.PersistentFlags().StringVarP(&amp;configFile, "config", "c", "", "Path to configuration file (required)")
+        rootCmd.PersistentFlags().BoolVarP(&amp;debug, "debug", "d", false, "Enable debug mode")
+        _ = rootCmd.MarkPersistentFlagRequired("config")
+
+        if err := rootCmd.Execute(); err != nil </span><span class="cov0" title="0">{
+                fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+                os.Exit(1)
+        }</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

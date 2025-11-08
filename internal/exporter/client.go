@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/logging"
@@ -193,8 +194,38 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 		return fmt.Errorf("HTTP request to %s returned status %d: %s", url, resp.StatusCode(), resp.Status())
 	}
 
+	// Validate Content-Type before attempting to unmarshal
+	contentType := resp.Header().Get("Content-Type")
+	if contentType != "" && !strings.Contains(contentType, "application/json") && !strings.Contains(contentType, "application/vnd.netbackup+json") {
+		// Server returned non-JSON content (likely HTML error page)
+		bodyPreview := string(resp.Body())
+		if len(bodyPreview) > 200 {
+			bodyPreview = bodyPreview[:200] + "..."
+		}
+		
+		errMsg := fmt.Sprintf(
+			"NetBackup server returned non-JSON response (Content-Type: %s).\n\n"+
+				"This usually indicates:\n"+
+				"1. Wrong API endpoint URL (check 'uri' in config.yaml)\n"+
+				"2. Authentication failure (verify API key is valid)\n"+
+				"3. Server configuration issue (check NetBackup REST API is enabled)\n\n"+
+				"Request URL: %s\n"+
+				"Response preview: %s",
+			contentType,
+			url,
+			bodyPreview,
+		)
+		logging.LogError(errMsg)
+		return fmt.Errorf("server returned %s instead of JSON: %s", contentType, bodyPreview)
+	}
+
 	if err := json.Unmarshal(resp.Body(), target); err != nil {
-		return fmt.Errorf("failed to unmarshal response from %s: %w", url, err)
+		// Provide more context for JSON unmarshaling errors
+		bodyPreview := string(resp.Body())
+		if len(bodyPreview) > 200 {
+			bodyPreview = bodyPreview[:200] + "..."
+		}
+		return fmt.Errorf("failed to unmarshal JSON response from %s: %w\nResponse preview: %s", url, err, bodyPreview)
 	}
 
 	return nil
