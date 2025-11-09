@@ -126,8 +126,11 @@ func (c *Config) validateServerConfig() error {
 	if c.Server.URI == "" {
 		return errors.New("server URI is required")
 	}
+	if c.Server.ScrapingInterval == "" {
+		return errors.New("server scraping interval is required")
+	}
 	if _, err := time.ParseDuration(c.Server.ScrapingInterval); err != nil {
-		return fmt.Errorf("invalid scraping interval: %w", err)
+		return fmt.Errorf("invalid scraping interval format '%s': %w (expected format: 5m, 1h, 30s)", c.Server.ScrapingInterval, err)
 	}
 	return nil
 }

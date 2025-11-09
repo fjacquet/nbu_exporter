@@ -16,6 +16,7 @@ import (
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/fjacquet/nbu_exporter/internal/telemetry"
 	"github.com/go-resty/resty/v2"
+	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -66,6 +67,11 @@ type NbuClient struct {
 //	cfg := models.Config{...}
 //	client := NewNbuClient(cfg)
 func NewNbuClient(cfg models.Config) *NbuClient {
+	// Log security warning if TLS verification is disabled
+	if cfg.NbuServer.InsecureSkipVerify {
+		log.Warn("TLS certificate verification is disabled - this is insecure for production use")
+	}
+
 	client := resty.New().
 		SetTLSClientConfig(&tls.Config{
 			InsecureSkipVerify: cfg.NbuServer.InsecureSkipVerify,
@@ -115,13 +121,31 @@ func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config) (
 	// Create the base client
 	client := NewNbuClient(*cfg)
 
-	// If API version is not explicitly configured, perform version detection
+	// Perform version detection if needed
+	if err := performVersionDetectionIfNeeded(ctx, client, cfg); err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+// performVersionDetectionIfNeeded handles version detection logic for client creation.
+// This function is extracted to avoid duplication between NewNbuClientWithVersionDetection
+// and NewNbuCollector.
+//
+// Parameters:
+//   - ctx: Context for version detection requests
+//   - client: The NbuClient instance to use for detection
+//   - cfg: Application configuration (will be modified if version detection occurs)
+//
+// Returns an error if version detection fails.
+func performVersionDetectionIfNeeded(ctx context.Context, client *NbuClient, cfg *models.Config) error {
 	if shouldPerformVersionDetection(cfg) {
 		logging.LogInfo("API version not configured, performing automatic detection")
 		detector := NewAPIVersionDetector(client, cfg)
 		detectedVersion, err := detector.DetectVersion(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("automatic API version detection failed: %w", err)
+			return fmt.Errorf("automatic API version detection failed: %w", err)
 		}
 
 		// Update configuration with detected version
@@ -134,7 +158,7 @@ func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config) (
 		logging.LogInfo(fmt.Sprintf("Using configured API version: %s", cfg.NbuServer.APIVersion))
 	}
 
-	return client, nil
+	return nil
 }
 
 // shouldPerformVersionDetection determines if automatic API version detection is needed.
@@ -243,9 +267,9 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 			c.recordError(span, err)
 			return err
 		}
-
+		contentType = "Content-Type"
 		// Include URL, status code, and content-type in error message
-		contentTypeHeader := resp.Header().Get("Content-Type")
+		contentTypeHeader := resp.Header().Get(contentType)
 		err := fmt.Errorf("HTTP request failed: url=%s, status=%d (%s), content-type=%s",
 			url, resp.StatusCode(), resp.Status(), contentTypeHeader)
 		c.recordError(span, err)
@@ -253,7 +277,7 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 	}
 
 	// Validate Content-Type before attempting to unmarshal
-	contentType := resp.Header().Get("Content-Type")
+	contentType := resp.Header().Get(contentType)
 	if contentType != "" && !strings.Contains(contentType, "application/json") && !strings.Contains(contentType, "application/vnd.netbackup+json") {
 		// Server returned non-JSON content (likely HTML error page)
 		bodyPreview := string(resp.Body())
@@ -282,7 +306,7 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 		if len(bodyPreview) > 200 {
 			bodyPreview = bodyPreview[:200] + "..."
 		}
-		contentTypeHeader := resp.Header().Get("Content-Type")
+		contentTypeHeader := resp.Header().Get(contentType)
 		unmarshalErr := fmt.Errorf("failed to unmarshal JSON response: url=%s, status=%d, content-type=%s, error=%w\nResponse preview: %s",
 			url, resp.StatusCode(), contentTypeHeader, err, bodyPreview)
 		c.recordError(span, unmarshalErr)
@@ -332,18 +356,18 @@ func (c *NbuClient) DetectAPIVersion(ctx context.Context) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to detect API version: url=%s, error=%w", testURL, err)
 	}
-
+	contentType = "Content-Type"
 	// Check for version-specific error responses
 	if resp.StatusCode() == 406 {
 		// 406 Not Acceptable typically means the API version is not supported
-		contentTypeHeader := resp.Header().Get("Content-Type")
+		contentTypeHeader := resp.Header().Get(contentType)
 		return "", fmt.Errorf("API version %s not supported by NetBackup server: url=%s, status=406, content-type=%s",
 			c.cfg.NbuServer.APIVersion, testURL, contentTypeHeader)
 	}
 
 	if resp.IsError() {
 		// Other errors might indicate connectivity issues, not version problems
-		contentTypeHeader := resp.Header().Get("Content-Type")
+		contentTypeHeader := resp.Header().Get(contentType)
 		return "", fmt.Errorf("API connectivity test failed: url=%s, status=%d (%s), content-type=%s",
 			testURL, resp.StatusCode(), resp.Status(), contentTypeHeader)
 	}
@@ -438,9 +462,18 @@ func (c *NbuClient) injectTraceContext(ctx context.Context, headers map[string]s
 }
 
 // Close releases resources associated with the HTTP client.
-// Note: Resty doesn't provide an explicit close method, so this clears the client reference
-// to allow garbage collection. Connection pooling is managed by the underlying http.Client.
-func (c *NbuClient) Close() {
-	// Resty doesn't have an explicit close, but we can clear the client
+// It closes idle connections in the underlying HTTP client connection pool
+// and clears the client reference to allow garbage collection.
+//
+// Returns an error if the client is already closed (nil).
+func (c *NbuClient) Close() error {
+	if c.client == nil {
+		return fmt.Errorf("client already closed")
+	}
+
+	// Close idle connections in the underlying HTTP client
+	c.client.GetClient().CloseIdleConnections()
 	c.client = nil
+
+	return nil
 }

@@ -2,104 +2,150 @@ package testutil_test
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/fjacquet/nbu_exporter/internal/testutil"
 )
 
+const (
+	errMsgCloseBody = "Failed to close response body: %v"
+)
+
 // TestMockServerBuilder demonstrates the usage of MockServerBuilder
 func TestMockServerBuilder(t *testing.T) {
 	t.Run("WithJobsEndpoint", func(t *testing.T) {
-		// Create a mock server with jobs endpoint
-		jobsResponse := map[string]interface{}{
-			"data": []map[string]interface{}{
-				{"id": "1", "type": "backup"},
-			},
-		}
-
-		server := testutil.NewMockServer().
-			WithJobsEndpoint("13.0", jobsResponse).
-			Build()
-		defer server.Close()
-
-		// Make a request to the jobs endpoint
-		req, err := http.NewRequest("GET", server.URL+testutil.TestPathAdminJobs, nil)
-		if err != nil {
-			t.Fatalf("Failed to create request: %v", err)
-		}
-		req.Header.Set(testutil.AcceptHeader, "application/vnd.netbackup+json;version=13.0")
-
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			t.Fatalf("Request failed: %v", err)
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			t.Errorf("Expected status 200, got %d", resp.StatusCode)
-		}
+		testJobsEndpoint(t)
 	})
 
 	t.Run("WithVersionDetection", func(t *testing.T) {
-		// Create a mock server that accepts version 13.0 but rejects 12.0
-		server := testutil.NewMockServer().
-			WithVersionDetection(map[string]bool{
-				"13.0": true,
-				"12.0": false,
-			}).
-			Build()
-		defer server.Close()
-
-		// Test accepted version
-		req, _ := http.NewRequest("GET", server.URL+testutil.TestPathAdminJobs, nil)
-		req.Header.Set(testutil.AcceptHeader, "application/vnd.netbackup+json;version=13.0")
-		resp, _ := http.DefaultClient.Do(req)
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusOK {
-			t.Errorf("Expected status 200 for version 13.0, got %d", resp.StatusCode)
-		}
-
-		// Test rejected version
-		req2, _ := http.NewRequest("GET", server.URL+testutil.TestPathAdminJobs, nil)
-		req2.Header.Set(testutil.AcceptHeader, "application/vnd.netbackup+json;version=12.0")
-		resp2, _ := http.DefaultClient.Do(req2)
-		defer resp2.Body.Close()
-
-		if resp2.StatusCode != http.StatusNotAcceptable {
-			t.Errorf("Expected status 406 for version 12.0, got %d", resp2.StatusCode)
-		}
+		testVersionDetection(t)
 	})
 
 	t.Run("WithTLS", func(t *testing.T) {
-		// Create a TLS-enabled mock server
-		server := testutil.NewMockServer().
-			WithTLS().
-			WithJobsEndpoint("13.0", map[string]interface{}{"data": []interface{}{}}).
-			Build()
-		defer server.Close()
-
-		// Verify it's using HTTPS
-		if server.URL[:5] != "https" {
-			t.Errorf("Expected HTTPS URL, got %s", server.URL)
-		}
+		testTLSServer(t)
 	})
 
 	t.Run("WithErrorResponse", func(t *testing.T) {
-		// Create a mock server that returns 401 Unauthorized
-		server := testutil.NewMockServer().
-			WithErrorResponse(testutil.TestPathAdminJobs, http.StatusUnauthorized).
-			Build()
-		defer server.Close()
-
-		req, _ := http.NewRequest("GET", server.URL+testutil.TestPathAdminJobs, nil)
-		resp, _ := http.DefaultClient.Do(req)
-		defer resp.Body.Close()
-
-		if resp.StatusCode != http.StatusUnauthorized {
-			t.Errorf("Expected status 401, got %d", resp.StatusCode)
-		}
+		testErrorResponse(t)
 	})
+}
+
+// testJobsEndpoint tests the WithJobsEndpoint builder method
+func testJobsEndpoint(t *testing.T) {
+	t.Helper()
+
+	jobsResponse := map[string]interface{}{
+		"data": []map[string]interface{}{
+			{"id": "1", "type": "backup"},
+		},
+	}
+
+	server := testutil.NewMockServer().
+		WithJobsEndpoint("13.0", jobsResponse).
+		Build()
+	defer server.Close()
+
+	req, err := http.NewRequest("GET", server.URL+testutil.TestPathAdminJobs, nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set(testutil.AcceptHeader, "application/vnd.netbackup+json;version=13.0")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	defer closeResponseBody(t, resp)
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", resp.StatusCode)
+	}
+}
+
+// testVersionDetection tests the WithVersionDetection builder method
+func testVersionDetection(t *testing.T) {
+	t.Helper()
+
+	server := testutil.NewMockServer().
+		WithVersionDetection(map[string]bool{
+			"13.0": true,
+			"12.0": false,
+		}).
+		Build()
+	defer server.Close()
+
+	testAcceptedVersion(t, server)
+	testRejectedVersion(t, server)
+}
+
+// testAcceptedVersion verifies that accepted API versions return 200 OK
+func testAcceptedVersion(t *testing.T, server *httptest.Server) {
+	t.Helper()
+
+	req, _ := http.NewRequest("GET", server.URL+testutil.TestPathAdminJobs, nil)
+	req.Header.Set(testutil.AcceptHeader, "application/vnd.netbackup+json;version=13.0")
+	resp, _ := http.DefaultClient.Do(req)
+	defer closeResponseBody(t, resp)
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200 for version 13.0, got %d", resp.StatusCode)
+	}
+}
+
+// testRejectedVersion verifies that rejected API versions return 406 Not Acceptable
+func testRejectedVersion(t *testing.T, server *httptest.Server) {
+	t.Helper()
+
+	req, _ := http.NewRequest("GET", server.URL+testutil.TestPathAdminJobs, nil)
+	req.Header.Set(testutil.AcceptHeader, "application/vnd.netbackup+json;version=12.0")
+	resp, _ := http.DefaultClient.Do(req)
+	defer closeResponseBody(t, resp)
+
+	if resp.StatusCode != http.StatusNotAcceptable {
+		t.Errorf("Expected status 406 for version 12.0, got %d", resp.StatusCode)
+	}
+}
+
+// testTLSServer tests the WithTLS builder method
+func testTLSServer(t *testing.T) {
+	t.Helper()
+
+	server := testutil.NewMockServer().
+		WithTLS().
+		WithJobsEndpoint("13.0", map[string]interface{}{"data": []interface{}{}}).
+		Build()
+	defer server.Close()
+
+	if server.URL[:5] != "https" {
+		t.Errorf("Expected HTTPS URL, got %s", server.URL)
+	}
+}
+
+// testErrorResponse tests the WithErrorResponse builder method
+func testErrorResponse(t *testing.T) {
+	t.Helper()
+
+	server := testutil.NewMockServer().
+		WithErrorResponse(testutil.TestPathAdminJobs, http.StatusUnauthorized).
+		Build()
+	defer server.Close()
+
+	req, _ := http.NewRequest("GET", server.URL+testutil.TestPathAdminJobs, nil)
+	resp, _ := http.DefaultClient.Do(req)
+	defer closeResponseBody(t, resp)
+
+	if resp.StatusCode != http.StatusUnauthorized {
+		t.Errorf("Expected status 401, got %d", resp.StatusCode)
+	}
+}
+
+// closeResponseBody closes the response body and logs any errors
+func closeResponseBody(t *testing.T, resp *http.Response) {
+	t.Helper()
+	if err := resp.Body.Close(); err != nil {
+		t.Logf(errMsgCloseBody, err)
+	}
 }
 
 // TestHelperFunctions demonstrates the usage of helper functions

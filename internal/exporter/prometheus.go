@@ -5,7 +5,6 @@ package exporter
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -73,24 +72,12 @@ func NewNbuCollector(cfg models.Config) (*NbuCollector, error) {
 	// Create base client
 	client := NewNbuClient(cfg)
 
-	// Perform version detection if apiVersion is not explicitly configured
+	// Perform version detection if needed (reuses shared logic)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if cfg.NbuServer.APIVersion == "" {
-		log.Info("API version not configured, performing automatic detection")
-		detector := NewAPIVersionDetector(client, &cfg)
-		detectedVersion, err := detector.DetectVersion(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("automatic API version detection failed: %w", err)
-		}
-
-		// Update configuration with detected version
-		cfg.NbuServer.APIVersion = detectedVersion
-		client.cfg.NbuServer.APIVersion = detectedVersion
-		log.Infof("Detected NetBackup API version: %s", detectedVersion)
-	} else {
-		log.Infof("Using configured NetBackup API version: %s", cfg.NbuServer.APIVersion)
+	if err := performVersionDetectionIfNeeded(ctx, client, &cfg); err != nil {
+		return nil, err
 	}
 
 	// Initialize tracer from global provider if OpenTelemetry is enabled
@@ -202,71 +189,125 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), collectionTimeout)
 	defer cancel()
 
-	// Create root span for scrape cycle
 	scrapeStart := time.Now()
 	ctx, span := c.createScrapeSpan(ctx)
 	if span != nil {
 		defer span.End()
 	}
 
-	// Track errors for scrape status
-	var storageErr, jobsErr error
-	scrapeStatus := "success"
+	// Collect all metrics
+	storageMetrics, jobsSize, jobsCount, jobsStatusCount, storageErr, jobsErr := c.collectAllMetrics(ctx, span)
+
+	// Update span with scrape results
+	c.updateScrapeSpan(span, scrapeStart, storageMetrics, jobsSize, storageErr, jobsErr)
+
+	// Expose all collected metrics
+	c.exposeMetrics(ch, storageMetrics, jobsSize, jobsCount, jobsStatusCount)
+
+	log.Debugf("Collected %d storage, %d job size, %d job count, %d status metrics",
+		len(storageMetrics), len(jobsSize), len(jobsCount), len(jobsStatusCount))
+}
+
+// collectAllMetrics fetches storage and job metrics from NetBackup API.
+// Returns the collected metrics maps and any errors encountered.
+func (c *NbuCollector) collectAllMetrics(ctx context.Context, span trace.Span) (
+	storageMetrics, jobsSize, jobsCount, jobsStatusCount map[string]float64,
+	storageErr, jobsErr error,
+) {
+	storageMetrics = make(map[string]float64)
+	jobsSize = make(map[string]float64)
+	jobsCount = make(map[string]float64)
+	jobsStatusCount = make(map[string]float64)
 
 	// Collect storage metrics
-	storageMetrics := make(map[string]float64)
+	storageErr = c.collectStorageMetrics(ctx, span, storageMetrics)
+
+	// Collect job metrics (continue even if storage fails)
+	jobsErr = c.collectJobMetrics(ctx, span, jobsSize, jobsCount, jobsStatusCount)
+
+	return
+}
+
+// collectStorageMetrics fetches storage metrics and records errors in span.
+func (c *NbuCollector) collectStorageMetrics(ctx context.Context, span trace.Span, storageMetrics map[string]float64) error {
 	if err := FetchStorage(ctx, c.client, storageMetrics); err != nil {
-		storageErr = err
 		log.Errorf("Failed to fetch storage metrics: %v", err)
-		// Record error as span event
-		if span != nil {
-			span.AddEvent("storage_fetch_error", trace.WithAttributes(
-				attribute.String(telemetry.AttrError, err.Error()),
-			))
-		}
-		// Continue to try fetching job metrics even if storage fails
+		c.recordFetchError(span, "storage_fetch_error", err)
+		return err
 	}
+	return nil
+}
 
-	// Collect job metrics
-	jobsSize := make(map[string]float64)
-	jobsCount := make(map[string]float64)
-	jobsStatusCount := make(map[string]float64)
-
+// collectJobMetrics fetches job metrics and records errors in span.
+func (c *NbuCollector) collectJobMetrics(ctx context.Context, span trace.Span, jobsSize, jobsCount, jobsStatusCount map[string]float64) error {
 	if err := FetchAllJobs(ctx, c.client, jobsSize, jobsCount, jobsStatusCount, c.cfg.Server.ScrapingInterval); err != nil {
-		jobsErr = err
 		log.Errorf("Failed to fetch job metrics: %v", err)
-		// Record error as span event
-		if span != nil {
-			span.AddEvent("jobs_fetch_error", trace.WithAttributes(
-				attribute.String(telemetry.AttrError, err.Error()),
-			))
-		}
-		// Continue to expose whatever metrics we have
+		c.recordFetchError(span, "jobs_fetch_error", err)
+		return err
+	}
+	return nil
+}
+
+// recordFetchError records a fetch error as a span event.
+func (c *NbuCollector) recordFetchError(span trace.Span, eventName string, err error) {
+	if span != nil {
+		span.AddEvent(eventName, trace.WithAttributes(
+			attribute.String(telemetry.AttrError, err.Error()),
+		))
+	}
+}
+
+// updateScrapeSpan updates the span with scrape results and status.
+func (c *NbuCollector) updateScrapeSpan(span trace.Span, scrapeStart time.Time, storageMetrics, jobsSize map[string]float64, storageErr, jobsErr error) {
+	if span == nil {
+		return
 	}
 
-	// Determine scrape status and set span status
+	scrapeStatus := c.determineScrapeStatus(storageErr, jobsErr)
+	c.setSpanStatus(span, scrapeStatus)
+	c.recordScrapeAttributes(span, scrapeStart, storageMetrics, jobsSize, scrapeStatus)
+}
+
+// determineScrapeStatus returns the scrape status based on errors.
+func (c *NbuCollector) determineScrapeStatus(storageErr, jobsErr error) string {
 	if storageErr != nil || jobsErr != nil {
-		scrapeStatus = "partial_failure"
-		if span != nil {
-			span.SetStatus(codes.Error, "Partial failure during metric collection")
-		}
-	} else if span != nil {
+		return "partial_failure"
+	}
+	return "success"
+}
+
+// setSpanStatus sets the span status based on scrape status.
+func (c *NbuCollector) setSpanStatus(span trace.Span, scrapeStatus string) {
+	if scrapeStatus == "partial_failure" {
+		span.SetStatus(codes.Error, "Partial failure during metric collection")
+	} else {
 		span.SetStatus(codes.Ok, "")
 	}
+}
 
-	// Record span attributes if tracing is enabled (batched for performance)
-	if span != nil {
-		scrapeDuration := time.Since(scrapeStart)
-		attrs := []attribute.KeyValue{
-			attribute.Float64(telemetry.AttrScrapeDurationMS, float64(scrapeDuration.Milliseconds())),
-			attribute.Int(telemetry.AttrScrapeStorageMetricsCount, len(storageMetrics)),
-			attribute.Int(telemetry.AttrScrapeJobMetricsCount, len(jobsSize)),
-			attribute.String(telemetry.AttrScrapeStatus, scrapeStatus),
-		}
-		span.SetAttributes(attrs...)
+// recordScrapeAttributes records scrape metrics as span attributes.
+func (c *NbuCollector) recordScrapeAttributes(span trace.Span, scrapeStart time.Time, storageMetrics, jobsSize map[string]float64, scrapeStatus string) {
+	scrapeDuration := time.Since(scrapeStart)
+	attrs := []attribute.KeyValue{
+		attribute.Float64(telemetry.AttrScrapeDurationMS, float64(scrapeDuration.Milliseconds())),
+		attribute.Int(telemetry.AttrScrapeStorageMetricsCount, len(storageMetrics)),
+		attribute.Int(telemetry.AttrScrapeJobMetricsCount, len(jobsSize)),
+		attribute.String(telemetry.AttrScrapeStatus, scrapeStatus),
 	}
+	span.SetAttributes(attrs...)
+}
 
-	// Expose storage metrics
+// exposeMetrics sends all collected metrics to the Prometheus channel.
+func (c *NbuCollector) exposeMetrics(ch chan<- prometheus.Metric, storageMetrics, jobsSize, jobsCount, jobsStatusCount map[string]float64) {
+	c.exposeStorageMetrics(ch, storageMetrics)
+	c.exposeJobSizeMetrics(ch, jobsSize)
+	c.exposeJobCountMetrics(ch, jobsCount)
+	c.exposeJobStatusMetrics(ch, jobsStatusCount)
+	c.exposeAPIVersionMetric(ch)
+}
+
+// exposeStorageMetrics sends storage metrics to the Prometheus channel.
+func (c *NbuCollector) exposeStorageMetrics(ch chan<- prometheus.Metric, storageMetrics map[string]float64) {
 	for key, value := range storageMetrics {
 		labels := strings.Split(key, "|")
 		ch <- prometheus.MustNewConstMetric(
@@ -276,8 +317,10 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 			labels[0], labels[1], labels[2],
 		)
 	}
+}
 
-	// Expose job size metrics
+// exposeJobSizeMetrics sends job size metrics to the Prometheus channel.
+func (c *NbuCollector) exposeJobSizeMetrics(ch chan<- prometheus.Metric, jobsSize map[string]float64) {
 	for key, value := range jobsSize {
 		labels := strings.Split(key, "|")
 		ch <- prometheus.MustNewConstMetric(
@@ -287,8 +330,10 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 			labels[0], labels[1], labels[2],
 		)
 	}
+}
 
-	// Expose job count metrics
+// exposeJobCountMetrics sends job count metrics to the Prometheus channel.
+func (c *NbuCollector) exposeJobCountMetrics(ch chan<- prometheus.Metric, jobsCount map[string]float64) {
 	for key, value := range jobsCount {
 		labels := strings.Split(key, "|")
 		ch <- prometheus.MustNewConstMetric(
@@ -298,8 +343,10 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 			labels[0], labels[1], labels[2],
 		)
 	}
+}
 
-	// Expose job status count metrics
+// exposeJobStatusMetrics sends job status count metrics to the Prometheus channel.
+func (c *NbuCollector) exposeJobStatusMetrics(ch chan<- prometheus.Metric, jobsStatusCount map[string]float64) {
 	for key, value := range jobsStatusCount {
 		labels := strings.Split(key, "|")
 		ch <- prometheus.MustNewConstMetric(
@@ -309,15 +356,14 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 			labels[0], labels[1],
 		)
 	}
+}
 
-	// Expose API version metric
+// exposeAPIVersionMetric sends the API version metric to the Prometheus channel.
+func (c *NbuCollector) exposeAPIVersionMetric(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(
 		c.nbuAPIVersion,
 		prometheus.GaugeValue,
 		1,
 		c.cfg.NbuServer.APIVersion,
 	)
-
-	log.Debugf("Collected %d storage, %d job size, %d job count, %d status metrics",
-		len(storageMetrics), len(jobsSize), len(jobsCount), len(jobsStatusCount))
 }

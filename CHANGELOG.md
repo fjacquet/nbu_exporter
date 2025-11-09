@@ -88,6 +88,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Better variable naming following Go conventions
 - Centralized URL construction in `Config.BuildURL()`
 - Enhanced logging with structured fields and debug mode support
+- **Code Quality Improvements**: Comprehensive refactoring for maintainability and SonarCloud compliance
+  - Consolidated duplicate span creation logic into single reusable `createSpan` helper function
+  - Centralized all OpenTelemetry span attribute keys as constants in `internal/telemetry/attributes.go`
+  - Extracted complex error message templates to `internal/telemetry/errors.go` for easier maintenance
+  - Batched span attribute recording for improved performance (single `SetAttributes` call)
+  - Enhanced OpenTelemetry endpoint validation with format and port range checks
+  - Extracted complex conditional logic to named helper functions for clarity
+  - Renamed all test functions to follow Go conventions (removed underscores, e.g., `TestNbuClient_GetHeaders` → `TestNbuClientGetHeaders`)
+  - Eliminated duplicate string literals by extracting to named constants (API versions, content types, test configuration values)
+  - Reduced cognitive complexity in 8 test functions by extracting helper functions:
+    - `TestNewNbuCollectorAutomaticDetection` (complexity 24 → <15)
+    - `TestAPIVersionDetectorIntegration` (complexity 37 → <15)
+    - `TestConfigValidateNbuServer` (complexity 23 → <15)
+    - `TestConfigValidateOpenTelemetry` (complexity 16 → <15)
+    - `TestConfigValidateServer` (complexity 17 → <15)
+    - `TestConfigGetNBUBaseURL` (complexity 23 → <15)
+    - `TestConfigValidate` (complexity 23 → <15)
+    - `createMockServerWithFile` helper (complexity 22 → <15)
+  - Centralized test helper functions in `internal/testutil` package with fluent builder interfaces
+  - Added `TestConfigBuilder` for consistent test configuration creation
+  - Added `MockServerBuilder` for simplified mock HTTP server setup
+  - Enhanced error messages with additional context (URL, status code, content-type, response preview)
+  - Added comprehensive package-level documentation with usage examples
+  - All code now passes SonarCloud "Sonar Way" quality profile checks
 
 ### Removed
 

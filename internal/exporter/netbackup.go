@@ -35,7 +35,7 @@ const (
 //
 // Parameters:
 //   - ctx: Context for request cancellation and timeout
-//   - client: Configured NetBackup API client
+//   - client: NetBackup API client (interface for testability)
 //   - storageMetrics: Map to populate with storage metrics (key format: "name|type|size")
 //
 // The function populates storageMetrics with entries like:

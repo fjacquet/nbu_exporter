@@ -1,3 +1,42 @@
+// Package testutil provides shared testing utilities and constants for the NBU exporter.
+//
+// This package centralizes common test constants, helper functions, and mock builders
+// to reduce duplication across test files and improve test maintainability.
+//
+// # Key Components
+//
+// Constants: Shared test values (API keys, endpoints, error messages) defined in constants.go
+//
+// MockServerBuilder: Fluent interface for creating mock HTTP servers with configurable endpoints
+//
+// Helper Functions: Common test utilities (data loading, assertions, JSON response writing)
+//
+// # Usage Example
+//
+// Creating a mock server with fluent interface:
+//
+//	server := testutil.NewMockServer().
+//	    WithJobsEndpoint("13.0", jobsResponse).
+//	    WithStorageEndpoint("13.0", storageResponse).
+//	    Build()
+//	defer server.Close()
+//
+// Loading test data from fixtures:
+//
+//	data := testutil.LoadTestData(t, "testdata/jobs-response.json")
+//
+// Using test assertions:
+//
+//	testutil.AssertNoError(t, err, "Failed to fetch data")
+//	testutil.AssertContains(t, output, "expected string")
+//
+// # Design Patterns
+//
+// Builder Pattern: MockServerBuilder uses method chaining for readable test setup
+//
+// Test Constants: Centralized constants prevent duplication and ensure consistency
+//
+// Helper Functions: Reduce boilerplate and improve test readability
 package testutil
 
 import (

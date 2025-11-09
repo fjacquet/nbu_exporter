@@ -687,7 +687,7 @@ func createTestConfig(serverURL, apiVersion string) models.Config {
 	cfg.NbuServer.Host = host
 	cfg.NbuServer.Port = port
 	cfg.NbuServer.Scheme = "http"
-	cfg.NbuServer.URI = ""
+	cfg.NbuServer.URI = "/netbackup"
 	cfg.NbuServer.APIKey = testutil.TestAPIKey
 	cfg.NbuServer.APIVersion = apiVersion
 	cfg.NbuServer.ContentType = testutil.ContentTypeJSON
