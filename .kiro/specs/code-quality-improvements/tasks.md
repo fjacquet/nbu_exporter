@@ -83,10 +83,75 @@
   - Verify all tests still pass after refactoring
   - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
 
-- [ ] 12. Update documentation and changelog
+- [x] 12. Centralize test helper functions
+  - Create `internal/testutil/helpers.go` with shared test utilities
+  - Implement `TestConfigBuilder` with fluent interface for building test configurations
+  - Implement `MockServerBuilder` with fluent interface for creating mock HTTP servers
+  - Add `LoadTestData` helper function for loading test fixtures
+  - Migrate duplicate test helper functions from individual test files to centralized helpers
+  - Update test files to use centralized helpers instead of local duplicates
+  - _Requirements: 1.1, 6.1, 6.2_
+
+- [ ] 13. Reduce cognitive complexity
+
+  - [ ] 13.1 Reduce cognitive complexityin prometheus_test.go
+    - Refactor `TestNewNbuCollectorAutomaticDetection` (line 76) to reduce complexity from 24 to below 15
+    - Extract `createVersionMockServer` helper to handle mock server creation
+    - Extract `extractVersionFromHeader` helper to parse version from Accept header
+    - Extract `handleVersionResponse` helper to handle version-specific responses
+    - Extract `assertCollectorResult` helper to validate collector creation results
+    - Verify all tests still pass after refactoring
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
+
+  - [ ] 13.2 Reduce cognitive complexity in version_detection_integration_test.go
+    - Refactor `TestAPIVersionDetectorIntegration` (line 14) to reduce complexity from 37 to below 15
+    - Extract helper functions for test case setup and validation
+    - Extract mock server creation logic into separate helper
+    - Extract version detection validation into separate helper
+    - Verify all tests still pass after refactoring
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
+
+  - [ ] 13.3 Reduce cognitive complexity in Config_test.go
+    - Refactor `TestConfigValidateNbuServer` (line 69) to reduce complexity from 23 to below 15
+    - Refactor `TestConfigValidateOpenTelemetry` (line 276) to reduce complexity from 16 to below 15
+    - Refactor `TestConfigValidateServer` (line 514) to reduce complexity from 17 to below 15
+    - Refactor `TestConfigGetNBUBaseURL` (line 898) to reduce complexity from 23 to below 15
+    - Refactor `TestConfigValidate` (line 1385) to reduce complexity from 23 to below 15
+    - Extract validation assertion helpers for each test
+    - Extract test case setup helpers to reduce nesting
+    - Verify all tests still pass after refactoring
+    - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
+
+- [ ] 14. Eliminate duplicate string literals in version_detection_integration_test.go
+  - Extract "version=13.0" to constant (duplicated 3 times, line 53)
+  - Extract "version=12.0" to constant (duplicated 3 times, line 55)
+  - Extract "Content-Type" to constant (duplicated 3 times, line 73)
+  - Group version-related constants together
+  - Verify all tests still pass after extraction
+  - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+
+- [ ] 15. Enhance error messages with additional context
+  - Update error messages in `client.go` to include URL, status code, and content-type
+  - Add request context to JSON unmarshal errors
+  - Add response preview to non-JSON response errors
+  - Ensure error messages provide actionable debugging information
+  - _Requirements: 3.1, 3.2, 8.4_
+
+- [ ] 16. Add package-level documentation
+  - Add comprehensive package documentation to `internal/testutil` package
+  - Document key components: constants, builders, helper functions
+  - Include usage examples in package documentation
+  - Document the test constants consolidation pattern
+  - Add package documentation to `internal/telemetry` if missing
+  - _Requirements: 8.1, 8.2, 8.3, 8.4_
+
+- [ ] 17. Update documentation and changelog
   - Update CHANGELOG.md with improvements in "Changed" section
   - Document performance optimizations and enhanced validation
   - Document SonarCloud compliance improvements (test naming, string literals, cognitive complexity)
+  - Document test infrastructure improvements (centralized helpers, reduced complexity)
+  - List all cognitive complexity reductions (8 test functions refactored)
+  - List all string literal extractions (version headers, content-type)
   - Add code comments explaining design decisions where appropriate
   - Ensure all new functions have complete godoc comments
   - _Requirements: 8.4, 9.5, 10.5, 11.5_

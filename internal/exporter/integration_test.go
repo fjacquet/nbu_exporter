@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
+	"github.com/fjacquet/nbu_exporter/internal/testutil"
 )
 
 // TestStorageMetricsCollection tests storage metrics collection with 10.5 responses
@@ -679,17 +680,17 @@ func createTestConfig(serverURL, apiVersion string) models.Config {
 	cfg := models.Config{}
 	cfg.Server.Host = "localhost"
 	cfg.Server.Port = "2112"
-	cfg.Server.URI = "/metrics"
+	cfg.Server.URI = testutil.TestPathMetrics
 	cfg.Server.ScrapingInterval = "5m"
-	cfg.Server.LogName = "test.log"
+	cfg.Server.LogName = testutil.TestLogName
 
 	cfg.NbuServer.Host = host
 	cfg.NbuServer.Port = port
 	cfg.NbuServer.Scheme = "http"
 	cfg.NbuServer.URI = ""
-	cfg.NbuServer.APIKey = "test-api-key"
+	cfg.NbuServer.APIKey = testutil.TestAPIKey
 	cfg.NbuServer.APIVersion = apiVersion
-	cfg.NbuServer.ContentType = "application/json"
+	cfg.NbuServer.ContentType = testutil.ContentTypeJSON
 	cfg.NbuServer.InsecureSkipVerify = true
 
 	return cfg
