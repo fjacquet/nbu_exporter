@@ -181,7 +181,23 @@ func (c *NbuCollector) createScrapeSpan(ctx context.Context) (context.Context, t
 // to expose partial metrics even if some API calls fail. Errors are logged but do not
 // prevent metric exposition.
 //
-// This method is required by the prometheus.Collector interface.
+// When OpenTelemetry tracing is enabled, this method creates a root span for the scrape
+// cycle and records attributes including:
+//   - scrape.duration_ms: Total time taken for metric collection
+//   - scrape.storage_metrics_count: Number of storage metrics collected
+//   - scrape.job_metrics_count: Number of job metrics collected
+//   - scrape.status: Overall scrape status (success/partial_failure)
+//
+// Graceful Degradation:
+// If storage or job fetching fails, the collector continues to expose whatever metrics
+// were successfully collected. This ensures Prometheus receives partial data rather than
+// no data at all, improving observability during partial outages.
+//
+// This method is required by the prometheus.Collector interface and is called automatically
+// by Prometheus during each scrape cycle (typically every 15-60 seconds).
+//
+// Parameters:
+//   - ch: Channel to send Prometheus metrics to (provided by Prometheus registry)
 func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), collectionTimeout)
 	defer cancel()

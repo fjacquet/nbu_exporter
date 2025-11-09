@@ -150,7 +150,19 @@ func isExplicitVersionConfigured(cfg *models.Config) bool {
 	return cfg.NbuServer.APIVersion != "" && cfg.NbuServer.APIVersion != models.APIVersion130
 }
 
-// getHeaders returns the standard headers for NBU API requests.
+// getHeaders returns the standard HTTP headers required for NetBackup API requests.
+// It constructs a versioned Accept header for API version negotiation and includes
+// the API key for authentication.
+//
+// The Accept header format follows NetBackup's versioned media type convention:
+//
+//	application/vnd.netbackup+json;version=<apiVersion>
+//
+// Returns a map containing:
+//   - Accept: Versioned content type header for API version negotiation
+//   - Authorization: API key for authentication
+//
+// This method is called internally by FetchData before each HTTP request.
 func (c *NbuClient) getHeaders() map[string]string {
 	// Construct versioned Accept header for NetBackup API 10.5+
 	acceptHeader := fmt.Sprintf("application/vnd.netbackup+json;version=%s", c.cfg.NbuServer.APIVersion)
@@ -327,8 +339,6 @@ func (c *NbuClient) DetectAPIVersion(ctx context.Context) (string, error) {
 	// If we get here, the configured API version is working
 	return c.cfg.NbuServer.APIVersion, nil
 }
-
-
 
 // recordHTTPAttributes records HTTP semantic convention attributes on the span.
 // This method follows OpenTelemetry HTTP semantic conventions for consistent

@@ -43,6 +43,24 @@ const (
 //   - "disk-pool-1|MEDIA_SERVER|used" -> 5368709120000 (bytes)
 //
 // Returns an error if the API request fails or response cannot be parsed.
+//
+// Example usage:
+//
+//	storageMetrics := make(map[string]float64)
+//	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+//	defer cancel()
+//
+//	if err := FetchStorage(ctx, client, storageMetrics); err != nil {
+//	    log.Errorf("Failed to fetch storage: %v", err)
+//	    return err
+//	}
+//
+//	// Access metrics using structured keys
+//	for key, value := range storageMetrics {
+//	    labels := strings.Split(key, "|")
+//	    name, storageType, sizeType := labels[0], labels[1], labels[2]
+//	    log.Infof("Storage %s (%s) %s: %.2f GB", name, storageType, sizeType, value/1e9)
+//	}
 func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[string]float64) error {
 	// Start child span "netbackup.fetch_storage" from parent context
 	ctx, span := createSpan(ctx, client.tracer, "netbackup.fetch_storage", trace.SpanKindClient)
@@ -95,8 +113,6 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
 	log.Debugf("Fetched storage data for %d storage units", len(storages.Data))
 	return nil
 }
-
-
 
 // FetchJobDetails retrieves a single job record at the specified pagination offset and
 // updates the provided metrics maps with job statistics. This function is designed to be
@@ -214,8 +230,6 @@ func FetchJobDetails(
 	return jobs.Meta.Pagination.Next, nil
 }
 
-
-
 // HandlePagination provides a generic pagination handler that repeatedly calls a fetch function
 // until all pages have been processed. It handles context cancellation and propagates errors
 // from the fetch function.
@@ -277,12 +291,28 @@ func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, o
 //   - The scraping interval cannot be parsed
 //   - Any API request fails during pagination
 //
-// Example:
+// Example usage:
 //
 //	jobsSize := make(map[string]float64)
 //	jobsCount := make(map[string]float64)
 //	jobsStatusCount := make(map[string]float64)
+//	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+//	defer cancel()
+//
 //	err := FetchAllJobs(ctx, client, jobsSize, jobsCount, jobsStatusCount, "5m")
+//	if err != nil {
+//	    log.Errorf("Failed to fetch jobs: %v", err)
+//	    return err
+//	}
+//
+//	// Access aggregated metrics
+//	for key, count := range jobsCount {
+//	    labels := strings.Split(key, "|")
+//	    action, policyType, status := labels[0], labels[1], labels[2]
+//	    bytes := jobsSize[key]
+//	    log.Infof("Jobs: %s/%s (status %s) - count: %.0f, bytes: %.2f GB",
+//	        action, policyType, status, count, bytes/1e9)
+//	}
 func FetchAllJobs(
 	ctx context.Context,
 	client *NbuClient,
@@ -357,5 +387,3 @@ func FetchAllJobs(
 
 	return nil
 }
-
-
