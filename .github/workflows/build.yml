@@ -9,7 +9,7 @@ on:
     - cron: '0 0 * * 1'  # Run every Monday at midnight
     
 env:
-  GO_VERSION: '1.23'
+  GO_VERSION: '1.25'
   COVERAGE_THRESHOLD: 80
 
 jobs:
@@ -51,12 +51,12 @@ jobs:
         run: go mod download
 
       - name: Build
-        run: go build -v ./...
+        run: |
+          go env -w GOTOOLCHAIN=go${{ env.GO_VERSION }}+auto
+          go build -v ./...
+          go test ./... -coverprofile=coverage.out -covermode=atomic 
 
-        
-      - name: Test
-        run: go test ./... -coverprofile=coverage.out -covermode=atomic 
-
+         
       - name: SonarQube Scan
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         uses: SonarSource/sonarqube-scan-action@v6

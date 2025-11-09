@@ -2,8 +2,6 @@ module github.com/fjacquet/nbu_exporter
 
 go 1.25
 
-toolchain go1.25.3
-
 require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/prometheus/client_golang v1.23.2
