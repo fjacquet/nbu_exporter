@@ -10,6 +10,70 @@ import (
 	"testing"
 )
 
+// extractVersionFromAcceptHeader extracts the API version from the Accept header
+func extractVersionFromAcceptHeader(acceptHeader string) string {
+	if strings.Contains(acceptHeader, "version=13.0") {
+		return "13.0"
+	} else if strings.Contains(acceptHeader, "version=12.0") {
+		return "12.0"
+	} else if strings.Contains(acceptHeader, "version=3.0") {
+		return "3.0"
+	}
+	return ""
+}
+
+// isVersionSupported checks if the requested version is in the list of supported versions
+func isVersionSupported(requestedVersion string, supportedVersions []string) bool {
+	for _, v := range supportedVersions {
+		if v == requestedVersion {
+			return true
+		}
+	}
+	return false
+}
+
+// writeVersionResponse writes the appropriate HTTP response based on version support
+func writeVersionResponse(w http.ResponseWriter, requestedVersion string, supported bool) {
+	if supported {
+		response := createMinimalJobsResponse()
+		w.Header().Set("Content-Type", fmt.Sprintf("application/vnd.netbackup+json;version=%s", requestedVersion))
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(response)
+	} else {
+		w.WriteHeader(http.StatusNotAcceptable)
+		errorResponse := map[string]interface{}{
+			"errorCode":    406,
+			"errorMessage": fmt.Sprintf("API version %s is not supported", requestedVersion),
+		}
+		_ = json.NewEncoder(w).Encode(errorResponse)
+	}
+}
+
+// createVersionDetectionMockServer creates a mock server for version detection testing
+func createVersionDetectionMockServer(supportedVersions []string) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestedVersion := extractVersionFromAcceptHeader(r.Header.Get("Accept"))
+		supported := isVersionSupported(requestedVersion, supportedVersions)
+		writeVersionResponse(w, requestedVersion, supported)
+	}))
+}
+
+// validateVersionDetectionResult validates the result of version detection
+func validateVersionDetectionResult(t *testing.T, detectedVersion string, err error, expectedVersion string, expectError bool) {
+	if expectError {
+		if err == nil {
+			t.Error("Expected error but got none")
+		}
+	} else {
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		if detectedVersion != expectedVersion {
+			t.Errorf("Expected version %s, got %s", expectedVersion, detectedVersion)
+		}
+	}
+}
+
 // TestVersionDetectionWithMockServers tests automatic version detection with mock servers
 func TestVersionDetectionWithMockServers(t *testing.T) {
 	tests := []struct {
@@ -46,43 +110,7 @@ func TestVersionDetectionWithMockServers(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Extract version from Accept header
-				acceptHeader := r.Header.Get("Accept")
-				requestedVersion := ""
-				if strings.Contains(acceptHeader, "version=13.0") {
-					requestedVersion = "13.0"
-				} else if strings.Contains(acceptHeader, "version=12.0") {
-					requestedVersion = "12.0"
-				} else if strings.Contains(acceptHeader, "version=3.0") {
-					requestedVersion = "3.0"
-				}
-
-				// Check if this version is supported
-				supported := false
-				for _, v := range tt.supportedVersions {
-					if v == requestedVersion {
-						supported = true
-						break
-					}
-				}
-
-				if supported {
-					// Return success with minimal job response
-					response := createMinimalJobsResponse()
-					w.Header().Set("Content-Type", fmt.Sprintf("application/vnd.netbackup+json;version=%s", requestedVersion))
-					w.WriteHeader(http.StatusOK)
-					_ = json.NewEncoder(w).Encode(response)
-				} else {
-					// Return 406 Not Acceptable
-					w.WriteHeader(http.StatusNotAcceptable)
-					errorResponse := map[string]interface{}{
-						"errorCode":    406,
-						"errorMessage": fmt.Sprintf("API version %s is not supported", requestedVersion),
-					}
-					_ = json.NewEncoder(w).Encode(errorResponse)
-				}
-			}))
+			server := createVersionDetectionMockServer(tt.supportedVersions)
 			defer server.Close()
 
 			cfg := createTestConfig(server.URL, "") // Empty version to trigger detection
@@ -91,18 +119,7 @@ func TestVersionDetectionWithMockServers(t *testing.T) {
 			detector := NewAPIVersionDetector(client, &cfg)
 			detectedVersion, err := detector.DetectVersion(context.Background())
 
-			if tt.expectError {
-				if err == nil {
-					t.Error("Expected error but got none")
-				}
-			} else {
-				if err != nil {
-					t.Fatalf("Unexpected error: %v", err)
-				}
-				if detectedVersion != tt.expectedVersion {
-					t.Errorf("Expected version %s, got %s", tt.expectedVersion, detectedVersion)
-				}
-			}
+			validateVersionDetectionResult(t, detectedVersion, err, tt.expectedVersion, tt.expectError)
 		})
 	}
 }

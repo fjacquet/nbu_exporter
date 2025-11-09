@@ -66,6 +66,65 @@ func TestConfigSetDefaults(t *testing.T) {
 	}
 }
 
+// createConfigWithAPIVersion creates a test config with the specified API version
+func createConfigWithAPIVersion(apiVersion string) *Config {
+	return &Config{
+		Server: struct {
+			Port             string `yaml:"port"`
+			Host             string `yaml:"host"`
+			URI              string `yaml:"uri"`
+			ScrapingInterval string `yaml:"scrapingInterval"`
+			LogName          string `yaml:"logName"`
+		}{
+			Port:             "2112",
+			Host:             "localhost",
+			URI:              testPathMetrics,
+			ScrapingInterval: "5m",
+			LogName:          testLogName,
+		},
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			Port:       "1556",
+			Scheme:     "https",
+			URI:        testPathNetBackup,
+			Host:       testServerNBUMaster,
+			APIKey:     "test-api-key",
+			APIVersion: apiVersion,
+		},
+	}
+}
+
+// assertAPIVersionValidation validates the API version validation result
+func assertAPIVersionValidation(t *testing.T, config *Config, err error, apiVersion string, wantErr bool, errMsg string) {
+	if wantErr {
+		if err == nil {
+			t.Errorf("Validate() expected error containing %q, got nil", errMsg)
+			return
+		}
+		if errMsg != "" && err.Error() == "" {
+			t.Errorf("Validate() error = %v, want error containing %q", err, errMsg)
+		}
+	} else {
+		if err != nil {
+			t.Errorf(testErrorValidateUnexpected, err)
+		}
+		// Verify default was set if empty
+		if apiVersion == "" && config.NbuServer.APIVersion != "13.0" {
+			t.Errorf("Validate() APIVersion = %v, want default 13.0", config.NbuServer.APIVersion)
+		}
+	}
+}
+
 func TestConfigValidateAPIVersion(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -133,59 +192,9 @@ func TestConfigValidateAPIVersion(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := &Config{
-				Server: struct {
-					Port             string `yaml:"port"`
-					Host             string `yaml:"host"`
-					URI              string `yaml:"uri"`
-					ScrapingInterval string `yaml:"scrapingInterval"`
-					LogName          string `yaml:"logName"`
-				}{
-					Port:             "2112",
-					Host:             "localhost",
-					URI:              testPathMetrics,
-					ScrapingInterval: "5m",
-					LogName:          testLogName,
-				},
-				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-				}{
-					Port:       "1556",
-					Scheme:     "https",
-					URI:        testPathNetBackup,
-					Host:       testServerNBUMaster,
-					APIKey:     "test-api-key",
-					APIVersion: tt.apiVersion,
-				},
-			}
-
+			config := createConfigWithAPIVersion(tt.apiVersion)
 			err := config.Validate()
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("Validate() expected error containing %q, got nil", tt.errMsg)
-					return
-				}
-				if tt.errMsg != "" && err.Error() == "" {
-					t.Errorf("Validate() error = %v, want error containing %q", err, tt.errMsg)
-				}
-			} else {
-				if err != nil {
-					t.Errorf(testErrorValidateUnexpected, err)
-				}
-				// Verify default was set if empty
-				if tt.apiVersion == "" && config.NbuServer.APIVersion != "13.0" {
-					t.Errorf("Validate() APIVersion = %v, want default 13.0", config.NbuServer.APIVersion)
-				}
-			}
+			assertAPIVersionValidation(t, config, err, tt.apiVersion, tt.wantErr, tt.errMsg)
 		})
 	}
 }
@@ -273,6 +282,29 @@ nbuserver:
 	}
 }
 
+// parseAndValidateYAMLConfig parses YAML and validates the config
+func parseAndValidateYAMLConfig(t *testing.T, yamlContent string) (Config, error) {
+	var config Config
+	err := yaml.Unmarshal([]byte(yamlContent), &config)
+	if err != nil {
+		t.Fatalf("yaml.Unmarshal() error = %v", err)
+	}
+	return config, config.Validate()
+}
+
+// assertBackwardCompatibility validates backward compatibility expectations
+func assertBackwardCompatibility(t *testing.T, config Config, err error, expectedAPIVer string, shouldValidate bool) {
+	if shouldValidate && err != nil {
+		t.Errorf(testErrorValidateUnexpected, err)
+	}
+	if !shouldValidate && err == nil {
+		t.Error("Validate() expected error, got nil")
+	}
+	if shouldValidate && config.NbuServer.APIVersion != expectedAPIVer {
+		t.Errorf("APIVersion = %v, want %v", config.NbuServer.APIVersion, expectedAPIVer)
+	}
+}
+
 func TestConfigBackwardCompatibility(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -327,25 +359,8 @@ nbuserver:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var config Config
-			err := yaml.Unmarshal([]byte(tt.yaml), &config)
-			if err != nil {
-				t.Fatalf("yaml.Unmarshal() error = %v", err)
-			}
-
-			// Validate the config
-			err = config.Validate()
-			if tt.shouldValidate && err != nil {
-				t.Errorf(testErrorValidateUnexpected, err)
-			}
-			if !tt.shouldValidate && err == nil {
-				t.Error("Validate() expected error, got nil")
-			}
-
-			// Check that default API version was set
-			if tt.shouldValidate && config.NbuServer.APIVersion != tt.expectedAPIVer {
-				t.Errorf("APIVersion = %v, want %v", config.NbuServer.APIVersion, tt.expectedAPIVer)
-			}
+			config, err := parseAndValidateYAMLConfig(t, tt.yaml)
+			assertBackwardCompatibility(t, config, err, tt.expectedAPIVer, tt.shouldValidate)
 		})
 	}
 }
@@ -397,63 +412,60 @@ func TestAPIVersionConstants(t *testing.T) {
 	}
 }
 
+// createConfigWithNBUServer creates a config with the specified NBU server settings
+func createConfigWithNBUServer(scheme, host, port, uri string) Config {
+	return Config{
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			Scheme: scheme,
+			Host:   host,
+			Port:   port,
+			URI:    uri,
+		},
+	}
+}
+
 func TestConfigGetNBUBaseURL(t *testing.T) {
 	tests := []struct {
 		name     string
-		config   Config
+		scheme   string
+		host     string
+		port     string
+		uri      string
 		expected string
 	}{
 		{
-			name: "standard HTTPS URL",
-			config: Config{
-				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-				}{
-					Scheme: "https",
-					Host:   "nbu-master.example.com",
-					Port:   "1556",
-					URI:    testPathNetBackup,
-				},
-			},
+			name:     "standard HTTPS URL",
+			scheme:   "https",
+			host:     "nbu-master.example.com",
+			port:     "1556",
+			uri:      testPathNetBackup,
 			expected: "https://nbu-master.example.com:1556/netbackup",
 		},
 		{
-			name: "HTTP URL with different port",
-			config: Config{
-				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-				}{
-					Scheme: "http",
-					Host:   "localhost",
-					Port:   "8080",
-					URI:    "/api",
-				},
-			},
+			name:     "HTTP URL with different port",
+			scheme:   "http",
+			host:     "localhost",
+			port:     "8080",
+			uri:      "/api",
 			expected: "http://localhost:8080/api",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := tt.config.GetNBUBaseURL()
+			config := createConfigWithNBUServer(tt.scheme, tt.host, tt.port, tt.uri)
+			result := config.GetNBUBaseURL()
 			if result != tt.expected {
 				t.Errorf("GetNBUBaseURL() = %v, want %v", result, tt.expected)
 			}
@@ -511,6 +523,37 @@ func TestConfigGetServerAddress(t *testing.T) {
 	}
 }
 
+// createConfigWithInterval creates a config with the specified scraping interval
+func createConfigWithInterval(interval string) Config {
+	return Config{
+		Server: struct {
+			Port             string `yaml:"port"`
+			Host             string `yaml:"host"`
+			URI              string `yaml:"uri"`
+			ScrapingInterval string `yaml:"scrapingInterval"`
+			LogName          string `yaml:"logName"`
+		}{
+			ScrapingInterval: interval,
+		},
+	}
+}
+
+// assertDurationResult checks if the duration result matches expectations
+func assertDurationResult(t *testing.T, result time.Duration, err error, expected time.Duration, expectError bool) {
+	if expectError {
+		if err == nil {
+			t.Error(testErrorExpectedError)
+		}
+	} else {
+		if err != nil {
+			t.Errorf(testErrorUnexpected, err)
+		}
+		if result != expected {
+			t.Errorf("GetScrapingDuration() = %v, want %v", result, expected)
+		}
+	}
+}
+
 func TestConfigGetScrapingDuration(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -552,32 +595,9 @@ func TestConfigGetScrapingDuration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := Config{
-				Server: struct {
-					Port             string `yaml:"port"`
-					Host             string `yaml:"host"`
-					URI              string `yaml:"uri"`
-					ScrapingInterval string `yaml:"scrapingInterval"`
-					LogName          string `yaml:"logName"`
-				}{
-					ScrapingInterval: tt.interval,
-				},
-			}
-
+			config := createConfigWithInterval(tt.interval)
 			result, err := config.GetScrapingDuration()
-
-			if tt.expectError {
-				if err == nil {
-					t.Error(testErrorExpectedError)
-				}
-			} else {
-				if err != nil {
-					t.Errorf(testErrorUnexpected, err)
-				}
-				if result != tt.expected {
-					t.Errorf("GetScrapingDuration() = %v, want %v", result, tt.expected)
-				}
-			}
+			assertDurationResult(t, result, err, tt.expected, tt.expectError)
 		})
 	}
 }
@@ -895,6 +915,26 @@ func TestConfigValidateServerFields(t *testing.T) {
 	}
 }
 
+// assertSupportedVersionValidation validates the supported version validation result
+func assertSupportedVersionValidation(t *testing.T, err error, wantErr bool, errMsg string) {
+	if wantErr {
+		if err == nil {
+			t.Errorf("Validate() expected error, got nil")
+			return
+		}
+		if errMsg != "" {
+			errStr := err.Error()
+			if len(errStr) < len(errMsg) || errStr[:len(errMsg)] != errMsg {
+				t.Errorf("Validate() error = %v, want error starting with %v", err.Error(), errMsg)
+			}
+		}
+	} else {
+		if err != nil {
+			t.Errorf(testErrorValidateUnexpected, err)
+		}
+	}
+}
+
 func TestConfigValidateSupportedVersions(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -939,99 +979,65 @@ func TestConfigValidateSupportedVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := &Config{
-				Server: struct {
-					Port             string `yaml:"port"`
-					Host             string `yaml:"host"`
-					URI              string `yaml:"uri"`
-					ScrapingInterval string `yaml:"scrapingInterval"`
-					LogName          string `yaml:"logName"`
-				}{
-					Port:             "2112",
-					Host:             "localhost",
-					URI:              testPathMetrics,
-					ScrapingInterval: "5m",
-					LogName:          testLogName,
-				},
-				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-				}{
-					Port:       "1556",
-					Scheme:     "https",
-					URI:        testPathNetBackup,
-					Host:       testServerNBUMaster,
-					APIKey:     "test-api-key",
-					APIVersion: tt.apiVersion,
-				},
-			}
-
+			config := createConfigWithAPIVersion(tt.apiVersion)
 			err := config.Validate()
-			if tt.wantErr {
-				if err == nil {
-					t.Errorf("Validate() expected error, got nil")
-					return
-				}
-				// Check if error message contains the expected substring
-				if tt.errMsg != "" {
-					errStr := err.Error()
-					if len(errStr) < len(tt.errMsg) || errStr[:len(tt.errMsg)] != tt.errMsg {
-						t.Errorf("Validate() error = %v, want error starting with %v", err.Error(), tt.errMsg)
-					}
-				}
-			} else {
-				if err != nil {
-					t.Errorf(testErrorValidateUnexpected, err)
-				}
-			}
+			assertSupportedVersionValidation(t, err, tt.wantErr, tt.errMsg)
 		})
 	}
 }
 
-func TestConfigValidateOpenTelemetry(t *testing.T) {
-	baseConfig := func() Config {
-		return Config{
-			Server: struct {
-				Port             string `yaml:"port"`
-				Host             string `yaml:"host"`
-				URI              string `yaml:"uri"`
-				ScrapingInterval string `yaml:"scrapingInterval"`
-				LogName          string `yaml:"logName"`
-			}{
-				Port:             "2112",
-				Host:             "localhost",
-				URI:              testPathMetrics,
-				ScrapingInterval: "5m",
-			},
-			NbuServer: struct {
-				Port               string `yaml:"port"`
-				Scheme             string `yaml:"scheme"`
-				URI                string `yaml:"uri"`
-				Domain             string `yaml:"domain"`
-				DomainType         string `yaml:"domainType"`
-				Host               string `yaml:"host"`
-				APIKey             string `yaml:"apiKey"`
-				APIVersion         string `yaml:"apiVersion"`
-				ContentType        string `yaml:"contentType"`
-				InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-			}{
-				Port:   "1556",
-				Scheme: "https",
-				URI:    testPathNetBackup,
-				Host:   testServerNBUMaster,
-				APIKey: testKeyName,
-			},
+// createBaseTestConfig creates a base configuration for testing
+func createBaseTestConfig() Config {
+	return Config{
+		Server: struct {
+			Port             string `yaml:"port"`
+			Host             string `yaml:"host"`
+			URI              string `yaml:"uri"`
+			ScrapingInterval string `yaml:"scrapingInterval"`
+			LogName          string `yaml:"logName"`
+		}{
+			Port:             "2112",
+			Host:             "localhost",
+			URI:              testPathMetrics,
+			ScrapingInterval: "5m",
+		},
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			Port:   "1556",
+			Scheme: "https",
+			URI:    testPathNetBackup,
+			Host:   testServerNBUMaster,
+			APIKey: testKeyName,
+		},
+	}
+}
+
+// assertValidationResult checks if the validation result matches expectations
+func assertValidationResult(t *testing.T, err error, wantError bool, errMsg string) {
+	if wantError {
+		if err == nil {
+			t.Error(testErrorExpectedError)
+		} else if errMsg != "" && !strings.Contains(err.Error(), errMsg) {
+			t.Errorf(testErrorExpectedErrorContaining, errMsg, err.Error())
+		}
+	} else {
+		if err != nil {
+			t.Errorf(testErrorUnexpected, err)
 		}
 	}
+}
 
+func TestConfigValidateOpenTelemetry(t *testing.T) {
 	tests := []struct {
 		name      string
 		modify    func(*Config)
@@ -1108,22 +1114,10 @@ func TestConfigValidateOpenTelemetry(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := baseConfig()
+			config := createBaseTestConfig()
 			tt.modify(&config)
-
 			err := config.Validate()
-
-			if tt.wantError {
-				if err == nil {
-					t.Error(testErrorExpectedError)
-				} else if tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
-					t.Errorf(testErrorExpectedErrorContaining, tt.errMsg, err.Error())
-				}
-			} else {
-				if err != nil {
-					t.Errorf(testErrorUnexpected, err)
-				}
-			}
+			assertValidationResult(t, err, tt.wantError, tt.errMsg)
 		})
 	}
 }
@@ -1382,6 +1376,22 @@ func TestConfigValidateOTelEndpoint(t *testing.T) {
 	}
 }
 
+// assertOTelConfigFields validates OpenTelemetry configuration fields
+func assertOTelConfigFields(t *testing.T, config Config, enabled bool, endpoint string, insecure bool, samplingRate float64) {
+	if config.OpenTelemetry.Enabled != enabled {
+		t.Errorf("ParseYAML() OpenTelemetry.Enabled = %v, want %v", config.OpenTelemetry.Enabled, enabled)
+	}
+	if config.OpenTelemetry.Endpoint != endpoint {
+		t.Errorf("ParseYAML() OpenTelemetry.Endpoint = %v, want %v", config.OpenTelemetry.Endpoint, endpoint)
+	}
+	if config.OpenTelemetry.Insecure != insecure {
+		t.Errorf("ParseYAML() OpenTelemetry.Insecure = %v, want %v", config.OpenTelemetry.Insecure, insecure)
+	}
+	if config.OpenTelemetry.SamplingRate != samplingRate {
+		t.Errorf("ParseYAML() OpenTelemetry.SamplingRate = %v, want %v", config.OpenTelemetry.SamplingRate, samplingRate)
+	}
+}
+
 func TestConfigParseYAMLOpenTelemetry(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -1479,18 +1489,7 @@ opentelemetry:
 				return
 			}
 			if !tt.wantErr {
-				if config.OpenTelemetry.Enabled != tt.enabled {
-					t.Errorf("ParseYAML() OpenTelemetry.Enabled = %v, want %v", config.OpenTelemetry.Enabled, tt.enabled)
-				}
-				if config.OpenTelemetry.Endpoint != tt.endpoint {
-					t.Errorf("ParseYAML() OpenTelemetry.Endpoint = %v, want %v", config.OpenTelemetry.Endpoint, tt.endpoint)
-				}
-				if config.OpenTelemetry.Insecure != tt.insecure {
-					t.Errorf("ParseYAML() OpenTelemetry.Insecure = %v, want %v", config.OpenTelemetry.Insecure, tt.insecure)
-				}
-				if config.OpenTelemetry.SamplingRate != tt.samplingRate {
-					t.Errorf("ParseYAML() OpenTelemetry.SamplingRate = %v, want %v", config.OpenTelemetry.SamplingRate, tt.samplingRate)
-				}
+				assertOTelConfigFields(t, config, tt.enabled, tt.endpoint, tt.insecure, tt.samplingRate)
 			}
 		})
 	}

@@ -70,6 +70,62 @@ func TestNewNbuCollectorExplicitVersion(t *testing.T) {
 	}
 }
 
+// createVersionMockServer creates a mock server that responds to version detection requests
+func createVersionMockServer(t *testing.T, responses map[string]int) *httptest.Server {
+	return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		version := extractVersionFromHeader(r.Header.Get("Accept"))
+		handleVersionResponse(w, version, responses)
+	}))
+}
+
+// extractVersionFromHeader extracts the API version from the Accept header
+func extractVersionFromHeader(acceptHeader string) string {
+	for _, v := range []string{"13.0", "12.0", "3.0"} {
+		if fmt.Sprintf("application/vnd.netbackup+json;version=%s", v) == acceptHeader {
+			return v
+		}
+	}
+	return ""
+}
+
+// handleVersionResponse writes the appropriate response based on version and configured responses
+func handleVersionResponse(w http.ResponseWriter, version string, responses map[string]int) {
+	if statusCode, ok := responses[version]; ok {
+		w.WriteHeader(statusCode)
+		if statusCode == http.StatusOK {
+			_, _ = w.Write([]byte(`{"data": []}`))
+		}
+	} else {
+		w.WriteHeader(http.StatusNotAcceptable)
+	}
+}
+
+// assertCollectorResult validates the collector creation result
+func assertCollectorResult(t *testing.T, collector *NbuCollector, err error, expectError bool, expectedVersion string) {
+	if expectError {
+		assert.Error(t, err, "Collector creation should fail when all versions are unsupported")
+		assert.Nil(t, collector, "Collector should be nil on error")
+	} else {
+		require.NoError(t, err, "Collector creation should succeed with automatic detection")
+		require.NotNil(t, collector, "Collector should not be nil")
+		assert.Equal(t, expectedVersion, collector.cfg.NbuServer.APIVersion, "API version should match detected version")
+	}
+}
+
+// createTestConfigWithServer creates a test configuration for the given server
+func createTestConfigWithServer(server *httptest.Server) models.Config {
+	cfg := models.Config{}
+	cfg.NbuServer.Scheme = "https"
+	cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
+	cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
+	cfg.NbuServer.URI = ""
+	cfg.NbuServer.APIKey = testAPIKey
+	cfg.NbuServer.APIVersion = "" // Empty to trigger detection
+	cfg.NbuServer.InsecureSkipVerify = true
+	cfg.Server.ScrapingInterval = "5m"
+	return cfg
+}
+
 // TestNewNbuCollector_AutomaticDetection tests collector creation with automatic version detection.
 // It verifies that when no API version is configured, the collector performs automatic
 // detection and selects the highest supported version.
@@ -123,51 +179,13 @@ func TestNewNbuCollectorAutomaticDetection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock server that responds based on the Accept header version
-			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				acceptHeader := r.Header.Get("Accept")
-
-				// Extract version from Accept header
-				var version string
-				for v := range tt.serverResponses {
-					if fmt.Sprintf("application/vnd.netbackup+json;version=%s", v) == acceptHeader {
-						version = v
-						break
-					}
-				}
-
-				if statusCode, ok := tt.serverResponses[version]; ok {
-					w.WriteHeader(statusCode)
-					if statusCode == http.StatusOK {
-						_, _ = w.Write([]byte(`{"data": []}`))
-					}
-				} else {
-					w.WriteHeader(http.StatusNotAcceptable)
-				}
-			}))
+			server := createVersionMockServer(t, tt.serverResponses)
 			defer server.Close()
 
-			cfg := models.Config{}
-			cfg.NbuServer.Scheme = "https"
-			cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
-			cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
-			cfg.NbuServer.URI = ""
-			cfg.NbuServer.APIKey = testAPIKey
-			cfg.NbuServer.APIVersion = "" // Empty to trigger detection
-			cfg.NbuServer.InsecureSkipVerify = true
-			cfg.Server.ScrapingInterval = "5m"
-
-			// Create collector with automatic detection
+			cfg := createTestConfigWithServer(server)
 			collector, err := NewNbuCollector(cfg)
 
-			if tt.expectError {
-				assert.Error(t, err, "Collector creation should fail when all versions are unsupported")
-				assert.Nil(t, collector, "Collector should be nil on error")
-			} else {
-				require.NoError(t, err, "Collector creation should succeed with automatic detection")
-				require.NotNil(t, collector, "Collector should not be nil")
-				assert.Equal(t, tt.expectedVersion, collector.cfg.NbuServer.APIVersion, "API version should match detected version")
-			}
+			assertCollectorResult(t, collector, err, tt.expectError, tt.expectedVersion)
 		})
 	}
 }
