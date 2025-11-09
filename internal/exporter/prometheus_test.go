@@ -2,16 +2,19 @@
 package exporter
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
 )
 
 // TestNewNbuCollector_ExplicitVersion tests collector creation with an explicitly configured API version.
@@ -340,4 +343,284 @@ func TestNbuCollector_Describe(t *testing.T) {
 
 	assert.Equal(t, len(expectedDescriptors), descriptorCount, "Should have correct number of metric descriptors")
 	assert.Equal(t, len(expectedDescriptors), len(descriptorNames), "All expected descriptors should be present")
+}
+
+// TestNbuCollector_CreateScrapeSpan_NilSafe tests that span creation is nil-safe
+func TestNbuCollector_CreateScrapeSpan_NilSafe(t *testing.T) {
+	cfg := models.Config{
+		Server: struct {
+			Port             string `yaml:"port"`
+			Host             string `yaml:"host"`
+			URI              string `yaml:"uri"`
+			ScrapingInterval string `yaml:"scrapingInterval"`
+			LogName          string `yaml:"logName"`
+		}{
+			Port:             "2112",
+			Host:             "localhost",
+			URI:              "/metrics",
+			ScrapingInterval: "5m",
+		},
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			Host:       "nbu-master",
+			Port:       "1556",
+			Scheme:     "https",
+			URI:        "/netbackup",
+			APIKey:     "test-key",
+			APIVersion: "13.0",
+		},
+	}
+
+	client := NewNbuClient(cfg)
+	collector := &NbuCollector{
+		cfg:    cfg,
+		client: client,
+		tracer: nil, // Ensure tracer is nil
+	}
+
+	ctx := context.Background()
+	newCtx, span := collector.createScrapeSpan(ctx)
+
+	// Should return original context and nil span when tracer is nil
+	if newCtx != ctx {
+		t.Error("createScrapeSpan() should return original context when tracer is nil")
+	}
+
+	if span != nil {
+		t.Error("createScrapeSpan() should return nil span when tracer is nil")
+	}
+}
+
+// TestNbuCollector_CreateScrapeSpan_WithTracer tests span creation with tracer
+func TestNbuCollector_CreateScrapeSpan_WithTracer(t *testing.T) {
+	cfg := models.Config{
+		Server: struct {
+			Port             string `yaml:"port"`
+			Host             string `yaml:"host"`
+			URI              string `yaml:"uri"`
+			ScrapingInterval string `yaml:"scrapingInterval"`
+			LogName          string `yaml:"logName"`
+		}{
+			Port:             "2112",
+			Host:             "localhost",
+			URI:              "/metrics",
+			ScrapingInterval: "5m",
+		},
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			Host:       "nbu-master",
+			Port:       "1556",
+			Scheme:     "https",
+			URI:        "/netbackup",
+			APIKey:     "test-key",
+			APIVersion: "13.0",
+		},
+	}
+
+	client := NewNbuClient(cfg)
+
+	// Get tracer from global provider (may be nil if not initialized)
+	tracer := otel.Tracer("nbu-exporter-test")
+
+	collector := &NbuCollector{
+		cfg:    cfg,
+		client: client,
+		tracer: tracer,
+	}
+
+	ctx := context.Background()
+	newCtx, span := collector.createScrapeSpan(ctx)
+
+	// Context should be different (has span attached)
+	if newCtx == ctx {
+		t.Error("createScrapeSpan() should return new context with span")
+	}
+
+	// Span may be nil if no global tracer provider is set
+	// This is acceptable - the test verifies the code doesn't panic
+	if span != nil {
+		span.End()
+	}
+}
+
+// TestNbuCollector_Collect_WithoutTracing tests Collect without tracing
+func TestNbuCollector_Collect_WithoutTracing(t *testing.T) {
+	// This test verifies that Collect works without tracing enabled
+	// We can't easily test the full Collect method without a real NetBackup server,
+	// but we can verify that the tracer nil-safety works
+
+	cfg := models.Config{
+		Server: struct {
+			Port             string `yaml:"port"`
+			Host             string `yaml:"host"`
+			URI              string `yaml:"uri"`
+			ScrapingInterval string `yaml:"scrapingInterval"`
+			LogName          string `yaml:"logName"`
+		}{
+			Port:             "2112",
+			Host:             "localhost",
+			URI:              "/metrics",
+			ScrapingInterval: "5m",
+		},
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			Host:       "nbu-master",
+			Port:       "1556",
+			Scheme:     "https",
+			URI:        "/netbackup",
+			APIKey:     "test-key",
+			APIVersion: "13.0",
+		},
+	}
+
+	client := NewNbuClient(cfg)
+	collector := &NbuCollector{
+		cfg:    cfg,
+		client: client,
+		tracer: nil, // Ensure tracer is nil
+		nbuDiskSize: prometheus.NewDesc(
+			"nbu_disk_bytes",
+			"The quantity of storage bytes",
+			[]string{"name", "type", "size"}, nil,
+		),
+		nbuResponseTime: prometheus.NewDesc(
+			"nbu_response_time_ms",
+			"The server response time in milliseconds",
+			nil, nil,
+		),
+		nbuJobsSize: prometheus.NewDesc(
+			"nbu_jobs_bytes",
+			"The quantity of processed bytes",
+			[]string{"action", "policy_type", "status"}, nil,
+		),
+		nbuJobsCount: prometheus.NewDesc(
+			"nbu_jobs_count",
+			"The quantity of jobs",
+			[]string{"action", "policy_type", "status"}, nil,
+		),
+		nbuJobsStatusCount: prometheus.NewDesc(
+			"nbu_status_count",
+			"The quantity per status",
+			[]string{"action", "status"}, nil,
+		),
+		nbuAPIVersion: prometheus.NewDesc(
+			"nbu_api_version",
+			"The NetBackup API version currently in use",
+			[]string{"version"}, nil,
+		),
+	}
+
+	// Create a channel to receive metrics
+	ch := make(chan prometheus.Metric, 100)
+
+	// Run Collect in a goroutine since it will likely fail (no real server)
+	// but we want to verify it doesn't panic
+	done := make(chan bool)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Errorf("Collect() panicked: %v", r)
+			}
+			done <- true
+		}()
+		collector.Collect(ch)
+	}()
+
+	// Wait for Collect to finish or timeout
+	select {
+	case <-done:
+		// Success - Collect completed without panic
+	case <-time.After(5 * time.Second):
+		t.Error("Collect() timed out")
+	}
+
+	close(ch)
+}
+
+// TestNbuCollector_TracingDisabled tests that collector works without tracing
+func TestNbuCollector_TracingDisabled(t *testing.T) {
+	cfg := models.Config{
+		Server: struct {
+			Port             string `yaml:"port"`
+			Host             string `yaml:"host"`
+			URI              string `yaml:"uri"`
+			ScrapingInterval string `yaml:"scrapingInterval"`
+			LogName          string `yaml:"logName"`
+		}{
+			Port:             "2112",
+			Host:             "localhost",
+			URI:              "/metrics",
+			ScrapingInterval: "5m",
+		},
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			Host:       "nbu-master",
+			Port:       "1556",
+			Scheme:     "https",
+			URI:        "/netbackup",
+			APIKey:     "test-key",
+			APIVersion: "13.0",
+		},
+	}
+
+	client := NewNbuClient(cfg)
+	client.tracer = nil // Ensure tracer is nil
+
+	collector := &NbuCollector{
+		cfg:    cfg,
+		client: client,
+		tracer: nil,
+	}
+
+	// Verify that createScrapeSpan works without tracer
+	ctx := context.Background()
+	newCtx, span := collector.createScrapeSpan(ctx)
+
+	if newCtx != ctx {
+		t.Error("createScrapeSpan() should return original context when tracer is nil")
+	}
+
+	if span != nil {
+		t.Error("createScrapeSpan() should return nil span when tracer is nil")
+	}
 }

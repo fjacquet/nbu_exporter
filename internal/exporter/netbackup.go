@@ -11,6 +11,9 @@ import (
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/fjacquet/nbu_exporter/internal/utils"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -40,6 +43,19 @@ const (
 //
 // Returns an error if the API request fails or response cannot be parsed.
 func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[string]float64) error {
+	// Start child span "netbackup.fetch_storage" from parent context
+	ctx, span := createStorageSpan(ctx, client.tracer)
+	if span != nil {
+		defer span.End()
+	}
+
+	// Record endpoint attribute
+	if span != nil {
+		span.SetAttributes(
+			attribute.String("netbackup.endpoint", storagePath),
+		)
+	}
+
 	var storages models.Storages
 
 	url := client.cfg.BuildURL(storagePath, map[string]string{
@@ -48,6 +64,11 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
 	})
 
 	if err := client.FetchData(ctx, url, &storages); err != nil {
+		// Record error as span event and set span status to error
+		if span != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
 		return fmt.Errorf("failed to fetch storage data: %w", err)
 	}
 
@@ -67,8 +88,38 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
 		storageMetrics[usedKey.String()] = float64(data.Attributes.UsedCapacityBytes)
 	}
 
+	// Record storage operation attributes
+	if span != nil {
+		span.SetAttributes(
+			attribute.Int("netbackup.storage_units", len(storages.Data)),
+			attribute.String("netbackup.api_version", client.cfg.NbuServer.APIVersion),
+		)
+	}
+
 	log.Debugf("Fetched storage data for %d storage units", len(storages.Data))
 	return nil
+}
+
+// createStorageSpan creates a child span for storage fetching operations.
+// This helper method provides nil-safe span creation and sets the span kind to client.
+//
+// Parameters:
+//   - ctx: Parent context for the span
+//   - tracer: OpenTelemetry tracer (may be nil if tracing is disabled)
+//
+// Returns:
+//   - Updated context with the span
+//   - The created span (or nil if tracing is disabled)
+func createStorageSpan(ctx context.Context, tracer trace.Tracer) (context.Context, trace.Span) {
+	// Nil-safe check: if tracer is not initialized, return original context and nil span
+	if tracer == nil {
+		return ctx, nil
+	}
+
+	// Start span with operation name and set span kind to client
+	return tracer.Start(ctx, "netbackup.fetch_storage",
+		trace.WithSpanKind(trace.SpanKindClient),
+	)
 }
 
 // FetchJobDetails retrieves a single job record at the specified pagination offset and
@@ -102,6 +153,22 @@ func FetchJobDetails(
 	offset int,
 	startTime time.Time,
 ) (int, error) {
+	// Start child span "netbackup.fetch_job_page" from parent context
+	ctx, span := createJobPageSpan(ctx, client.tracer)
+	if span != nil {
+		defer span.End()
+	}
+
+	// Record page offset attribute
+	if span != nil {
+		// Calculate page number (assuming page size of 1 based on limit)
+		pageNumber := offset + 1
+		span.SetAttributes(
+			attribute.Int("netbackup.page_offset", offset),
+			attribute.Int("netbackup.page_number", pageNumber),
+		)
+	}
+
 	var jobs models.Jobs
 
 	queryParams := map[string]string{
@@ -114,11 +181,22 @@ func FetchJobDetails(
 	url := client.cfg.BuildURL(jobsPath, queryParams)
 
 	if err := client.FetchData(ctx, url, &jobs); err != nil {
+		// Record error as span event and set span status to error
+		if span != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
 		return -1, fmt.Errorf("failed to fetch job details at offset %d: %w", offset, err)
 	}
 
 	// No more jobs to process
 	if len(jobs.Data) == 0 {
+		if span != nil {
+			span.SetAttributes(
+				attribute.Int("netbackup.jobs_in_page", 0),
+			)
+			span.SetStatus(codes.Ok, "No more jobs to process")
+		}
 		return -1, nil
 	}
 
@@ -141,12 +219,49 @@ func FetchJobDetails(
 	jobsStatusCount[statusKey.String()]++
 	jobsSize[jobKey.String()] += float64(job.Attributes.KilobytesTransferred * bytesPerKilobyte)
 
+	// Record jobs in page attribute
+	if span != nil {
+		span.SetAttributes(
+			attribute.Int("netbackup.jobs_in_page", len(jobs.Data)),
+		)
+	}
+
 	// Check if we've reached the last page
 	if jobs.Meta.Pagination.Offset == jobs.Meta.Pagination.Last {
+		if span != nil {
+			span.SetStatus(codes.Ok, "Last page reached")
+		}
 		return -1, nil
 	}
 
+	// Set span status to OK for successful page fetch
+	if span != nil {
+		span.SetStatus(codes.Ok, "Page fetched successfully")
+	}
+
 	return jobs.Meta.Pagination.Next, nil
+}
+
+// createJobPageSpan creates a child span for job page fetching operations.
+// This helper method provides nil-safe span creation and sets the span kind to client.
+//
+// Parameters:
+//   - ctx: Parent context for the span
+//   - tracer: OpenTelemetry tracer (may be nil if tracing is disabled)
+//
+// Returns:
+//   - Updated context with the span
+//   - The created span (or nil if tracing is disabled)
+func createJobPageSpan(ctx context.Context, tracer trace.Tracer) (context.Context, trace.Span) {
+	// Nil-safe check: if tracer is not initialized, return original context and nil span
+	if tracer == nil {
+		return ctx, nil
+	}
+
+	// Start span with operation name and set span kind to client
+	return tracer.Start(ctx, "netbackup.fetch_job_page",
+		trace.WithSpanKind(trace.SpanKindClient),
+	)
 }
 
 // HandlePagination provides a generic pagination handler that repeatedly calls a fetch function
@@ -222,15 +337,98 @@ func FetchAllJobs(
 	jobsSize, jobsCount, jobsStatusCount map[string]float64,
 	scrapingInterval string,
 ) error {
+	// Start child span "netbackup.fetch_jobs" from parent context
+	ctx, span := createJobsSpan(ctx, client.tracer)
+	if span != nil {
+		defer span.End()
+	}
+
 	duration, err := time.ParseDuration("-" + scrapingInterval)
 	if err != nil {
+		// Record error as span event and set span status to error
+		if span != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
 		return fmt.Errorf("invalid scraping interval %s: %w", scrapingInterval, err)
 	}
 
 	startTime := time.Now().Add(duration).UTC()
 	log.Debugf("Fetching jobs since %s", startTime.Format(time.RFC3339))
 
-	return HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
+	// Record span attributes for jobs endpoint, time window, and start time
+	if span != nil {
+		span.SetAttributes(
+			attribute.String("netbackup.endpoint", jobsPath),
+			attribute.String("netbackup.time_window", scrapingInterval),
+			attribute.String("netbackup.start_time", startTime.Format(time.RFC3339)),
+		)
+	}
+
+	// Track initial job counts to calculate total jobs fetched
+	initialJobCount := 0
+	for _, count := range jobsCount {
+		initialJobCount += int(count)
+	}
+
+	// Track page count
+	pageCount := 0
+
+	err = HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
+		pageCount++
 		return FetchJobDetails(ctx, client, jobsSize, jobsCount, jobsStatusCount, offset, startTime)
 	})
+
+	// Calculate total jobs fetched
+	finalJobCount := 0
+	for _, count := range jobsCount {
+		finalJobCount += int(count)
+	}
+	totalJobs := finalJobCount - initialJobCount
+
+	// Record job operation attributes
+	if span != nil {
+		span.SetAttributes(
+			attribute.Int("netbackup.total_jobs", totalJobs),
+			attribute.Int("netbackup.total_pages", pageCount),
+		)
+	}
+
+	// Handle errors in job fetching
+	if err != nil {
+		if span != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		return err
+	}
+
+	// Set span status to OK for successful requests
+	if span != nil {
+		span.SetStatus(codes.Ok, fmt.Sprintf("Fetched %d jobs across %d pages", totalJobs, pageCount))
+	}
+
+	return nil
+}
+
+// createJobsSpan creates a child span for job fetching operations.
+// This helper method provides nil-safe span creation and sets the span kind to client.
+//
+// Parameters:
+//   - ctx: Parent context for the span
+//   - tracer: OpenTelemetry tracer (may be nil if tracing is disabled)
+//
+// Returns:
+//   - Updated context with the span
+//   - The created span (or nil if tracing is disabled)
+func createJobsSpan(ctx context.Context, tracer trace.Tracer) (context.Context, trace.Span) {
+	// Nil-safe check: if tracer is not initialized, return original context and nil span
+	if tracer == nil {
+		return ctx, nil
+	}
+
+	// Start span with operation name and set span kind to client
+	return tracer.Start(ctx, "netbackup.fetch_jobs",
+		trace.WithSpanKind(trace.SpanKindClient),
+	)
 }
