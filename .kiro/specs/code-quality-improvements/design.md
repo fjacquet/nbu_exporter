@@ -8,7 +8,7 @@ This design addresses code quality improvements for the NBU Exporter codebase, f
 
 ### Component Organization
 
-```
+```dir
 internal/
 ├── telemetry/
 │   ├── manager.go          # Existing telemetry manager

@@ -48,14 +48,14 @@
   - Verify attribute constants are used correctly (compile-time check)
   - _Requirements: 1.3, 4.1, 6.3_
 
-- [ ] 8. Run integration and regression tests
+- [x] 8. Run integration and regression tests
   - Execute existing OpenTelemetry integration tests to verify no behavioral changes
   - Run full test suite with `go test ./...` to ensure no breaking changes
   - Run benchmarks to verify no performance regression
   - Verify metrics collection continues to work correctly
   - _Requirements: 1.4, 7.4_
 
-- [ ] 9. Fix test function naming convention
+- [x] 9. Fix test function naming convention
   - Rename all test functions to remove underscores (e.g., `TestNbuClient_GetHeaders` → `TestNbuClientGetHeaders`)
   - Use regex find/replace: `func Test(\w+)_(\w+)` → `func Test$1$2`
   - Handle multi-underscore cases: `Test(\w+)_(\w+)_(\w+)` → `func Test$1$2$3`
@@ -63,9 +63,9 @@
   - Update affected files: `client_test.go`, `netbackup_test.go`, `prometheus_test.go`, `version_detector_test.go`, `otel_integration_test.go`, `otel_benchmark_test.go`, `manager_test.go`, `Config_test.go`
   - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [ ] 10. Eliminate duplicate string literals
+- [x] 10. Eliminate duplicate string literals
   - Identify string literals duplicated more than 3 times using SonarCloud report or grep
-  - Extract test configuration strings to constants (e.g., `testAPIVersion`, `testAPIKey`, `testHost`)
+  - Extract test configuration strings to centralized constants (e.g., `testAPIVersion`, `testAPIKey`, `testHost`)
   - Extract content type strings to constants (e.g., `ContentTypeJSON`)
   - Extract repeated YAML tag strings if used in multiple places
   - Group related constants together in appropriate files

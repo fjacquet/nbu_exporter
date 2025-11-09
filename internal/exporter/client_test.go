@@ -14,15 +14,18 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 )
 
-// Test constants to avoid string duplication
+// Test constants specific to client tests
 const (
 	testResourceName          = "test-resource"
-	contentTypeJSON           = "application/json"
+	testOperationName         = "test.operation"
 	errMsgFetchDataUnexpected = "FetchData() unexpected error = %v"
 	errMsgFetchDataItemCount  = "FetchData() got %d items, want 1"
 	errMsgUnmarshalJSON       = "failed to unmarshal JSON response"
 	errMsgHTTP406             = "HTTP 406 Not Acceptable"
 )
+
+// Note: Common constants like testAPIKey, contentTypeHeader, and contentTypeJSON
+// are defined in test_common.go and shared across all test files
 
 // mockAPIResponse represents a simple API response structure for testing
 type mockAPIResponse struct {
@@ -831,7 +834,7 @@ func TestNbuClientCreateHTTPSpanNilSafe(t *testing.T) {
 	client.tracer = nil // Ensure tracer is nil
 
 	ctx := context.Background()
-	newCtx, span := createSpan(ctx, client.tracer, "test.operation", trace.SpanKindClient)
+	newCtx, span := createSpan(ctx, client.tracer, testOperationName, trace.SpanKindClient)
 
 	// Should return original context and nil span
 	if newCtx != ctx {
@@ -931,7 +934,7 @@ func TestNbuClientFetchDataErrorWithTracing(t *testing.T) {
 func TestCreateSpanWithNilTracer(t *testing.T) {
 	ctx := context.Background()
 
-	newCtx, span := createSpan(ctx, nil, "test.operation", trace.SpanKindClient)
+	newCtx, span := createSpan(ctx, nil, testOperationName, trace.SpanKindClient)
 
 	if newCtx != ctx {
 		t.Error("createSpan() with nil tracer should return original context")
@@ -950,7 +953,7 @@ func TestCreateSpanWithValidTracer(t *testing.T) {
 
 	ctx := context.Background()
 
-	newCtx, span := createSpan(ctx, tracer, "test.operation", trace.SpanKindClient)
+	newCtx, span := createSpan(ctx, tracer, testOperationName, trace.SpanKindClient)
 
 	if newCtx == ctx {
 		t.Error("createSpan() with valid tracer should return new context")

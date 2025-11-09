@@ -16,6 +16,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Note: Common test constants like contentTypeJSON, contentTypeHeader,
+// testSchemeHTTPS, testPathAdminJobs, and testPathStorageUnits
+// are defined in test_common.go and shared across all test files
+
 // TestPerformance_StartupTimeWithVersionDetection measures the startup time
 // when automatic version detection is enabled.
 func TestPerformanceStartupTimeWithVersionDetection(t *testing.T) {
@@ -32,13 +36,13 @@ func TestPerformanceStartupTimeWithVersionDetection(t *testing.T) {
 		response := map[string]interface{}{
 			"data": []interface{}{},
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
 	// Measure startup time with version detection
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "") // Empty version triggers detection
 	cfg.NbuServer.Scheme = "https"
 
@@ -65,13 +69,13 @@ func TestPerformanceStartupTimeWithExplicitVersion(t *testing.T) {
 		response := map[string]interface{}{
 			"data": []interface{}{},
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
 	// Measure startup time with explicit version
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "12.0") // Explicit version
 	cfg.NbuServer.Scheme = "https"
 
@@ -105,12 +109,12 @@ func TestPerformanceCompareStartupTimes(t *testing.T) {
 		response := map[string]interface{}{
 			"data": []interface{}{},
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 
 	// Measure explicit version startup
 	cfgExplicit := createTestConfig(serverAddr, "12.0")
@@ -142,6 +146,20 @@ func TestPerformanceCompareStartupTimes(t *testing.T) {
 		"Version detection overhead should be reasonable")
 }
 
+// handleJobsRequest handles mock job API requests
+func handleJobsRequest(w http.ResponseWriter) {
+	response := createTestJobData()
+	w.Header().Set(contentTypeHeader, contentTypeJSON)
+	_ = json.NewEncoder(w).Encode(response)
+}
+
+// handleStorageRequest handles mock storage API requests
+func handleStorageRequest(w http.ResponseWriter) {
+	response := createTestStorageData()
+	w.Header().Set(contentTypeHeader, contentTypeJSON)
+	_ = json.NewEncoder(w).Encode(response)
+}
+
 // TestPerformance_RuntimePerformance verifies that runtime performance
 // (metric collection) is not degraded by multi-version support.
 func TestPerformanceRuntimePerformance(t *testing.T) {
@@ -154,14 +172,10 @@ func TestPerformanceRuntimePerformance(t *testing.T) {
 		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requestCount++
 
-			if strings.Contains(r.URL.Path, "/admin/jobs") {
-				response := createTestJobData()
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(response)
-			} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
-				response := createTestStorageData()
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(response)
+			if strings.Contains(r.URL.Path, testPathAdminJobs) {
+				handleJobsRequest(w)
+			} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+				handleStorageRequest(w)
 			} else {
 				w.WriteHeader(http.StatusNotFound)
 			}
@@ -169,7 +183,7 @@ func TestPerformanceRuntimePerformance(t *testing.T) {
 		defer server.Close()
 
 		// Create collector
-		serverAddr := strings.TrimPrefix(server.URL, "https://")
+		serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 		cfg := createTestConfig(serverAddr, version)
 		cfg.NbuServer.Scheme = "https"
 
@@ -229,20 +243,16 @@ func TestPerformanceConnectionReuse(t *testing.T) {
 			connectionCount++
 		}
 
-		if strings.Contains(r.URL.Path, "/admin/jobs") {
-			response := createTestJobData()
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(response)
-		} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
-			response := createTestStorageData()
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(response)
+		if strings.Contains(r.URL.Path, testPathAdminJobs) {
+			handleJobsRequest(w)
+		} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+			handleStorageRequest(w)
 		}
 	}))
 	defer server.Close()
 
 	// Create collector
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "12.0")
 	cfg.NbuServer.Scheme = "https"
 
@@ -279,20 +289,16 @@ func TestPerformanceMemoryUsage(t *testing.T) {
 	for _, version := range versions {
 		// Create mock server
 		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.Contains(r.URL.Path, "/admin/jobs") {
-				response := createTestJobData()
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(response)
-			} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
-				response := createTestStorageData()
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(response)
+			if strings.Contains(r.URL.Path, testPathAdminJobs) {
+				handleJobsRequest(w)
+			} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+				handleStorageRequest(w)
 			}
 		}))
 		defer server.Close()
 
 		// Create collector
-		serverAddr := strings.TrimPrefix(server.URL, "https://")
+		serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 		cfg := createTestConfig(serverAddr, version)
 		cfg.NbuServer.Scheme = "https"
 
@@ -317,20 +323,16 @@ func TestPerformanceConcurrentScrapes(t *testing.T) {
 		// Add small delay to simulate real API
 		time.Sleep(10 * time.Millisecond)
 
-		if strings.Contains(r.URL.Path, "/admin/jobs") {
-			response := createTestJobData()
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(response)
-		} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
-			response := createTestStorageData()
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(response)
+		if strings.Contains(r.URL.Path, testPathAdminJobs) {
+			handleJobsRequest(w)
+		} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+			handleStorageRequest(w)
 		}
 	}))
 	defer server.Close()
 
 	// Create collector
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "12.0")
 	cfg.NbuServer.Scheme = "https"
 
@@ -385,12 +387,12 @@ func BenchmarkCollectorCreation(b *testing.B) {
 		response := map[string]interface{}{
 			"data": []interface{}{},
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 
 	b.Run("ExplicitVersion", func(b *testing.B) {
 		cfg := createTestConfig(serverAddr, "12.0")
@@ -415,20 +417,16 @@ func BenchmarkMetricCollection(b *testing.B) {
 		b.Run("Version_"+strings.ReplaceAll(version, ".", "_"), func(b *testing.B) {
 			// Create mock server
 			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if strings.Contains(r.URL.Path, "/admin/jobs") {
-					response := createTestJobData()
-					w.Header().Set("Content-Type", "application/json")
-					_ = json.NewEncoder(w).Encode(response)
-				} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
-					response := createTestStorageData()
-					w.Header().Set("Content-Type", "application/json")
-					_ = json.NewEncoder(w).Encode(response)
+				if strings.Contains(r.URL.Path, testPathAdminJobs) {
+					handleJobsRequest(w)
+				} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+					handleStorageRequest(w)
 				}
 			}))
 			defer server.Close()
 
 			// Create collector
-			serverAddr := strings.TrimPrefix(server.URL, "https://")
+			serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 			cfg := createTestConfig(serverAddr, version)
 			cfg.NbuServer.Scheme = "https"
 

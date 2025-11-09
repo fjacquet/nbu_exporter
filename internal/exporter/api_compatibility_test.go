@@ -14,17 +14,15 @@ import (
 	"github.com/fjacquet/nbu_exporter/internal/models"
 )
 
-// Test constants
+// Test constants specific to API compatibility tests
+// Note: Common constants like contentTypeHeader, contentTypeJSON, testAPIKey, etc.
+// are defined in test_common.go and shared across all test files
 const (
 	testAPIVersionFormat     = "API_v%s"
 	fetchJobsErrorFormat     = "FetchAllJobs failed for version %s: %v"
 	fetchStorageErrorFormat  = "FetchStorage failed for version %s: %v"
-	contentTypeHeader        = "Content-Type"
-	acceptHeader             = "Accept"
-	authorizationHeader      = "Authorization"
-	netbackupMediaTypeFormat = "application/vnd.netbackup+json;version=%s"
-	testAPIKey               = "test-api-key"
 	testDataPathFormat       = "../../testdata/api-versions/%s-response-v%s.json"
+	netbackupMediaTypeFormat = "application/vnd.netbackup+json;version=%s"
 )
 
 // TestJobsAPICompatibilityAcrossVersions tests jobs API with all three versions
@@ -48,7 +46,7 @@ func TestJobsAPICompatibilityAcrossVersions(t *testing.T) {
 // testJobsAPIForVersion tests jobs API for a specific version
 func testJobsAPIForVersion(t *testing.T, version, filename string) {
 	t.Helper()
-	
+
 	server := createMockServerWithFile(t, filename, version)
 	defer server.Close()
 
@@ -73,7 +71,7 @@ func createJobMetricMaps() (map[string]float64, map[string]float64, map[string]f
 // verifyJobMetrics verifies that job metrics were collected correctly
 func verifyJobMetrics(t *testing.T, jobsSize, jobsCount map[string]float64) {
 	t.Helper()
-	
+
 	if len(jobsCount) == 0 {
 		t.Error("No job count metrics collected")
 	}
@@ -114,7 +112,7 @@ func TestStorageAPICompatibilityAcrossVersions(t *testing.T) {
 // testStorageAPIForVersion tests storage API for a specific version
 func testStorageAPIForVersion(t *testing.T, version, filename string) {
 	t.Helper()
-	
+
 	server := createMockServerWithFile(t, filename, version)
 	defer server.Close()
 
@@ -133,7 +131,7 @@ func testStorageAPIForVersion(t *testing.T, version, filename string) {
 // verifyStorageMetrics verifies that storage metrics were collected correctly
 func verifyStorageMetrics(t *testing.T, storageMetrics map[string]float64, version string) {
 	t.Helper()
-	
+
 	if len(storageMetrics) == 0 {
 		t.Error("No storage metrics collected")
 	}
@@ -169,13 +167,13 @@ func TestMetricsConsistencyAcrossVersions(t *testing.T) {
 // collectJobMetricsForAllVersions collects job metrics for all API versions
 func collectJobMetricsForAllVersions(t *testing.T, versions []string) map[string]map[string]float64 {
 	t.Helper()
-	
+
 	allJobMetrics := make(map[string]map[string]float64)
 
 	for _, version := range versions {
 		versionSuffix := getVersionSuffix(version)
 		jobsFile := fmt.Sprintf(testDataPathFormat, "jobs", versionSuffix)
-		
+
 		jobsServer := createMockServerWithFile(t, jobsFile, version)
 		jobsCfg := createTestConfig(jobsServer.URL, version)
 		jobsClient := NewNbuClient(jobsCfg)
@@ -197,13 +195,13 @@ func collectJobMetricsForAllVersions(t *testing.T, versions []string) map[string
 // collectStorageMetricsForAllVersions collects storage metrics for all API versions
 func collectStorageMetricsForAllVersions(t *testing.T, versions []string) map[string]map[string]float64 {
 	t.Helper()
-	
+
 	allStorageMetrics := make(map[string]map[string]float64)
 
 	for _, version := range versions {
 		versionSuffix := getVersionSuffix(version)
 		storageFile := fmt.Sprintf(testDataPathFormat, "storage", versionSuffix)
-		
+
 		storageServer := createMockServerWithFile(t, storageFile, version)
 		storageCfg := createTestConfig(storageServer.URL, version)
 		storageClient := NewNbuClient(storageCfg)
@@ -238,7 +236,7 @@ func getVersionSuffix(version string) string {
 // verifyJobMetricConsistency verifies job metrics are consistent across versions
 func verifyJobMetricConsistency(t *testing.T, allJobMetrics map[string]map[string]float64) {
 	t.Helper()
-	
+
 	baseJobKeys := make(map[string]bool)
 	for key := range allJobMetrics["3.0"] {
 		baseJobKeys[key] = true
@@ -259,7 +257,7 @@ func verifyJobMetricConsistency(t *testing.T, allJobMetrics map[string]map[strin
 // verifyStorageMetricConsistency verifies storage metrics are consistent across versions
 func verifyStorageMetricConsistency(t *testing.T, allStorageMetrics map[string]map[string]float64) {
 	t.Helper()
-	
+
 	baseStorageKeys := make(map[string]bool)
 	for key := range allStorageMetrics["3.0"] {
 		baseStorageKeys[key] = true
@@ -495,18 +493,18 @@ func isPaginatedJobsRequest(r *http.Request) bool {
 // handlePaginatedJobsRequest handles paginated jobs API requests
 func handlePaginatedJobsRequest(t *testing.T, w http.ResponseWriter, r *http.Request, data []byte, version string) {
 	t.Helper()
-	
+
 	fullJobs := unmarshalJobsData(t, data)
 	offset := parseOffsetFromRequest(r)
 	response := createPaginatedJobsResponse(fullJobs, offset)
-	
+
 	writeJSONResponse(w, response, version)
 }
 
 // unmarshalJobsData unmarshals the jobs data from bytes
 func unmarshalJobsData(t *testing.T, data []byte) models.Jobs {
 	t.Helper()
-	
+
 	var fullJobs models.Jobs
 	if err := json.Unmarshal(data, &fullJobs); err != nil {
 		t.Fatalf("Failed to unmarshal jobs data: %v", err)
@@ -625,7 +623,7 @@ func createPaginatedJobsResponse(fullJobs models.Jobs, offset int) *models.Jobs 
 func setPaginationMetadata(response *models.Jobs, offset int, totalJobs int) {
 	response.Meta.Pagination.Offset = offset
 	response.Meta.Pagination.Last = totalJobs - 1
-	
+
 	if offset < totalJobs-1 {
 		response.Meta.Pagination.Next = offset + 1
 	} else {

@@ -13,21 +13,21 @@ import (
 )
 
 const (
-	benchContentType      = "Content-Type"
-	benchApplicationJSON  = "application/json"
-	benchTestResource     = "test-resource"
-	benchTestKey          = "test-key"
-	benchAPIVersion       = "13.0"
-	benchEndpoint         = "localhost:4317"
-	benchServiceName      = "nbu-exporter-bench"
-	benchServiceVersion   = "1.0.0-bench"
-	benchNetBackupServer  = "bench-server"
-	benchTestOperation    = "test.operation"
-	benchHTTPMethod       = "GET"
-	benchExampleURL       = "http://example.com"
-	benchHTTPStatus       = 200
-	benchResponseSize     = 100
-	benchDuration         = 50
+	benchContentType     = "Content-Type"
+	benchApplicationJSON = "application/json"
+	benchTestResource    = "test-resource"
+	benchTestKey         = "test-key"
+	benchAPIVersion      = "13.0"
+	benchEndpoint        = "localhost:4317"
+	benchServiceName     = "nbu-exporter-bench"
+	benchServiceVersion  = "1.0.0-bench"
+	benchNetBackupServer = "bench-server"
+	benchTestOperation   = "test.operation"
+	benchHTTPMethod      = "GET"
+	benchExampleURL      = "http://example.com"
+	benchHTTPStatus      = 200
+	benchResponseSize    = 100
+	benchDuration        = 50
 )
 
 // BenchmarkFetchDataWithoutTracing benchmarks FetchData without tracing

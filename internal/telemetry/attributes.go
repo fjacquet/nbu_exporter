@@ -12,16 +12,16 @@ const (
 
 // NetBackup-specific attributes
 const (
-	AttrNetBackupEndpoint       = "netbackup.endpoint"
-	AttrNetBackupStorageUnits   = "netbackup.storage_units"
-	AttrNetBackupAPIVersion     = "netbackup.api_version"
-	AttrNetBackupTimeWindow     = "netbackup.time_window"
-	AttrNetBackupStartTime      = "netbackup.start_time"
-	AttrNetBackupTotalJobs      = "netbackup.total_jobs"
-	AttrNetBackupTotalPages     = "netbackup.total_pages"
-	AttrNetBackupPageOffset     = "netbackup.page_offset"
-	AttrNetBackupPageNumber     = "netbackup.page_number"
-	AttrNetBackupJobsInPage     = "netbackup.jobs_in_page"
+	AttrNetBackupEndpoint     = "netbackup.endpoint"
+	AttrNetBackupStorageUnits = "netbackup.storage_units"
+	AttrNetBackupAPIVersion   = "netbackup.api_version"
+	AttrNetBackupTimeWindow   = "netbackup.time_window"
+	AttrNetBackupStartTime    = "netbackup.start_time"
+	AttrNetBackupTotalJobs    = "netbackup.total_jobs"
+	AttrNetBackupTotalPages   = "netbackup.total_pages"
+	AttrNetBackupPageOffset   = "netbackup.page_offset"
+	AttrNetBackupPageNumber   = "netbackup.page_number"
+	AttrNetBackupJobsInPage   = "netbackup.jobs_in_page"
 )
 
 // Scrape cycle attributes
