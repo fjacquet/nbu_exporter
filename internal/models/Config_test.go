@@ -1230,6 +1230,156 @@ func TestConfig_GetOTelConfig(t *testing.T) {
 	}
 }
 
+func TestConfig_ValidateOTelEndpoint(t *testing.T) {
+	baseConfig := func() Config {
+		return Config{
+			Server: struct {
+				Port             string `yaml:"port"`
+				Host             string `yaml:"host"`
+				URI              string `yaml:"uri"`
+				ScrapingInterval string `yaml:"scrapingInterval"`
+				LogName          string `yaml:"logName"`
+			}{
+				Port:             "2112",
+				Host:             "localhost",
+				URI:              "/metrics",
+				ScrapingInterval: "5m",
+			},
+			NbuServer: struct {
+				Port               string `yaml:"port"`
+				Scheme             string `yaml:"scheme"`
+				URI                string `yaml:"uri"`
+				Domain             string `yaml:"domain"`
+				DomainType         string `yaml:"domainType"`
+				Host               string `yaml:"host"`
+				APIKey             string `yaml:"apiKey"`
+				APIVersion         string `yaml:"apiVersion"`
+				ContentType        string `yaml:"contentType"`
+				InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			}{
+				Port:   "1556",
+				Scheme: "https",
+				URI:    "/netbackup",
+				Host:   "nbu-master",
+				APIKey: "test-key",
+			},
+		}
+	}
+
+	tests := []struct {
+		name      string
+		endpoint  string
+		wantError bool
+		errMsg    string
+	}{
+		{
+			name:      "valid endpoint localhost:4317",
+			endpoint:  "localhost:4317",
+			wantError: false,
+		},
+		{
+			name:      "valid endpoint with IP address",
+			endpoint:  "192.168.1.100:4317",
+			wantError: false,
+		},
+		{
+			name:      "valid endpoint with hostname",
+			endpoint:  "otel-collector.example.com:4317",
+			wantError: false,
+		},
+		{
+			name:      "valid endpoint with IPv6 address",
+			endpoint:  "[::1]:4317",
+			wantError: false,
+		},
+		{
+			name:      "valid endpoint with port 1",
+			endpoint:  "localhost:1",
+			wantError: false,
+		},
+		{
+			name:      "valid endpoint with port 65535",
+			endpoint:  "localhost:65535",
+			wantError: false,
+		},
+		{
+			name:      "empty endpoint",
+			endpoint:  "",
+			wantError: true,
+			errMsg:    "OpenTelemetry endpoint is required when enabled",
+		},
+		{
+			name:      "missing port",
+			endpoint:  "localhost",
+			wantError: true,
+			errMsg:    "invalid OpenTelemetry endpoint format",
+		},
+		{
+			name:      "missing host",
+			endpoint:  ":4317",
+			wantError: true,
+			errMsg:    "invalid OpenTelemetry endpoint format",
+		},
+		{
+			name:      "invalid port - non-numeric",
+			endpoint:  "localhost:abc",
+			wantError: true,
+			errMsg:    "invalid OpenTelemetry endpoint port",
+		},
+		{
+			name:      "invalid port - zero",
+			endpoint:  "localhost:0",
+			wantError: true,
+			errMsg:    "invalid OpenTelemetry endpoint port: 0 (must be between 1 and 65535)",
+		},
+		{
+			name:      "invalid port - negative",
+			endpoint:  "localhost:-1",
+			wantError: true,
+			errMsg:    "invalid OpenTelemetry endpoint port",
+		},
+		{
+			name:      "invalid port - too high",
+			endpoint:  "localhost:65536",
+			wantError: true,
+			errMsg:    "invalid OpenTelemetry endpoint port: 65536 (must be between 1 and 65535)",
+		},
+		{
+			name:      "invalid port - way too high",
+			endpoint:  "localhost:99999",
+			wantError: true,
+			errMsg:    "invalid OpenTelemetry endpoint port: 99999 (must be between 1 and 65535)",
+		},
+		{
+			name:      "multiple colons without brackets",
+			endpoint:  "host:with:colons:4317",
+			wantError: false, // Takes last colon as separator
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := baseConfig()
+			config.OpenTelemetry.Enabled = true
+			config.OpenTelemetry.Endpoint = tt.endpoint
+
+			err := config.Validate()
+
+			if tt.wantError {
+				if err == nil {
+					t.Error("Expected error, got nil")
+				} else if tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf("Expected error containing %q, got %q", tt.errMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}
+
 func TestConfig_ParseYAML_OpenTelemetry(t *testing.T) {
 	tests := []struct {
 		name         string

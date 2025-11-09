@@ -141,8 +141,8 @@ func (c *Config) Validate() error {
 
 	// Validate OpenTelemetry configuration if enabled
 	if c.OpenTelemetry.Enabled {
-		if c.OpenTelemetry.Endpoint == "" {
-			return errors.New("OpenTelemetry endpoint is required when enabled")
+		if err := c.validateOTelEndpoint(); err != nil {
+			return err
 		}
 		if c.OpenTelemetry.SamplingRate < 0.0 || c.OpenTelemetry.SamplingRate > 1.0 {
 			return fmt.Errorf("OpenTelemetry sampling rate must be between 0.0 and 1.0, got: %f", c.OpenTelemetry.SamplingRate)
@@ -150,6 +150,72 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+// validateOTelEndpoint validates the OpenTelemetry endpoint format and port range.
+// It checks that the endpoint follows the "host:port" pattern and that the port
+// is within the valid range (1-65535).
+//
+// Returns an error if:
+//   - The endpoint is empty
+//   - The endpoint format is not "host:port"
+//   - The port is not a valid integer
+//   - The port is outside the range 1-65535
+func (c *Config) validateOTelEndpoint() error {
+	if c.OpenTelemetry.Endpoint == "" {
+		return errors.New("OpenTelemetry endpoint is required when enabled")
+	}
+
+	// Split endpoint into host and port
+	host, port, err := splitHostPort(c.OpenTelemetry.Endpoint)
+	if err != nil {
+		return fmt.Errorf("invalid OpenTelemetry endpoint format: %s (expected host:port)", c.OpenTelemetry.Endpoint)
+	}
+
+	// Validate host is not empty
+	if host == "" {
+		return fmt.Errorf("invalid OpenTelemetry endpoint: host cannot be empty in %s", c.OpenTelemetry.Endpoint)
+	}
+
+	// Validate port is a valid integer in range 1-65535
+	portNum, err := strconv.Atoi(port)
+	if err != nil {
+		return fmt.Errorf("invalid OpenTelemetry endpoint port: %s (must be a valid integer)", port)
+	}
+	if portNum < 1 || portNum > 65535 {
+		return fmt.Errorf("invalid OpenTelemetry endpoint port: %d (must be between 1 and 65535)", portNum)
+	}
+
+	return nil
+}
+
+// splitHostPort splits a "host:port" string into host and port components.
+// This is a helper function for endpoint validation that handles the parsing
+// of the endpoint string.
+//
+// Returns the host and port as separate strings, or an error if the format is invalid.
+func splitHostPort(endpoint string) (host, port string, err error) {
+	// Find the last colon to handle IPv6 addresses like [::1]:4317
+	lastColon := -1
+	for i := len(endpoint) - 1; i >= 0; i-- {
+		if endpoint[i] == ':' {
+			lastColon = i
+			break
+		}
+	}
+
+	if lastColon == -1 {
+		return "", "", fmt.Errorf("missing port in endpoint")
+	}
+
+	host = endpoint[:lastColon]
+	port = endpoint[lastColon+1:]
+
+	if host == "" || port == "" {
+		return "", "", fmt.Errorf("invalid host:port format")
+	}
+
+	return host, port, nil
 }
 
 // GetNBUBaseURL returns the complete base URL for the NetBackup server.
