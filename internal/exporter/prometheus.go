@@ -12,6 +12,10 @@ import (
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const collectionTimeout = 2 * time.Minute // Maximum time allowed for metric collection
@@ -30,6 +34,7 @@ const collectionTimeout = 2 * time.Minute // Maximum time allowed for metric col
 type NbuCollector struct {
 	cfg                models.Config
 	client             *NbuClient
+	tracer             trace.Tracer
 	nbuDiskSize        *prometheus.Desc
 	nbuResponseTime    *prometheus.Desc
 	nbuJobsSize        *prometheus.Desc
@@ -87,9 +92,13 @@ func NewNbuCollector(cfg models.Config) (*NbuCollector, error) {
 		log.Infof("Using configured NetBackup API version: %s", cfg.NbuServer.APIVersion)
 	}
 
+	// Initialize tracer from global provider if OpenTelemetry is enabled
+	tracer := otel.Tracer("nbu-exporter")
+
 	return &NbuCollector{
 		cfg:    cfg,
 		client: client,
+		tracer: tracer,
 		nbuResponseTime: prometheus.NewDesc(
 			"nbu_response_time_ms",
 			"The server response time in milliseconds",
@@ -135,6 +144,32 @@ func (c *NbuCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.nbuAPIVersion
 }
 
+// createScrapeSpan creates a root span for the Prometheus scrape cycle.
+// It returns a context with the span and the span itself for lifecycle management.
+// If the tracer is not initialized (OpenTelemetry disabled), it returns the original
+// context and a nil span, allowing the collector to operate without tracing overhead.
+//
+// The span is configured with:
+//   - Operation name: "prometheus.scrape"
+//   - Span kind: SpanKindServer (representing the scrape as a server operation)
+//
+// Returns:
+//   - context.Context: Context with span attached (or original context if tracing disabled)
+//   - trace.Span: The created span (or nil if tracing disabled)
+func (c *NbuCollector) createScrapeSpan(ctx context.Context) (context.Context, trace.Span) {
+	// Nil-safe check: if tracer is not initialized, return original context
+	if c.tracer == nil {
+		return ctx, nil
+	}
+
+	// Create root span for scrape cycle
+	ctx, span := c.tracer.Start(ctx, "prometheus.scrape",
+		trace.WithSpanKind(trace.SpanKindServer),
+	)
+
+	return ctx, span
+}
+
 // Collect fetches metrics from NetBackup and sends them to the provided channel.
 // This method is called by Prometheus on each scrape request and performs the following:
 //  1. Fetches storage unit capacity data
@@ -150,10 +185,28 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), collectionTimeout)
 	defer cancel()
 
+	// Create root span for scrape cycle
+	scrapeStart := time.Now()
+	ctx, span := c.createScrapeSpan(ctx)
+	if span != nil {
+		defer span.End()
+	}
+
+	// Track errors for scrape status
+	var storageErr, jobsErr error
+	scrapeStatus := "success"
+
 	// Collect storage metrics
 	storageMetrics := make(map[string]float64)
 	if err := FetchStorage(ctx, c.client, storageMetrics); err != nil {
+		storageErr = err
 		log.Errorf("Failed to fetch storage metrics: %v", err)
+		// Record error as span event
+		if span != nil {
+			span.AddEvent("storage_fetch_error", trace.WithAttributes(
+				attribute.String("error", err.Error()),
+			))
+		}
 		// Continue to try fetching job metrics even if storage fails
 	}
 
@@ -163,8 +216,36 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 	jobsStatusCount := make(map[string]float64)
 
 	if err := FetchAllJobs(ctx, c.client, jobsSize, jobsCount, jobsStatusCount, c.cfg.Server.ScrapingInterval); err != nil {
+		jobsErr = err
 		log.Errorf("Failed to fetch job metrics: %v", err)
+		// Record error as span event
+		if span != nil {
+			span.AddEvent("jobs_fetch_error", trace.WithAttributes(
+				attribute.String("error", err.Error()),
+			))
+		}
 		// Continue to expose whatever metrics we have
+	}
+
+	// Determine scrape status and set span status
+	if storageErr != nil || jobsErr != nil {
+		scrapeStatus = "partial_failure"
+		if span != nil {
+			span.SetStatus(codes.Error, "Partial failure during metric collection")
+		}
+	} else if span != nil {
+		span.SetStatus(codes.Ok, "")
+	}
+
+	// Record span attributes if tracing is enabled
+	if span != nil {
+		scrapeDuration := time.Since(scrapeStart)
+		span.SetAttributes(
+			attribute.Float64("scrape.duration_ms", float64(scrapeDuration.Milliseconds())),
+			attribute.Int("scrape.storage_metrics_count", len(storageMetrics)),
+			attribute.Int("scrape.job_metrics_count", len(jobsSize)),
+			attribute.String("scrape.status", scrapeStatus),
+		)
 	}
 
 	// Expose storage metrics

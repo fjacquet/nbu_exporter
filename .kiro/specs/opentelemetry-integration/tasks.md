@@ -86,25 +86,25 @@
     - End span with defer statement
     - _Requirements: 2.5, 2.7_
 
-- [ ] 5. Instrument Prometheus collector for scrape tracing
-  - [ ] 5.1 Add tracer to NbuCollector struct
+- [x] 5. Instrument Prometheus collector for scrape tracing
+  - [x] 5.1 Add tracer to NbuCollector struct
     - Add `tracer trace.Tracer` field to NbuCollector
     - Initialize tracer in `NewNbuCollector()` from global provider
     - _Requirements: 2.1_
-  - [ ] 5.2 Create root span for scrape cycle
+  - [x] 5.2 Create root span for scrape cycle
     - Implement `createScrapeSpan()` helper method
     - Start span with operation name "prometheus.scrape"
     - Set span kind to `trace.SpanKindServer`
     - Add nil-safe checks for tracer
     - _Requirements: 2.1, 6.2_
-  - [ ] 5.3 Update Collect method with root span
+  - [x] 5.3 Update Collect method with root span
     - Create root span at start of `Collect()` method
     - Propagate context to child operations (FetchStorage, FetchAllJobs)
     - Record scrape duration as span attribute
     - Record metric counts (storage, jobs) as span attributes
     - End span with defer statement
     - _Requirements: 2.1, 2.7, 5.1_
-  - [ ] 5.4 Record scrape status and errors
+  - [x] 5.4 Record scrape status and errors
     - Add `scrape.status` attribute ("success" or "partial_failure")
     - Record errors as span events
     - Set span status based on scrape outcome
