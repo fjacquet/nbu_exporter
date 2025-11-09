@@ -79,7 +79,7 @@ func NewServer(cfg models.Config) *Server {
 			Insecure:        cfg.OpenTelemetry.Insecure,
 			SamplingRate:    cfg.OpenTelemetry.SamplingRate,
 			ServiceName:     "nbu-exporter",
-			ServiceVersion:  "1.0.0", // TODO: Get from build info
+			ServiceVersion:  "2.0.0", // Version with OpenTelemetry support
 			NetBackupServer: cfg.NbuServer.Host,
 		})
 	}

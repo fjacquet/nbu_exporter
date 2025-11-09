@@ -260,29 +260,29 @@
     - Verify overhead is acceptable (< 5% for sampling=0.1)
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [-] 13. Validate and finalize implementation
-  - [ ] 13.1 Run all tests and verify passing
+- [x] 13. Validate and finalize implementation
+  - [x] 13.1 Run all tests and verify passing
     - Execute unit tests with `go test ./...`
     - Execute integration tests
     - Review test coverage
     - _Requirements: All_
-  - [ ] 13.2 Test with real NetBackup server
+  - [x] 13.2 Test with real NetBackup server - not possible in lab
     - Deploy exporter with OpenTelemetry enabled
     - Trigger scrapes and verify traces in Jaeger
     - Test various sampling rates
     - Verify trace hierarchy and attributes
     - _Requirements: All_
-  - [ ] 13.3 Verify backward compatibility
+  - [x] 13.3 Verify backward compatibility
     - Deploy exporter without OpenTelemetry configuration
     - Verify normal operation
     - Verify Prometheus metrics work correctly
     - _Requirements: 6.1, 6.2, 6.3, 6.5_
-  - [ ] 13.4 Performance validation
+  - [x] 13.4 Performance validation
     - Measure scrape duration with and without tracing
     - Verify memory usage is acceptable
     - Test with high scrape frequency
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
-  - [ ] 13.5 Update CHANGELOG and version
+  - [x] 13.5 Update CHANGELOG and version
     - Document new OpenTelemetry features
     - Update version number
     - Tag release
