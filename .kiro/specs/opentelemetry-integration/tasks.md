@@ -223,37 +223,37 @@
     - Explain span attributes and their meanings
     - _Requirements: 10.4_
 
-- [ ] 12. Implement comprehensive testing
-  - [ ] 12.1 Add unit tests for telemetry manager
+- [x] 12. Implement comprehensive testing
+  - [x] 12.1 Add unit tests for telemetry manager
     - Test initialization with valid configuration
     - Test initialization with invalid endpoint
     - Test shutdown with pending spans
     - Test disabled mode behavior
     - _Requirements: 1.1, 1.2, 1.4, 6.4_
-  - [ ] 12.2 Add unit tests for instrumented client
+  - [x] 12.2 Add unit tests for instrumented client
     - Test span creation for HTTP requests
     - Test attribute recording (method, URL, status)
     - Test error recording and span status
     - Test nil-safe operation without tracer
     - _Requirements: 2.5, 2.6, 2.7, 6.2_
-  - [ ] 12.3 Add unit tests for instrumented collector
+  - [x] 12.3 Add unit tests for instrumented collector
     - Test scrape span creation
     - Test context propagation to fetch operations
     - Test span attributes for successful scrape
     - Test span attributes for failed scrape
     - _Requirements: 2.1, 2.6, 2.7_
-  - [ ] 12.4 Add unit tests for configuration
+  - [x] 12.4 Add unit tests for configuration
     - Test OpenTelemetry config validation
     - Test default values
     - Test invalid sampling rates
     - Test missing endpoint when enabled
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8_
-  - [ ] 12.5 Add integration tests
+  - [x] 12.5 Add integration tests
     - Test end-to-end tracing with test collector
     - Test backward compatibility without OTel config
     - Test graceful degradation with invalid endpoint
     - _Requirements: 6.1, 6.2, 6.3, 6.4_
-  - [ ] 12.6 Add performance benchmarks
+  - [x] 12.6 Add performance benchmarks
     - Benchmark scrape with tracing disabled
     - Benchmark scrape with tracing enabled (sampling=1.0)
     - Benchmark scrape with tracing enabled (sampling=0.1)

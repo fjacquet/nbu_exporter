@@ -135,13 +135,13 @@ func (s *Server) Start() error {
 
 	// Setup HTTP handlers
 	mux := http.NewServeMux()
-	
+
 	// Wrap Prometheus handler with trace context extraction if OpenTelemetry is enabled
 	prometheusHandler := promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{})
 	if s.telemetryManager != nil && s.telemetryManager.IsEnabled() {
 		prometheusHandler = s.extractTraceContextMiddleware(prometheusHandler)
 	}
-	
+
 	mux.Handle(s.cfg.Server.URI, prometheusHandler)
 	mux.HandleFunc("/health", s.healthHandler)
 
@@ -217,10 +217,10 @@ func (s *Server) extractTraceContextMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Extract trace context from incoming request headers using the global propagator
 		ctx := otel.GetTextMapPropagator().Extract(r.Context(), propagation.HeaderCarrier(r.Header))
-		
+
 		// Create a new request with the extracted context
 		r = r.WithContext(ctx)
-		
+
 		// Call the next handler with the updated request
 		next.ServeHTTP(w, r)
 	})

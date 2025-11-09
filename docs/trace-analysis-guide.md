@@ -62,7 +62,7 @@ prometheus.scrape (root span)
 | Attribute | Type | Description | Example |
 |-----------|------|-------------|---------|
 | `http.method` | string | HTTP method | "GET" |
-| `http.url` | string | Full request URL | "https://nbu:1556/netbackup/admin/jobs" |
+| `http.url` | string | Full request URL | "<https://nbu:1556/netbackup/admin/jobs>" |
 | `http.status_code` | int | HTTP response status code | 200 |
 | `http.duration_ms` | int | Request duration in milliseconds | 2341 |
 
@@ -157,6 +157,7 @@ Tags: netbackup.total_pages>10
 Click on a slow trace and examine the waterfall view:
 
 **Example 1: Slow Storage Fetch**
+
 ```
 prometheus.scrape: 35.2s
 ├── netbackup.fetch_storage: 30.1s ⚠️ BOTTLENECK
@@ -168,6 +169,7 @@ prometheus.scrape: 35.2s
 **Action**: Check NetBackup server performance, verify network latency
 
 **Example 2: High Pagination**
+
 ```
 prometheus.scrape: 48.3s
 ├── netbackup.fetch_storage: 2.1s
@@ -181,6 +183,7 @@ prometheus.scrape: 48.3s
 **Action**: Reduce `scrapingInterval` from 1h to 30m
 
 **Example 3: API Errors**
+
 ```
 prometheus.scrape: 25.2s
 ├── netbackup.fetch_storage: 2.1s
@@ -198,6 +201,7 @@ prometheus.scrape: 25.2s
 Click on a span to view its attributes:
 
 **Key metrics to check:**
+
 - `http.duration_ms`: Request latency
 - `http.status_code`: Success/failure status
 - `netbackup.total_pages`: Pagination count
@@ -208,6 +212,7 @@ Click on a span to view its attributes:
 #### Baseline Performance
 
 **Normal scrape (< 1000 jobs, 6 storage units):**
+
 ```
 prometheus.scrape: 8-12s
 ├── netbackup.fetch_storage: 1-2s
@@ -216,6 +221,7 @@ prometheus.scrape: 8-12s
 ```
 
 **High-volume scrape (> 5000 jobs):**
+
 ```
 prometheus.scrape: 45-60s
 ├── netbackup.fetch_storage: 1-2s
@@ -238,17 +244,20 @@ prometheus.scrape: 45-60s
 ### Scenario 1: Scrapes Timing Out
 
 **Symptoms:**
+
 - Prometheus scrape timeout errors
 - Incomplete metrics
 - Traces show > 60s duration
 
 **Analysis:**
+
 ```
 Query: Min Duration: 60s
 Look for: High netbackup.total_pages
 ```
 
 **Solutions:**
+
 1. Reduce `scrapingInterval` from 1h to 30m
 2. Increase Prometheus scrape timeout
 3. Optimize NetBackup server performance
@@ -256,17 +265,20 @@ Look for: High netbackup.total_pages
 ### Scenario 2: Intermittent Failures
 
 **Symptoms:**
+
 - Some scrapes succeed, others fail
 - HTTP 500 errors in traces
 - `scrape.status=partial_failure`
 
 **Analysis:**
+
 ```
 Query: Tags: scrape.status=partial_failure
 Look for: http.status_code >= 500
 ```
 
 **Solutions:**
+
 1. Check NetBackup server logs for errors
 2. Verify API key has correct permissions
 3. Check network connectivity
@@ -275,16 +287,19 @@ Look for: http.status_code >= 500
 ### Scenario 3: Slow Storage Fetch
 
 **Symptoms:**
+
 - Storage metrics delayed
 - `netbackup.fetch_storage` > 10s
 
 **Analysis:**
+
 ```
 Query: Operation: netbackup.fetch_storage, Min Duration: 10s
 Look for: http.duration_ms in child spans
 ```
 
 **Solutions:**
+
 1. Check NetBackup storage service status
 2. Verify network latency to NetBackup server
 3. Review NetBackup server disk I/O
@@ -293,17 +308,20 @@ Look for: http.duration_ms in child spans
 ### Scenario 4: High Pagination
 
 **Symptoms:**
+
 - Long scrape durations
 - Many `netbackup.fetch_job_page` spans
 - `netbackup.total_pages` > 10
 
 **Analysis:**
+
 ```
 Query: Tags: netbackup.total_pages>10
 Look for: Pattern of multiple page fetches
 ```
 
 **Solutions:**
+
 1. Reduce `scrapingInterval` to fetch fewer jobs
 2. Consider filtering jobs by policy or status
 3. Optimize NetBackup job retention policies
@@ -311,17 +329,20 @@ Look for: Pattern of multiple page fetches
 ### Scenario 5: API Version Issues
 
 **Symptoms:**
+
 - HTTP 406 errors
 - Version detection failures
 - Inconsistent API responses
 
 **Analysis:**
+
 ```
 Query: Tags: http.status_code=406
 Look for: netbackup.api_version attribute
 ```
 
 **Solutions:**
+
 1. Verify NetBackup version compatibility
 2. Check API version configuration
 3. Enable automatic version detection
@@ -332,16 +353,19 @@ Look for: netbackup.api_version attribute
 ### Query Optimization
 
 **Use specific time ranges:**
+
 ```
 Lookback: Last 1 hour (instead of Last 24 hours)
 ```
 
 **Filter by operation:**
+
 ```
 Operation: netbackup.fetch_jobs (instead of all operations)
 ```
 
 **Use tags for precision:**
+
 ```
 Tags: netbackup.api_version=13.0
 ```
@@ -349,16 +373,19 @@ Tags: netbackup.api_version=13.0
 ### Sampling Strategy
 
 **Development:**
+
 ```yaml
 samplingRate: 1.0  # Trace everything
 ```
 
 **Production (normal load):**
+
 ```yaml
 samplingRate: 0.1  # 10% sampling
 ```
 
 **Production (high load):**
+
 ```yaml
 samplingRate: 0.01  # 1% sampling
 ```
@@ -366,12 +393,14 @@ samplingRate: 0.01  # 1% sampling
 ### Alerting on Traces
 
 **Create alerts for:**
+
 - Scrape duration > 60s
 - HTTP status codes >= 500
 - High pagination (> 10 pages)
 - Partial failures
 
 **Example Prometheus alert:**
+
 ```yaml
 - alert: SlowNBUScrape
   expr: histogram_quantile(0.95, rate(scrape_duration_seconds_bucket[5m])) > 60
@@ -383,16 +412,19 @@ samplingRate: 0.01  # 1% sampling
 ### Regular Analysis
 
 **Daily:**
+
 - Check for failed scrapes
 - Review slow traces (> 30s)
 - Monitor HTTP error rates
 
 **Weekly:**
+
 - Analyze pagination trends
 - Review API version distribution
 - Check sampling effectiveness
 
 **Monthly:**
+
 - Optimize scraping intervals
 - Review trace retention policies
 - Update performance baselines
@@ -427,6 +459,7 @@ samplingRate: 0.01  # 1% sampling
 4. Identify patterns
 
 **Example:**
+
 ```
 Trace shows: 15 pages fetched
 Prometheus shows: nbu_jobs_count{} = 5234
@@ -443,6 +476,7 @@ Calculation: 5234 / 15 ≈ 349 jobs per page
 4. Generate reports
 
 **Example Python analysis:**
+
 ```python
 import json
 
