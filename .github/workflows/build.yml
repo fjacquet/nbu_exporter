@@ -55,7 +55,7 @@ jobs:
 
         
       - name: Test
-        run: go test ./... -coverprofile=coverage.out 
+        run: go test ./... -coverprofile=coverage.out -covermode=atomic 
 
       - name: SonarQube Scan
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
