@@ -20,7 +20,7 @@ import (
 // TestNewNbuCollector_ExplicitVersion tests collector creation with an explicitly configured API version.
 // It verifies that when an API version is provided in the configuration, the collector
 // is created successfully without performing version detection.
-func TestNewNbuCollector_ExplicitVersion(t *testing.T) {
+func TestNewNbuCollectorExplicitVersion(t *testing.T) {
 	tests := []struct {
 		name       string
 		apiVersion string
@@ -54,7 +54,7 @@ func TestNewNbuCollector_ExplicitVersion(t *testing.T) {
 			cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
 			cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
 			cfg.NbuServer.URI = ""
-			cfg.NbuServer.APIKey = "test-api-key"
+			cfg.NbuServer.APIKey = testAPIKey
 			cfg.NbuServer.APIVersion = tt.apiVersion
 			cfg.NbuServer.InsecureSkipVerify = true
 			cfg.Server.ScrapingInterval = "5m"
@@ -70,10 +70,66 @@ func TestNewNbuCollector_ExplicitVersion(t *testing.T) {
 	}
 }
 
+// createVersionMockServer creates a mock server that responds to version detection requests
+func createVersionMockServer(t *testing.T, responses map[string]int) *httptest.Server {
+	return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		version := extractVersionFromHeader(r.Header.Get("Accept"))
+		handleVersionResponse(w, version, responses)
+	}))
+}
+
+// extractVersionFromHeader extracts the API version from the Accept header
+func extractVersionFromHeader(acceptHeader string) string {
+	for _, v := range []string{"13.0", "12.0", "3.0"} {
+		if fmt.Sprintf("application/vnd.netbackup+json;version=%s", v) == acceptHeader {
+			return v
+		}
+	}
+	return ""
+}
+
+// handleVersionResponse writes the appropriate response based on version and configured responses
+func handleVersionResponse(w http.ResponseWriter, version string, responses map[string]int) {
+	if statusCode, ok := responses[version]; ok {
+		w.WriteHeader(statusCode)
+		if statusCode == http.StatusOK {
+			_, _ = w.Write([]byte(`{"data": []}`))
+		}
+	} else {
+		w.WriteHeader(http.StatusNotAcceptable)
+	}
+}
+
+// assertCollectorResult validates the collector creation result
+func assertCollectorResult(t *testing.T, collector *NbuCollector, err error, expectError bool, expectedVersion string) {
+	if expectError {
+		assert.Error(t, err, "Collector creation should fail when all versions are unsupported")
+		assert.Nil(t, collector, "Collector should be nil on error")
+	} else {
+		require.NoError(t, err, "Collector creation should succeed with automatic detection")
+		require.NotNil(t, collector, "Collector should not be nil")
+		assert.Equal(t, expectedVersion, collector.cfg.NbuServer.APIVersion, "API version should match detected version")
+	}
+}
+
+// createTestConfigWithServer creates a test configuration for the given server
+func createTestConfigWithServer(server *httptest.Server) models.Config {
+	cfg := models.Config{}
+	cfg.NbuServer.Scheme = "https"
+	cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
+	cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
+	cfg.NbuServer.URI = ""
+	cfg.NbuServer.APIKey = testAPIKey
+	cfg.NbuServer.APIVersion = "" // Empty to trigger detection
+	cfg.NbuServer.InsecureSkipVerify = true
+	cfg.Server.ScrapingInterval = "5m"
+	return cfg
+}
+
 // TestNewNbuCollector_AutomaticDetection tests collector creation with automatic version detection.
 // It verifies that when no API version is configured, the collector performs automatic
 // detection and selects the highest supported version.
-func TestNewNbuCollector_AutomaticDetection(t *testing.T) {
+func TestNewNbuCollectorAutomaticDetection(t *testing.T) {
 	// Skip this test as it requires a real NetBackup server or complex mocking
 	// The version detection logic is already tested in version_detector_test.go
 	t.Skip("Skipping automatic detection test - covered by version_detector_test.go")
@@ -123,51 +179,13 @@ func TestNewNbuCollector_AutomaticDetection(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock server that responds based on the Accept header version
-			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				acceptHeader := r.Header.Get("Accept")
-
-				// Extract version from Accept header
-				var version string
-				for v := range tt.serverResponses {
-					if fmt.Sprintf("application/vnd.netbackup+json;version=%s", v) == acceptHeader {
-						version = v
-						break
-					}
-				}
-
-				if statusCode, ok := tt.serverResponses[version]; ok {
-					w.WriteHeader(statusCode)
-					if statusCode == http.StatusOK {
-						_, _ = w.Write([]byte(`{"data": []}`))
-					}
-				} else {
-					w.WriteHeader(http.StatusNotAcceptable)
-				}
-			}))
+			server := createVersionMockServer(t, tt.serverResponses)
 			defer server.Close()
 
-			cfg := models.Config{}
-			cfg.NbuServer.Scheme = "https"
-			cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
-			cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
-			cfg.NbuServer.URI = ""
-			cfg.NbuServer.APIKey = "test-api-key"
-			cfg.NbuServer.APIVersion = "" // Empty to trigger detection
-			cfg.NbuServer.InsecureSkipVerify = true
-			cfg.Server.ScrapingInterval = "5m"
-
-			// Create collector with automatic detection
+			cfg := createTestConfigWithServer(server)
 			collector, err := NewNbuCollector(cfg)
 
-			if tt.expectError {
-				assert.Error(t, err, "Collector creation should fail when all versions are unsupported")
-				assert.Nil(t, collector, "Collector should be nil on error")
-			} else {
-				require.NoError(t, err, "Collector creation should succeed with automatic detection")
-				require.NotNil(t, collector, "Collector should not be nil")
-				assert.Equal(t, tt.expectedVersion, collector.cfg.NbuServer.APIVersion, "API version should match detected version")
-			}
+			assertCollectorResult(t, collector, err, tt.expectError, tt.expectedVersion)
 		})
 	}
 }
@@ -175,7 +193,7 @@ func TestNewNbuCollector_AutomaticDetection(t *testing.T) {
 // TestNewNbuCollector_DetectionFailure tests error handling when version detection fails.
 // It verifies that appropriate errors are returned when the NetBackup server is unreachable
 // or returns unexpected responses.
-func TestNewNbuCollector_DetectionFailure(t *testing.T) {
+func TestNewNbuCollectorDetectionFailure(t *testing.T) {
 	// Skip this test as it requires a real NetBackup server or complex mocking
 	// The error handling logic is already tested in version_detector_test.go
 	t.Skip("Skipping detection failure test - covered by version_detector_test.go")
@@ -217,7 +235,7 @@ func TestNewNbuCollector_DetectionFailure(t *testing.T) {
 			cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
 			cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
 			cfg.NbuServer.URI = ""
-			cfg.NbuServer.APIKey = "test-api-key"
+			cfg.NbuServer.APIKey = testAPIKey
 			cfg.NbuServer.APIVersion = "" // Empty to trigger detection
 			cfg.NbuServer.InsecureSkipVerify = true
 			cfg.Server.ScrapingInterval = "5m"
@@ -236,7 +254,7 @@ func TestNewNbuCollector_DetectionFailure(t *testing.T) {
 
 // TestNbuCollector_APIVersionMetric tests that the API version metric is properly exposed.
 // It verifies that the nbu_api_version metric is registered and contains the correct version label.
-func TestNbuCollector_APIVersionMetric(t *testing.T) {
+func TestNbuCollectorAPIVersionMetric(t *testing.T) {
 	// Create a mock server
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -249,7 +267,7 @@ func TestNbuCollector_APIVersionMetric(t *testing.T) {
 	cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
 	cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
 	cfg.NbuServer.URI = ""
-	cfg.NbuServer.APIKey = "test-api-key"
+	cfg.NbuServer.APIKey = testAPIKey
 	cfg.NbuServer.APIVersion = models.APIVersion130
 	cfg.NbuServer.InsecureSkipVerify = true
 	cfg.Server.ScrapingInterval = "5m"
@@ -289,7 +307,7 @@ func TestNbuCollector_APIVersionMetric(t *testing.T) {
 
 // TestNbuCollector_Describe tests that all metric descriptors are properly registered.
 // It verifies that the Describe method sends all expected metric descriptors to the channel.
-func TestNbuCollector_Describe(t *testing.T) {
+func TestNbuCollectorDescribe(t *testing.T) {
 	// Create a mock server
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -302,7 +320,7 @@ func TestNbuCollector_Describe(t *testing.T) {
 	cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
 	cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
 	cfg.NbuServer.URI = ""
-	cfg.NbuServer.APIKey = "test-api-key"
+	cfg.NbuServer.APIKey = testAPIKey
 	cfg.NbuServer.APIVersion = models.APIVersion130
 	cfg.NbuServer.InsecureSkipVerify = true
 	cfg.Server.ScrapingInterval = "5m"
@@ -346,7 +364,7 @@ func TestNbuCollector_Describe(t *testing.T) {
 }
 
 // TestNbuCollector_CreateScrapeSpan_NilSafe tests that span creation is nil-safe
-func TestNbuCollector_CreateScrapeSpan_NilSafe(t *testing.T) {
+func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
 			Port             string `yaml:"port"`
@@ -357,7 +375,7 @@ func TestNbuCollector_CreateScrapeSpan_NilSafe(t *testing.T) {
 		}{
 			Port:             "2112",
 			Host:             "localhost",
-			URI:              "/metrics",
+			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
@@ -372,11 +390,11 @@ func TestNbuCollector_CreateScrapeSpan_NilSafe(t *testing.T) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			Host:       "nbu-master",
+			Host:       testServerNBUMaster,
 			Port:       "1556",
 			Scheme:     "https",
-			URI:        "/netbackup",
-			APIKey:     "test-key",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
 			APIVersion: "13.0",
 		},
 	}
@@ -402,7 +420,7 @@ func TestNbuCollector_CreateScrapeSpan_NilSafe(t *testing.T) {
 }
 
 // TestNbuCollector_CreateScrapeSpan_WithTracer tests span creation with tracer
-func TestNbuCollector_CreateScrapeSpan_WithTracer(t *testing.T) {
+func TestNbuCollectorCreateScrapeSpanWithTracer(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
 			Port             string `yaml:"port"`
@@ -413,7 +431,7 @@ func TestNbuCollector_CreateScrapeSpan_WithTracer(t *testing.T) {
 		}{
 			Port:             "2112",
 			Host:             "localhost",
-			URI:              "/metrics",
+			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
@@ -428,11 +446,11 @@ func TestNbuCollector_CreateScrapeSpan_WithTracer(t *testing.T) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			Host:       "nbu-master",
+			Host:       testServerNBUMaster,
 			Port:       "1556",
 			Scheme:     "https",
-			URI:        "/netbackup",
-			APIKey:     "test-key",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
 			APIVersion: "13.0",
 		},
 	}
@@ -464,7 +482,7 @@ func TestNbuCollector_CreateScrapeSpan_WithTracer(t *testing.T) {
 }
 
 // TestNbuCollector_Collect_WithoutTracing tests Collect without tracing
-func TestNbuCollector_Collect_WithoutTracing(t *testing.T) {
+func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 	// This test verifies that Collect works without tracing enabled
 	// We can't easily test the full Collect method without a real NetBackup server,
 	// but we can verify that the tracer nil-safety works
@@ -479,7 +497,7 @@ func TestNbuCollector_Collect_WithoutTracing(t *testing.T) {
 		}{
 			Port:             "2112",
 			Host:             "localhost",
-			URI:              "/metrics",
+			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
@@ -494,11 +512,11 @@ func TestNbuCollector_Collect_WithoutTracing(t *testing.T) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			Host:       "nbu-master",
+			Host:       testServerNBUMaster,
 			Port:       "1556",
 			Scheme:     "https",
-			URI:        "/netbackup",
-			APIKey:     "test-key",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
 			APIVersion: "13.0",
 		},
 	}
@@ -568,7 +586,7 @@ func TestNbuCollector_Collect_WithoutTracing(t *testing.T) {
 }
 
 // TestNbuCollector_TracingDisabled tests that collector works without tracing
-func TestNbuCollector_TracingDisabled(t *testing.T) {
+func TestNbuCollectorTracingDisabled(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
 			Port             string `yaml:"port"`
@@ -579,7 +597,7 @@ func TestNbuCollector_TracingDisabled(t *testing.T) {
 		}{
 			Port:             "2112",
 			Host:             "localhost",
-			URI:              "/metrics",
+			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
@@ -594,11 +612,11 @@ func TestNbuCollector_TracingDisabled(t *testing.T) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			Host:       "nbu-master",
+			Host:       testServerNBUMaster,
 			Port:       "1556",
 			Scheme:     "https",
-			URI:        "/netbackup",
-			APIKey:     "test-key",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
 			APIVersion: "13.0",
 		},
 	}

@@ -14,7 +14,9 @@ import (
 
 	"github.com/fjacquet/nbu_exporter/internal/logging"
 	"github.com/fjacquet/nbu_exporter/internal/models"
+	"github.com/fjacquet/nbu_exporter/internal/telemetry"
 	"github.com/go-resty/resty/v2"
+	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -23,8 +25,9 @@ import (
 )
 
 const (
-	defaultTimeout = 1 * time.Minute    // Default timeout for HTTP requests
-	contentType    = "application/json" // Content type for API requests
+	defaultTimeout        = 1 * time.Minute    // Default timeout for HTTP requests
+	contentType           = "application/json" // Content type for API requests
+	httpContentTypeHeader = "Content-Type"     // HTTP header name for content type
 )
 
 // HTTP header names used in NetBackup API requests.
@@ -65,6 +68,11 @@ type NbuClient struct {
 //	cfg := models.Config{...}
 //	client := NewNbuClient(cfg)
 func NewNbuClient(cfg models.Config) *NbuClient {
+	// Log security warning if TLS verification is disabled
+	if cfg.NbuServer.InsecureSkipVerify {
+		log.Warn("TLS certificate verification is disabled - this is insecure for production use")
+	}
+
 	client := resty.New().
 		SetTLSClientConfig(&tls.Config{
 			InsecureSkipVerify: cfg.NbuServer.InsecureSkipVerify,
@@ -114,35 +122,72 @@ func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config) (
 	// Create the base client
 	client := NewNbuClient(*cfg)
 
-	// If API version is not explicitly configured, perform version detection
-	if cfg.NbuServer.APIVersion == "" || cfg.NbuServer.APIVersion == models.APIVersion130 {
-		// Only perform detection if version is empty or set to default
-		// This allows users to explicitly configure a version to bypass detection
-		shouldDetect := cfg.NbuServer.APIVersion == ""
-
-		if shouldDetect {
-			logging.LogInfo("API version not configured, performing automatic detection")
-			detector := NewAPIVersionDetector(client, cfg)
-			detectedVersion, err := detector.DetectVersion(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("automatic API version detection failed: %w", err)
-			}
-
-			// Update configuration with detected version
-			cfg.NbuServer.APIVersion = detectedVersion
-			client.cfg.NbuServer.APIVersion = detectedVersion
-			logging.LogInfo(fmt.Sprintf("Automatically detected API version: %s", detectedVersion))
-		} else {
-			logging.LogInfo(fmt.Sprintf("Using configured API version: %s", cfg.NbuServer.APIVersion))
-		}
-	} else {
-		logging.LogInfo(fmt.Sprintf("Using explicitly configured API version: %s (bypassing detection)", cfg.NbuServer.APIVersion))
+	// Perform version detection if needed
+	if err := performVersionDetectionIfNeeded(ctx, client, cfg); err != nil {
+		return nil, err
 	}
 
 	return client, nil
 }
 
-// getHeaders returns the standard headers for NBU API requests.
+// performVersionDetectionIfNeeded handles version detection logic for client creation.
+// This function is extracted to avoid duplication between NewNbuClientWithVersionDetection
+// and NewNbuCollector.
+//
+// Parameters:
+//   - ctx: Context for version detection requests
+//   - client: The NbuClient instance to use for detection
+//   - cfg: Application configuration (will be modified if version detection occurs)
+//
+// Returns an error if version detection fails.
+func performVersionDetectionIfNeeded(ctx context.Context, client *NbuClient, cfg *models.Config) error {
+	if shouldPerformVersionDetection(cfg) {
+		logging.LogInfo("API version not configured, performing automatic detection")
+		detector := NewAPIVersionDetector(client, cfg)
+		detectedVersion, err := detector.DetectVersion(ctx)
+		if err != nil {
+			return fmt.Errorf("automatic API version detection failed: %w", err)
+		}
+
+		// Update configuration with detected version
+		cfg.NbuServer.APIVersion = detectedVersion
+		client.cfg.NbuServer.APIVersion = detectedVersion
+		logging.LogInfo(fmt.Sprintf("Automatically detected API version: %s", detectedVersion))
+	} else if isExplicitVersionConfigured(cfg) {
+		logging.LogInfo(fmt.Sprintf("Using explicitly configured API version: %s (bypassing detection)", cfg.NbuServer.APIVersion))
+	} else {
+		logging.LogInfo(fmt.Sprintf("Using configured API version: %s", cfg.NbuServer.APIVersion))
+	}
+
+	return nil
+}
+
+// shouldPerformVersionDetection determines if automatic API version detection is needed.
+// Returns true when the API version is not configured in the config file.
+func shouldPerformVersionDetection(cfg *models.Config) bool {
+	return cfg.NbuServer.APIVersion == ""
+}
+
+// isExplicitVersionConfigured checks if the user explicitly configured an API version.
+// Returns true when a non-default API version is configured, indicating the user
+// intentionally set a specific version to bypass automatic detection.
+func isExplicitVersionConfigured(cfg *models.Config) bool {
+	return cfg.NbuServer.APIVersion != "" && cfg.NbuServer.APIVersion != models.APIVersion130
+}
+
+// getHeaders returns the standard HTTP headers required for NetBackup API requests.
+// It constructs a versioned Accept header for API version negotiation and includes
+// the API key for authentication.
+//
+// The Accept header format follows NetBackup's versioned media type convention:
+//
+//	application/vnd.netbackup+json;version=<apiVersion>
+//
+// Returns a map containing:
+//   - Accept: Versioned content type header for API version negotiation
+//   - Authorization: API key for authentication
+//
+// This method is called internally by FetchData before each HTTP request.
 func (c *NbuClient) getHeaders() map[string]string {
 	// Construct versioned Accept header for NetBackup API 10.5+
 	acceptHeader := fmt.Sprintf("application/vnd.netbackup+json;version=%s", c.cfg.NbuServer.APIVersion)
@@ -176,8 +221,8 @@ func (c *NbuClient) getHeaders() map[string]string {
 //	var jobs models.Jobs
 //	err := client.FetchData(ctx, "https://nbu:1556/admin/jobs", &jobs)
 func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{}) error {
-	// Create span for HTTP request
-	ctx, span := c.createHTTPSpan(ctx, "http.request")
+	// Create span for HTTP request using consolidated helper
+	ctx, span := createSpan(ctx, c.tracer, "http.request", trace.SpanKindClient)
 	if span != nil {
 		defer span.End()
 	}
@@ -213,21 +258,7 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 		// Handle 406 Not Acceptable - API version not supported
 		if resp.StatusCode() == 406 {
 			errMsg := fmt.Sprintf(
-				"API version %s is not supported by the NetBackup server (HTTP 406 Not Acceptable).\n\n"+
-					"The server may be running a version of NetBackup that does not support API version %s.\n\n"+
-					"Supported API versions:\n"+
-					"  - 3.0  (NetBackup 10.0-10.4)\n"+
-					"  - 12.0 (NetBackup 10.5)\n"+
-					"  - 13.0 (NetBackup 11.0)\n\n"+
-					"Troubleshooting steps:\n"+
-					"1. Verify your NetBackup server version: bpgetconfig -g | grep VERSION\n"+
-					"2. Update the 'apiVersion' field in config.yaml to match your server version\n"+
-					"3. Or remove the 'apiVersion' field to enable automatic version detection\n\n"+
-					"Example configuration:\n"+
-					"  nbuserver:\n"+
-					"    apiVersion: \"12.0\"  # For NetBackup 10.5\n"+
-					"    # Or omit apiVersion for automatic detection\n\n"+
-					"Request URL: %s",
+				telemetry.ErrAPIVersionNotSupportedTemplate,
 				c.cfg.NbuServer.APIVersion,
 				c.cfg.NbuServer.APIVersion,
 				url,
@@ -237,14 +268,16 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 			c.recordError(span, err)
 			return err
 		}
-
-		err := fmt.Errorf("HTTP request to %s returned status %d: %s", url, resp.StatusCode(), resp.Status())
+		// Include URL, status code, and content-type in error message
+		contentTypeValue := resp.Header().Get(httpContentTypeHeader)
+		err := fmt.Errorf("HTTP request failed: url=%s, status=%d (%s), content-type=%s",
+			url, resp.StatusCode(), resp.Status(), contentTypeValue)
 		c.recordError(span, err)
 		return err
 	}
 
 	// Validate Content-Type before attempting to unmarshal
-	contentType := resp.Header().Get("Content-Type")
+	contentType := resp.Header().Get(httpContentTypeHeader)
 	if contentType != "" && !strings.Contains(contentType, "application/json") && !strings.Contains(contentType, "application/vnd.netbackup+json") {
 		// Server returned non-JSON content (likely HTML error page)
 		bodyPreview := string(resp.Body())
@@ -253,30 +286,29 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 		}
 
 		errMsg := fmt.Sprintf(
-			"NetBackup server returned non-JSON response (Content-Type: %s).\n\n"+
-				"This usually indicates:\n"+
-				"1. Wrong API endpoint URL (check 'uri' in config.yaml)\n"+
-				"2. Authentication failure (verify API key is valid)\n"+
-				"3. Server configuration issue (check NetBackup REST API is enabled)\n\n"+
-				"Request URL: %s\n"+
-				"Response preview: %s",
+			telemetry.ErrNonJSONResponseTemplate,
 			contentType,
 			url,
 			bodyPreview,
 		)
 		logging.LogError(errMsg)
-		err := fmt.Errorf("server returned %s instead of JSON: %s", contentType, bodyPreview)
+		// Include URL, status code, and content-type in structured error message
+		// Keep "instead of JSON" for backward compatibility with tests
+		err := fmt.Errorf("server returned %s instead of JSON: url=%s, status=%d, preview=%s",
+			contentType, url, resp.StatusCode(), bodyPreview)
 		c.recordError(span, err)
 		return err
 	}
 
 	if err := json.Unmarshal(resp.Body(), target); err != nil {
-		// Provide more context for JSON unmarshaling errors
+		// Provide more context for JSON unmarshaling errors including URL, status code, and content-type
 		bodyPreview := string(resp.Body())
 		if len(bodyPreview) > 200 {
 			bodyPreview = bodyPreview[:200] + "..."
 		}
-		unmarshalErr := fmt.Errorf("failed to unmarshal JSON response from %s: %w\nResponse preview: %s", url, err, bodyPreview)
+		contentTypeValue := resp.Header().Get(httpContentTypeHeader)
+		unmarshalErr := fmt.Errorf("failed to unmarshal JSON response: url=%s, status=%d, content-type=%s, error=%w\nResponse preview: %s",
+			url, resp.StatusCode(), contentTypeValue, err, bodyPreview)
 		c.recordError(span, unmarshalErr)
 		return unmarshalErr
 	}
@@ -322,44 +354,26 @@ func (c *NbuClient) DetectAPIVersion(ctx context.Context) (string, error) {
 		Get(testURL)
 
 	if err != nil {
-		return "", fmt.Errorf("failed to detect API version: %w", err)
+		return "", fmt.Errorf("failed to detect API version: url=%s, error=%w", testURL, err)
 	}
 
 	// Check for version-specific error responses
 	if resp.StatusCode() == 406 {
 		// 406 Not Acceptable typically means the API version is not supported
-		return "", fmt.Errorf("API version %s not supported by NetBackup server (HTTP 406)", c.cfg.NbuServer.APIVersion)
+		contentTypeValue := resp.Header().Get(httpContentTypeHeader)
+		return "", fmt.Errorf("API version %s not supported by NetBackup server: url=%s, status=406, content-type=%s",
+			c.cfg.NbuServer.APIVersion, testURL, contentTypeValue)
 	}
 
 	if resp.IsError() {
 		// Other errors might indicate connectivity issues, not version problems
-		return "", fmt.Errorf("API connectivity test failed with status %d: %s", resp.StatusCode(), resp.Status())
+		contentTypeValue := resp.Header().Get(httpContentTypeHeader)
+		return "", fmt.Errorf("API connectivity test failed: url=%s, status=%d (%s), content-type=%s",
+			testURL, resp.StatusCode(), resp.Status(), contentTypeValue)
 	}
 
 	// If we get here, the configured API version is working
 	return c.cfg.NbuServer.APIVersion, nil
-}
-
-// createHTTPSpan creates a new span for HTTP operations with proper configuration.
-// This helper method provides nil-safe span creation and sets the span kind to client.
-//
-// Parameters:
-//   - ctx: Parent context for the span
-//   - operation: Name of the operation (e.g., "http.request")
-//
-// Returns:
-//   - Updated context with the span
-//   - The created span (or nil if tracing is disabled)
-func (c *NbuClient) createHTTPSpan(ctx context.Context, operation string) (context.Context, trace.Span) {
-	// Nil-safe check: if tracer is not initialized, return original context and nil span
-	if c.tracer == nil {
-		return ctx, nil
-	}
-
-	// Start span with operation name and set span kind to client
-	return c.tracer.Start(ctx, operation,
-		trace.WithSpanKind(trace.SpanKindClient),
-	)
 }
 
 // recordHTTPAttributes records HTTP semantic convention attributes on the span.
@@ -380,14 +394,14 @@ func (c *NbuClient) recordHTTPAttributes(span trace.Span, method, url string, st
 		return
 	}
 
-	// Record HTTP semantic convention attributes
+	// Record HTTP semantic convention attributes using centralized constants
 	span.SetAttributes(
-		attribute.String("http.method", method),
-		attribute.String("http.url", url),
-		attribute.Int("http.status_code", statusCode),
-		attribute.Int64("http.request_content_length", requestSize),
-		attribute.Int64("http.response_content_length", responseSize),
-		attribute.Float64("http.duration_ms", float64(duration.Milliseconds())),
+		attribute.String(telemetry.AttrHTTPMethod, method),
+		attribute.String(telemetry.AttrHTTPURL, url),
+		attribute.Int(telemetry.AttrHTTPStatusCode, statusCode),
+		attribute.Int64(telemetry.AttrHTTPRequestContentLength, requestSize),
+		attribute.Int64(telemetry.AttrHTTPResponseContentLength, responseSize),
+		attribute.Float64(telemetry.AttrHTTPDurationMS, float64(duration.Milliseconds())),
 	)
 }
 
@@ -409,9 +423,9 @@ func (c *NbuClient) recordError(span trace.Span, err error) {
 	// Set span status to error with error message
 	span.SetStatus(codes.Error, err.Error())
 
-	// Add error attribute
+	// Add error attribute using centralized constant
 	span.SetAttributes(
-		attribute.String("error", err.Error()),
+		attribute.String(telemetry.AttrError, err.Error()),
 	)
 }
 
@@ -448,9 +462,18 @@ func (c *NbuClient) injectTraceContext(ctx context.Context, headers map[string]s
 }
 
 // Close releases resources associated with the HTTP client.
-// Note: Resty doesn't provide an explicit close method, so this clears the client reference
-// to allow garbage collection. Connection pooling is managed by the underlying http.Client.
-func (c *NbuClient) Close() {
-	// Resty doesn't have an explicit close, but we can clear the client
+// It closes idle connections in the underlying HTTP client connection pool
+// and clears the client reference to allow garbage collection.
+//
+// Returns an error if the client is already closed (nil).
+func (c *NbuClient) Close() error {
+	if c.client == nil {
+		return fmt.Errorf("client already closed")
+	}
+
+	// Close idle connections in the underlying HTTP client
+	c.client.GetClient().CloseIdleConnections()
 	c.client = nil
+
+	return nil
 }

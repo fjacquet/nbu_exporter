@@ -9,13 +9,32 @@ import (
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/fjacquet/nbu_exporter/internal/telemetry"
+	"go.opentelemetry.io/otel/trace"
 )
 
-// BenchmarkFetchData_WithoutTracing benchmarks FetchData without tracing
-func BenchmarkFetchData_WithoutTracing(b *testing.B) {
+const (
+	benchContentType     = "Content-Type"
+	benchApplicationJSON = "application/json"
+	benchTestResource    = "test-resource"
+	benchTestKey         = "test-key"
+	benchAPIVersion      = "13.0"
+	benchEndpoint        = "localhost:4317"
+	benchServiceName     = "nbu-exporter-bench"
+	benchServiceVersion  = "1.0.0-bench"
+	benchNetBackupServer = "bench-server"
+	benchTestOperation   = "test.operation"
+	benchHTTPMethod      = "GET"
+	benchExampleURL      = "http://example.com"
+	benchHTTPStatus      = 200
+	benchResponseSize    = 100
+	benchDuration        = 50
+)
+
+// BenchmarkFetchDataWithoutTracing benchmarks FetchData without tracing
+func BenchmarkFetchDataWithoutTracing(b *testing.B) {
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(benchContentType, benchApplicationJSON)
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
@@ -23,7 +42,7 @@ func BenchmarkFetchData_WithoutTracing(b *testing.B) {
 				{
 					"id": "1",
 					"attributes": map[string]interface{}{
-						"name": "test-resource",
+						"name": benchTestResource,
 					},
 				},
 			},
@@ -45,8 +64,8 @@ func BenchmarkFetchData_WithoutTracing(b *testing.B) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIVersion: benchAPIVersion,
+			APIKey:     benchTestKey,
 		},
 	}
 
@@ -60,11 +79,11 @@ func BenchmarkFetchData_WithoutTracing(b *testing.B) {
 	}
 }
 
-// BenchmarkFetchData_WithTracing_FullSampling benchmarks FetchData with tracing (sampling=1.0)
-func BenchmarkFetchData_WithTracing_FullSampling(b *testing.B) {
+// BenchmarkFetchDataWithTracingFullSampling benchmarks FetchData with tracing (sampling=1.0)
+func BenchmarkFetchDataWithTracingFullSampling(b *testing.B) {
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(benchContentType, benchApplicationJSON)
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
@@ -72,7 +91,7 @@ func BenchmarkFetchData_WithTracing_FullSampling(b *testing.B) {
 				{
 					"id": "1",
 					"attributes": map[string]interface{}{
-						"name": "test-resource",
+						"name": benchTestResource,
 					},
 				},
 			},
@@ -84,12 +103,12 @@ func BenchmarkFetchData_WithTracing_FullSampling(b *testing.B) {
 	// Initialize telemetry with full sampling
 	telemetryConfig := telemetry.Config{
 		Enabled:         true,
-		Endpoint:        "localhost:4317",
+		Endpoint:        benchEndpoint,
 		Insecure:        true,
 		SamplingRate:    1.0,
-		ServiceName:     "nbu-exporter-bench",
-		ServiceVersion:  "1.0.0-bench",
-		NetBackupServer: "bench-server",
+		ServiceName:     benchServiceName,
+		ServiceVersion:  benchServiceVersion,
+		NetBackupServer: benchNetBackupServer,
 	}
 
 	manager := telemetry.NewManager(telemetryConfig)
@@ -114,8 +133,8 @@ func BenchmarkFetchData_WithTracing_FullSampling(b *testing.B) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIVersion: benchAPIVersion,
+			APIKey:     benchTestKey,
 		},
 	}
 
@@ -128,11 +147,11 @@ func BenchmarkFetchData_WithTracing_FullSampling(b *testing.B) {
 	}
 }
 
-// BenchmarkFetchData_WithTracing_PartialSampling benchmarks FetchData with tracing (sampling=0.1)
-func BenchmarkFetchData_WithTracing_PartialSampling(b *testing.B) {
+// BenchmarkFetchDataWithTracingPartialSampling benchmarks FetchData with tracing (sampling=0.1)
+func BenchmarkFetchDataWithTracingPartialSampling(b *testing.B) {
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(benchContentType, benchApplicationJSON)
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
@@ -140,7 +159,7 @@ func BenchmarkFetchData_WithTracing_PartialSampling(b *testing.B) {
 				{
 					"id": "1",
 					"attributes": map[string]interface{}{
-						"name": "test-resource",
+						"name": benchTestResource,
 					},
 				},
 			},
@@ -152,12 +171,12 @@ func BenchmarkFetchData_WithTracing_PartialSampling(b *testing.B) {
 	// Initialize telemetry with partial sampling
 	telemetryConfig := telemetry.Config{
 		Enabled:         true,
-		Endpoint:        "localhost:4317",
+		Endpoint:        benchEndpoint,
 		Insecure:        true,
 		SamplingRate:    0.1,
-		ServiceName:     "nbu-exporter-bench",
-		ServiceVersion:  "1.0.0-bench",
-		NetBackupServer: "bench-server",
+		ServiceName:     benchServiceName,
+		ServiceVersion:  benchServiceVersion,
+		NetBackupServer: benchNetBackupServer,
 	}
 
 	manager := telemetry.NewManager(telemetryConfig)
@@ -182,8 +201,8 @@ func BenchmarkFetchData_WithTracing_PartialSampling(b *testing.B) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIVersion: benchAPIVersion,
+			APIKey:     benchTestKey,
 		},
 	}
 
@@ -201,12 +220,12 @@ func BenchmarkSpanCreation(b *testing.B) {
 	// Initialize telemetry
 	telemetryConfig := telemetry.Config{
 		Enabled:         true,
-		Endpoint:        "localhost:4317",
+		Endpoint:        benchEndpoint,
 		Insecure:        true,
 		SamplingRate:    1.0,
-		ServiceName:     "nbu-exporter-bench",
-		ServiceVersion:  "1.0.0-bench",
-		NetBackupServer: "bench-server",
+		ServiceName:     benchServiceName,
+		ServiceVersion:  benchServiceVersion,
+		NetBackupServer: benchNetBackupServer,
 	}
 
 	manager := telemetry.NewManager(telemetryConfig)
@@ -231,8 +250,8 @@ func BenchmarkSpanCreation(b *testing.B) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIVersion: benchAPIVersion,
+			APIKey:     benchTestKey,
 		},
 	}
 
@@ -240,7 +259,7 @@ func BenchmarkSpanCreation(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ctx, span := client.createHTTPSpan(context.Background(), "test.operation")
+		ctx, span := createSpan(context.Background(), client.tracer, benchTestOperation, trace.SpanKindClient)
 		if span != nil {
 			span.End()
 		}
@@ -253,12 +272,12 @@ func BenchmarkAttributeRecording(b *testing.B) {
 	// Initialize telemetry
 	telemetryConfig := telemetry.Config{
 		Enabled:         true,
-		Endpoint:        "localhost:4317",
+		Endpoint:        benchEndpoint,
 		Insecure:        true,
 		SamplingRate:    1.0,
-		ServiceName:     "nbu-exporter-bench",
-		ServiceVersion:  "1.0.0-bench",
-		NetBackupServer: "bench-server",
+		ServiceName:     benchServiceName,
+		ServiceVersion:  benchServiceVersion,
+		NetBackupServer: benchNetBackupServer,
 	}
 
 	manager := telemetry.NewManager(telemetryConfig)
@@ -283,13 +302,13 @@ func BenchmarkAttributeRecording(b *testing.B) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIVersion: benchAPIVersion,
+			APIKey:     benchTestKey,
 		},
 	}
 
 	client := NewNbuClient(cfg)
-	ctx, span := client.createHTTPSpan(context.Background(), "test.operation")
+	ctx, span := createSpan(context.Background(), client.tracer, benchTestOperation, trace.SpanKindClient)
 	defer func() {
 		if span != nil {
 			span.End()
@@ -298,6 +317,6 @@ func BenchmarkAttributeRecording(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		client.recordHTTPAttributes(span, "GET", "http://example.com", 200, 0, 100, 50)
+		client.recordHTTPAttributes(span, benchHTTPMethod, benchExampleURL, benchHTTPStatus, 0, benchResponseSize, benchDuration)
 	}
 }

@@ -208,6 +208,7 @@ The `samplingRate` controls what percentage of scrape cycles are traced:
 - **0.01** (1%): Trace 1% of scrapes - minimal overhead for high-frequency scraping
 
 **Performance Impact:**
+
 - Tracing disabled: 0% overhead
 - samplingRate 0.1: < 2% overhead
 - samplingRate 1.0: < 5% overhead
@@ -234,39 +235,46 @@ prometheus.scrape (root span)
 Traces include rich attributes for analysis:
 
 **Resource Attributes (all spans):**
+
 - `service.name`: Service identifier ("nbu-exporter")
 - `service.version`: Exporter version
 - `host.name`: Hostname where exporter is running
 - `netbackup.server`: NetBackup master server hostname
 
 **Root Span (prometheus.scrape):**
+
 - `scrape.duration_ms`: Total scrape duration
 - `scrape.storage_metrics_count`: Number of storage metrics collected
 - `scrape.job_metrics_count`: Number of job metrics collected
 - `scrape.status`: "success" or "partial_failure"
 
 **Storage Fetch (netbackup.fetch_storage):**
+
 - `netbackup.endpoint`: API endpoint path
 - `netbackup.storage_units`: Number of storage units retrieved
 - `netbackup.api_version`: API version used
 
 **Job Fetch (netbackup.fetch_jobs):**
+
 - `netbackup.endpoint`: API endpoint path
 - `netbackup.time_window`: Scraping interval
 - `netbackup.total_jobs`: Total jobs retrieved
 - `netbackup.total_pages`: Number of pages fetched
 
 **Job Page Fetch (netbackup.fetch_job_page):**
+
 - `netbackup.page_offset`: Page offset for pagination
 - `netbackup.page_number`: Calculated page number
 - `netbackup.jobs_in_page`: Number of jobs in this page
 
 **Version Detection (netbackup.detect_version):**
+
 - `netbackup.attempted_versions`: List of API versions attempted
 - `netbackup.detected_version`: Successfully detected API version
 - Span events for each version attempt with success/failure status
 
 **HTTP Request (http.request):**
+
 - `http.method`: HTTP method (GET, POST, etc.)
 - `http.url`: Full request URL
 - `http.status_code`: HTTP response status code
@@ -338,6 +346,7 @@ Trace: prometheus.scrape (45.2s total)
 ```
 
 **Diagnosis**: Job pagination is slow. Consider:
+
 - Reducing `scrapingInterval` to fetch fewer jobs
 - Checking NetBackup server performance
 - Verifying network latency
@@ -378,6 +387,7 @@ ERROR: x509: certificate signed by unknown authority
 ```
 
 **Solution**: Either:
+
 - Install the collector's CA certificate on the exporter host
 - Use `insecure: true` for development/testing (not recommended for production)
 - Configure the collector with a valid TLS certificate
@@ -412,6 +422,7 @@ docker build -t nbu_exporter .
 ```
 
 The Docker image uses a multi-stage build for optimal size and includes:
+
 - Alpine Linux base for minimal footprint
 - CA certificates for HTTPS connections
 - Pre-configured log directory
@@ -596,10 +607,10 @@ docker-compose up -d
 
 **Access the services:**
 
-- **Prometheus Metrics**: http://localhost:2112/metrics
-- **Jaeger UI**: http://localhost:16686
-- **Collector Metrics**: http://localhost:8888/metrics
-- **Collector Health**: http://localhost:13133
+- **Prometheus Metrics**: <http://localhost:2112/metrics>
+- **Jaeger UI**: <http://localhost:16686>
+- **Collector Metrics**: <http://localhost:8888/metrics>
+- **Collector Health**: <http://localhost:13133>
 
 ### Verify Container
 

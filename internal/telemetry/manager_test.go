@@ -6,6 +6,18 @@ import (
 	"time"
 )
 
+// Test constants to avoid string duplication
+const (
+	testEndpoint               = "localhost:4317"
+	testServiceName            = "nbu-exporter"
+	testServiceVersion         = "1.0.0"
+	testServiceVersionTest     = "1.0.0-test"
+	testNetBackupServer        = "nbu-master"
+	testNetBackupServerTest    = "nbu-test"
+	errMsgInitializeUnexpected = "Initialize() unexpected error = %v"
+	errMsgShutdownUnexpected   = "Shutdown() unexpected error = %v"
+)
+
 // TestNewManager tests the creation of a new telemetry manager
 func TestNewManager(t *testing.T) {
 	tests := []struct {
@@ -16,12 +28,12 @@ func TestNewManager(t *testing.T) {
 			name: "creates manager with enabled config",
 			config: Config{
 				Enabled:         true,
-				Endpoint:        "localhost:4317",
+				Endpoint:        testEndpoint,
 				Insecure:        true,
 				SamplingRate:    0.1,
-				ServiceName:     "nbu-exporter",
-				ServiceVersion:  "1.0.0",
-				NetBackupServer: "nbu-master",
+				ServiceName:     testServiceName,
+				ServiceVersion:  testServiceVersion,
+				NetBackupServer: testNetBackupServer,
 			},
 		},
 		{
@@ -52,7 +64,7 @@ func TestNewManager(t *testing.T) {
 }
 
 // TestManager_Initialize_Disabled tests initialization when telemetry is disabled
-func TestManager_Initialize_Disabled(t *testing.T) {
+func TestManagerInitializeDisabled(t *testing.T) {
 	config := Config{
 		Enabled: false,
 	}
@@ -62,7 +74,7 @@ func TestManager_Initialize_Disabled(t *testing.T) {
 
 	err := manager.Initialize(ctx)
 	if err != nil {
-		t.Errorf("Initialize() unexpected error = %v", err)
+		t.Errorf(errMsgInitializeUnexpected, err)
 	}
 
 	if manager.tracerProvider != nil {
@@ -78,7 +90,9 @@ func TestManager_Initialize_Disabled(t *testing.T) {
 // Note: OTLP exporter creation succeeds even with invalid endpoints - it only fails
 // when actually trying to send data. This test verifies that initialization completes
 // without errors, and the manager can be used (spans will be dropped if collector is unavailable).
-func TestManager_Initialize_InvalidEndpoint(t *testing.T) {
+// This is an example of graceful degradation - the system continues to operate even when
+// the telemetry backend is unavailable, allowing the exporter to function without tracing.
+func TestManagerInitializeInvalidEndpoint(t *testing.T) {
 	tests := []struct {
 		name     string
 		endpoint string
@@ -100,8 +114,8 @@ func TestManager_Initialize_InvalidEndpoint(t *testing.T) {
 				Endpoint:       tt.endpoint,
 				Insecure:       true,
 				SamplingRate:   1.0,
-				ServiceName:    "nbu-exporter",
-				ServiceVersion: "1.0.0",
+				ServiceName:    testServiceName,
+				ServiceVersion: testServiceVersion,
 			}
 
 			manager := NewManager(config)
@@ -109,9 +123,10 @@ func TestManager_Initialize_InvalidEndpoint(t *testing.T) {
 			defer cancel()
 
 			// Initialize should not return error (exporter creation succeeds even with invalid endpoints)
+			// Graceful degradation: telemetry failures don't prevent application startup
 			err := manager.Initialize(ctx)
 			if err != nil {
-				t.Errorf("Initialize() unexpected error = %v", err)
+				t.Errorf(errMsgInitializeUnexpected, err)
 			}
 
 			// Manager will be enabled even with invalid endpoint
@@ -120,28 +135,31 @@ func TestManager_Initialize_InvalidEndpoint(t *testing.T) {
 				t.Error("IsEnabled() should return true after initialization (even with invalid endpoint)")
 			}
 
-			// Clean up
+			// Clean up - explicitly check shutdown error for proper resource cleanup
 			if manager.IsEnabled() {
 				shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer shutdownCancel()
-				_ = manager.Shutdown(shutdownCtx)
+				if err := manager.Shutdown(shutdownCtx); err != nil {
+					t.Logf("Shutdown returned error (expected with invalid endpoint): %v", err)
+				}
 			}
 		})
 	}
 }
 
 // TestManager_Initialize_ValidConfig tests successful initialization
-func TestManager_Initialize_ValidConfig(t *testing.T) {
-	// Note: This test requires a real OTLP collector or will gracefully fail
-	// In a real environment, you would use a test collector or mock
+// Note: This test requires a real OTLP collector or will gracefully fail.
+// Graceful degradation: if no collector is available, the manager initializes but
+// may disable itself, allowing the application to continue without tracing.
+func TestManagerInitializeValidConfig(t *testing.T) {
 	config := Config{
 		Enabled:         true,
-		Endpoint:        "localhost:4317",
+		Endpoint:        testEndpoint,
 		Insecure:        true,
 		SamplingRate:    1.0,
-		ServiceName:     "nbu-exporter-test",
-		ServiceVersion:  "1.0.0-test",
-		NetBackupServer: "nbu-test",
+		ServiceName:     testServiceName + "-test",
+		ServiceVersion:  testServiceVersionTest,
+		NetBackupServer: testNetBackupServerTest,
 	}
 
 	manager := NewManager(config)
@@ -150,7 +168,7 @@ func TestManager_Initialize_ValidConfig(t *testing.T) {
 
 	err := manager.Initialize(ctx)
 	if err != nil {
-		t.Errorf("Initialize() unexpected error = %v", err)
+		t.Errorf(errMsgInitializeUnexpected, err)
 	}
 
 	// If initialization succeeded, tracer provider should be set
@@ -159,16 +177,18 @@ func TestManager_Initialize_ValidConfig(t *testing.T) {
 		t.Error("Initialize() enabled but tracer provider is nil")
 	}
 
-	// Clean up
+	// Clean up - explicitly check shutdown error for proper resource cleanup
 	if manager.IsEnabled() {
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer shutdownCancel()
-		_ = manager.Shutdown(shutdownCtx)
+		if err := manager.Shutdown(shutdownCtx); err != nil {
+			t.Errorf(errMsgShutdownUnexpected, err)
+		}
 	}
 }
 
 // TestManager_Shutdown_NotInitialized tests shutdown when not initialized
-func TestManager_Shutdown_NotInitialized(t *testing.T) {
+func TestManagerShutdownNotInitialized(t *testing.T) {
 	config := Config{
 		Enabled: false,
 	}
@@ -178,26 +198,31 @@ func TestManager_Shutdown_NotInitialized(t *testing.T) {
 
 	err := manager.Shutdown(ctx)
 	if err != nil {
-		t.Errorf("Shutdown() unexpected error = %v", err)
+		t.Errorf(errMsgShutdownUnexpected, err)
 	}
 }
 
 // TestManager_Shutdown_WithTimeout tests shutdown with context timeout
-func TestManager_Shutdown_WithTimeout(t *testing.T) {
+// Graceful degradation: initialization errors are ignored to allow testing shutdown behavior
+// even when the telemetry backend is unavailable.
+func TestManagerShutdownWithTimeout(t *testing.T) {
 	config := Config{
 		Enabled:        true,
-		Endpoint:       "localhost:4317",
+		Endpoint:       testEndpoint,
 		Insecure:       true,
 		SamplingRate:   1.0,
-		ServiceName:    "nbu-exporter-test",
-		ServiceVersion: "1.0.0-test",
+		ServiceName:    testServiceName + "-test",
+		ServiceVersion: testServiceVersionTest,
 	}
 
 	manager := NewManager(config)
 	initCtx, initCancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer initCancel()
 
-	_ = manager.Initialize(initCtx)
+	// Graceful degradation: ignore initialization errors (collector may not be available)
+	if err := manager.Initialize(initCtx); err != nil {
+		t.Logf("Initialize returned error (expected if no collector available): %v", err)
+	}
 
 	// Only test shutdown if initialization succeeded
 	if manager.IsEnabled() {
@@ -207,13 +232,15 @@ func TestManager_Shutdown_WithTimeout(t *testing.T) {
 
 		err := manager.Shutdown(shutdownCtx)
 		if err != nil {
-			t.Errorf("Shutdown() unexpected error = %v", err)
+			t.Errorf(errMsgShutdownUnexpected, err)
 		}
 	}
 }
 
 // TestManager_IsEnabled tests the IsEnabled method
-func TestManager_IsEnabled(t *testing.T) {
+// Graceful degradation: initialization errors are ignored as the test focuses on
+// the enabled state behavior, not initialization success.
+func TestManagerIsEnabled(t *testing.T) {
 	tests := []struct {
 		name           string
 		config         Config
@@ -225,14 +252,14 @@ func TestManager_IsEnabled(t *testing.T) {
 			name: "enabled in config",
 			config: Config{
 				Enabled:        true,
-				Endpoint:       "localhost:4317",
+				Endpoint:       testEndpoint,
 				Insecure:       true,
 				SamplingRate:   1.0,
 				ServiceName:    "test",
-				ServiceVersion: "1.0.0",
+				ServiceVersion: testServiceVersion,
 			},
 			expectedBefore: true,
-			// After init, may be disabled if no collector available
+			// After init, may be disabled if no collector available (graceful degradation)
 		},
 		{
 			name: "disabled in config",
@@ -253,10 +280,12 @@ func TestManager_IsEnabled(t *testing.T) {
 				t.Errorf("IsEnabled() before init = %v, want %v", manager.IsEnabled(), tt.expectedBefore)
 			}
 
-			// Initialize
+			// Initialize - gracefully handle errors (collector may not be available)
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
-			_ = manager.Initialize(ctx)
+			if err := manager.Initialize(ctx); err != nil {
+				t.Logf("Initialize returned error (expected if no collector available): %v", err)
+			}
 
 			// After initialization, check if state matches expectation
 			// Note: If config is enabled but init fails, IsEnabled() should return false
@@ -264,18 +293,20 @@ func TestManager_IsEnabled(t *testing.T) {
 				t.Error("IsEnabled() should return false when disabled in config")
 			}
 
-			// Clean up
+			// Clean up - explicitly check shutdown error
 			if manager.IsEnabled() {
 				shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 				defer shutdownCancel()
-				_ = manager.Shutdown(shutdownCtx)
+				if err := manager.Shutdown(shutdownCtx); err != nil {
+					t.Logf("Shutdown returned error: %v", err)
+				}
 			}
 		})
 	}
 }
 
 // TestManager_CreateSampler tests sampler creation logic
-func TestManager_CreateSampler(t *testing.T) {
+func TestManagerCreateSampler(t *testing.T) {
 	tests := []struct {
 		name         string
 		samplingRate float64
@@ -324,7 +355,7 @@ func TestManager_CreateSampler(t *testing.T) {
 }
 
 // TestManager_CreateResource tests resource creation
-func TestManager_CreateResource(t *testing.T) {
+func TestManagerCreateResource(t *testing.T) {
 	tests := []struct {
 		name            string
 		serviceName     string
@@ -333,14 +364,14 @@ func TestManager_CreateResource(t *testing.T) {
 	}{
 		{
 			name:            "creates resource with all attributes",
-			serviceName:     "nbu-exporter",
-			serviceVersion:  "1.0.0",
-			netBackupServer: "nbu-master",
+			serviceName:     testServiceName,
+			serviceVersion:  testServiceVersion,
+			netBackupServer: testNetBackupServer,
 		},
 		{
 			name:            "creates resource without NetBackup server",
-			serviceName:     "nbu-exporter",
-			serviceVersion:  "1.0.0",
+			serviceName:     testServiceName,
+			serviceVersion:  testServiceVersion,
 			netBackupServer: "",
 		},
 	}
@@ -356,6 +387,7 @@ func TestManager_CreateResource(t *testing.T) {
 			manager := NewManager(config)
 			resource, err := manager.createResource()
 
+			// Explicitly check for errors - resource creation should always succeed
 			if err != nil {
 				t.Errorf("createResource() unexpected error = %v", err)
 			}
@@ -374,7 +406,7 @@ func TestManager_CreateResource(t *testing.T) {
 }
 
 // TestManager_DisabledMode tests that disabled mode works correctly
-func TestManager_DisabledMode(t *testing.T) {
+func TestManagerDisabledMode(t *testing.T) {
 	config := Config{
 		Enabled: false,
 	}
@@ -385,7 +417,7 @@ func TestManager_DisabledMode(t *testing.T) {
 	// Initialize should succeed
 	err := manager.Initialize(ctx)
 	if err != nil {
-		t.Errorf("Initialize() unexpected error = %v", err)
+		t.Errorf(errMsgInitializeUnexpected, err)
 	}
 
 	// IsEnabled should return false
@@ -396,7 +428,7 @@ func TestManager_DisabledMode(t *testing.T) {
 	// Shutdown should succeed
 	err = manager.Shutdown(ctx)
 	if err != nil {
-		t.Errorf("Shutdown() unexpected error = %v", err)
+		t.Errorf(errMsgShutdownUnexpected, err)
 	}
 
 	// TracerProvider should be nil

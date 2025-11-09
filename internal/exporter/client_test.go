@@ -10,7 +10,22 @@ import (
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
+
+// Test constants specific to client tests
+const (
+	testResourceName          = "test-resource"
+	testOperationName         = "test.operation"
+	errMsgFetchDataUnexpected = "FetchData() unexpected error = %v"
+	errMsgFetchDataItemCount  = "FetchData() got %d items, want 1"
+	errMsgUnmarshalJSON       = "failed to unmarshal JSON response"
+	errMsgHTTP406             = "HTTP 406 Not Acceptable"
+)
+
+// Note: Common constants like testAPIKey, contentTypeHeader, and contentTypeJSON
+// are defined in test_common.go and shared across all test files
 
 // mockAPIResponse represents a simple API response structure for testing
 type mockAPIResponse struct {
@@ -22,7 +37,7 @@ type mockAPIResponse struct {
 	} `json:"data"`
 }
 
-func TestNbuClient_GetHeaders(t *testing.T) {
+func TestNbuClientGetHeaders(t *testing.T) {
 	tests := []struct {
 		name               string
 		apiVersion         string
@@ -55,24 +70,7 @@ func TestNbuClient_GetHeaders(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := models.Config{
-				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-				}{
-					APIVersion: tt.apiVersion,
-					APIKey:     tt.apiKey,
-				},
-			}
-
+			cfg := createBasicTestConfig(tt.apiVersion, tt.apiKey)
 			client := NewNbuClient(cfg)
 			headers := client.getHeaders()
 
@@ -87,7 +85,7 @@ func TestNbuClient_GetHeaders(t *testing.T) {
 	}
 }
 
-func TestNbuClient_FetchData_Success(t *testing.T) {
+func TestNbuClientFetchDataSuccess(t *testing.T) {
 	tests := []struct {
 		name       string
 		apiVersion string
@@ -107,82 +105,87 @@ func TestNbuClient_FetchData_Success(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a test server that validates headers
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Verify Accept header includes API version
-				expectedAccept := fmt.Sprintf("application/vnd.netbackup+json;version=%s", tt.apiVersion)
-				if r.Header.Get(HeaderAccept) != expectedAccept {
-					t.Errorf("Accept header = %v, want %v", r.Header.Get(HeaderAccept), expectedAccept)
-				}
-
-				// Verify Authorization header is unchanged
-				if r.Header.Get(HeaderAuthorization) != tt.apiKey {
-					t.Errorf("Authorization header = %v, want %v", r.Header.Get(HeaderAuthorization), tt.apiKey)
-				}
-
-				// Return mock response
-				response := mockAPIResponse{
-					Data: []struct {
-						ID         string `json:"id"`
-						Attributes struct {
-							Name string `json:"name"`
-						} `json:"attributes"`
-					}{
-						{
-							ID: "1",
-							Attributes: struct {
-								Name string `json:"name"`
-							}{
-								Name: "test-resource",
-							},
-						},
-					},
-				}
-
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(response)
-			}))
+			server := createTestServer(t, tt.apiVersion, tt.apiKey)
 			defer server.Close()
 
-			cfg := models.Config{
-				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-				}{
-					APIVersion: tt.apiVersion,
-					APIKey:     tt.apiKey,
-				},
-			}
-
+			cfg := createBasicTestConfig(tt.apiVersion, tt.apiKey)
 			client := NewNbuClient(cfg)
 			var result mockAPIResponse
 
 			err := client.FetchData(context.Background(), server.URL, &result)
 			if err != nil {
-				t.Errorf("FetchData() unexpected error = %v", err)
+				t.Errorf(errMsgFetchDataUnexpected, err)
 			}
 
 			if len(result.Data) != 1 {
-				t.Errorf("FetchData() got %d items, want 1", len(result.Data))
+				t.Errorf(errMsgFetchDataItemCount, len(result.Data))
 			}
 
-			if result.Data[0].Attributes.Name != "test-resource" {
-				t.Errorf("FetchData() name = %v, want test-resource", result.Data[0].Attributes.Name)
+			if result.Data[0].Attributes.Name != testResourceName {
+				t.Errorf("FetchData() name = %v, want %s", result.Data[0].Attributes.Name, testResourceName)
 			}
 		})
 	}
 }
 
-func TestNbuClient_FetchData_NotAcceptableError(t *testing.T) {
+// createTestServer creates a test HTTP server that validates headers and returns mock data
+func createTestServer(t *testing.T, apiVersion, apiKey string) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		expectedAccept := fmt.Sprintf("application/vnd.netbackup+json;version=%s", apiVersion)
+		if r.Header.Get(HeaderAccept) != expectedAccept {
+			t.Errorf("Accept header = %v, want %v", r.Header.Get(HeaderAccept), expectedAccept)
+		}
+
+		if r.Header.Get(HeaderAuthorization) != apiKey {
+			t.Errorf("Authorization header = %v, want %v", r.Header.Get(HeaderAuthorization), apiKey)
+		}
+
+		response := mockAPIResponse{
+			Data: []struct {
+				ID         string `json:"id"`
+				Attributes struct {
+					Name string `json:"name"`
+				} `json:"attributes"`
+			}{
+				{
+					ID: "1",
+					Attributes: struct {
+						Name string `json:"name"`
+					}{
+						Name: testResourceName,
+					},
+				},
+			},
+		}
+
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(response)
+	}))
+}
+
+// createBasicTestConfig creates a test configuration with the given API version and key
+func createBasicTestConfig(apiVersion, apiKey string) models.Config {
+	return models.Config{
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			APIVersion: apiVersion,
+			APIKey:     apiKey,
+		},
+	}
+}
+
+func TestNbuClientFetchDataNotAcceptableError(t *testing.T) {
 	tests := []struct {
 		name       string
 		apiVersion string
@@ -216,7 +219,7 @@ func TestNbuClient_FetchData_NotAcceptableError(t *testing.T) {
 					},
 				}
 
-				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set(contentTypeHeader, contentTypeJSON)
 				w.WriteHeader(tt.statusCode)
 				_ = json.NewEncoder(w).Encode(errorResponse)
 			}))
@@ -236,7 +239,7 @@ func TestNbuClient_FetchData_NotAcceptableError(t *testing.T) {
 					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 				}{
 					APIVersion: tt.apiVersion,
-					APIKey:     "test-key",
+					APIKey:     testAPIKey,
 				},
 			}
 
@@ -263,7 +266,7 @@ func TestNbuClient_FetchData_NotAcceptableError(t *testing.T) {
 	}
 }
 
-func TestNbuClient_FetchData_OtherErrors(t *testing.T) {
+func TestNbuClientFetchDataOtherErrors(t *testing.T) {
 	tests := []struct {
 		name       string
 		statusCode int
@@ -298,24 +301,7 @@ func TestNbuClient_FetchData_OtherErrors(t *testing.T) {
 			}))
 			defer server.Close()
 
-			cfg := models.Config{
-				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-				}{
-					APIVersion: tt.apiVersion,
-					APIKey:     "test-key",
-				},
-			}
-
+			cfg := createBasicTestConfig(tt.apiVersion, testAPIKey)
 			client := NewNbuClient(cfg)
 			var result mockAPIResponse
 
@@ -327,7 +313,7 @@ func TestNbuClient_FetchData_OtherErrors(t *testing.T) {
 	}
 }
 
-func TestNbuClient_AuthorizationHeaderUnchanged(t *testing.T) {
+func TestNbuClientAuthorizationHeaderUnchanged(t *testing.T) {
 	// This test specifically verifies that the Authorization header
 	// remains unchanged regardless of API version
 	apiKeys := []string{
@@ -348,7 +334,7 @@ func TestNbuClient_AuthorizationHeaderUnchanged(t *testing.T) {
 					t.Errorf("Authorization header modified: got %v, want %v", r.Header.Get(HeaderAuthorization), apiKey)
 				}
 
-				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set(contentTypeHeader, contentTypeJSON)
 				w.WriteHeader(http.StatusOK)
 				_ = json.NewEncoder(w).Encode(mockAPIResponse{})
 			}))
@@ -377,15 +363,15 @@ func TestNbuClient_AuthorizationHeaderUnchanged(t *testing.T) {
 
 			err := client.FetchData(context.Background(), server.URL, &result)
 			if err != nil {
-				t.Errorf("FetchData() unexpected error = %v", err)
+				t.Errorf(errMsgFetchDataUnexpected, err)
 			}
 		})
 	}
 }
 
-// TestNbuClient_HeaderConstruction_AllVersions tests that headers are correctly
+// TestNbuClientHeaderConstructionAllVersions tests that headers are correctly
 // constructed for all three supported API versions (3.0, 12.0, 13.0)
-func TestNbuClient_HeaderConstruction_AllVersions(t *testing.T) {
+func TestNbuClientHeaderConstructionAllVersions(t *testing.T) {
 	tests := []struct {
 		name           string
 		apiVersion     string
@@ -414,10 +400,7 @@ func TestNbuClient_HeaderConstruction_AllVersions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := models.Config{}
-			cfg.NbuServer.APIVersion = tt.apiVersion
-			cfg.NbuServer.APIKey = tt.apiKey
-
+			cfg := createBasicTestConfig(tt.apiVersion, tt.apiKey)
 			client := NewNbuClient(cfg)
 			headers := client.getHeaders()
 
@@ -432,9 +415,9 @@ func TestNbuClient_HeaderConstruction_AllVersions(t *testing.T) {
 	}
 }
 
-// TestNbuClient_VersionFailureErrorMessages tests that error messages for version
+// TestNbuClientVersionFailureErrorMessages tests that error messages for version
 // failures include helpful troubleshooting information
-func TestNbuClient_VersionFailureErrorMessages(t *testing.T) {
+func TestNbuClientVersionFailureErrorMessages(t *testing.T) {
 	tests := []struct {
 		name              string
 		apiVersion        string
@@ -448,7 +431,7 @@ func TestNbuClient_VersionFailureErrorMessages(t *testing.T) {
 			statusCode: 406,
 			wantErrorContains: []string{
 				"API version 13.0 is not supported",
-				"HTTP 406 Not Acceptable",
+				errMsgHTTP406,
 				"3.0  (NetBackup 10.0-10.4)",
 				"12.0 (NetBackup 10.5)",
 				"13.0 (NetBackup 11.0)",
@@ -463,7 +446,7 @@ func TestNbuClient_VersionFailureErrorMessages(t *testing.T) {
 			statusCode: 406,
 			wantErrorContains: []string{
 				"API version 12.0 is not supported",
-				"HTTP 406 Not Acceptable",
+				errMsgHTTP406,
 				"apiVersion",
 			},
 		},
@@ -473,26 +456,17 @@ func TestNbuClient_VersionFailureErrorMessages(t *testing.T) {
 			statusCode: 406,
 			wantErrorContains: []string{
 				"API version 3.0 is not supported",
-				"HTTP 406 Not Acceptable",
+				errMsgHTTP406,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(tt.statusCode)
-				_ = json.NewEncoder(w).Encode(map[string]string{
-					"errorMessage": "API version not supported",
-				})
-			}))
+			server := createErrorServer(tt.statusCode)
 			defer server.Close()
 
-			cfg := models.Config{}
-			cfg.NbuServer.APIVersion = tt.apiVersion
-			cfg.NbuServer.APIKey = "test-key"
-			cfg.NbuServer.InsecureSkipVerify = true
-
+			cfg := createMinimalConfig(tt.apiVersion, testAPIKey)
 			client := NewNbuClient(cfg)
 			var result mockAPIResponse
 
@@ -501,28 +475,73 @@ func TestNbuClient_VersionFailureErrorMessages(t *testing.T) {
 				t.Fatal("FetchData() expected error, got nil")
 			}
 
-			errMsg := err.Error()
-
-			// Check that all expected strings are present
-			for _, expected := range tt.wantErrorContains {
-				if len(expected) > 0 && !contains(errMsg, expected) {
-					t.Errorf("Error message missing expected text: %q\nGot: %s", expected, errMsg)
-				}
-			}
-
-			// Check that excluded strings are not present
-			for _, excluded := range tt.wantErrorExcludes {
-				if len(excluded) > 0 && contains(errMsg, excluded) {
-					t.Errorf("Error message contains unexpected text: %q\nGot: %s", excluded, errMsg)
-				}
-			}
+			validateErrorMessage(t, err.Error(), tt.wantErrorContains, tt.wantErrorExcludes)
 		})
 	}
 }
 
-// TestNewNbuClientWithVersionDetection_ExplicitVersion tests that when an API version
+// createErrorServer creates a test server that returns the specified error status
+func createErrorServer(statusCode int) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(statusCode)
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"errorMessage": "API version not supported",
+		})
+	}))
+}
+
+// createMinimalConfig creates a minimal test configuration
+func createMinimalConfig(apiVersion, apiKey string) models.Config {
+	cfg := models.Config{}
+	cfg.NbuServer.APIVersion = apiVersion
+	cfg.NbuServer.APIKey = apiKey
+	cfg.NbuServer.InsecureSkipVerify = true
+	return cfg
+}
+
+// validateErrorMessage checks that error message contains expected strings and excludes unwanted ones
+func validateErrorMessage(t *testing.T, errMsg string, wantContains, wantExcludes []string) {
+	for _, expected := range wantContains {
+		if len(expected) > 0 && !contains(errMsg, expected) {
+			t.Errorf("Error message missing expected text: %q\nGot: %s", expected, errMsg)
+		}
+	}
+
+	for _, excluded := range wantExcludes {
+		if len(excluded) > 0 && contains(errMsg, excluded) {
+			t.Errorf("Error message contains unexpected text: %q\nGot: %s", excluded, errMsg)
+		}
+	}
+}
+
+// createMockDataServer creates a test server that returns mock API response data
+func createMockDataServer() *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(mockAPIResponse{
+			Data: []struct {
+				ID         string `json:"id"`
+				Attributes struct {
+					Name string `json:"name"`
+				} `json:"attributes"`
+			}{
+				{
+					ID: "1",
+					Attributes: struct {
+						Name string `json:"name"`
+					}{
+						Name: testResourceName,
+					},
+				},
+			},
+		})
+	}))
+}
+
+// TestNewNbuClientWithVersionDetectionExplicitVersion tests that when an API version
 // is explicitly configured, version detection is bypassed
-func TestNewNbuClientWithVersionDetection_ExplicitVersion(t *testing.T) {
+func TestNewNbuClientWithVersionDetectionExplicitVersion(t *testing.T) {
 	tests := []struct {
 		name              string
 		configuredVersion string
@@ -552,7 +571,7 @@ func TestNewNbuClientWithVersionDetection_ExplicitVersion(t *testing.T) {
 			cfg.NbuServer.Port = "1556"
 			cfg.NbuServer.Scheme = "https"
 			cfg.NbuServer.URI = "/netbackup"
-			cfg.NbuServer.APIKey = "test-key"
+			cfg.NbuServer.APIKey = testAPIKey
 			cfg.NbuServer.APIVersion = tt.configuredVersion
 			cfg.NbuServer.InsecureSkipVerify = true
 
@@ -568,11 +587,11 @@ func TestNewNbuClientWithVersionDetection_ExplicitVersion(t *testing.T) {
 	}
 }
 
-// TestNewNbuClientWithVersionDetection_AutoDetection tests automatic version detection
+// TestNewNbuClientWithVersionDetectionAutoDetection tests automatic version detection
 // when no version is configured
 // Note: This test is simplified to avoid complex mock server setup.
 // Full integration tests for version detection are in version_detector_test.go
-func TestNewNbuClientWithVersionDetection_AutoDetection(t *testing.T) {
+func TestNewNbuClientWithVersionDetectionAutoDetection(t *testing.T) {
 	t.Run("returns error when detection fails", func(t *testing.T) {
 		// Create a server that always returns 406
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -586,7 +605,7 @@ func TestNewNbuClientWithVersionDetection_AutoDetection(t *testing.T) {
 		cfg.NbuServer.Host = "localhost"
 		cfg.NbuServer.Port = "9999" // Non-existent port to trigger failure
 		cfg.NbuServer.URI = ""
-		cfg.NbuServer.APIKey = "test-key"
+		cfg.NbuServer.APIKey = testAPIKey
 		cfg.NbuServer.APIVersion = "" // Empty to trigger detection
 		cfg.NbuServer.InsecureSkipVerify = true
 
@@ -597,9 +616,9 @@ func TestNewNbuClientWithVersionDetection_AutoDetection(t *testing.T) {
 	})
 }
 
-// TestNbuClient_ConfigurationOverride tests that explicit configuration
+// TestNbuClientConfigurationOverride tests that explicit configuration
 // takes precedence over automatic detection
-func TestNbuClient_ConfigurationOverride(t *testing.T) {
+func TestNbuClientConfigurationOverride(t *testing.T) {
 	tests := []struct {
 		name              string
 		configuredVersion string
@@ -624,11 +643,7 @@ func TestNbuClient_ConfigurationOverride(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := models.Config{}
-			cfg.NbuServer.APIVersion = tt.configuredVersion
-			cfg.NbuServer.APIKey = "test-key"
-			cfg.NbuServer.InsecureSkipVerify = true
-
+			cfg := createMinimalConfig(tt.configuredVersion, testAPIKey)
 			client := NewNbuClient(cfg)
 
 			if client.cfg.NbuServer.APIVersion != tt.wantVersion {
@@ -639,10 +654,10 @@ func TestNbuClient_ConfigurationOverride(t *testing.T) {
 	}
 }
 
-// TestNbuClient_FetchData_HTMLResponse tests handling of HTML responses instead of JSON
+// TestNbuClientFetchDataHTMLResponse tests handling of HTML responses instead of JSON
 // This addresses the bug where server returns HTML error pages (e.g., 404, auth failures)
 // and we get "invalid character '<' looking for beginning of value" errors
-func TestNbuClient_FetchData_HTMLResponse(t *testing.T) {
+func TestNbuClientFetchDataHTMLResponse(t *testing.T) {
 	tests := []struct {
 		name        string
 		statusCode  int
@@ -690,30 +705,13 @@ func TestNbuClient_FetchData_HTMLResponse(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", tt.contentType)
+				w.Header().Set(contentTypeHeader, tt.contentType)
 				w.WriteHeader(tt.statusCode)
 				_, _ = w.Write([]byte(tt.body))
 			}))
 			defer server.Close()
 
-			cfg := models.Config{
-				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-				}{
-					APIVersion: "13.0",
-					APIKey:     "test-key",
-				},
-			}
-
+			cfg := createTestConfig("13.0", testAPIKey)
 			client := NewNbuClient(cfg)
 			var result mockAPIResponse
 
@@ -737,8 +735,8 @@ func TestNbuClient_FetchData_HTMLResponse(t *testing.T) {
 	}
 }
 
-// TestNbuClient_FetchData_InvalidJSON tests handling of malformed JSON responses
-func TestNbuClient_FetchData_InvalidJSON(t *testing.T) {
+// TestNbuClientFetchDataInvalidJSON tests handling of malformed JSON responses
+func TestNbuClientFetchDataInvalidJSON(t *testing.T) {
 	tests := []struct {
 		name        string
 		body        string
@@ -747,47 +745,30 @@ func TestNbuClient_FetchData_InvalidJSON(t *testing.T) {
 		{
 			name:        "incomplete JSON",
 			body:        `{"data": [{"id": "1"`,
-			expectError: "failed to unmarshal JSON response",
+			expectError: errMsgUnmarshalJSON,
 		},
 		{
 			name:        "invalid JSON syntax",
 			body:        `{data: invalid}`,
-			expectError: "failed to unmarshal JSON response",
+			expectError: errMsgUnmarshalJSON,
 		},
 		{
 			name:        "empty response",
 			body:        ``,
-			expectError: "failed to unmarshal JSON response",
+			expectError: errMsgUnmarshalJSON,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set(contentTypeHeader, contentTypeJSON)
 				w.WriteHeader(200)
 				_, _ = w.Write([]byte(tt.body))
 			}))
 			defer server.Close()
 
-			cfg := models.Config{
-				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-				}{
-					APIVersion: "13.0",
-					APIKey:     "test-key",
-				},
-			}
-
+			cfg := createBasicTestConfig("13.0", testAPIKey)
 			client := NewNbuClient(cfg)
 			var result mockAPIResponse
 
@@ -823,49 +804,12 @@ func containsHelper(s, substr string) bool {
 	return false
 }
 
-// TestNbuClient_TracingDisabled tests that client works correctly without tracer
-func TestNbuClient_TracingDisabled(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(mockAPIResponse{
-			Data: []struct {
-				ID         string `json:"id"`
-				Attributes struct {
-					Name string `json:"name"`
-				} `json:"attributes"`
-			}{
-				{
-					ID: "1",
-					Attributes: struct {
-						Name string `json:"name"`
-					}{
-						Name: "test-resource",
-					},
-				},
-			},
-		})
-	}))
+// TestNbuClientTracingDisabled tests that client works correctly without tracer
+func TestNbuClientTracingDisabled(t *testing.T) {
+	server := createMockDataServer()
 	defer server.Close()
 
-	cfg := models.Config{
-		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
-		},
-	}
-
+	cfg := createBasicTestConfig("13.0", testAPIKey)
 	client := NewNbuClient(cfg)
 	// Ensure tracer is nil (no global tracer provider set)
 	if client.tracer != nil {
@@ -875,43 +819,26 @@ func TestNbuClient_TracingDisabled(t *testing.T) {
 	var result mockAPIResponse
 	err := client.FetchData(context.Background(), server.URL, &result)
 	if err != nil {
-		t.Errorf("FetchData() unexpected error = %v", err)
+		t.Errorf(errMsgFetchDataUnexpected, err)
 	}
 
 	if len(result.Data) != 1 {
-		t.Errorf("FetchData() got %d items, want 1", len(result.Data))
+		t.Errorf(errMsgFetchDataItemCount, len(result.Data))
 	}
 }
 
-// TestNbuClient_CreateHTTPSpan_NilSafe tests that span creation is nil-safe
-func TestNbuClient_CreateHTTPSpan_NilSafe(t *testing.T) {
-	cfg := models.Config{
-		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
-		},
-	}
-
+// TestNbuClientCreateHTTPSpanNilSafe tests that span creation is nil-safe
+func TestNbuClientCreateHTTPSpanNilSafe(t *testing.T) {
+	cfg := createBasicTestConfig("13.0", testAPIKey)
 	client := NewNbuClient(cfg)
 	client.tracer = nil // Ensure tracer is nil
 
 	ctx := context.Background()
-	newCtx, span := client.createHTTPSpan(ctx, "test.operation")
+	newCtx, span := createSpan(ctx, client.tracer, testOperationName, trace.SpanKindClient)
 
 	// Should return original context and nil span
 	if newCtx != ctx {
-		t.Error("createHTTPSpan() should return original context when tracer is nil")
+		t.Error("createSpan() should return original context when tracer is nil")
 	}
 
 	if span != nil {
@@ -919,52 +846,18 @@ func TestNbuClient_CreateHTTPSpan_NilSafe(t *testing.T) {
 	}
 }
 
-// TestNbuClient_RecordHTTPAttributes_NilSafe tests that attribute recording is nil-safe
-func TestNbuClient_RecordHTTPAttributes_NilSafe(t *testing.T) {
-	cfg := models.Config{
-		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
-		},
-	}
-
+// TestNbuClientRecordHTTPAttributesNilSafe tests that attribute recording is nil-safe
+func TestNbuClientRecordHTTPAttributesNilSafe(t *testing.T) {
+	cfg := createBasicTestConfig("13.0", testAPIKey)
 	client := NewNbuClient(cfg)
 
 	// Should not panic when span is nil
 	client.recordHTTPAttributes(nil, "GET", "http://example.com", 200, 0, 100, 50*time.Millisecond)
 }
 
-// TestNbuClient_RecordError_NilSafe tests that error recording is nil-safe
-func TestNbuClient_RecordError_NilSafe(t *testing.T) {
-	cfg := models.Config{
-		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
-		},
-	}
-
+// TestNbuClientRecordErrorNilSafe tests that error recording is nil-safe
+func TestNbuClientRecordErrorNilSafe(t *testing.T) {
+	cfg := createBasicTestConfig("13.0", testAPIKey)
 	client := NewNbuClient(cfg)
 
 	// Should not panic when span is nil
@@ -972,32 +865,15 @@ func TestNbuClient_RecordError_NilSafe(t *testing.T) {
 	client.recordError(nil, testErr)
 }
 
-// TestNbuClient_InjectTraceContext_NilSafe tests that trace context injection is nil-safe
-func TestNbuClient_InjectTraceContext_NilSafe(t *testing.T) {
-	cfg := models.Config{
-		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
-		},
-	}
-
+// TestNbuClientInjectTraceContextNilSafe tests that trace context injection is nil-safe
+func TestNbuClientInjectTraceContextNilSafe(t *testing.T) {
+	cfg := createBasicTestConfig("13.0", testAPIKey)
 	client := NewNbuClient(cfg)
 	client.tracer = nil // Ensure tracer is nil
 
 	headers := map[string]string{
-		"Authorization": "test-key",
-		"Accept":        "application/json",
+		"Authorization": testAPIKey,
+		"Accept":        contentTypeJSON,
 	}
 
 	result := client.injectTraceContext(context.Background(), headers)
@@ -1014,50 +890,13 @@ func TestNbuClient_InjectTraceContext_NilSafe(t *testing.T) {
 	}
 }
 
-// TestNbuClient_FetchData_WithTracing tests FetchData with tracing enabled
+// TestNbuClientFetchDataWithTracing tests FetchData with tracing enabled
 // Note: This test uses a mock tracer to verify span creation without requiring a real collector
-func TestNbuClient_FetchData_WithTracing(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(mockAPIResponse{
-			Data: []struct {
-				ID         string `json:"id"`
-				Attributes struct {
-					Name string `json:"name"`
-				} `json:"attributes"`
-			}{
-				{
-					ID: "1",
-					Attributes: struct {
-						Name string `json:"name"`
-					}{
-						Name: "test-resource",
-					},
-				},
-			},
-		})
-	}))
+func TestNbuClientFetchDataWithTracing(t *testing.T) {
+	server := createMockDataServer()
 	defer server.Close()
 
-	cfg := models.Config{
-		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
-		},
-	}
-
+	cfg := createBasicTestConfig("13.0", testAPIKey)
 	client := NewNbuClient(cfg)
 
 	// Note: Without setting up a full OpenTelemetry environment, the tracer will be nil
@@ -1066,44 +905,216 @@ func TestNbuClient_FetchData_WithTracing(t *testing.T) {
 	var result mockAPIResponse
 	err := client.FetchData(context.Background(), server.URL, &result)
 	if err != nil {
-		t.Errorf("FetchData() unexpected error = %v", err)
+		t.Errorf(errMsgFetchDataUnexpected, err)
 	}
 
 	if len(result.Data) != 1 {
-		t.Errorf("FetchData() got %d items, want 1", len(result.Data))
+		t.Errorf(errMsgFetchDataItemCount, len(result.Data))
 	}
 }
 
-// TestNbuClient_FetchData_ErrorWithTracing tests error recording with tracing
-func TestNbuClient_FetchData_ErrorWithTracing(t *testing.T) {
+// TestNbuClientFetchDataErrorWithTracing tests error recording with tracing
+func TestNbuClientFetchDataErrorWithTracing(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}))
 	defer server.Close()
 
-	cfg := models.Config{
-		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
-		}{
-			APIVersion: "13.0",
-			APIKey:     "test-key",
-		},
-	}
-
+	cfg := createBasicTestConfig("13.0", testAPIKey)
 	client := NewNbuClient(cfg)
 
 	var result mockAPIResponse
 	err := client.FetchData(context.Background(), server.URL, &result)
 	if err == nil {
 		t.Error("FetchData() expected error for 500 status, got nil")
+	}
+}
+
+// TestCreateSpanWithNilTracer tests that createSpan handles nil tracer correctly
+func TestCreateSpanWithNilTracer(t *testing.T) {
+	ctx := context.Background()
+
+	newCtx, span := createSpan(ctx, nil, testOperationName, trace.SpanKindClient)
+
+	if newCtx != ctx {
+		t.Error("createSpan() with nil tracer should return original context")
+	}
+
+	if span != nil {
+		t.Error("createSpan() with nil tracer should return nil span")
+	}
+}
+
+// TestCreateSpanWithValidTracer tests that createSpan creates a span with valid tracer
+func TestCreateSpanWithValidTracer(t *testing.T) {
+	// Create a mock tracer provider using noop implementation
+	tp := noop.NewTracerProvider()
+	tracer := tp.Tracer("test-tracer")
+
+	ctx := context.Background()
+
+	newCtx, span := createSpan(ctx, tracer, testOperationName, trace.SpanKindClient)
+
+	if newCtx == ctx {
+		t.Error("createSpan() with valid tracer should return new context")
+	}
+
+	if span == nil {
+		t.Error("createSpan() with valid tracer should return non-nil span")
+	}
+
+	// Clean up
+	if span != nil {
+		span.End()
+	}
+}
+
+// TestCreateSpanDifferentKinds tests createSpan with different span kinds
+func TestCreateSpanDifferentKinds(t *testing.T) {
+	tests := []struct {
+		name      string
+		operation string
+		kind      trace.SpanKind
+	}{
+		{
+			name:      "client span kind",
+			operation: "http.request",
+			kind:      trace.SpanKindClient,
+		},
+		{
+			name:      "internal span kind",
+			operation: "internal.process",
+			kind:      trace.SpanKindInternal,
+		},
+		{
+			name:      "server span kind",
+			operation: "http.handler",
+			kind:      trace.SpanKindServer,
+		},
+	}
+
+	tp := noop.NewTracerProvider()
+	tracer := tp.Tracer("test-tracer")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			newCtx, span := createSpan(ctx, tracer, tt.operation, tt.kind)
+
+			if newCtx == ctx {
+				t.Error("createSpan() should return new context")
+			}
+
+			if span == nil {
+				t.Error("createSpan() should return non-nil span")
+			}
+
+			// Clean up
+			if span != nil {
+				span.End()
+			}
+		})
+	}
+}
+
+// TestShouldPerformVersionDetection tests the version detection decision logic
+func TestShouldPerformVersionDetection(t *testing.T) {
+	tests := []struct {
+		name       string
+		apiVersion string
+		expected   bool
+	}{
+		{
+			name:       "empty version triggers detection",
+			apiVersion: "",
+			expected:   true,
+		},
+		{
+			name:       "version 3.0 bypasses detection",
+			apiVersion: models.APIVersion30,
+			expected:   false,
+		},
+		{
+			name:       "version 12.0 bypasses detection",
+			apiVersion: models.APIVersion120,
+			expected:   false,
+		},
+		{
+			name:       "version 13.0 bypasses detection",
+			apiVersion: models.APIVersion130,
+			expected:   false,
+		},
+		{
+			name:       "custom version bypasses detection",
+			apiVersion: "11.0",
+			expected:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &models.Config{}
+			cfg.NbuServer.APIVersion = tt.apiVersion
+
+			result := shouldPerformVersionDetection(cfg)
+
+			if result != tt.expected {
+				t.Errorf("shouldPerformVersionDetection() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestIsExplicitVersionConfigured tests the explicit version configuration check
+func TestIsExplicitVersionConfigured(t *testing.T) {
+	tests := []struct {
+		name       string
+		apiVersion string
+		expected   bool
+	}{
+		{
+			name:       "empty version is not explicit",
+			apiVersion: "",
+			expected:   false,
+		},
+		{
+			name:       "default version 13.0 is not explicit",
+			apiVersion: models.APIVersion130,
+			expected:   false,
+		},
+		{
+			name:       "version 12.0 is explicit",
+			apiVersion: models.APIVersion120,
+			expected:   true,
+		},
+		{
+			name:       "version 3.0 is explicit",
+			apiVersion: models.APIVersion30,
+			expected:   true,
+		},
+		{
+			name:       "custom version 11.0 is explicit",
+			apiVersion: "11.0",
+			expected:   true,
+		},
+		{
+			name:       "custom version 10.5 is explicit",
+			apiVersion: "10.5",
+			expected:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &models.Config{}
+			cfg.NbuServer.APIVersion = tt.apiVersion
+
+			result := isExplicitVersionConfigured(cfg)
+
+			if result != tt.expected {
+				t.Errorf("isExplicitVersionConfigured() = %v, want %v", result, tt.expected)
+			}
+		})
 	}
 }

@@ -11,6 +11,14 @@ import (
 	"github.com/fjacquet/nbu_exporter/internal/models"
 )
 
+// Test constants specific to version detector tests
+const (
+	testAPIKeyVersion = "test-key"
+)
+
+// Note: contentTypeJSON and contentTypeHeader are shared constants
+// defined in api_compatibility_test.go
+
 // mockJobsResponse represents a minimal jobs API response for testing
 type mockJobsResponse struct {
 	Data []struct {
@@ -26,7 +34,7 @@ func createVersionTestServer(acceptedVersion string) *httptest.Server {
 
 		if acceptHeader == expectedAccept {
 			// Version matches - return success
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			w.WriteHeader(http.StatusOK)
 			_ = json.NewEncoder(w).Encode(mockJobsResponse{
 				Data: []struct {
@@ -43,7 +51,7 @@ func createVersionTestServer(acceptedVersion string) *httptest.Server {
 // setupVersionDetectorTest creates a configured client and detector for testing
 func setupVersionDetectorTest(serverURL, acceptedVersion string) (*NbuClient, *APIVersionDetector, models.Config) {
 	cfg := createTestConfig(serverURL, acceptedVersion)
-	cfg.NbuServer.APIKey = "test-key"
+	cfg.NbuServer.APIKey = testAPIKeyVersion
 	cfg.NbuServer.APIVersion = "" // Will be detected
 	cfg.NbuServer.URI = ""        // No base URI for test server
 	client := NewNbuClient(cfg)
@@ -51,7 +59,7 @@ func setupVersionDetectorTest(serverURL, acceptedVersion string) (*NbuClient, *A
 	return client, detector, cfg
 }
 
-func TestAPIVersionDetector_DetectVersion_Success(t *testing.T) {
+func TestAPIVersionDetectorDetectVersionSuccess(t *testing.T) {
 	tests := []struct {
 		name            string
 		serverVersion   string // Version the mock server will accept
@@ -93,7 +101,7 @@ func TestAPIVersionDetector_DetectVersion_Success(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_DetectVersion_Fallback(t *testing.T) {
+func TestAPIVersionDetectorDetectVersionFallback(t *testing.T) {
 	tests := []struct {
 		name            string
 		serverVersion   string // Version the mock server will accept
@@ -133,7 +141,7 @@ func TestAPIVersionDetector_DetectVersion_Fallback(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_DetectVersion_AllVersionsFail(t *testing.T) {
+func TestAPIVersionDetectorDetectVersionAllVersionsFail(t *testing.T) {
 	// Create a test server that rejects all versions
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotAcceptable)
@@ -158,7 +166,7 @@ func TestAPIVersionDetector_DetectVersion_AllVersionsFail(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_DetectVersion_AuthenticationError(t *testing.T) {
+func TestAPIVersionDetectorDetectVersionAuthenticationError(t *testing.T) {
 	// Create a test server that returns 401 Unauthorized
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -177,7 +185,7 @@ func TestAPIVersionDetector_DetectVersion_AuthenticationError(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_TryVersion_RetryLogic(t *testing.T) {
+func TestAPIVersionDetectorTryVersionRetryLogic(t *testing.T) {
 	tests := []struct {
 		name           string
 		failureCount   int // Number of times to fail before succeeding
@@ -219,7 +227,7 @@ func TestAPIVersionDetector_TryVersion_RetryLogic(t *testing.T) {
 				}
 
 				// Success after N failures
-				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set(contentTypeHeader, contentTypeJSON)
 				w.WriteHeader(http.StatusOK)
 				_ = json.NewEncoder(w).Encode(mockJobsResponse{
 					Data: []struct {
@@ -247,7 +255,7 @@ func TestAPIVersionDetector_TryVersion_RetryLogic(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_TryVersion_HTTPStatusCodes(t *testing.T) {
+func TestAPIVersionDetectorTryVersionHTTPStatusCodes(t *testing.T) {
 	tests := []struct {
 		name           string
 		statusCode     int
@@ -292,7 +300,7 @@ func TestAPIVersionDetector_TryVersion_HTTPStatusCodes(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
 				if tt.statusCode == http.StatusOK {
-					w.Header().Set("Content-Type", "application/json")
+					w.Header().Set(contentTypeHeader, contentTypeJSON)
 					_ = json.NewEncoder(w).Encode(mockJobsResponse{
 						Data: []struct {
 							ID string `json:"id"`
@@ -313,7 +321,7 @@ func TestAPIVersionDetector_TryVersion_HTTPStatusCodes(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_TryVersion_ContextCancellation(t *testing.T) {
+func TestAPIVersionDetectorTryVersionContextCancellation(t *testing.T) {
 	// Create a test server with a delay
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(100 * time.Millisecond)
@@ -333,7 +341,7 @@ func TestAPIVersionDetector_TryVersion_ContextCancellation(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_ExponentialBackoff(t *testing.T) {
+func TestAPIVersionDetectorExponentialBackoff(t *testing.T) {
 	attemptTimes := []time.Time{}
 
 	// Create a test server that tracks request times

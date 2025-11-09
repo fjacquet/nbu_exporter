@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestJobs_UnmarshalJSON_WithOptionalFields(t *testing.T) {
+func TestJobsUnmarshalJSONWithOptionalFields(t *testing.T) {
 	// Read the test fixture with 10.5 API response
 	data, err := os.ReadFile("../../testdata/api-10.5/jobs-response.json")
 	if err != nil {
@@ -77,7 +77,7 @@ func TestJobs_UnmarshalJSON_WithOptionalFields(t *testing.T) {
 	}
 }
 
-func TestJobs_UnmarshalJSON_WithoutOptionalFields(t *testing.T) {
+func TestJobsUnmarshalJSONWithoutOptionalFields(t *testing.T) {
 	// Test JSON without optional fields (backward compatibility)
 	jsonData := `{
 		"data": [{
@@ -200,7 +200,7 @@ func TestJobs_UnmarshalJSON_WithoutOptionalFields(t *testing.T) {
 	}
 }
 
-func TestJobs_Pagination(t *testing.T) {
+func TestJobsPagination(t *testing.T) {
 	// Read the test fixture
 	data, err := os.ReadFile("../../testdata/api-10.5/jobs-response.json")
 	if err != nil {
@@ -248,7 +248,7 @@ func TestJobs_Pagination(t *testing.T) {
 	}
 }
 
-func TestJobs_TimeFields(t *testing.T) {
+func TestJobsTimeFields(t *testing.T) {
 	// Read the test fixture
 	data, err := os.ReadFile("../../testdata/api-10.5/jobs-response.json")
 	if err != nil {
@@ -285,7 +285,7 @@ func TestJobs_TimeFields(t *testing.T) {
 	}
 }
 
-func TestJobs_RequiredFields(t *testing.T) {
+func TestJobsRequiredFields(t *testing.T) {
 	tests := []struct {
 		name        string
 		jsonData    string
@@ -324,7 +324,7 @@ func TestJobs_RequiredFields(t *testing.T) {
 	}
 }
 
-func TestJobs_DifferentJobTypes(t *testing.T) {
+func TestJobsDifferentJobTypes(t *testing.T) {
 	// Read the test fixture
 	data, err := os.ReadFile("../../testdata/api-10.5/jobs-response.json")
 	if err != nil {

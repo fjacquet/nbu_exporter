@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
+	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -42,10 +43,11 @@ var DefaultRetryConfig = RetryConfig{
 // working version. This allows the exporter to work with NetBackup 10.0, 10.5, and 11.0
 // without manual configuration.
 type APIVersionDetector struct {
-	client      *NbuClient     // HTTP client for making test requests
-	cfg         *models.Config // Application configuration
-	retryConfig RetryConfig    // Retry configuration for transient failures
-	tracer      trace.Tracer   // OpenTelemetry tracer for distributed tracing (nil if tracing disabled)
+	client          *NbuClient     // HTTP client for making test requests
+	cfg             *models.Config // Application configuration
+	retryConfig     RetryConfig    // Retry configuration for transient failures
+	tracer          trace.Tracer   // OpenTelemetry tracer for distributed tracing (nil if tracing disabled)
+	originalVersion string         // Original API version to restore after testing
 }
 
 // NewAPIVersionDetector creates a new version detector with the provided client and configuration.
@@ -179,169 +181,213 @@ func (d *APIVersionDetector) DetectVersion(ctx context.Context) (string, error) 
 //   - true if the version is supported and working
 //   - false if the version is not supported or encounters errors
 func (d *APIVersionDetector) tryVersion(ctx context.Context, version string) bool {
-	// Get span from context to record version attempt events
 	span := trace.SpanFromContext(ctx)
-	// Temporarily set the version in both the detector's config and the client's config
-	originalVersion := d.cfg.NbuServer.APIVersion
+
+	d.setTemporaryVersion(version)
+	defer d.restoreOriginalVersion()
+
+	testURL := d.buildTestURL()
+	return d.retryVersionTest(ctx, version, testURL, span)
+}
+
+// setTemporaryVersion temporarily sets the API version for testing
+func (d *APIVersionDetector) setTemporaryVersion(version string) {
+	d.originalVersion = d.cfg.NbuServer.APIVersion
 	d.cfg.NbuServer.APIVersion = version
 	d.client.cfg.NbuServer.APIVersion = version
-	defer func() {
-		d.cfg.NbuServer.APIVersion = originalVersion
-		d.client.cfg.NbuServer.APIVersion = originalVersion
-	}()
+}
 
-	// Use a lightweight endpoint to test API connectivity
+// restoreOriginalVersion restores the original API version
+func (d *APIVersionDetector) restoreOriginalVersion() {
+	d.cfg.NbuServer.APIVersion = d.originalVersion
+	d.client.cfg.NbuServer.APIVersion = d.originalVersion
+}
+
+// buildTestURL builds the test URL for version detection
+func (d *APIVersionDetector) buildTestURL() string {
 	baseURL := d.cfg.GetNBUBaseURL()
-	testURL := fmt.Sprintf("%s/admin/jobs?page[limit]=1", baseURL)
+	return fmt.Sprintf("%s/admin/jobs?page[limit]=1", baseURL)
+}
 
-	// Implement retry logic with exponential backoff
+// retryVersionTest implements retry logic with exponential backoff
+func (d *APIVersionDetector) retryVersionTest(ctx context.Context, version, testURL string, span trace.Span) bool {
 	delay := d.retryConfig.InitialDelay
+
 	for attempt := 1; attempt <= d.retryConfig.MaxAttempts; attempt++ {
-		resp, err := d.client.client.R().
-			SetContext(ctx).
-			SetHeaders(d.client.getHeaders()).
-			Get(testURL)
+		resp, err := d.makeVersionTestRequest(ctx, testURL)
 
 		if err != nil {
-			// Network error - retry with backoff
-			log.Debugf("API version %s attempt %d/%d failed with network error: %v",
-				version, attempt, d.retryConfig.MaxAttempts, err)
-
-			if attempt < d.retryConfig.MaxAttempts {
-				log.Debugf("Retrying in %v...", delay)
-				time.Sleep(delay)
-				delay = time.Duration(float64(delay) * d.retryConfig.BackoffFactor)
-				if delay > d.retryConfig.MaxDelay {
-					delay = d.retryConfig.MaxDelay
-				}
+			if d.shouldRetry(attempt) {
+				delay = d.retryWithBackoff(delay)
 				continue
 			}
-
-			log.Warnf("API version %s failed after %d attempts: %v", version, d.retryConfig.MaxAttempts, err)
-
-			// Record network error failure as span event
-			if span != nil {
-				span.AddEvent("version_attempt_failed",
-					trace.WithAttributes(
-						attribute.String("version", version),
-						attribute.Bool("success", false),
-						attribute.String("failure_reason", "network_error"),
-						attribute.String("error", err.Error()),
-						attribute.Int("attempts", d.retryConfig.MaxAttempts),
-					),
-				)
-			}
-
+			d.recordNetworkError(span, version, err)
 			return false
 		}
 
-		// Check response status
-		switch resp.StatusCode() {
-		case 200:
-			// Success - this version works
-			log.Debugf("API version %s is supported (HTTP 200)", version)
-
-			// Record success as span event
-			if span != nil {
-				span.AddEvent("version_attempt_success",
-					trace.WithAttributes(
-						attribute.String("version", version),
-						attribute.Int("http_status", 200),
-						attribute.Bool("success", true),
-					),
-				)
-			}
-
-			return true
-
-		case 401:
-			// Authentication error - fail immediately, don't try other versions
-			log.Errorf("Authentication failed (HTTP 401). Please verify your API key is valid.")
-
-			// Record authentication failure as span event
-			if span != nil {
-				span.AddEvent("version_attempt_failed",
-					trace.WithAttributes(
-						attribute.String("version", version),
-						attribute.Int("http_status", 401),
-						attribute.Bool("success", false),
-						attribute.String("failure_reason", "authentication_error"),
-					),
-				)
-			}
-
-			return false
-
-		case 406:
-			// Version not supported - try next version
-			log.Debugf("API version %s not supported by server (HTTP 406)", version)
-
-			// Record version not supported as span event
-			if span != nil {
-				span.AddEvent("version_attempt_failed",
-					trace.WithAttributes(
-						attribute.String("version", version),
-						attribute.Int("http_status", 406),
-						attribute.Bool("success", false),
-						attribute.String("failure_reason", "version_not_supported"),
-					),
-				)
-			}
-
-			return false
-
-		case 500, 502, 503, 504:
-			// Transient server errors - retry with backoff
-			log.Debugf("API version %s attempt %d/%d failed with transient error (HTTP %d)",
-				version, attempt, d.retryConfig.MaxAttempts, resp.StatusCode())
-
-			if attempt < d.retryConfig.MaxAttempts {
-				log.Debugf("Retrying in %v...", delay)
-				time.Sleep(delay)
-				delay = time.Duration(float64(delay) * d.retryConfig.BackoffFactor)
-				if delay > d.retryConfig.MaxDelay {
-					delay = d.retryConfig.MaxDelay
-				}
-				continue
-			}
-
-			log.Warnf("API version %s failed after %d attempts with HTTP %d",
-				version, d.retryConfig.MaxAttempts, resp.StatusCode())
-
-			// Record transient error failure as span event
-			if span != nil {
-				span.AddEvent("version_attempt_failed",
-					trace.WithAttributes(
-						attribute.String("version", version),
-						attribute.Int("http_status", resp.StatusCode()),
-						attribute.Bool("success", false),
-						attribute.String("failure_reason", "transient_server_error"),
-						attribute.Int("attempts", d.retryConfig.MaxAttempts),
-					),
-				)
-			}
-
-			return false
-
-		default:
-			// Other error - log and try next version
-			log.Warnf("API version %s returned unexpected status %d: %s",
-				version, resp.StatusCode(), resp.Status())
-
-			// Record unexpected error as span event
-			if span != nil {
-				span.AddEvent("version_attempt_failed",
-					trace.WithAttributes(
-						attribute.String("version", version),
-						attribute.Int("http_status", resp.StatusCode()),
-						attribute.Bool("success", false),
-						attribute.String("failure_reason", "unexpected_status"),
-					),
-				)
-			}
-
-			return false
+		result, shouldContinue := d.handleResponseStatus(ctx, version, resp, attempt, &delay, span)
+		if !shouldContinue {
+			return result
 		}
+	}
+
+	return false
+}
+
+// makeVersionTestRequest makes the HTTP request to test the API version
+func (d *APIVersionDetector) makeVersionTestRequest(ctx context.Context, testURL string) (*resty.Response, error) {
+	return d.client.client.R().
+		SetContext(ctx).
+		SetHeaders(d.client.getHeaders()).
+		Get(testURL)
+}
+
+// shouldRetry checks if we should retry the request
+func (d *APIVersionDetector) shouldRetry(attempt int) bool {
+	return attempt < d.retryConfig.MaxAttempts
+}
+
+// retryWithBackoff implements exponential backoff and returns the new delay
+func (d *APIVersionDetector) retryWithBackoff(delay time.Duration) time.Duration {
+	log.Debugf("Retrying in %v...", delay)
+	time.Sleep(delay)
+	newDelay := time.Duration(float64(delay) * d.retryConfig.BackoffFactor)
+	if newDelay > d.retryConfig.MaxDelay {
+		return d.retryConfig.MaxDelay
+	}
+	return newDelay
+}
+
+// recordNetworkError records a network error in the span
+func (d *APIVersionDetector) recordNetworkError(span trace.Span, version string, err error) {
+	log.Warnf("API version %s failed after %d attempts: %v", version, d.retryConfig.MaxAttempts, err)
+
+	if span != nil {
+		span.AddEvent("version_attempt_failed",
+			trace.WithAttributes(
+				attribute.String("version", version),
+				attribute.Bool("success", false),
+				attribute.String("failure_reason", "network_error"),
+				attribute.String("error", err.Error()),
+				attribute.Int("attempts", d.retryConfig.MaxAttempts),
+			),
+		)
+	}
+}
+
+// handleResponseStatus handles different HTTP response status codes
+// Returns (result, shouldContinue) where shouldContinue indicates if the retry loop should continue
+func (d *APIVersionDetector) handleResponseStatus(ctx context.Context, version string, resp *resty.Response, attempt int, delay *time.Duration, span trace.Span) (bool, bool) {
+	switch resp.StatusCode() {
+	case 200:
+		return d.handleSuccess(version, span), false
+	case 401:
+		return d.handleAuthError(version, span), false
+	case 406:
+		return d.handleVersionNotSupported(version, span), false
+	case 500, 502, 503, 504:
+		return d.handleTransientError(version, resp.StatusCode(), attempt, delay, span)
+	default:
+		return d.handleUnexpectedStatus(version, resp, span), false
+	}
+}
+
+// handleSuccess handles a successful version test (HTTP 200)
+func (d *APIVersionDetector) handleSuccess(version string, span trace.Span) bool {
+	log.Debugf("API version %s is supported (HTTP 200)", version)
+
+	if span != nil {
+		span.AddEvent("version_attempt_success",
+			trace.WithAttributes(
+				attribute.String("version", version),
+				attribute.Int("http_status", 200),
+				attribute.Bool("success", true),
+			),
+		)
+	}
+
+	return true
+}
+
+// handleAuthError handles authentication errors (HTTP 401)
+func (d *APIVersionDetector) handleAuthError(version string, span trace.Span) bool {
+	log.Errorf("Authentication failed (HTTP 401). Please verify your API key is valid.")
+
+	if span != nil {
+		span.AddEvent("version_attempt_failed",
+			trace.WithAttributes(
+				attribute.String("version", version),
+				attribute.Int("http_status", 401),
+				attribute.Bool("success", false),
+				attribute.String("failure_reason", "authentication_error"),
+			),
+		)
+	}
+
+	return false
+}
+
+// handleVersionNotSupported handles version not supported errors (HTTP 406)
+func (d *APIVersionDetector) handleVersionNotSupported(version string, span trace.Span) bool {
+	log.Debugf("API version %s not supported by server (HTTP 406)", version)
+
+	if span != nil {
+		span.AddEvent("version_attempt_failed",
+			trace.WithAttributes(
+				attribute.String("version", version),
+				attribute.Int("http_status", 406),
+				attribute.Bool("success", false),
+				attribute.String("failure_reason", "version_not_supported"),
+			),
+		)
+	}
+
+	return false
+}
+
+// handleTransientError handles transient server errors (HTTP 500, 502, 503, 504)
+// Returns (result, shouldContinue)
+func (d *APIVersionDetector) handleTransientError(version string, statusCode, attempt int, delay *time.Duration, span trace.Span) (bool, bool) {
+	log.Debugf("API version %s attempt %d/%d failed with transient error (HTTP %d)",
+		version, attempt, d.retryConfig.MaxAttempts, statusCode)
+
+	if d.shouldRetry(attempt) {
+		*delay = d.retryWithBackoff(*delay)
+		return false, true // Continue retrying
+	}
+
+	log.Warnf("API version %s failed after %d attempts with HTTP %d",
+		version, d.retryConfig.MaxAttempts, statusCode)
+
+	if span != nil {
+		span.AddEvent("version_attempt_failed",
+			trace.WithAttributes(
+				attribute.String("version", version),
+				attribute.Int("http_status", statusCode),
+				attribute.Bool("success", false),
+				attribute.String("failure_reason", "transient_server_error"),
+				attribute.Int("attempts", d.retryConfig.MaxAttempts),
+			),
+		)
+	}
+
+	return false, false // Don't continue
+}
+
+// handleUnexpectedStatus handles unexpected HTTP status codes
+func (d *APIVersionDetector) handleUnexpectedStatus(version string, resp *resty.Response, span trace.Span) bool {
+	log.Warnf("API version %s returned unexpected status %d: %s",
+		version, resp.StatusCode(), resp.Status())
+
+	if span != nil {
+		span.AddEvent("version_attempt_failed",
+			trace.WithAttributes(
+				attribute.String("version", version),
+				attribute.Int("http_status", resp.StatusCode()),
+				attribute.Bool("success", false),
+				attribute.String("failure_reason", "unexpected_status"),
+			),
+		)
 	}
 
 	return false

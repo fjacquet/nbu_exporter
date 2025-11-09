@@ -16,9 +16,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// Note: Common test constants like contentTypeJSON, contentTypeHeader,
+// testSchemeHTTPS, testPathAdminJobs, and testPathStorageUnits
+// are defined in test_common.go and shared across all test files
+
 // TestPerformance_StartupTimeWithVersionDetection measures the startup time
 // when automatic version detection is enabled.
-func TestPerformance_StartupTimeWithVersionDetection(t *testing.T) {
+func TestPerformanceStartupTimeWithVersionDetection(t *testing.T) {
 	// Create a mock server that supports version 12.0
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
@@ -32,13 +36,13 @@ func TestPerformance_StartupTimeWithVersionDetection(t *testing.T) {
 		response := map[string]interface{}{
 			"data": []interface{}{},
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
 	// Measure startup time with version detection
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "") // Empty version triggers detection
 	cfg.NbuServer.Scheme = "https"
 
@@ -59,19 +63,19 @@ func TestPerformance_StartupTimeWithVersionDetection(t *testing.T) {
 
 // TestPerformance_StartupTimeWithExplicitVersion measures the startup time
 // when API version is explicitly configured (no detection).
-func TestPerformance_StartupTimeWithExplicitVersion(t *testing.T) {
+func TestPerformanceStartupTimeWithExplicitVersion(t *testing.T) {
 	// Create a mock server
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := map[string]interface{}{
 			"data": []interface{}{},
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
 	// Measure startup time with explicit version
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "12.0") // Explicit version
 	cfg.NbuServer.Scheme = "https"
 
@@ -91,7 +95,7 @@ func TestPerformance_StartupTimeWithExplicitVersion(t *testing.T) {
 
 // TestPerformance_CompareStartupTimes compares startup times between
 // explicit configuration and automatic detection.
-func TestPerformance_CompareStartupTimes(t *testing.T) {
+func TestPerformanceCompareStartupTimes(t *testing.T) {
 	// Create a mock server
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
@@ -105,12 +109,12 @@ func TestPerformance_CompareStartupTimes(t *testing.T) {
 		response := map[string]interface{}{
 			"data": []interface{}{},
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 
 	// Measure explicit version startup
 	cfgExplicit := createTestConfig(serverAddr, "12.0")
@@ -142,9 +146,23 @@ func TestPerformance_CompareStartupTimes(t *testing.T) {
 		"Version detection overhead should be reasonable")
 }
 
+// handleJobsRequest handles mock job API requests
+func handleJobsRequest(w http.ResponseWriter) {
+	response := createTestJobData()
+	w.Header().Set(contentTypeHeader, contentTypeJSON)
+	_ = json.NewEncoder(w).Encode(response)
+}
+
+// handleStorageRequest handles mock storage API requests
+func handleStorageRequest(w http.ResponseWriter) {
+	response := createTestStorageData()
+	w.Header().Set(contentTypeHeader, contentTypeJSON)
+	_ = json.NewEncoder(w).Encode(response)
+}
+
 // TestPerformance_RuntimePerformance verifies that runtime performance
 // (metric collection) is not degraded by multi-version support.
-func TestPerformance_RuntimePerformance(t *testing.T) {
+func TestPerformanceRuntimePerformance(t *testing.T) {
 	versions := []string{"3.0", "12.0", "13.0"}
 	runtimeDurations := make(map[string]time.Duration)
 
@@ -154,14 +172,10 @@ func TestPerformance_RuntimePerformance(t *testing.T) {
 		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requestCount++
 
-			if strings.Contains(r.URL.Path, "/admin/jobs") {
-				response := createTestJobData()
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(response)
-			} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
-				response := createTestStorageData()
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(response)
+			if strings.Contains(r.URL.Path, testPathAdminJobs) {
+				handleJobsRequest(w)
+			} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+				handleStorageRequest(w)
 			} else {
 				w.WriteHeader(http.StatusNotFound)
 			}
@@ -169,7 +183,7 @@ func TestPerformance_RuntimePerformance(t *testing.T) {
 		defer server.Close()
 
 		// Create collector
-		serverAddr := strings.TrimPrefix(server.URL, "https://")
+		serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 		cfg := createTestConfig(serverAddr, version)
 		cfg.NbuServer.Scheme = "https"
 
@@ -216,7 +230,7 @@ func TestPerformance_RuntimePerformance(t *testing.T) {
 
 // TestPerformance_ConnectionReuse verifies that HTTP connections are reused
 // across multiple API calls within a scraping cycle.
-func TestPerformance_ConnectionReuse(t *testing.T) {
+func TestPerformanceConnectionReuse(t *testing.T) {
 	connectionCount := 0
 	requestCount := 0
 
@@ -229,20 +243,16 @@ func TestPerformance_ConnectionReuse(t *testing.T) {
 			connectionCount++
 		}
 
-		if strings.Contains(r.URL.Path, "/admin/jobs") {
-			response := createTestJobData()
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(response)
-		} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
-			response := createTestStorageData()
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(response)
+		if strings.Contains(r.URL.Path, testPathAdminJobs) {
+			handleJobsRequest(w)
+		} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+			handleStorageRequest(w)
 		}
 	}))
 	defer server.Close()
 
 	// Create collector
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "12.0")
 	cfg.NbuServer.Scheme = "https"
 
@@ -270,7 +280,7 @@ func TestPerformance_ConnectionReuse(t *testing.T) {
 
 // TestPerformance_MemoryUsage verifies that the multi-version implementation
 // doesn't significantly increase memory usage.
-func TestPerformance_MemoryUsage(t *testing.T) {
+func TestPerformanceMemoryUsage(t *testing.T) {
 	// This is a simplified test - in production, you'd use runtime.MemStats
 	// to measure actual memory allocation
 
@@ -279,20 +289,16 @@ func TestPerformance_MemoryUsage(t *testing.T) {
 	for _, version := range versions {
 		// Create mock server
 		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.Contains(r.URL.Path, "/admin/jobs") {
-				response := createTestJobData()
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(response)
-			} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
-				response := createTestStorageData()
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(response)
+			if strings.Contains(r.URL.Path, testPathAdminJobs) {
+				handleJobsRequest(w)
+			} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+				handleStorageRequest(w)
 			}
 		}))
 		defer server.Close()
 
 		// Create collector
-		serverAddr := strings.TrimPrefix(server.URL, "https://")
+		serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 		cfg := createTestConfig(serverAddr, version)
 		cfg.NbuServer.Scheme = "https"
 
@@ -311,26 +317,22 @@ func TestPerformance_MemoryUsage(t *testing.T) {
 
 // TestPerformance_ConcurrentScrapes verifies that the collector can handle
 // concurrent scrape requests without performance degradation.
-func TestPerformance_ConcurrentScrapes(t *testing.T) {
+func TestPerformanceConcurrentScrapes(t *testing.T) {
 	// Create mock server
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Add small delay to simulate real API
 		time.Sleep(10 * time.Millisecond)
 
-		if strings.Contains(r.URL.Path, "/admin/jobs") {
-			response := createTestJobData()
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(response)
-		} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
-			response := createTestStorageData()
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(response)
+		if strings.Contains(r.URL.Path, testPathAdminJobs) {
+			handleJobsRequest(w)
+		} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+			handleStorageRequest(w)
 		}
 	}))
 	defer server.Close()
 
 	// Create collector
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "12.0")
 	cfg.NbuServer.Scheme = "https"
 
@@ -385,12 +387,12 @@ func BenchmarkCollectorCreation(b *testing.B) {
 		response := map[string]interface{}{
 			"data": []interface{}{},
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 
 	b.Run("ExplicitVersion", func(b *testing.B) {
 		cfg := createTestConfig(serverAddr, "12.0")
@@ -413,42 +415,56 @@ func BenchmarkMetricCollection(b *testing.B) {
 
 	for _, version := range versions {
 		b.Run("Version_"+strings.ReplaceAll(version, ".", "_"), func(b *testing.B) {
-			// Create mock server
-			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if strings.Contains(r.URL.Path, "/admin/jobs") {
-					response := createTestJobData()
-					w.Header().Set("Content-Type", "application/json")
-					_ = json.NewEncoder(w).Encode(response)
-				} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
-					response := createTestStorageData()
-					w.Header().Set("Content-Type", "application/json")
-					_ = json.NewEncoder(w).Encode(response)
-				}
-			}))
+			server := createBenchmarkMockServer()
 			defer server.Close()
 
-			// Create collector
-			serverAddr := strings.TrimPrefix(server.URL, "https://")
-			cfg := createTestConfig(serverAddr, version)
-			cfg.NbuServer.Scheme = "https"
-
-			collector, err := NewNbuCollector(cfg)
-			if err != nil {
-				b.Fatal(err)
-			}
+			collector := createBenchmarkCollector(b, server.URL, version)
 
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				ch := make(chan prometheus.Metric, 100)
-				go func() {
-					collector.Collect(ch)
-					close(ch)
-				}()
-
-				for range ch {
-					// Drain the channel
-				}
-			}
+			benchmarkCollectorIterations(b, collector)
 		})
+	}
+}
+
+// createBenchmarkMockServer creates a mock server for benchmarking
+func createBenchmarkMockServer() *httptest.Server {
+	return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, testPathAdminJobs) {
+			handleJobsRequest(w)
+		} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+			handleStorageRequest(w)
+		}
+	}))
+}
+
+// createBenchmarkCollector creates a collector for benchmarking
+func createBenchmarkCollector(b *testing.B, serverURL, version string) *NbuCollector {
+	b.Helper()
+
+	serverAddr := strings.TrimPrefix(serverURL, testSchemeHTTPS)
+	cfg := createTestConfig(serverAddr, version)
+	cfg.NbuServer.Scheme = "https"
+
+	collector, err := NewNbuCollector(cfg)
+	if err != nil {
+		b.Fatal(err)
+	}
+	return collector
+}
+
+// benchmarkCollectorIterations runs the collector for b.N iterations
+func benchmarkCollectorIterations(b *testing.B, collector *NbuCollector) {
+	b.Helper()
+
+	for i := 0; i < b.N; i++ {
+		ch := make(chan prometheus.Metric, 100)
+		go func() {
+			collector.Collect(ch)
+			close(ch)
+		}()
+
+		for range ch {
+			// Drain the channel
+		}
 	}
 }

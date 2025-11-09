@@ -15,10 +15,10 @@ import (
 
 // TestIntegration_EndToEndTracing tests end-to-end tracing with a test collector
 // This test verifies that spans are created and propagated correctly through the system
-func TestIntegration_EndToEndTracing(t *testing.T) {
+func TestIntegrationEndToEndTracing(t *testing.T) {
 	// Create a test server that simulates NetBackup API
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
 
 		// Return minimal valid response
@@ -32,12 +32,12 @@ func TestIntegration_EndToEndTracing(t *testing.T) {
 	// Initialize telemetry manager
 	telemetryConfig := telemetry.Config{
 		Enabled:         true,
-		Endpoint:        "localhost:4317",
+		Endpoint:        testOTELEndpoint,
 		Insecure:        true,
 		SamplingRate:    1.0,
-		ServiceName:     "nbu-exporter-test",
-		ServiceVersion:  "1.0.0-test",
-		NetBackupServer: "test-server",
+		ServiceName:     testServiceName,
+		ServiceVersion:  testServiceVersion,
+		NetBackupServer: testServerName,
 	}
 
 	manager := telemetry.NewManager(telemetryConfig)
@@ -71,7 +71,7 @@ func TestIntegration_EndToEndTracing(t *testing.T) {
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIKey:     testKeyName,
 		},
 	}
 
@@ -81,7 +81,7 @@ func TestIntegration_EndToEndTracing(t *testing.T) {
 	var result map[string]interface{}
 	err := client.FetchData(context.Background(), server.URL, &result)
 	if err != nil {
-		t.Errorf("FetchData() unexpected error = %v", err)
+		t.Errorf(testErrorFetchDataUnexpected, err)
 	}
 
 	// Shutdown telemetry
@@ -93,10 +93,10 @@ func TestIntegration_EndToEndTracing(t *testing.T) {
 }
 
 // TestIntegration_BackwardCompatibility tests that the system works without OpenTelemetry config
-func TestIntegration_BackwardCompatibility(t *testing.T) {
+func TestIntegrationBackwardCompatibility(t *testing.T) {
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
@@ -137,7 +137,7 @@ func TestIntegration_BackwardCompatibility(t *testing.T) {
 			Scheme:     "https",
 			URI:        "/netbackup",
 			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIKey:     testKeyName,
 		},
 		OpenTelemetry: struct {
 			Enabled      bool    `yaml:"enabled"`
@@ -165,15 +165,15 @@ func TestIntegration_BackwardCompatibility(t *testing.T) {
 	var result map[string]interface{}
 	err = client.FetchData(context.Background(), server.URL, &result)
 	if err != nil {
-		t.Errorf("FetchData() unexpected error = %v", err)
+		t.Errorf(testErrorFetchDataUnexpected, err)
 	}
 }
 
 // TestIntegration_GracefulDegradation tests graceful degradation with invalid endpoint
-func TestIntegration_GracefulDegradation(t *testing.T) {
+func TestIntegrationGracefulDegradation(t *testing.T) {
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
@@ -189,9 +189,9 @@ func TestIntegration_GracefulDegradation(t *testing.T) {
 		Endpoint:        "invalid-endpoint:9999",
 		Insecure:        true,
 		SamplingRate:    1.0,
-		ServiceName:     "nbu-exporter-test",
-		ServiceVersion:  "1.0.0-test",
-		NetBackupServer: "test-server",
+		ServiceName:     testServiceName,
+		ServiceVersion:  testServiceVersion,
+		NetBackupServer: testServerName,
 	}
 
 	manager := telemetry.NewManager(telemetryConfig)
@@ -228,7 +228,7 @@ func TestIntegration_GracefulDegradation(t *testing.T) {
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIKey:     testKeyName,
 		},
 	}
 
@@ -238,7 +238,7 @@ func TestIntegration_GracefulDegradation(t *testing.T) {
 	var result map[string]interface{}
 	err = client.FetchData(context.Background(), server.URL, &result)
 	if err != nil {
-		t.Errorf("FetchData() unexpected error = %v", err)
+		t.Errorf(testErrorFetchDataUnexpected, err)
 	}
 
 	// Shutdown telemetry
@@ -250,14 +250,14 @@ func TestIntegration_GracefulDegradation(t *testing.T) {
 }
 
 // TestIntegration_TracePropagation tests that trace context is propagated correctly
-func TestIntegration_TracePropagation(t *testing.T) {
+func TestIntegrationTracePropagation(t *testing.T) {
 	// Create a test server that checks for trace headers
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check for trace headers (may not be present if no global tracer provider)
 		_ = r.Header.Get("traceparent")
 		_ = r.Header.Get("tracestate")
 
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
@@ -270,12 +270,12 @@ func TestIntegration_TracePropagation(t *testing.T) {
 	// Initialize telemetry
 	telemetryConfig := telemetry.Config{
 		Enabled:         true,
-		Endpoint:        "localhost:4317",
+		Endpoint:        testOTELEndpoint,
 		Insecure:        true,
 		SamplingRate:    1.0,
-		ServiceName:     "nbu-exporter-test",
-		ServiceVersion:  "1.0.0-test",
-		NetBackupServer: "test-server",
+		ServiceName:     testServiceName,
+		ServiceVersion:  testServiceVersion,
+		NetBackupServer: testServerName,
 	}
 
 	manager := telemetry.NewManager(telemetryConfig)
@@ -299,7 +299,7 @@ func TestIntegration_TracePropagation(t *testing.T) {
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIKey:     testKeyName,
 		},
 	}
 
@@ -313,7 +313,7 @@ func TestIntegration_TracePropagation(t *testing.T) {
 	var result map[string]interface{}
 	err := client.FetchData(spanCtx, server.URL, &result)
 	if err != nil {
-		t.Errorf("FetchData() unexpected error = %v", err)
+		t.Errorf(testErrorFetchDataUnexpected, err)
 	}
 
 	// Note: Trace headers may not be present if no global tracer provider is set
@@ -328,7 +328,7 @@ func TestIntegration_TracePropagation(t *testing.T) {
 }
 
 // TestIntegration_SamplingRates tests different sampling rates
-func TestIntegration_SamplingRates(t *testing.T) {
+func TestIntegrationSamplingRates(t *testing.T) {
 	tests := []struct {
 		name         string
 		samplingRate float64
@@ -352,12 +352,12 @@ func TestIntegration_SamplingRates(t *testing.T) {
 			// Initialize telemetry with different sampling rates
 			telemetryConfig := telemetry.Config{
 				Enabled:         true,
-				Endpoint:        "localhost:4317",
+				Endpoint:        testOTELEndpoint,
 				Insecure:        true,
 				SamplingRate:    tt.samplingRate,
-				ServiceName:     "nbu-exporter-test",
-				ServiceVersion:  "1.0.0-test",
-				NetBackupServer: "test-server",
+				ServiceName:     testServiceName,
+				ServiceVersion:  testServiceVersion,
+				NetBackupServer: testServerName,
 			}
 
 			manager := telemetry.NewManager(telemetryConfig)

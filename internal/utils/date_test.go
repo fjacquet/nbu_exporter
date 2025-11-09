@@ -48,7 +48,7 @@ func TestConvertTimeToNBUDate(t *testing.T) {
 	}
 }
 
-func TestConvertTimeToNBUDate_RoundTrip(t *testing.T) {
+func TestConvertTimeToNBUDateRoundTrip(t *testing.T) {
 	// Test that we can convert to NBU format and parse it back
 	original := time.Date(2024, 11, 8, 15, 30, 45, 123456789, time.UTC)
 	nbuFormat := ConvertTimeToNBUDate(original)
