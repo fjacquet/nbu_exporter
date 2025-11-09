@@ -11,6 +11,9 @@ import (
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/fjacquet/nbu_exporter/internal/utils"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -40,6 +43,19 @@ const (
 //
 // Returns an error if the API request fails or response cannot be parsed.
 func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[string]float64) error {
+	// Start child span "netbackup.fetch_storage" from parent context
+	ctx, span := createStorageSpan(ctx, client.tracer)
+	if span != nil {
+		defer span.End()
+	}
+
+	// Record endpoint attribute
+	if span != nil {
+		span.SetAttributes(
+			attribute.String("netbackup.endpoint", storagePath),
+		)
+	}
+
 	var storages models.Storages
 
 	url := client.cfg.BuildURL(storagePath, map[string]string{
@@ -48,6 +64,11 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
 	})
 
 	if err := client.FetchData(ctx, url, &storages); err != nil {
+		// Record error as span event and set span status to error
+		if span != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
 		return fmt.Errorf("failed to fetch storage data: %w", err)
 	}
 
@@ -67,8 +88,38 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
 		storageMetrics[usedKey.String()] = float64(data.Attributes.UsedCapacityBytes)
 	}
 
+	// Record storage operation attributes
+	if span != nil {
+		span.SetAttributes(
+			attribute.Int("netbackup.storage_units", len(storages.Data)),
+			attribute.String("netbackup.api_version", client.cfg.NbuServer.APIVersion),
+		)
+	}
+
 	log.Debugf("Fetched storage data for %d storage units", len(storages.Data))
 	return nil
+}
+
+// createStorageSpan creates a child span for storage fetching operations.
+// This helper method provides nil-safe span creation and sets the span kind to client.
+//
+// Parameters:
+//   - ctx: Parent context for the span
+//   - tracer: OpenTelemetry tracer (may be nil if tracing is disabled)
+//
+// Returns:
+//   - Updated context with the span
+//   - The created span (or nil if tracing is disabled)
+func createStorageSpan(ctx context.Context, tracer trace.Tracer) (context.Context, trace.Span) {
+	// Nil-safe check: if tracer is not initialized, return original context and nil span
+	if tracer == nil {
+		return ctx, nil
+	}
+
+	// Start span with operation name and set span kind to client
+	return tracer.Start(ctx, "netbackup.fetch_storage",
+		trace.WithSpanKind(trace.SpanKindClient),
+	)
 }
 
 // FetchJobDetails retrieves a single job record at the specified pagination offset and
