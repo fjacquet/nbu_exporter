@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
+	"github.com/fjacquet/nbu_exporter/internal/telemetry"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
@@ -204,7 +205,7 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 		// Record error as span event
 		if span != nil {
 			span.AddEvent("storage_fetch_error", trace.WithAttributes(
-				attribute.String("error", err.Error()),
+				attribute.String(telemetry.AttrError, err.Error()),
 			))
 		}
 		// Continue to try fetching job metrics even if storage fails
@@ -221,7 +222,7 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 		// Record error as span event
 		if span != nil {
 			span.AddEvent("jobs_fetch_error", trace.WithAttributes(
-				attribute.String("error", err.Error()),
+				attribute.String(telemetry.AttrError, err.Error()),
 			))
 		}
 		// Continue to expose whatever metrics we have
@@ -237,15 +238,16 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 		span.SetStatus(codes.Ok, "")
 	}
 
-	// Record span attributes if tracing is enabled
+	// Record span attributes if tracing is enabled (batched for performance)
 	if span != nil {
 		scrapeDuration := time.Since(scrapeStart)
-		span.SetAttributes(
-			attribute.Float64("scrape.duration_ms", float64(scrapeDuration.Milliseconds())),
-			attribute.Int("scrape.storage_metrics_count", len(storageMetrics)),
-			attribute.Int("scrape.job_metrics_count", len(jobsSize)),
-			attribute.String("scrape.status", scrapeStatus),
-		)
+		attrs := []attribute.KeyValue{
+			attribute.Float64(telemetry.AttrScrapeDurationMS, float64(scrapeDuration.Milliseconds())),
+			attribute.Int(telemetry.AttrScrapeStorageMetricsCount, len(storageMetrics)),
+			attribute.Int(telemetry.AttrScrapeJobMetricsCount, len(jobsSize)),
+			attribute.String(telemetry.AttrScrapeStatus, scrapeStatus),
+		}
+		span.SetAttributes(attrs...)
 	}
 
 	// Expose storage metrics

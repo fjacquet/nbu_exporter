@@ -20,7 +20,7 @@
   - Batch span attributes in `FetchStorage`, `FetchJobDetails`, and `FetchAllJobs` functions
   - _Requirements: 1.1, 1.2, 2.2, 7.1, 7.2_
 
-- [ ] 4. Update prometheus.go to batch span attributes
+- [x] 4. Update prometheus.go to batch span attributes
   - Modify `Collect` method to batch all span attributes in a single `SetAttributes` call
   - Use attribute constants from `telemetry.attributes` for all span attributes
   - Ensure nil-safe attribute recording with proper checks
