@@ -13,11 +13,13 @@ A production-ready Prometheus exporter that collects backup job statistics and s
 - **Job Metrics Collection**: Aggregates backup job statistics by type, policy, and status
 - **Storage Monitoring**: Tracks storage unit capacity (free/used bytes) for disk-based storage
 - **Prometheus Integration**: Native Prometheus metrics exposition via HTTP endpoint
+- **OpenTelemetry Tracing**: Optional distributed tracing for performance analysis and troubleshooting
+- **Multi-Version API Support**: Automatic detection of NetBackup API versions (3.0, 12.0, 13.0)
 - **Configurable Scraping**: Adjustable time windows for historical job data collection
 - **Health Checks**: Built-in `/health` endpoint for monitoring exporter status
 - **Graceful Shutdown**: Proper signal handling with configurable shutdown timeout
 - **Security**: Configurable TLS verification, API key masking in logs
-- **Performance**: HTTP client connection pooling, context-aware operations
+- **Performance**: HTTP client connection pooling, context-aware operations, minimal tracing overhead
 
 ## Quick Start
 
@@ -74,8 +76,15 @@ nbuserver:
     apiVersion: "13.0"  # Optional: NetBackup API version (13.0, 12.0, or 3.0)
                         # If omitted, the exporter will automatically detect the version
     apiKey: "your-api-key-here"
-    contentType: "application/vnd.netbackup+json; version=3.0"
+    contentType: "application/vnd.netbackup+json; version=13.0"
     insecureSkipVerify: false  # Set to true only for testing environments
+
+# Optional: OpenTelemetry distributed tracing (see OpenTelemetry Integration section)
+# opentelemetry:
+#     enabled: true
+#     endpoint: "localhost:4317"
+#     insecure: true
+#     samplingRate: 0.1
 ```
 
 **Important**: Replace `your-api-key-here` with your actual NetBackup API key.
@@ -94,6 +103,8 @@ make run-cli
 ```
 
 The exporter will start and expose metrics at `http://localhost:2112/metrics`.
+
+**Optional**: To enable distributed tracing with OpenTelemetry, see the [OpenTelemetry Integration](#opentelemetry-integration) section below.
 
 ## Usage
 
@@ -154,10 +165,12 @@ The exporter supports optional distributed tracing via OpenTelemetry, enabling y
 
 - **Distributed Tracing**: Track the complete lifecycle of each Prometheus scrape
 - **API Call Instrumentation**: Detailed spans for every NetBackup API request
+- **W3C Trace Context Propagation**: Automatic trace context injection into NetBackup API requests
 - **Performance Analysis**: Identify slow endpoints and optimize scraping intervals
 - **Trace Correlation**: Link logs to traces for comprehensive troubleshooting
 - **Zero Overhead When Disabled**: No performance impact when tracing is not enabled
 - **Configurable Sampling**: Control tracing overhead with adjustable sampling rates
+- **Graceful Degradation**: Continues operating normally if tracing initialization fails
 
 ### Quick Start
 
@@ -220,6 +233,12 @@ prometheus.scrape (root span)
 
 Traces include rich attributes for analysis:
 
+**Resource Attributes (all spans):**
+- `service.name`: Service identifier ("nbu-exporter")
+- `service.version`: Exporter version
+- `host.name`: Hostname where exporter is running
+- `netbackup.server`: NetBackup master server hostname
+
 **Root Span (prometheus.scrape):**
 - `scrape.duration_ms`: Total scrape duration
 - `scrape.storage_metrics_count`: Number of storage metrics collected
@@ -237,11 +256,23 @@ Traces include rich attributes for analysis:
 - `netbackup.total_jobs`: Total jobs retrieved
 - `netbackup.total_pages`: Number of pages fetched
 
+**Job Page Fetch (netbackup.fetch_job_page):**
+- `netbackup.page_offset`: Page offset for pagination
+- `netbackup.page_number`: Calculated page number
+- `netbackup.jobs_in_page`: Number of jobs in this page
+
+**Version Detection (netbackup.detect_version):**
+- `netbackup.attempted_versions`: List of API versions attempted
+- `netbackup.detected_version`: Successfully detected API version
+- Span events for each version attempt with success/failure status
+
 **HTTP Request (http.request):**
 - `http.method`: HTTP method (GET, POST, etc.)
 - `http.url`: Full request URL
 - `http.status_code`: HTTP response status code
 - `http.duration_ms`: Request duration in milliseconds
+- `http.request_content_length`: Request body size in bytes
+- `http.response_content_length`: Response body size in bytes
 
 ### Example Configurations
 
@@ -310,6 +341,8 @@ Trace: prometheus.scrape (45.2s total)
 - Reducing `scrapingInterval` to fetch fewer jobs
 - Checking NetBackup server performance
 - Verifying network latency
+
+For comprehensive trace analysis techniques, query examples, and troubleshooting scenarios, see the [Trace Analysis Guide](docs/trace-analysis-guide.md).
 
 ### Troubleshooting
 
@@ -645,6 +678,12 @@ go test -race ./...
 go test ./internal/exporter -run TestVersionDetection
 go test ./internal/exporter -run TestBackwardCompatibility
 go test ./internal/exporter -run TestEndToEnd
+
+# Run OpenTelemetry integration tests
+go test ./internal/exporter -run TestIntegration
+
+# Run performance benchmarks
+go test ./internal/exporter -bench=. -benchmem
 ```
 
 **Test Coverage**:
@@ -653,8 +692,25 @@ go test ./internal/exporter -run TestEndToEnd
 - Integration tests for all API versions (3.0, 12.0, 13.0)
 - Backward compatibility tests for existing configurations
 - End-to-end workflow tests with fallback scenarios
-- Performance validation tests
+- OpenTelemetry integration tests with mock collector
+- Performance benchmarks for tracing overhead validation
 - Metrics consistency tests across versions
+
+**Benchmark Tests**:
+
+The exporter includes benchmark tests to measure OpenTelemetry tracing overhead:
+
+- `BenchmarkFetchData_WithoutTracing`: Baseline performance without tracing
+- `BenchmarkFetchData_WithTracing_FullSampling`: Performance with 100% sampling
+- `BenchmarkFetchData_WithTracing_PartialSampling`: Performance with 10% sampling
+- `BenchmarkSpanCreation`: Overhead of span creation
+- `BenchmarkAttributeRecording`: Overhead of attribute recording
+
+Run benchmarks to verify performance on your system:
+
+```bash
+go test ./internal/exporter -bench=BenchmarkFetchData -benchmem -benchtime=10s
+```
 
 ### Debugging
 
@@ -1050,6 +1106,9 @@ See [CHANGELOG.md](CHANGELOG.md) for complete migration details.
 ## Documentation
 
 - [CHANGELOG.md](CHANGELOG.md) - Version history and migration notes
+- [OpenTelemetry Integration Guide](docs/opentelemetry-example.md) - Complete setup guide with Docker Compose examples
+- [Trace Analysis Guide](docs/trace-analysis-guide.md) - Query and analyze traces for performance optimization
+- [NetBackup 11.0 Migration Guide](docs/netbackup-11-migration.md) - Upgrade instructions for NetBackup 11.0
 - [API 10.5 Migration Guide](docs/api-10.5-migration.md) - Upgrade instructions for NetBackup 10.5
 - [Deployment Verification](docs/deployment-verification.md) - Deployment and rollback procedures
 - [REFACTORING_SUMMARY.md](docs/REFACTORING_SUMMARY.md) - Recent refactoring details
