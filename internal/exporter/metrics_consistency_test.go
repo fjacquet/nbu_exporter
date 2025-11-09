@@ -31,7 +31,7 @@ func TestMetricsConsistencyJobMetrics(t *testing.T) {
 			defer server.Close()
 
 			// Create collector
-			serverAddr := strings.TrimPrefix(server.URL, "https://")
+			serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 			cfg := createTestConfig(serverAddr, version)
 			cfg.NbuServer.Scheme = "https"
 
@@ -87,7 +87,7 @@ func TestMetricsConsistencyStorageMetrics(t *testing.T) {
 			defer server.Close()
 
 			// Create collector
-			serverAddr := strings.TrimPrefix(server.URL, "https://")
+			serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 			cfg := createTestConfig(serverAddr, version)
 			cfg.NbuServer.Scheme = "https"
 
@@ -128,63 +128,100 @@ func TestMetricsConsistencyStorageMetrics(t *testing.T) {
 // TestMetricsConsistency_LabelValues verifies that label values remain consistent
 // across API versions for the same data.
 func TestMetricsConsistencyLabelValues(t *testing.T) {
-	// Create identical job data for all versions
 	jobData := createTestJobData()
-
 	versions := []string{"3.0", "12.0", "13.0"}
-	collectedLabels := make(map[string]map[string]bool) // version -> label values
+
+	collectedLabels := collectLabelsForAllVersions(t, jobData, versions)
+	verifyLabelConsistency(t, collectedLabels)
+}
+
+// collectLabelsForAllVersions collects metric labels for all API versions
+func collectLabelsForAllVersions(t *testing.T, jobData interface{}, versions []string) map[string]map[string]bool {
+	t.Helper()
+	collectedLabels := make(map[string]map[string]bool)
 
 	for _, version := range versions {
-		// Create mock server
-		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(jobData)
-		}))
+		server := createMockServerWithJobData(jobData)
 		defer server.Close()
 
-		// Create collector
-		serverAddr := strings.TrimPrefix(server.URL, "https://")
-		cfg := createTestConfig(serverAddr, version)
-		cfg.NbuServer.Scheme = "https"
+		metricFamilies := collectMetricsForVersion(t, server.URL, version)
+		collectedLabels[version] = extractJobLabels(metricFamilies)
+	}
 
-		collector, err := NewNbuCollector(cfg)
-		require.NoError(t, err)
+	return collectedLabels
+}
 
-		// Collect metrics
-		registry := prometheus.NewRegistry()
-		registry.MustRegister(collector)
+// createMockServerWithJobData creates a mock server that returns the given job data
+func createMockServerWithJobData(jobData interface{}) *httptest.Server {
+	return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
+		_ = json.NewEncoder(w).Encode(jobData)
+	}))
+}
 
-		metricFamilies, err := registry.Gather()
-		require.NoError(t, err)
+// collectMetricsForVersion collects metrics for a specific API version
+func collectMetricsForVersion(t *testing.T, serverURL, version string) []*dto.MetricFamily {
+	t.Helper()
 
-		// Extract label values for job metrics
-		jobsMetric := findMetricFamily(metricFamilies, "nbu_jobs_count")
-		if jobsMetric != nil {
-			collectedLabels[version] = make(map[string]bool)
-			for _, metric := range jobsMetric.GetMetric() {
-				labels := metric.GetLabel()
-				labelStr := ""
-				for _, label := range labels {
-					labelStr += label.GetName() + "=" + label.GetValue() + ","
-				}
-				collectedLabels[version][labelStr] = true
-			}
+	serverAddr := strings.TrimPrefix(serverURL, testSchemeHTTPS)
+	cfg := createTestConfig(serverAddr, version)
+	cfg.NbuServer.Scheme = "https"
+
+	collector, err := NewNbuCollector(cfg)
+	require.NoError(t, err)
+
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(collector)
+
+	metricFamilies, err := registry.Gather()
+	require.NoError(t, err)
+
+	return metricFamilies
+}
+
+// extractJobLabels extracts label combinations from job metrics
+func extractJobLabels(metricFamilies []*dto.MetricFamily) map[string]bool {
+	labels := make(map[string]bool)
+	jobsMetric := findMetricFamily(metricFamilies, "nbu_jobs_count")
+
+	if jobsMetric != nil {
+		for _, metric := range jobsMetric.GetMetric() {
+			labelStr := buildLabelString(metric.GetLabel())
+			labels[labelStr] = true
 		}
 	}
 
-	// Verify all versions have the same label combinations
-	if len(collectedLabels) > 1 {
-		var referenceLabels map[string]bool
-		var referenceVersion string
-		for version, labels := range collectedLabels {
-			if referenceLabels == nil {
-				referenceLabels = labels
-				referenceVersion = version
-			} else {
-				assert.Equal(t, referenceLabels, labels,
-					"Label combinations should be identical between version %s and %s",
-					referenceVersion, version)
-			}
+	return labels
+}
+
+// buildLabelString builds a string representation of metric labels
+func buildLabelString(labels []*dto.LabelPair) string {
+	labelStr := ""
+	for _, label := range labels {
+		labelStr += label.GetName() + "=" + label.GetValue() + ","
+	}
+	return labelStr
+}
+
+// verifyLabelConsistency verifies that all versions have the same label combinations
+func verifyLabelConsistency(t *testing.T, collectedLabels map[string]map[string]bool) {
+	t.Helper()
+
+	if len(collectedLabels) <= 1 {
+		return
+	}
+
+	var referenceLabels map[string]bool
+	var referenceVersion string
+
+	for version, labels := range collectedLabels {
+		if referenceLabels == nil {
+			referenceLabels = labels
+			referenceVersion = version
+		} else {
+			assert.Equal(t, referenceLabels, labels,
+				"Label combinations should be identical between version %s and %s",
+				referenceVersion, version)
 		}
 	}
 }
@@ -201,7 +238,7 @@ func TestMetricsConsistencyMetricTypes(t *testing.T) {
 		defer server.Close()
 
 		// Create collector
-		serverAddr := strings.TrimPrefix(server.URL, "https://")
+		serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 		cfg := createTestConfig(serverAddr, version)
 		cfg.NbuServer.Scheme = "https"
 
@@ -300,7 +337,7 @@ func TestMetricsConsistencyPrometheusExport(t *testing.T) {
 			defer server.Close()
 
 			// Create collector
-			serverAddr := strings.TrimPrefix(server.URL, "https://")
+			serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 			cfg := createTestConfig(serverAddr, version)
 			cfg.NbuServer.Scheme = "https"
 
@@ -338,11 +375,11 @@ func createMockServerWithJobs(version string) *httptest.Server {
 		// Return appropriate response based on endpoint
 		if strings.Contains(r.URL.Path, "/admin/jobs") {
 			response := createTestJobData()
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			_ = json.NewEncoder(w).Encode(response)
 		} else if strings.Contains(r.URL.Path, "/storage/storage-units") {
 			response := createTestStorageData()
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			_ = json.NewEncoder(w).Encode(response)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
@@ -355,14 +392,14 @@ func createMockServerWithStorage(version string) *httptest.Server {
 	return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "/storage/storage-units") {
 			response := createTestStorageData()
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			_ = json.NewEncoder(w).Encode(response)
 		} else if strings.Contains(r.URL.Path, "/admin/jobs") {
 			// Return empty jobs response
 			response := map[string]interface{}{
 				"data": []interface{}{},
 			}
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			_ = json.NewEncoder(w).Encode(response)
 		} else {
 			w.WriteHeader(http.StatusNotFound)

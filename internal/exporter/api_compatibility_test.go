@@ -18,11 +18,10 @@ import (
 // Note: Common constants like contentTypeHeader, contentTypeJSON, testAPIKey, etc.
 // are defined in test_common.go and shared across all test files
 const (
-	testAPIVersionFormat     = "API_v%s"
-	fetchJobsErrorFormat     = "FetchAllJobs failed for version %s: %v"
-	fetchStorageErrorFormat  = "FetchStorage failed for version %s: %v"
-	testDataPathFormat       = "../../testdata/api-versions/%s-response-v%s.json"
-	netbackupMediaTypeFormat = "application/vnd.netbackup+json;version=%s"
+	testAPIVersionFormat    = "API_v%s"
+	fetchJobsErrorFormat    = "FetchAllJobs failed for version %s: %v"
+	fetchStorageErrorFormat = "FetchStorage failed for version %s: %v"
+	testDataPathFormat      = "../../testdata/api-versions/%s-response-v%s.json"
 )
 
 // TestJobsAPICompatibilityAcrossVersions tests jobs API with all three versions
@@ -284,19 +283,19 @@ func TestAuthenticationWithAllVersions(t *testing.T) {
 			authHeaderReceived := ""
 
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				authHeaderReceived = r.Header.Get("Authorization")
+				authHeaderReceived = r.Header.Get(authorizationHeader)
 
 				// Verify correct API version header
-				acceptHeader := r.Header.Get("Accept")
-				expectedAccept := fmt.Sprintf("application/vnd.netbackup+json;version=%s", version)
-				if acceptHeader != expectedAccept {
+				acceptHdr := r.Header.Get(acceptHeader)
+				expectedAccept := fmt.Sprintf(contentTypeNetBackupJSONFormat, version)
+				if acceptHdr != expectedAccept {
 					w.WriteHeader(http.StatusNotAcceptable)
 					return
 				}
 
 				// Return minimal valid response
 				response := createMinimalJobsResponse()
-				w.Header().Set("Content-Type", fmt.Sprintf("application/vnd.netbackup+json;version=%s", version))
+				w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, version))
 				w.WriteHeader(http.StatusOK)
 				_ = json.NewEncoder(w).Encode(response)
 			}))
@@ -352,66 +351,104 @@ func TestParsingWithRealResponseFiles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test jobs parsing
 			t.Run("Jobs", func(t *testing.T) {
-				data := loadTestDataFromFile(t, tt.jobsFile)
-
-				var jobs models.Jobs
-				err := json.Unmarshal(data, &jobs)
-				if err != nil {
-					t.Fatalf("Failed to unmarshal jobs response: %v", err)
-				}
-
-				if len(jobs.Data) == 0 {
-					t.Error("No jobs data parsed")
-				}
-
-				// Verify common fields are present
-				for i, job := range jobs.Data {
-					if job.Attributes.JobID == 0 {
-						t.Errorf("Job %d: JobID is zero", i)
-					}
-					if job.Attributes.JobType == "" {
-						t.Errorf("Job %d: JobType is empty", i)
-					}
-					if job.Attributes.PolicyType == "" {
-						t.Errorf("Job %d: PolicyType is empty", i)
-					}
-					if job.Attributes.ClientName == "" {
-						t.Errorf("Job %d: ClientName is empty", i)
-					}
-				}
+				testJobsParsing(t, tt.jobsFile)
 			})
 
-			// Test storage parsing
 			t.Run("Storage", func(t *testing.T) {
-				data := loadTestDataFromFile(t, tt.storageFile)
-
-				var storage models.Storages
-				err := json.Unmarshal(data, &storage)
-				if err != nil {
-					t.Fatalf("Failed to unmarshal storage response: %v", err)
-				}
-
-				if len(storage.Data) == 0 {
-					t.Error("No storage data parsed")
-				}
-
-				// Verify common fields are present
-				for i, stu := range storage.Data {
-					if stu.Attributes.Name == "" {
-						t.Errorf("Storage unit %d: Name is empty", i)
-					}
-					if stu.Attributes.StorageType == "" {
-						t.Errorf("Storage unit %d: StorageType is empty", i)
-					}
-					// Capacity fields can be zero for tape, so just check they exist
-					_ = stu.Attributes.FreeCapacityBytes
-					_ = stu.Attributes.UsedCapacityBytes
-					_ = stu.Attributes.TotalCapacityBytes
-				}
+				testStorageParsing(t, tt.storageFile)
 			})
 		})
+	}
+}
+
+// testJobsParsing tests parsing of jobs response files
+func testJobsParsing(t *testing.T, jobsFile string) {
+	t.Helper()
+
+	data := loadTestDataFromFile(t, jobsFile)
+	jobs := unmarshalJobsResponse(t, data)
+
+	if len(jobs.Data) == 0 {
+		t.Error("No jobs data parsed")
+	}
+
+	verifyJobsFields(t, jobs)
+}
+
+// unmarshalJobsResponse unmarshals jobs response data
+func unmarshalJobsResponse(t *testing.T, data []byte) models.Jobs {
+	t.Helper()
+
+	var jobs models.Jobs
+	err := json.Unmarshal(data, &jobs)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal jobs response: %v", err)
+	}
+	return jobs
+}
+
+// verifyJobsFields verifies that common job fields are present
+func verifyJobsFields(t *testing.T, jobs models.Jobs) {
+	t.Helper()
+
+	for i, job := range jobs.Data {
+		if job.Attributes.JobID == 0 {
+			t.Errorf("Job %d: JobID is zero", i)
+		}
+		if job.Attributes.JobType == "" {
+			t.Errorf("Job %d: JobType is empty", i)
+		}
+		if job.Attributes.PolicyType == "" {
+			t.Errorf("Job %d: PolicyType is empty", i)
+		}
+		if job.Attributes.ClientName == "" {
+			t.Errorf("Job %d: ClientName is empty", i)
+		}
+	}
+}
+
+// testStorageParsing tests parsing of storage response files
+func testStorageParsing(t *testing.T, storageFile string) {
+	t.Helper()
+
+	data := loadTestDataFromFile(t, storageFile)
+	storage := unmarshalStorageResponse(t, data)
+
+	if len(storage.Data) == 0 {
+		t.Error("No storage data parsed")
+	}
+
+	verifyStorageFields(t, storage)
+}
+
+// unmarshalStorageResponse unmarshals storage response data
+func unmarshalStorageResponse(t *testing.T, data []byte) models.Storages {
+	t.Helper()
+
+	var storage models.Storages
+	err := json.Unmarshal(data, &storage)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal storage response: %v", err)
+	}
+	return storage
+}
+
+// verifyStorageFields verifies that common storage fields are present
+func verifyStorageFields(t *testing.T, storage models.Storages) {
+	t.Helper()
+
+	for i, stu := range storage.Data {
+		if stu.Attributes.Name == "" {
+			t.Errorf("Storage unit %d: Name is empty", i)
+		}
+		if stu.Attributes.StorageType == "" {
+			t.Errorf("Storage unit %d: StorageType is empty", i)
+		}
+		// Capacity fields can be zero for tape, so just check they exist
+		_ = stu.Attributes.FreeCapacityBytes
+		_ = stu.Attributes.UsedCapacityBytes
+		_ = stu.Attributes.TotalCapacityBytes
 	}
 }
 
@@ -480,8 +517,8 @@ func createMockServerWithFile(t *testing.T, filename string, version string) *ht
 
 // validateAPIVersionHeader checks if the Accept header matches the expected API version
 func validateAPIVersionHeader(r *http.Request, version string) bool {
-	acceptHeader := r.Header.Get("Accept")
-	expectedAccept := fmt.Sprintf("application/vnd.netbackup+json;version=%s", version)
+	acceptHeader := r.Header.Get(acceptHeader)
+	expectedAccept := fmt.Sprintf(contentTypeNetBackupJSONFormat, version)
 	return acceptHeader == expectedAccept
 }
 
@@ -639,14 +676,14 @@ func setEmptyPaginationMetadata(response *models.Jobs, totalJobs int) {
 
 // writeJSONResponse writes a JSON response with appropriate headers
 func writeJSONResponse(w http.ResponseWriter, response interface{}, version string) {
-	w.Header().Set("Content-Type", fmt.Sprintf("application/vnd.netbackup+json;version=%s", version))
+	w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, version))
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(response)
 }
 
 // handleFullDataResponse handles non-paginated requests by returning full data
 func handleFullDataResponse(w http.ResponseWriter, data []byte, version string) {
-	w.Header().Set("Content-Type", fmt.Sprintf("application/vnd.netbackup+json;version=%s", version))
+	w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, version))
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(data)
 }

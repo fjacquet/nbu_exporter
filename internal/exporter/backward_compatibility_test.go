@@ -42,14 +42,14 @@ func TestBackwardCompatibilityExplicitVersion120(t *testing.T) {
 				},
 			},
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
 	// Create configuration with explicit API version 12.0
 	// Extract host:port from server URL (format: https://127.0.0.1:12345)
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "12.0")
 	cfg.NbuServer.Scheme = "https"
 
@@ -60,9 +60,9 @@ func TestBackwardCompatibilityExplicitVersion120(t *testing.T) {
 	// Test that API calls work correctly
 	ctx := context.Background()
 	var result map[string]interface{}
-	err := client.FetchData(ctx, server.URL+"/admin/jobs", &result)
+	err := client.FetchData(ctx, server.URL+testPathAdminJobs, &result)
 	require.NoError(t, err, "API call with version 12.0 should succeed")
-	assert.NotNil(t, result["data"], "Response should contain data")
+	assert.NotNil(t, result["data"], testErrorResponseShouldContain)
 }
 
 // TestBackwardCompatibility_ExplicitVersion30 verifies that configurations with
@@ -89,14 +89,14 @@ func TestBackwardCompatibilityExplicitVersion30(t *testing.T) {
 				},
 			},
 		}
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		_ = json.NewEncoder(w).Encode(response)
 	}))
 	defer server.Close()
 
 	// Create configuration with explicit API version 3.0
 	// Extract host:port from server URL (format: https://127.0.0.1:12345)
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "3.0")
 	cfg.NbuServer.Scheme = "https"
 
@@ -107,9 +107,9 @@ func TestBackwardCompatibilityExplicitVersion30(t *testing.T) {
 	// Test that API calls work correctly
 	ctx := context.Background()
 	var result map[string]interface{}
-	err := client.FetchData(ctx, server.URL+"/admin/jobs", &result)
+	err := client.FetchData(ctx, server.URL+testPathAdminJobs, &result)
 	require.NoError(t, err, "API call with version 3.0 should succeed")
-	assert.NotNil(t, result["data"], "Response should contain data")
+	assert.NotNil(t, result["data"], testErrorResponseShouldContain)
 }
 
 // TestBackwardCompatibility_MissingVersion verifies that configurations without
@@ -142,7 +142,7 @@ func TestBackwardCompatibilityMissingVersion(t *testing.T) {
 					},
 				},
 			}
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			_ = json.NewEncoder(w).Encode(response)
 			return
 		} else if contains(acceptHeader, "version=3.0") {
@@ -159,7 +159,7 @@ func TestBackwardCompatibilityMissingVersion(t *testing.T) {
 
 	// Create configuration WITHOUT apiVersion field (empty string)
 	// Extract host:port from server URL (format: https://127.0.0.1:12345)
-	serverAddr := strings.TrimPrefix(server.URL, "https://")
+	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 	cfg := createTestConfig(serverAddr, "")
 	cfg.NbuServer.Scheme = "https"
 
@@ -177,9 +177,9 @@ func TestBackwardCompatibilityMissingVersion(t *testing.T) {
 
 	// Verify that detected version works for API calls
 	var result map[string]interface{}
-	err = client.FetchData(ctx, server.URL+"/admin/jobs", &result)
+	err = client.FetchData(ctx, server.URL+testPathAdminJobs, &result)
 	require.NoError(t, err, "API call with detected version should succeed")
-	assert.NotNil(t, result["data"], "Response should contain data")
+	assert.NotNil(t, result["data"], testErrorResponseShouldContain)
 }
 
 // TestBackwardCompatibility_NoBreakingChanges verifies that the implementation
@@ -218,7 +218,7 @@ func TestBackwardCompatibilityNoBreakingChanges(t *testing.T) {
 		assert.Equal(t, expectedBaseURL, actualBaseURL, "Base URL construction should remain unchanged")
 
 		// Verify URL building with query parameters
-		jobsURL := cfg.BuildURL("/admin/jobs", map[string]string{
+		jobsURL := cfg.BuildURL(testPathAdminJobs, map[string]string{
 			"page[limit]":  "100",
 			"page[offset]": "0",
 		})
@@ -245,12 +245,12 @@ func TestBackwardCompatibilityCollectorInitialization(t *testing.T) {
 			response := map[string]interface{}{
 				"data": []interface{}{},
 			}
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			_ = json.NewEncoder(w).Encode(response)
 		}))
 		defer server.Close()
 
-		serverAddr := strings.TrimPrefix(server.URL, "https://")
+		serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 		cfg := createTestConfig(serverAddr, "12.0")
 		cfg.NbuServer.Scheme = "https"
 
@@ -274,12 +274,12 @@ func TestBackwardCompatibilityCollectorInitialization(t *testing.T) {
 			response := map[string]interface{}{
 				"data": []interface{}{},
 			}
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			_ = json.NewEncoder(w).Encode(response)
 		}))
 		defer server.Close()
 
-		serverAddr := strings.TrimPrefix(server.URL, "https://")
+		serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 		cfg := createTestConfig(serverAddr, "")
 		cfg.NbuServer.Scheme = "https"
 
@@ -301,7 +301,7 @@ func TestBackwardCompatibilityErrorMessages(t *testing.T) {
 		}))
 		defer server.Close()
 
-		serverAddr := strings.TrimPrefix(server.URL, "https://")
+		serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
 		cfg := createTestConfig(serverAddr, "12.0")
 		cfg.NbuServer.Scheme = "https"
 		client := NewNbuClient(cfg)

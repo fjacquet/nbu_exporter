@@ -54,7 +54,7 @@ func TestNewNbuCollectorExplicitVersion(t *testing.T) {
 			cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
 			cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
 			cfg.NbuServer.URI = ""
-			cfg.NbuServer.APIKey = "test-api-key"
+			cfg.NbuServer.APIKey = testAPIKey
 			cfg.NbuServer.APIVersion = tt.apiVersion
 			cfg.NbuServer.InsecureSkipVerify = true
 			cfg.Server.ScrapingInterval = "5m"
@@ -152,7 +152,7 @@ func TestNewNbuCollectorAutomaticDetection(t *testing.T) {
 			cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
 			cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
 			cfg.NbuServer.URI = ""
-			cfg.NbuServer.APIKey = "test-api-key"
+			cfg.NbuServer.APIKey = testAPIKey
 			cfg.NbuServer.APIVersion = "" // Empty to trigger detection
 			cfg.NbuServer.InsecureSkipVerify = true
 			cfg.Server.ScrapingInterval = "5m"
@@ -217,7 +217,7 @@ func TestNewNbuCollectorDetectionFailure(t *testing.T) {
 			cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
 			cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
 			cfg.NbuServer.URI = ""
-			cfg.NbuServer.APIKey = "test-api-key"
+			cfg.NbuServer.APIKey = testAPIKey
 			cfg.NbuServer.APIVersion = "" // Empty to trigger detection
 			cfg.NbuServer.InsecureSkipVerify = true
 			cfg.Server.ScrapingInterval = "5m"
@@ -249,7 +249,7 @@ func TestNbuCollectorAPIVersionMetric(t *testing.T) {
 	cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
 	cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
 	cfg.NbuServer.URI = ""
-	cfg.NbuServer.APIKey = "test-api-key"
+	cfg.NbuServer.APIKey = testAPIKey
 	cfg.NbuServer.APIVersion = models.APIVersion130
 	cfg.NbuServer.InsecureSkipVerify = true
 	cfg.Server.ScrapingInterval = "5m"
@@ -302,7 +302,7 @@ func TestNbuCollectorDescribe(t *testing.T) {
 	cfg.NbuServer.Host = server.Listener.Addr().(*net.TCPAddr).IP.String()
 	cfg.NbuServer.Port = fmt.Sprintf("%d", server.Listener.Addr().(*net.TCPAddr).Port)
 	cfg.NbuServer.URI = ""
-	cfg.NbuServer.APIKey = "test-api-key"
+	cfg.NbuServer.APIKey = testAPIKey
 	cfg.NbuServer.APIVersion = models.APIVersion130
 	cfg.NbuServer.InsecureSkipVerify = true
 	cfg.Server.ScrapingInterval = "5m"
@@ -357,7 +357,7 @@ func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 		}{
 			Port:             "2112",
 			Host:             "localhost",
-			URI:              "/metrics",
+			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
@@ -372,11 +372,11 @@ func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			Host:       "nbu-master",
+			Host:       testServerNBUMaster,
 			Port:       "1556",
 			Scheme:     "https",
-			URI:        "/netbackup",
-			APIKey:     "test-key",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
 			APIVersion: "13.0",
 		},
 	}
@@ -413,7 +413,7 @@ func TestNbuCollectorCreateScrapeSpanWithTracer(t *testing.T) {
 		}{
 			Port:             "2112",
 			Host:             "localhost",
-			URI:              "/metrics",
+			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
@@ -428,11 +428,11 @@ func TestNbuCollectorCreateScrapeSpanWithTracer(t *testing.T) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			Host:       "nbu-master",
+			Host:       testServerNBUMaster,
 			Port:       "1556",
 			Scheme:     "https",
-			URI:        "/netbackup",
-			APIKey:     "test-key",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
 			APIVersion: "13.0",
 		},
 	}
@@ -479,7 +479,7 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 		}{
 			Port:             "2112",
 			Host:             "localhost",
-			URI:              "/metrics",
+			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
@@ -494,11 +494,11 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			Host:       "nbu-master",
+			Host:       testServerNBUMaster,
 			Port:       "1556",
 			Scheme:     "https",
-			URI:        "/netbackup",
-			APIKey:     "test-key",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
 			APIVersion: "13.0",
 		},
 	}
@@ -579,7 +579,7 @@ func TestNbuCollectorTracingDisabled(t *testing.T) {
 		}{
 			Port:             "2112",
 			Host:             "localhost",
-			URI:              "/metrics",
+			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
@@ -594,11 +594,11 @@ func TestNbuCollectorTracingDisabled(t *testing.T) {
 			ContentType        string `yaml:"contentType"`
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
-			Host:       "nbu-master",
+			Host:       testServerNBUMaster,
 			Port:       "1556",
 			Scheme:     "https",
-			URI:        "/netbackup",
-			APIKey:     "test-key",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
 			APIVersion: "13.0",
 		},
 	}

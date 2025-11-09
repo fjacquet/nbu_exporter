@@ -72,7 +72,7 @@
   - Verify code still compiles and tests pass after extraction
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
 
-- [ ] 11. Reduce cognitive complexity in test helpers
+- [x] 11. Reduce cognitive complexity in test helpers
   - Refactor `createMockServerWithFile` function to reduce complexity from 22 to below 15
   - Extract header validation logic into `validateAPIVersionHeader` helper
   - Extract pagination detection into `isPaginatedJobsRequest` helper

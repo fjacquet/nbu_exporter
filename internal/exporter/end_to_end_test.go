@@ -27,20 +27,20 @@ func TestEndToEndWorkflowAPI130(t *testing.T) {
 		acceptHeader := r.Header.Get("Accept")
 
 		// Verify API version in Accept header
-		if !strings.Contains(acceptHeader, "version=13.0") {
+		if !strings.Contains(acceptHeader, apiVersion130) {
 			w.WriteHeader(http.StatusNotAcceptable)
 			_ = json.NewEncoder(w).Encode(map[string]string{
 				"errorCode":    "UNSUPPORTED_API_VERSION",
-				"errorMessage": "API version not supported",
+				"errorMessage": testErrorAPIVersionNotSupported,
 			})
 			return
 		}
 
 		// Handle different endpoints
 		switch {
-		case strings.Contains(r.URL.Path, "/admin/jobs"):
+		case strings.Contains(r.URL.Path, testPathAdminJobs):
 			// Return jobs response with sample data
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			w.WriteHeader(http.StatusOK)
 			jobsResponse := `{
 				"data": [{
@@ -61,9 +61,9 @@ func TestEndToEndWorkflowAPI130(t *testing.T) {
 			}`
 			_, _ = w.Write([]byte(jobsResponse))
 
-		case strings.Contains(r.URL.Path, "/storage/storage-units"):
+		case strings.Contains(r.URL.Path, testPathStorageUnits):
 			// Return storage response with sample data
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			w.WriteHeader(http.StatusOK)
 			storageResponse := `{
 				"data": [{
@@ -138,19 +138,19 @@ func TestEndToEndWorkflowAPI120(t *testing.T) {
 		acceptHeader := r.Header.Get("Accept")
 
 		// Verify API version in Accept header
-		if !strings.Contains(acceptHeader, "version=12.0") {
+		if !strings.Contains(acceptHeader, apiVersion120) {
 			w.WriteHeader(http.StatusNotAcceptable)
 			_ = json.NewEncoder(w).Encode(map[string]string{
 				"errorCode":    "UNSUPPORTED_API_VERSION",
-				"errorMessage": "API version not supported",
+				"errorMessage": testErrorAPIVersionNotSupported,
 			})
 			return
 		}
 
 		// Handle different endpoints
 		switch {
-		case strings.Contains(r.URL.Path, "/admin/jobs"):
-			w.Header().Set("Content-Type", "application/json")
+		case strings.Contains(r.URL.Path, testPathAdminJobs):
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			w.WriteHeader(http.StatusOK)
 			jobsResponse := `{
 				"data": [{
@@ -171,8 +171,8 @@ func TestEndToEndWorkflowAPI120(t *testing.T) {
 			}`
 			_, _ = w.Write([]byte(jobsResponse))
 
-		case strings.Contains(r.URL.Path, "/storage/storage-units"):
-			w.Header().Set("Content-Type", "application/json")
+		case strings.Contains(r.URL.Path, testPathStorageUnits):
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			w.WriteHeader(http.StatusOK)
 			storageResponse := `{
 				"data": [{
@@ -224,11 +224,11 @@ func TestEndToEndFallbackScenario(t *testing.T) {
 		acceptHeader := r.Header.Get("Accept")
 
 		// Only accept API 3.0
-		if strings.Contains(acceptHeader, "version=13.0") || strings.Contains(acceptHeader, "version=12.0") {
+		if strings.Contains(acceptHeader, apiVersion130) || strings.Contains(acceptHeader, apiVersion120) {
 			w.WriteHeader(http.StatusNotAcceptable)
 			_ = json.NewEncoder(w).Encode(map[string]string{
 				"errorCode":    "UNSUPPORTED_API_VERSION",
-				"errorMessage": "API version not supported",
+				"errorMessage": testErrorAPIVersionNotSupported,
 			})
 			return
 		}
@@ -236,8 +236,8 @@ func TestEndToEndFallbackScenario(t *testing.T) {
 		if strings.Contains(acceptHeader, "version=3.0") {
 			// Handle API 3.0 requests
 			switch {
-			case strings.Contains(r.URL.Path, "/admin/jobs"):
-				w.Header().Set("Content-Type", "application/json")
+			case strings.Contains(r.URL.Path, testPathAdminJobs):
+				w.Header().Set(contentTypeHeader, contentTypeJSON)
 				w.WriteHeader(http.StatusOK)
 				jobsResponse := `{
 					"data": [{
@@ -258,8 +258,8 @@ func TestEndToEndFallbackScenario(t *testing.T) {
 				}`
 				_, _ = w.Write([]byte(jobsResponse))
 
-			case strings.Contains(r.URL.Path, "/storage/storage-units"):
-				w.Header().Set("Content-Type", "application/json")
+			case strings.Contains(r.URL.Path, testPathStorageUnits):
+				w.Header().Set(contentTypeHeader, contentTypeJSON)
 				w.WriteHeader(http.StatusOK)
 				storageResponse := `{
 					"data": [{
@@ -355,7 +355,7 @@ func TestEndToEndErrorScenarios(t *testing.T) {
 		{
 			name: "Invalid JSON Response",
 			serverBehavior: func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set(contentTypeHeader, contentTypeJSON)
 				w.WriteHeader(http.StatusOK)
 				_, _ = w.Write([]byte("invalid json"))
 			},
@@ -430,19 +430,19 @@ func TestEndToEndGracefulDegradation(t *testing.T) {
 	// Create server where storage endpoint fails but jobs endpoint works
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
-		if !strings.Contains(acceptHeader, "version=13.0") {
+		if !strings.Contains(acceptHeader, apiVersion130) {
 			w.WriteHeader(http.StatusNotAcceptable)
 			return
 		}
 
 		switch {
-		case strings.Contains(r.URL.Path, "/storage/storage-units"):
+		case strings.Contains(r.URL.Path, testPathStorageUnits):
 			// Storage endpoint fails
 			w.WriteHeader(http.StatusInternalServerError)
 
-		case strings.Contains(r.URL.Path, "/admin/jobs"):
+		case strings.Contains(r.URL.Path, testPathAdminJobs):
 			// Jobs endpoint succeeds with data
-			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			w.WriteHeader(http.StatusOK)
 			jobsResponse := `{
 				"data": [{
@@ -525,8 +525,8 @@ func createVersionedMockServer(t *testing.T, version string) *httptest.Server {
 		}
 
 		switch {
-		case strings.Contains(r.URL.Path, "/admin/jobs"):
-			w.Header().Set("Content-Type", "application/json")
+		case strings.Contains(r.URL.Path, testPathAdminJobs):
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			w.WriteHeader(http.StatusOK)
 			jobsResponse := fmt.Sprintf(`{
 				"data": [{
@@ -547,8 +547,8 @@ func createVersionedMockServer(t *testing.T, version string) *httptest.Server {
 			}`, version)
 			_, _ = w.Write([]byte(jobsResponse))
 
-		case strings.Contains(r.URL.Path, "/storage/storage-units"):
-			w.Header().Set("Content-Type", "application/json")
+		case strings.Contains(r.URL.Path, testPathStorageUnits):
+			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			w.WriteHeader(http.StatusOK)
 			storageResponse := fmt.Sprintf(`{
 				"data": [{

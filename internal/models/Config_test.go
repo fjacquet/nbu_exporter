@@ -109,25 +109,25 @@ func TestConfigValidateAPIVersion(t *testing.T) {
 			name:       "invalid format - no decimal",
 			apiVersion: "12",
 			wantErr:    true,
-			errMsg:     "invalid API version format",
+			errMsg:     testInvalidAPIVersion,
 		},
 		{
 			name:       "invalid format - too many decimals",
 			apiVersion: "12.0.1",
 			wantErr:    true,
-			errMsg:     "invalid API version format",
+			errMsg:     testInvalidAPIVersion,
 		},
 		{
 			name:       "invalid format - non-numeric",
 			apiVersion: "v12.0",
 			wantErr:    true,
-			errMsg:     "invalid API version format",
+			errMsg:     testInvalidAPIVersion,
 		},
 		{
 			name:       "invalid format - letters",
 			apiVersion: "abc",
 			wantErr:    true,
-			errMsg:     "invalid API version format",
+			errMsg:     testInvalidAPIVersion,
 		},
 	}
 
@@ -143,9 +143,9 @@ func TestConfigValidateAPIVersion(t *testing.T) {
 				}{
 					Port:             "2112",
 					Host:             "localhost",
-					URI:              "/metrics",
+					URI:              testPathMetrics,
 					ScrapingInterval: "5m",
-					LogName:          "test.log",
+					LogName:          testLogName,
 				},
 				NbuServer: struct {
 					Port               string `yaml:"port"`
@@ -161,8 +161,8 @@ func TestConfigValidateAPIVersion(t *testing.T) {
 				}{
 					Port:       "1556",
 					Scheme:     "https",
-					URI:        "/netbackup",
-					Host:       "nbu-master",
+					URI:        testPathNetBackup,
+					Host:       testServerNBUMaster,
 					APIKey:     "test-api-key",
 					APIVersion: tt.apiVersion,
 				},
@@ -179,7 +179,7 @@ func TestConfigValidateAPIVersion(t *testing.T) {
 				}
 			} else {
 				if err != nil {
-					t.Errorf("Validate() unexpected error = %v", err)
+					t.Errorf(testErrorValidateUnexpected, err)
 				}
 				// Verify default was set if empty
 				if tt.apiVersion == "" && config.NbuServer.APIVersion != "13.0" {
@@ -203,15 +203,15 @@ func TestConfigParseYAMLAPIVersion(t *testing.T) {
 server:
   host: "localhost"
   port: "2112"
-  uri: "/metrics"
+  uri: testPathMetrics
   scrapingInterval: "5m"
-  logName: "test.log"
+  logName: testLogName
 nbuserver:
-  host: "nbu-master"
+  host: testServerNBUMaster
   port: "1556"
   scheme: "https"
-  uri: "/netbackup"
-  apiKey: "test-key"
+  uri: testPathNetBackup
+  apiKey: testKeyName
   apiVersion: "13.0"
 `,
 			expectedAPIVer: "13.0",
@@ -223,15 +223,15 @@ nbuserver:
 server:
   host: "localhost"
   port: "2112"
-  uri: "/metrics"
+  uri: testPathMetrics
   scrapingInterval: "5m"
-  logName: "test.log"
+  logName: testLogName
 nbuserver:
-  host: "nbu-master"
+  host: testServerNBUMaster
   port: "1556"
   scheme: "https"
-  uri: "/netbackup"
-  apiKey: "test-key"
+  uri: testPathNetBackup
+  apiKey: testKeyName
 `,
 			expectedAPIVer: "",
 			wantErr:        false,
@@ -242,15 +242,15 @@ nbuserver:
 server:
   host: "localhost"
   port: "2112"
-  uri: "/metrics"
+  uri: testPathMetrics
   scrapingInterval: "5m"
-  logName: "test.log"
+  logName: testLogName
 nbuserver:
-  host: "nbu-master"
+  host: testServerNBUMaster
   port: "1556"
   scheme: "https"
-  uri: "/netbackup"
-  apiKey: "test-key"
+  uri: testPathNetBackup
+  apiKey: testKeyName
   apiVersion: "12.0"
 `,
 			expectedAPIVer: "12.0",
@@ -286,15 +286,15 @@ func TestConfigBackwardCompatibility(t *testing.T) {
 server:
   host: "localhost"
   port: "2112"
-  uri: "/metrics"
+  uri: testPathMetrics
   scrapingInterval: "5m"
-  logName: "test.log"
+  logName: testLogName
 nbuserver:
-  host: "nbu-master"
+  host: testServerNBUMaster
   port: "1556"
   scheme: "https"
-  uri: "/netbackup"
-  apiKey: "test-key"
+  uri: testPathNetBackup
+  apiKey: testKeyName
   contentType: "application/json"
 `,
 			expectedAPIVer: "13.0",
@@ -306,14 +306,14 @@ nbuserver:
 server:
   host: "localhost"
   port: "2112"
-  uri: "/metrics"
+  uri: testPathMetrics
   scrapingInterval: "1h"
   logName: "nbu.log"
 nbuserver:
   host: "master.example.com"
   port: "1556"
   scheme: "https"
-  uri: "/netbackup"
+  uri: testPathNetBackup
   domain: "example.com"
   domainType: "NT"
   apiKey: "legacy-api-key"
@@ -336,7 +336,7 @@ nbuserver:
 			// Validate the config
 			err = config.Validate()
 			if tt.shouldValidate && err != nil {
-				t.Errorf("Validate() unexpected error = %v", err)
+				t.Errorf(testErrorValidateUnexpected, err)
 			}
 			if !tt.shouldValidate && err == nil {
 				t.Error("Validate() expected error, got nil")
@@ -421,7 +421,7 @@ func TestConfigGetNBUBaseURL(t *testing.T) {
 					Scheme: "https",
 					Host:   "nbu-master.example.com",
 					Port:   "1556",
-					URI:    "/netbackup",
+					URI:    testPathNetBackup,
 				},
 			},
 			expected: "https://nbu-master.example.com:1556/netbackup",
@@ -568,11 +568,11 @@ func TestConfigGetScrapingDuration(t *testing.T) {
 
 			if tt.expectError {
 				if err == nil {
-					t.Error("Expected error, got nil")
+					t.Error(testErrorExpectedError)
 				}
 			} else {
 				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
+					t.Errorf(testErrorUnexpected, err)
 				}
 				if result != tt.expected {
 					t.Errorf("GetScrapingDuration() = %v, want %v", result, tt.expected)
@@ -662,9 +662,9 @@ func TestConfigBuildURL(t *testing.T) {
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
 			Scheme: "https",
-			Host:   "nbu-master",
+			Host:   testServerNBUMaster,
 			Port:   "1556",
-			URI:    "/netbackup",
+			URI:    testPathNetBackup,
 		},
 	}
 
@@ -676,10 +676,10 @@ func TestConfigBuildURL(t *testing.T) {
 	}{
 		{
 			name:        "simple path without query params",
-			path:        "/admin/jobs",
+			path:        testPathAdminJobs,
 			queryParams: map[string]string{},
 			contains: []string{
-				"https://nbu-master:1556/admin/jobs",
+				testSchemeHTTPS + "://" + testServerNBUMaster + ":" + testPort1556 + testPathNetBackup + testPathAdminJobs,
 			},
 		},
 		{
@@ -689,7 +689,7 @@ func TestConfigBuildURL(t *testing.T) {
 				"page[limit]": "100",
 			},
 			contains: []string{
-				"https://nbu-master:1556/admin/jobs",
+				testSchemeHTTPS + "://" + testServerNBUMaster + ":" + testPort1556 + testPathNetBackup + testPathAdminJobs,
 				"page%5Blimit%5D=100",
 			},
 		},
@@ -702,7 +702,7 @@ func TestConfigBuildURL(t *testing.T) {
 				"filter[type]": "DISK",
 			},
 			contains: []string{
-				"https://nbu-master:1556/storage/storage-units",
+				"https://nbu-master:1556/netbackup/storage/storage-units",
 				"page%5Blimit%5D=50",
 				"page%5Boffset%5D=0",
 				"filter%5Btype%5D=DISK",
@@ -715,7 +715,7 @@ func TestConfigBuildURL(t *testing.T) {
 				"filter[startTime]": "2024-11-08T10:00:00Z",
 			},
 			contains: []string{
-				"https://nbu-master:1556/admin/jobs",
+				"https://nbu-master:1556/netbackup/admin/jobs",
 				"filter%5BstartTime%5D=2024-11-08T10%3A00%3A00Z",
 			},
 		},
@@ -746,7 +746,7 @@ func TestConfigValidateServerFields(t *testing.T) {
 			}{
 				Port:             "2112",
 				Host:             "localhost",
-				URI:              "/metrics",
+				URI:              testPathMetrics,
 				ScrapingInterval: "5m",
 			},
 			NbuServer: struct {
@@ -763,9 +763,9 @@ func TestConfigValidateServerFields(t *testing.T) {
 			}{
 				Port:   "1556",
 				Scheme: "https",
-				URI:    "/netbackup",
-				Host:   "nbu-master",
-				APIKey: "test-key",
+				URI:    testPathNetBackup,
+				Host:   testServerNBUMaster,
+				APIKey: testKeyName,
 			},
 		}
 	}
@@ -777,8 +777,10 @@ func TestConfigValidateServerFields(t *testing.T) {
 		errMsg    string
 	}{
 		{
-			name:      "valid config",
-			modify:    func(c *Config) {},
+			name: "valid config",
+			modify: func(c *Config) {
+				// No modifications needed - testing default valid config
+			},
 			wantError: false,
 		},
 		{
@@ -795,7 +797,7 @@ func TestConfigValidateServerFields(t *testing.T) {
 				c.Server.Port = "99999"
 			},
 			wantError: true,
-			errMsg:    "invalid server port",
+			errMsg:    testInvalidServerPort,
 		},
 		{
 			name: "invalid server port - negative",
@@ -803,7 +805,7 @@ func TestConfigValidateServerFields(t *testing.T) {
 				c.Server.Port = "-1"
 			},
 			wantError: true,
-			errMsg:    "invalid server port",
+			errMsg:    testInvalidServerPort,
 		},
 		{
 			name: "invalid server port - non-numeric",
@@ -811,7 +813,7 @@ func TestConfigValidateServerFields(t *testing.T) {
 				c.Server.Port = "abc"
 			},
 			wantError: true,
-			errMsg:    "invalid server port",
+			errMsg:    testInvalidServerPort,
 		},
 		{
 			name: "missing server host",
@@ -880,13 +882,13 @@ func TestConfigValidateServerFields(t *testing.T) {
 
 			if tt.wantError {
 				if err == nil {
-					t.Error("Expected error, got nil")
+					t.Error(testErrorExpectedError)
 				} else if tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
-					t.Errorf("Expected error containing %q, got %q", tt.errMsg, err.Error())
+					t.Errorf(testErrorExpectedErrorContaining, tt.errMsg, err.Error())
 				}
 			} else {
 				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
+					t.Errorf(testErrorUnexpected, err)
 				}
 			}
 		})
@@ -947,9 +949,9 @@ func TestConfigValidateSupportedVersions(t *testing.T) {
 				}{
 					Port:             "2112",
 					Host:             "localhost",
-					URI:              "/metrics",
+					URI:              testPathMetrics,
 					ScrapingInterval: "5m",
-					LogName:          "test.log",
+					LogName:          testLogName,
 				},
 				NbuServer: struct {
 					Port               string `yaml:"port"`
@@ -965,8 +967,8 @@ func TestConfigValidateSupportedVersions(t *testing.T) {
 				}{
 					Port:       "1556",
 					Scheme:     "https",
-					URI:        "/netbackup",
-					Host:       "nbu-master",
+					URI:        testPathNetBackup,
+					Host:       testServerNBUMaster,
 					APIKey:     "test-api-key",
 					APIVersion: tt.apiVersion,
 				},
@@ -987,7 +989,7 @@ func TestConfigValidateSupportedVersions(t *testing.T) {
 				}
 			} else {
 				if err != nil {
-					t.Errorf("Validate() unexpected error = %v", err)
+					t.Errorf(testErrorValidateUnexpected, err)
 				}
 			}
 		})
@@ -1006,7 +1008,7 @@ func TestConfigValidateOpenTelemetry(t *testing.T) {
 			}{
 				Port:             "2112",
 				Host:             "localhost",
-				URI:              "/metrics",
+				URI:              testPathMetrics,
 				ScrapingInterval: "5m",
 			},
 			NbuServer: struct {
@@ -1023,9 +1025,9 @@ func TestConfigValidateOpenTelemetry(t *testing.T) {
 			}{
 				Port:   "1556",
 				Scheme: "https",
-				URI:    "/netbackup",
-				Host:   "nbu-master",
-				APIKey: "test-key",
+				URI:    testPathNetBackup,
+				Host:   testServerNBUMaster,
+				APIKey: testKeyName,
 			},
 		}
 	}
@@ -1040,7 +1042,7 @@ func TestConfigValidateOpenTelemetry(t *testing.T) {
 			name: "valid OpenTelemetry config",
 			modify: func(c *Config) {
 				c.OpenTelemetry.Enabled = true
-				c.OpenTelemetry.Endpoint = "localhost:4317"
+				c.OpenTelemetry.Endpoint = testOTELEndpoint
 				c.OpenTelemetry.Insecure = true
 				c.OpenTelemetry.SamplingRate = 0.1
 			},
@@ -1068,7 +1070,7 @@ func TestConfigValidateOpenTelemetry(t *testing.T) {
 			name: "sampling rate too low",
 			modify: func(c *Config) {
 				c.OpenTelemetry.Enabled = true
-				c.OpenTelemetry.Endpoint = "localhost:4317"
+				c.OpenTelemetry.Endpoint = testOTELEndpoint
 				c.OpenTelemetry.SamplingRate = -0.1
 			},
 			wantError: true,
@@ -1078,7 +1080,7 @@ func TestConfigValidateOpenTelemetry(t *testing.T) {
 			name: "sampling rate too high",
 			modify: func(c *Config) {
 				c.OpenTelemetry.Enabled = true
-				c.OpenTelemetry.Endpoint = "localhost:4317"
+				c.OpenTelemetry.Endpoint = testOTELEndpoint
 				c.OpenTelemetry.SamplingRate = 1.5
 			},
 			wantError: true,
@@ -1088,7 +1090,7 @@ func TestConfigValidateOpenTelemetry(t *testing.T) {
 			name: "sampling rate at lower bound",
 			modify: func(c *Config) {
 				c.OpenTelemetry.Enabled = true
-				c.OpenTelemetry.Endpoint = "localhost:4317"
+				c.OpenTelemetry.Endpoint = testOTELEndpoint
 				c.OpenTelemetry.SamplingRate = 0.0
 			},
 			wantError: false,
@@ -1097,7 +1099,7 @@ func TestConfigValidateOpenTelemetry(t *testing.T) {
 			name: "sampling rate at upper bound",
 			modify: func(c *Config) {
 				c.OpenTelemetry.Enabled = true
-				c.OpenTelemetry.Endpoint = "localhost:4317"
+				c.OpenTelemetry.Endpoint = testOTELEndpoint
 				c.OpenTelemetry.SamplingRate = 1.0
 			},
 			wantError: false,
@@ -1113,13 +1115,13 @@ func TestConfigValidateOpenTelemetry(t *testing.T) {
 
 			if tt.wantError {
 				if err == nil {
-					t.Error("Expected error, got nil")
+					t.Error(testErrorExpectedError)
 				} else if tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
-					t.Errorf("Expected error containing %q, got %q", tt.errMsg, err.Error())
+					t.Errorf(testErrorExpectedErrorContaining, tt.errMsg, err.Error())
 				}
 			} else {
 				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
+					t.Errorf(testErrorUnexpected, err)
 				}
 			}
 		})
@@ -1176,7 +1178,7 @@ func TestConfigGetOTelConfig(t *testing.T) {
 		{
 			name:         "full OpenTelemetry config",
 			enabled:      true,
-			endpoint:     "localhost:4317",
+			endpoint:     testOTELEndpoint,
 			insecure:     true,
 			samplingRate: 0.1,
 		},
@@ -1242,7 +1244,7 @@ func TestConfigValidateOTelEndpoint(t *testing.T) {
 			}{
 				Port:             "2112",
 				Host:             "localhost",
-				URI:              "/metrics",
+				URI:              testPathMetrics,
 				ScrapingInterval: "5m",
 			},
 			NbuServer: struct {
@@ -1259,9 +1261,9 @@ func TestConfigValidateOTelEndpoint(t *testing.T) {
 			}{
 				Port:   "1556",
 				Scheme: "https",
-				URI:    "/netbackup",
-				Host:   "nbu-master",
-				APIKey: "test-key",
+				URI:    testPathNetBackup,
+				Host:   testServerNBUMaster,
+				APIKey: testKeyName,
 			},
 		}
 	}
@@ -1274,7 +1276,7 @@ func TestConfigValidateOTelEndpoint(t *testing.T) {
 	}{
 		{
 			name:      "valid endpoint localhost:4317",
-			endpoint:  "localhost:4317",
+			endpoint:  testOTELEndpoint,
 			wantError: false,
 		},
 		{
@@ -1367,13 +1369,13 @@ func TestConfigValidateOTelEndpoint(t *testing.T) {
 
 			if tt.wantError {
 				if err == nil {
-					t.Error("Expected error, got nil")
+					t.Error(testErrorExpectedError)
 				} else if tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
-					t.Errorf("Expected error containing %q, got %q", tt.errMsg, err.Error())
+					t.Errorf(testErrorExpectedErrorContaining, tt.errMsg, err.Error())
 				}
 			} else {
 				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
+					t.Errorf(testErrorUnexpected, err)
 				}
 			}
 		})
@@ -1396,23 +1398,23 @@ func TestConfigParseYAMLOpenTelemetry(t *testing.T) {
 server:
   host: "localhost"
   port: "2112"
-  uri: "/metrics"
+  uri: testPathMetrics
   scrapingInterval: "5m"
-  logName: "test.log"
+  logName: testLogName
 nbuserver:
-  host: "nbu-master"
+  host: testServerNBUMaster
   port: "1556"
   scheme: "https"
-  uri: "/netbackup"
-  apiKey: "test-key"
+  uri: testPathNetBackup
+  apiKey: testKeyName
 opentelemetry:
   enabled: true
-  endpoint: "localhost:4317"
+  endpoint: localhost:4317
   insecure: true
   samplingRate: 0.1
 `,
 			enabled:      true,
-			endpoint:     "localhost:4317",
+			endpoint:     testOTELEndpoint,
 			insecure:     true,
 			samplingRate: 0.1,
 			wantErr:      false,
@@ -1423,15 +1425,15 @@ opentelemetry:
 server:
   host: "localhost"
   port: "2112"
-  uri: "/metrics"
+  uri: testPathMetrics
   scrapingInterval: "5m"
-  logName: "test.log"
+  logName: testLogName
 nbuserver:
-  host: "nbu-master"
+  host: testServerNBUMaster
   port: "1556"
   scheme: "https"
-  uri: "/netbackup"
-  apiKey: "test-key"
+  uri: testPathNetBackup
+  apiKey: testKeyName
 `,
 			enabled:      false,
 			endpoint:     "",
@@ -1445,23 +1447,23 @@ nbuserver:
 server:
   host: "localhost"
   port: "2112"
-  uri: "/metrics"
+  uri: testPathMetrics
   scrapingInterval: "5m"
-  logName: "test.log"
+  logName: testLogName
 nbuserver:
-  host: "nbu-master"
+  host: testServerNBUMaster
   port: "1556"
   scheme: "https"
-  uri: "/netbackup"
-  apiKey: "test-key"
+  uri: testPathNetBackup
+  apiKey: testKeyName
 opentelemetry:
   enabled: false
-  endpoint: "localhost:4317"
+  endpoint: localhost:4317
   insecure: false
   samplingRate: 0.5
 `,
 			enabled:      false,
-			endpoint:     "localhost:4317",
+			endpoint:     testOTELEndpoint,
 			insecure:     false,
 			samplingRate: 0.5,
 			wantErr:      false,

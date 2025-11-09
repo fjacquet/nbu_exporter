@@ -18,7 +18,7 @@ import (
 func TestIntegrationEndToEndTracing(t *testing.T) {
 	// Create a test server that simulates NetBackup API
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
 
 		// Return minimal valid response
@@ -32,12 +32,12 @@ func TestIntegrationEndToEndTracing(t *testing.T) {
 	// Initialize telemetry manager
 	telemetryConfig := telemetry.Config{
 		Enabled:         true,
-		Endpoint:        "localhost:4317",
+		Endpoint:        testOTELEndpoint,
 		Insecure:        true,
 		SamplingRate:    1.0,
-		ServiceName:     "nbu-exporter-test",
-		ServiceVersion:  "1.0.0-test",
-		NetBackupServer: "test-server",
+		ServiceName:     testServiceName,
+		ServiceVersion:  testServiceVersion,
+		NetBackupServer: testServerName,
 	}
 
 	manager := telemetry.NewManager(telemetryConfig)
@@ -71,7 +71,7 @@ func TestIntegrationEndToEndTracing(t *testing.T) {
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIKey:     testKeyName,
 		},
 	}
 
@@ -81,7 +81,7 @@ func TestIntegrationEndToEndTracing(t *testing.T) {
 	var result map[string]interface{}
 	err := client.FetchData(context.Background(), server.URL, &result)
 	if err != nil {
-		t.Errorf("FetchData() unexpected error = %v", err)
+		t.Errorf(testErrorFetchDataUnexpected, err)
 	}
 
 	// Shutdown telemetry
@@ -96,7 +96,7 @@ func TestIntegrationEndToEndTracing(t *testing.T) {
 func TestIntegrationBackwardCompatibility(t *testing.T) {
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
@@ -137,7 +137,7 @@ func TestIntegrationBackwardCompatibility(t *testing.T) {
 			Scheme:     "https",
 			URI:        "/netbackup",
 			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIKey:     testKeyName,
 		},
 		OpenTelemetry: struct {
 			Enabled      bool    `yaml:"enabled"`
@@ -165,7 +165,7 @@ func TestIntegrationBackwardCompatibility(t *testing.T) {
 	var result map[string]interface{}
 	err = client.FetchData(context.Background(), server.URL, &result)
 	if err != nil {
-		t.Errorf("FetchData() unexpected error = %v", err)
+		t.Errorf(testErrorFetchDataUnexpected, err)
 	}
 }
 
@@ -173,7 +173,7 @@ func TestIntegrationBackwardCompatibility(t *testing.T) {
 func TestIntegrationGracefulDegradation(t *testing.T) {
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
@@ -189,9 +189,9 @@ func TestIntegrationGracefulDegradation(t *testing.T) {
 		Endpoint:        "invalid-endpoint:9999",
 		Insecure:        true,
 		SamplingRate:    1.0,
-		ServiceName:     "nbu-exporter-test",
-		ServiceVersion:  "1.0.0-test",
-		NetBackupServer: "test-server",
+		ServiceName:     testServiceName,
+		ServiceVersion:  testServiceVersion,
+		NetBackupServer: testServerName,
 	}
 
 	manager := telemetry.NewManager(telemetryConfig)
@@ -228,7 +228,7 @@ func TestIntegrationGracefulDegradation(t *testing.T) {
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIKey:     testKeyName,
 		},
 	}
 
@@ -238,7 +238,7 @@ func TestIntegrationGracefulDegradation(t *testing.T) {
 	var result map[string]interface{}
 	err = client.FetchData(context.Background(), server.URL, &result)
 	if err != nil {
-		t.Errorf("FetchData() unexpected error = %v", err)
+		t.Errorf(testErrorFetchDataUnexpected, err)
 	}
 
 	// Shutdown telemetry
@@ -257,7 +257,7 @@ func TestIntegrationTracePropagation(t *testing.T) {
 		_ = r.Header.Get("traceparent")
 		_ = r.Header.Get("tracestate")
 
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
 
 		response := map[string]interface{}{
@@ -270,12 +270,12 @@ func TestIntegrationTracePropagation(t *testing.T) {
 	// Initialize telemetry
 	telemetryConfig := telemetry.Config{
 		Enabled:         true,
-		Endpoint:        "localhost:4317",
+		Endpoint:        testOTELEndpoint,
 		Insecure:        true,
 		SamplingRate:    1.0,
-		ServiceName:     "nbu-exporter-test",
-		ServiceVersion:  "1.0.0-test",
-		NetBackupServer: "test-server",
+		ServiceName:     testServiceName,
+		ServiceVersion:  testServiceVersion,
+		NetBackupServer: testServerName,
 	}
 
 	manager := telemetry.NewManager(telemetryConfig)
@@ -299,7 +299,7 @@ func TestIntegrationTracePropagation(t *testing.T) {
 			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: "13.0",
-			APIKey:     "test-key",
+			APIKey:     testKeyName,
 		},
 	}
 
@@ -313,7 +313,7 @@ func TestIntegrationTracePropagation(t *testing.T) {
 	var result map[string]interface{}
 	err := client.FetchData(spanCtx, server.URL, &result)
 	if err != nil {
-		t.Errorf("FetchData() unexpected error = %v", err)
+		t.Errorf(testErrorFetchDataUnexpected, err)
 	}
 
 	// Note: Trace headers may not be present if no global tracer provider is set
@@ -352,12 +352,12 @@ func TestIntegrationSamplingRates(t *testing.T) {
 			// Initialize telemetry with different sampling rates
 			telemetryConfig := telemetry.Config{
 				Enabled:         true,
-				Endpoint:        "localhost:4317",
+				Endpoint:        testOTELEndpoint,
 				Insecure:        true,
 				SamplingRate:    tt.samplingRate,
-				ServiceName:     "nbu-exporter-test",
-				ServiceVersion:  "1.0.0-test",
-				NetBackupServer: "test-server",
+				ServiceName:     testServiceName,
+				ServiceVersion:  testServiceVersion,
+				NetBackupServer: testServerName,
 			}
 
 			manager := telemetry.NewManager(telemetryConfig)

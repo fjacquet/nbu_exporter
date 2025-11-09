@@ -415,38 +415,56 @@ func BenchmarkMetricCollection(b *testing.B) {
 
 	for _, version := range versions {
 		b.Run("Version_"+strings.ReplaceAll(version, ".", "_"), func(b *testing.B) {
-			// Create mock server
-			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if strings.Contains(r.URL.Path, testPathAdminJobs) {
-					handleJobsRequest(w)
-				} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
-					handleStorageRequest(w)
-				}
-			}))
+			server := createBenchmarkMockServer()
 			defer server.Close()
 
-			// Create collector
-			serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
-			cfg := createTestConfig(serverAddr, version)
-			cfg.NbuServer.Scheme = "https"
-
-			collector, err := NewNbuCollector(cfg)
-			if err != nil {
-				b.Fatal(err)
-			}
+			collector := createBenchmarkCollector(b, server.URL, version)
 
 			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				ch := make(chan prometheus.Metric, 100)
-				go func() {
-					collector.Collect(ch)
-					close(ch)
-				}()
-
-				for range ch {
-					// Drain the channel
-				}
-			}
+			benchmarkCollectorIterations(b, collector)
 		})
+	}
+}
+
+// createBenchmarkMockServer creates a mock server for benchmarking
+func createBenchmarkMockServer() *httptest.Server {
+	return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.URL.Path, testPathAdminJobs) {
+			handleJobsRequest(w)
+		} else if strings.Contains(r.URL.Path, testPathStorageUnits) {
+			handleStorageRequest(w)
+		}
+	}))
+}
+
+// createBenchmarkCollector creates a collector for benchmarking
+func createBenchmarkCollector(b *testing.B, serverURL, version string) *NbuCollector {
+	b.Helper()
+
+	serverAddr := strings.TrimPrefix(serverURL, testSchemeHTTPS)
+	cfg := createTestConfig(serverAddr, version)
+	cfg.NbuServer.Scheme = "https"
+
+	collector, err := NewNbuCollector(cfg)
+	if err != nil {
+		b.Fatal(err)
+	}
+	return collector
+}
+
+// benchmarkCollectorIterations runs the collector for b.N iterations
+func benchmarkCollectorIterations(b *testing.B, collector *NbuCollector) {
+	b.Helper()
+
+	for i := 0; i < b.N; i++ {
+		ch := make(chan prometheus.Metric, 100)
+		go func() {
+			collector.Collect(ch)
+			close(ch)
+		}()
+
+		for range ch {
+			// Drain the channel
+		}
 	}
 }
