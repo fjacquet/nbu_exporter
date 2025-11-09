@@ -23,13 +23,13 @@
     - Add `IsOTelEnabled()` convenience method
     - _Requirements: 4.2, 4.3_
 
-- [ ] 3. Implement telemetry manager for OpenTelemetry lifecycle
-  - [ ] 3.1 Create telemetry package structure
+- [x] 3. Implement telemetry manager for OpenTelemetry lifecycle
+  - [x] 3.1 Create telemetry package structure
     - Create `internal/telemetry/manager.go` file
     - Define `Manager` struct with TracerProvider and configuration
     - Define `Config` struct for telemetry-specific settings
     - _Requirements: 1.1, 1.2_
-  - [ ] 3.2 Implement manager initialization
+  - [x] 3.2 Implement manager initialization
     - Implement `NewManager()` constructor accepting configuration
     - Implement `Initialize()` method to set up OTLP exporter
     - Create OTLP gRPC exporter with configured endpoint and TLS settings
@@ -38,12 +38,12 @@
     - Set resource attributes (service.name, service.version, host.name, netbackup.server)
     - Register global tracer provider using `otel.SetTracerProvider()`
     - _Requirements: 1.1, 1.3, 1.4, 4.4, 4.5, 4.6, 4.7, 4.8, 8.1, 8.2, 8.3, 8.4, 8.5_
-  - [ ] 3.3 Implement graceful shutdown
+  - [x] 3.3 Implement graceful shutdown
     - Implement `Shutdown()` method with context timeout
     - Call `TracerProvider.Shutdown()` to flush pending spans
     - Handle shutdown errors gracefully with logging
     - _Requirements: 1.4_
-  - [ ] 3.4 Implement error handling and graceful degradation
+  - [x] 3.4 Implement error handling and graceful degradation
     - Add error handling for exporter creation failures
     - Log warnings when initialization fails
     - Set `enabled = false` on initialization failure
