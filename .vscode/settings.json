@@ -1,5 +1,9 @@
 {
   "cody.autocomplete.advanced.provider": "experimental-ollama",
   "editor.defaultFoldingRangeProvider": "sourcegraph.cody-ai",
-  "editor.defaultFormatter": "sourcegraph.cody-ai"
+  "editor.defaultFormatter": "sourcegraph.cody-ai",
+  "sonarlint.connectedMode.project": {
+    "connectionId": "fjacquet",
+    "projectKey": "fjacquet_nbu_exporter"
+  }
 }

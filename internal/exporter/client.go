@@ -14,6 +14,7 @@ import (
 
 	"github.com/fjacquet/nbu_exporter/internal/logging"
 	"github.com/fjacquet/nbu_exporter/internal/models"
+	"github.com/fjacquet/nbu_exporter/internal/telemetry"
 	"github.com/go-resty/resty/v2"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -115,31 +116,38 @@ func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config) (
 	client := NewNbuClient(*cfg)
 
 	// If API version is not explicitly configured, perform version detection
-	if cfg.NbuServer.APIVersion == "" || cfg.NbuServer.APIVersion == models.APIVersion130 {
-		// Only perform detection if version is empty or set to default
-		// This allows users to explicitly configure a version to bypass detection
-		shouldDetect := cfg.NbuServer.APIVersion == ""
-
-		if shouldDetect {
-			logging.LogInfo("API version not configured, performing automatic detection")
-			detector := NewAPIVersionDetector(client, cfg)
-			detectedVersion, err := detector.DetectVersion(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("automatic API version detection failed: %w", err)
-			}
-
-			// Update configuration with detected version
-			cfg.NbuServer.APIVersion = detectedVersion
-			client.cfg.NbuServer.APIVersion = detectedVersion
-			logging.LogInfo(fmt.Sprintf("Automatically detected API version: %s", detectedVersion))
-		} else {
-			logging.LogInfo(fmt.Sprintf("Using configured API version: %s", cfg.NbuServer.APIVersion))
+	if shouldPerformVersionDetection(cfg) {
+		logging.LogInfo("API version not configured, performing automatic detection")
+		detector := NewAPIVersionDetector(client, cfg)
+		detectedVersion, err := detector.DetectVersion(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("automatic API version detection failed: %w", err)
 		}
-	} else {
+
+		// Update configuration with detected version
+		cfg.NbuServer.APIVersion = detectedVersion
+		client.cfg.NbuServer.APIVersion = detectedVersion
+		logging.LogInfo(fmt.Sprintf("Automatically detected API version: %s", detectedVersion))
+	} else if isExplicitVersionConfigured(cfg) {
 		logging.LogInfo(fmt.Sprintf("Using explicitly configured API version: %s (bypassing detection)", cfg.NbuServer.APIVersion))
+	} else {
+		logging.LogInfo(fmt.Sprintf("Using configured API version: %s", cfg.NbuServer.APIVersion))
 	}
 
 	return client, nil
+}
+
+// shouldPerformVersionDetection determines if automatic API version detection is needed.
+// Returns true when the API version is not configured in the config file.
+func shouldPerformVersionDetection(cfg *models.Config) bool {
+	return cfg.NbuServer.APIVersion == ""
+}
+
+// isExplicitVersionConfigured checks if the user explicitly configured an API version.
+// Returns true when a non-default API version is configured, indicating the user
+// intentionally set a specific version to bypass automatic detection.
+func isExplicitVersionConfigured(cfg *models.Config) bool {
+	return cfg.NbuServer.APIVersion != "" && cfg.NbuServer.APIVersion != models.APIVersion130
 }
 
 // getHeaders returns the standard headers for NBU API requests.
@@ -176,8 +184,8 @@ func (c *NbuClient) getHeaders() map[string]string {
 //	var jobs models.Jobs
 //	err := client.FetchData(ctx, "https://nbu:1556/admin/jobs", &jobs)
 func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{}) error {
-	// Create span for HTTP request
-	ctx, span := c.createHTTPSpan(ctx, "http.request")
+	// Create span for HTTP request using consolidated helper
+	ctx, span := createSpan(ctx, c.tracer, "http.request", trace.SpanKindClient)
 	if span != nil {
 		defer span.End()
 	}
@@ -213,21 +221,7 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 		// Handle 406 Not Acceptable - API version not supported
 		if resp.StatusCode() == 406 {
 			errMsg := fmt.Sprintf(
-				"API version %s is not supported by the NetBackup server (HTTP 406 Not Acceptable).\n\n"+
-					"The server may be running a version of NetBackup that does not support API version %s.\n\n"+
-					"Supported API versions:\n"+
-					"  - 3.0  (NetBackup 10.0-10.4)\n"+
-					"  - 12.0 (NetBackup 10.5)\n"+
-					"  - 13.0 (NetBackup 11.0)\n\n"+
-					"Troubleshooting steps:\n"+
-					"1. Verify your NetBackup server version: bpgetconfig -g | grep VERSION\n"+
-					"2. Update the 'apiVersion' field in config.yaml to match your server version\n"+
-					"3. Or remove the 'apiVersion' field to enable automatic version detection\n\n"+
-					"Example configuration:\n"+
-					"  nbuserver:\n"+
-					"    apiVersion: \"12.0\"  # For NetBackup 10.5\n"+
-					"    # Or omit apiVersion for automatic detection\n\n"+
-					"Request URL: %s",
+				telemetry.ErrAPIVersionNotSupportedTemplate,
 				c.cfg.NbuServer.APIVersion,
 				c.cfg.NbuServer.APIVersion,
 				url,
@@ -253,13 +247,7 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 		}
 
 		errMsg := fmt.Sprintf(
-			"NetBackup server returned non-JSON response (Content-Type: %s).\n\n"+
-				"This usually indicates:\n"+
-				"1. Wrong API endpoint URL (check 'uri' in config.yaml)\n"+
-				"2. Authentication failure (verify API key is valid)\n"+
-				"3. Server configuration issue (check NetBackup REST API is enabled)\n\n"+
-				"Request URL: %s\n"+
-				"Response preview: %s",
+			telemetry.ErrNonJSONResponseTemplate,
 			contentType,
 			url,
 			bodyPreview,
@@ -340,27 +328,7 @@ func (c *NbuClient) DetectAPIVersion(ctx context.Context) (string, error) {
 	return c.cfg.NbuServer.APIVersion, nil
 }
 
-// createHTTPSpan creates a new span for HTTP operations with proper configuration.
-// This helper method provides nil-safe span creation and sets the span kind to client.
-//
-// Parameters:
-//   - ctx: Parent context for the span
-//   - operation: Name of the operation (e.g., "http.request")
-//
-// Returns:
-//   - Updated context with the span
-//   - The created span (or nil if tracing is disabled)
-func (c *NbuClient) createHTTPSpan(ctx context.Context, operation string) (context.Context, trace.Span) {
-	// Nil-safe check: if tracer is not initialized, return original context and nil span
-	if c.tracer == nil {
-		return ctx, nil
-	}
 
-	// Start span with operation name and set span kind to client
-	return c.tracer.Start(ctx, operation,
-		trace.WithSpanKind(trace.SpanKindClient),
-	)
-}
 
 // recordHTTPAttributes records HTTP semantic convention attributes on the span.
 // This method follows OpenTelemetry HTTP semantic conventions for consistent
@@ -380,14 +348,14 @@ func (c *NbuClient) recordHTTPAttributes(span trace.Span, method, url string, st
 		return
 	}
 
-	// Record HTTP semantic convention attributes
+	// Record HTTP semantic convention attributes using centralized constants
 	span.SetAttributes(
-		attribute.String("http.method", method),
-		attribute.String("http.url", url),
-		attribute.Int("http.status_code", statusCode),
-		attribute.Int64("http.request_content_length", requestSize),
-		attribute.Int64("http.response_content_length", responseSize),
-		attribute.Float64("http.duration_ms", float64(duration.Milliseconds())),
+		attribute.String(telemetry.AttrHTTPMethod, method),
+		attribute.String(telemetry.AttrHTTPURL, url),
+		attribute.Int(telemetry.AttrHTTPStatusCode, statusCode),
+		attribute.Int64(telemetry.AttrHTTPRequestContentLength, requestSize),
+		attribute.Int64(telemetry.AttrHTTPResponseContentLength, responseSize),
+		attribute.Float64(telemetry.AttrHTTPDurationMS, float64(duration.Milliseconds())),
 	)
 }
 
@@ -409,9 +377,9 @@ func (c *NbuClient) recordError(span trace.Span, err error) {
 	// Set span status to error with error message
 	span.SetStatus(codes.Error, err.Error())
 
-	// Add error attribute
+	// Add error attribute using centralized constant
 	span.SetAttributes(
-		attribute.String("error", err.Error()),
+		attribute.String(telemetry.AttrError, err.Error()),
 	)
 }
 
