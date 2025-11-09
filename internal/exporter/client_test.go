@@ -11,6 +11,7 @@ import (
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 // Test constants to avoid string duplication
@@ -923,5 +924,194 @@ func TestNbuClientFetchDataErrorWithTracing(t *testing.T) {
 	err := client.FetchData(context.Background(), server.URL, &result)
 	if err == nil {
 		t.Error("FetchData() expected error for 500 status, got nil")
+	}
+}
+
+// TestCreateSpanWithNilTracer tests that createSpan handles nil tracer correctly
+func TestCreateSpanWithNilTracer(t *testing.T) {
+	ctx := context.Background()
+
+	newCtx, span := createSpan(ctx, nil, "test.operation", trace.SpanKindClient)
+
+	if newCtx != ctx {
+		t.Error("createSpan() with nil tracer should return original context")
+	}
+
+	if span != nil {
+		t.Error("createSpan() with nil tracer should return nil span")
+	}
+}
+
+// TestCreateSpanWithValidTracer tests that createSpan creates a span with valid tracer
+func TestCreateSpanWithValidTracer(t *testing.T) {
+	// Create a mock tracer provider using noop implementation
+	tp := noop.NewTracerProvider()
+	tracer := tp.Tracer("test-tracer")
+
+	ctx := context.Background()
+
+	newCtx, span := createSpan(ctx, tracer, "test.operation", trace.SpanKindClient)
+
+	if newCtx == ctx {
+		t.Error("createSpan() with valid tracer should return new context")
+	}
+
+	if span == nil {
+		t.Error("createSpan() with valid tracer should return non-nil span")
+	}
+
+	// Clean up
+	if span != nil {
+		span.End()
+	}
+}
+
+// TestCreateSpanDifferentKinds tests createSpan with different span kinds
+func TestCreateSpanDifferentKinds(t *testing.T) {
+	tests := []struct {
+		name      string
+		operation string
+		kind      trace.SpanKind
+	}{
+		{
+			name:      "client span kind",
+			operation: "http.request",
+			kind:      trace.SpanKindClient,
+		},
+		{
+			name:      "internal span kind",
+			operation: "internal.process",
+			kind:      trace.SpanKindInternal,
+		},
+		{
+			name:      "server span kind",
+			operation: "http.handler",
+			kind:      trace.SpanKindServer,
+		},
+	}
+
+	tp := noop.NewTracerProvider()
+	tracer := tp.Tracer("test-tracer")
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+
+			newCtx, span := createSpan(ctx, tracer, tt.operation, tt.kind)
+
+			if newCtx == ctx {
+				t.Error("createSpan() should return new context")
+			}
+
+			if span == nil {
+				t.Error("createSpan() should return non-nil span")
+			}
+
+			// Clean up
+			if span != nil {
+				span.End()
+			}
+		})
+	}
+}
+
+// TestShouldPerformVersionDetection tests the version detection decision logic
+func TestShouldPerformVersionDetection(t *testing.T) {
+	tests := []struct {
+		name       string
+		apiVersion string
+		expected   bool
+	}{
+		{
+			name:       "empty version triggers detection",
+			apiVersion: "",
+			expected:   true,
+		},
+		{
+			name:       "version 3.0 bypasses detection",
+			apiVersion: models.APIVersion30,
+			expected:   false,
+		},
+		{
+			name:       "version 12.0 bypasses detection",
+			apiVersion: models.APIVersion120,
+			expected:   false,
+		},
+		{
+			name:       "version 13.0 bypasses detection",
+			apiVersion: models.APIVersion130,
+			expected:   false,
+		},
+		{
+			name:       "custom version bypasses detection",
+			apiVersion: "11.0",
+			expected:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &models.Config{}
+			cfg.NbuServer.APIVersion = tt.apiVersion
+
+			result := shouldPerformVersionDetection(cfg)
+
+			if result != tt.expected {
+				t.Errorf("shouldPerformVersionDetection() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestIsExplicitVersionConfigured tests the explicit version configuration check
+func TestIsExplicitVersionConfigured(t *testing.T) {
+	tests := []struct {
+		name       string
+		apiVersion string
+		expected   bool
+	}{
+		{
+			name:       "empty version is not explicit",
+			apiVersion: "",
+			expected:   false,
+		},
+		{
+			name:       "default version 13.0 is not explicit",
+			apiVersion: models.APIVersion130,
+			expected:   false,
+		},
+		{
+			name:       "version 12.0 is explicit",
+			apiVersion: models.APIVersion120,
+			expected:   true,
+		},
+		{
+			name:       "version 3.0 is explicit",
+			apiVersion: models.APIVersion30,
+			expected:   true,
+		},
+		{
+			name:       "custom version 11.0 is explicit",
+			apiVersion: "11.0",
+			expected:   true,
+		},
+		{
+			name:       "custom version 10.5 is explicit",
+			apiVersion: "10.5",
+			expected:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &models.Config{}
+			cfg.NbuServer.APIVersion = tt.apiVersion
+
+			result := isExplicitVersionConfigured(cfg)
+
+			if result != tt.expected {
+				t.Errorf("isExplicitVersionConfigured() = %v, want %v", result, tt.expected)
+			}
+		})
 	}
 }

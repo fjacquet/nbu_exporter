@@ -34,14 +34,14 @@
   - Add descriptive error messages for validation failures
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 6. Improve test consistency and documentation
+- [x] 6. Improve test consistency and documentation
   - Update `internal/telemetry/manager_test.go` to explicitly check for errors instead of using underscore assignment
   - Add comments documenting graceful degradation cases in tests
   - Add godoc comments with parameter and return value documentation to exported functions in `client.go`, `netbackup.go`, and `prometheus.go`
   - Include usage examples in godoc for complex functions like `FetchStorage` and `FetchAllJobs`
   - _Requirements: 5.1, 5.2, 5.3, 8.1, 8.2, 8.3_
 
-- [ ] 7. Add unit tests for new components
+- [x] 7. Add unit tests for new components
   - Write tests for `createSpan` helper function with nil tracer and valid tracer
   - Write tests for `validateOTelEndpoint` with valid and invalid formats
   - Write tests for extracted conditional functions (`shouldPerformVersionDetection`, `isExplicitVersionConfigured`)
