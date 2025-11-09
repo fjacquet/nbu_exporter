@@ -28,11 +28,14 @@ import (
 	"github.com/fjacquet/nbu_exporter/internal/exporter"
 	"github.com/fjacquet/nbu_exporter/internal/logging"
 	"github.com/fjacquet/nbu_exporter/internal/models"
+	"github.com/fjacquet/nbu_exporter/internal/telemetry"
 	"github.com/fjacquet/nbu_exporter/internal/utils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 const (
@@ -47,15 +50,18 @@ var (
 )
 
 // Server encapsulates the HTTP server and its dependencies for serving Prometheus metrics.
-// It manages the lifecycle of the HTTP server, Prometheus registry, and NetBackup collector.
+// It manages the lifecycle of the HTTP server, Prometheus registry, NetBackup collector,
+// and OpenTelemetry telemetry manager.
 type Server struct {
-	cfg      models.Config        // Application configuration
-	httpSrv  *http.Server         // HTTP server instance
-	registry *prometheus.Registry // Prometheus metrics registry
+	cfg              models.Config        // Application configuration
+	httpSrv          *http.Server         // HTTP server instance
+	registry         *prometheus.Registry // Prometheus metrics registry
+	telemetryManager *telemetry.Manager   // OpenTelemetry telemetry manager (nil if disabled)
 }
 
 // NewServer creates a new server instance with the provided configuration.
-// It initializes a new Prometheus registry for metric collection.
+// It initializes a new Prometheus registry for metric collection and creates
+// a telemetry manager if OpenTelemetry is enabled in the configuration.
 //
 // Example:
 //
@@ -63,15 +69,31 @@ type Server struct {
 //	server := NewServer(cfg)
 //	server.Start()
 func NewServer(cfg models.Config) *Server {
+	var telemetryMgr *telemetry.Manager
+
+	// Create telemetry manager if OpenTelemetry is enabled
+	if cfg.IsOTelEnabled() {
+		telemetryMgr = telemetry.NewManager(telemetry.Config{
+			Enabled:         cfg.OpenTelemetry.Enabled,
+			Endpoint:        cfg.OpenTelemetry.Endpoint,
+			Insecure:        cfg.OpenTelemetry.Insecure,
+			SamplingRate:    cfg.OpenTelemetry.SamplingRate,
+			ServiceName:     "nbu-exporter",
+			ServiceVersion:  "1.0.0", // TODO: Get from build info
+			NetBackupServer: cfg.NbuServer.Host,
+		})
+	}
+
 	return &Server{
-		cfg:      cfg,
-		registry: prometheus.NewRegistry(),
+		cfg:              cfg,
+		registry:         prometheus.NewRegistry(),
+		telemetryManager: telemetryMgr,
 	}
 }
 
 // Start initializes and starts the HTTP server with Prometheus metrics endpoint.
-// It registers the NetBackup collector, configures HTTP handlers, and starts
-// the server in a goroutine.
+// It initializes OpenTelemetry if enabled, registers the NetBackup collector,
+// configures HTTP handlers, and starts the server in a goroutine.
 //
 // The server exposes:
 //   - Metrics endpoint at the configured URI (default: /metrics)
@@ -80,6 +102,26 @@ func NewServer(cfg models.Config) *Server {
 // Returns an error if collector creation or registration fails. The HTTP server runs
 // asynchronously and logs fatal errors if startup fails.
 func (s *Server) Start() error {
+	// Initialize OpenTelemetry if enabled
+	if s.telemetryManager != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		if err := s.telemetryManager.Initialize(ctx); err != nil {
+			// Log warning but continue - telemetry manager handles graceful degradation
+			log.Warnf("Failed to initialize OpenTelemetry: %v. Continuing without tracing.", err)
+		}
+
+		// Configure W3C Trace Context propagation if telemetry is enabled
+		if s.telemetryManager.IsEnabled() {
+			otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+				propagation.TraceContext{},
+				propagation.Baggage{},
+			))
+			log.Info("OpenTelemetry trace context propagation configured")
+		}
+	}
+
 	// Create NetBackup collector with version detection
 	collector, err := exporter.NewNbuCollector(s.cfg)
 	if err != nil {
@@ -93,7 +135,14 @@ func (s *Server) Start() error {
 
 	// Setup HTTP handlers
 	mux := http.NewServeMux()
-	mux.Handle(s.cfg.Server.URI, promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{}))
+	
+	// Wrap Prometheus handler with trace context extraction if OpenTelemetry is enabled
+	prometheusHandler := promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{})
+	if s.telemetryManager != nil && s.telemetryManager.IsEnabled() {
+		prometheusHandler = s.extractTraceContextMiddleware(prometheusHandler)
+	}
+	
+	mux.Handle(s.cfg.Server.URI, prometheusHandler)
 	mux.HandleFunc("/health", s.healthHandler)
 
 	// Create HTTP server
@@ -114,16 +163,30 @@ func (s *Server) Start() error {
 	return nil
 }
 
-// Shutdown gracefully shuts down the HTTP server with a timeout.
-// It waits for active connections to complete before shutting down.
+// Shutdown gracefully shuts down the HTTP server and OpenTelemetry with a timeout.
+// It waits for active connections to complete and flushes pending telemetry data
+// before shutting down.
 //
 // The shutdown process:
-//  1. Stops accepting new connections
-//  2. Waits for active requests to complete (up to shutdownTimeout)
-//  3. Forces shutdown if timeout is exceeded
+//  1. Shuts down OpenTelemetry TracerProvider (flushes pending spans)
+//  2. Stops accepting new HTTP connections
+//  3. Waits for active requests to complete (up to shutdownTimeout)
+//  4. Forces shutdown if timeout is exceeded
 //
 // Returns an error if shutdown fails or times out.
 func (s *Server) Shutdown() error {
+	// Shutdown OpenTelemetry first to flush pending spans
+	if s.telemetryManager != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+		defer cancel()
+
+		if err := s.telemetryManager.Shutdown(ctx); err != nil {
+			log.Warnf("OpenTelemetry shutdown error: %v", err)
+			// Continue with HTTP server shutdown even if telemetry shutdown fails
+		}
+	}
+
+	// Shutdown HTTP server
 	if s.httpSrv == nil {
 		return nil
 	}
@@ -138,6 +201,29 @@ func (s *Server) Shutdown() error {
 
 	log.Info("Server stopped gracefully")
 	return nil
+}
+
+// extractTraceContextMiddleware wraps an HTTP handler to extract trace context from incoming requests.
+// This enables distributed tracing when the exporter is part of a larger observability pipeline.
+// The extracted context is propagated to the Prometheus collector's Collect method.
+//
+// The middleware:
+//   - Extracts W3C Trace Context headers from the incoming request
+//   - Creates a new context with the extracted trace information
+//   - Passes the context to the wrapped handler
+//
+// If no trace context is present in the request, the handler operates normally without tracing.
+func (s *Server) extractTraceContextMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Extract trace context from incoming request headers using the global propagator
+		ctx := otel.GetTextMapPropagator().Extract(r.Context(), propagation.HeaderCarrier(r.Header))
+		
+		// Create a new request with the extracted context
+		r = r.WithContext(ctx)
+		
+		// Call the next handler with the updated request
+		next.ServeHTTP(w, r)
+	})
 }
 
 // healthHandler provides a simple health check endpoint that returns HTTP 200 OK.
