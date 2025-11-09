@@ -16,3 +16,4 @@ nbu_exporter.log
 samples
 .codegpt
 .DS_Store
+coverage.out
