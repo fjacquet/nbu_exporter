@@ -20,3 +20,10 @@ nbuserver:
     apiKey: "my-api-key"
     contentType: "application/vnd.netbackup+json"  # Version will be added automatically
     insecureSkipVerify: false  # Set to true to skip TLS certificate verification (not recommended for production)
+
+# Optional: OpenTelemetry distributed tracing configuration
+# opentelemetry:
+#     enabled: true
+#     endpoint: "localhost:4317"
+#     insecure: true
+#     samplingRate: 0.1

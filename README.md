@@ -146,6 +146,218 @@ scrape_configs:
 
 **Note**: Tape storage units are excluded from metrics collection.
 
+## OpenTelemetry Integration
+
+The exporter supports optional distributed tracing via OpenTelemetry, enabling you to diagnose slow scrapes, identify performance bottlenecks in NetBackup API calls, and understand the complete request flow through your monitoring infrastructure.
+
+### Features
+
+- **Distributed Tracing**: Track the complete lifecycle of each Prometheus scrape
+- **API Call Instrumentation**: Detailed spans for every NetBackup API request
+- **Performance Analysis**: Identify slow endpoints and optimize scraping intervals
+- **Trace Correlation**: Link logs to traces for comprehensive troubleshooting
+- **Zero Overhead When Disabled**: No performance impact when tracing is not enabled
+- **Configurable Sampling**: Control tracing overhead with adjustable sampling rates
+
+### Quick Start
+
+1. **Enable OpenTelemetry in your configuration:**
+
+```yaml
+opentelemetry:
+    enabled: true
+    endpoint: "localhost:4317"  # Your OTLP collector endpoint
+    insecure: true              # Use false for production with TLS
+    samplingRate: 0.1           # Trace 10% of scrapes
+```
+
+2. **Start an OpenTelemetry Collector** (see Docker Compose example below)
+
+3. **Restart the exporter** and view traces in your observability backend (Jaeger, Tempo, etc.)
+
+### Configuration Options
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `enabled` | bool | No | false | Enable or disable OpenTelemetry tracing |
+| `endpoint` | string | Yes* | - | OTLP gRPC endpoint (e.g., "localhost:4317") |
+| `insecure` | bool | No | false | Use insecure connection (no TLS) for OTLP export |
+| `samplingRate` | float | No | 1.0 | Sampling rate (0.0 to 1.0) for trace collection |
+
+*Required when `enabled` is `true`
+
+### Sampling Rate Behavior
+
+The `samplingRate` controls what percentage of scrape cycles are traced:
+
+- **1.0** (100%): Trace all scrapes - useful for debugging and development
+- **0.1** (10%): Trace 10% of scrapes - recommended for production monitoring
+- **0.01** (1%): Trace 1% of scrapes - minimal overhead for high-frequency scraping
+
+**Performance Impact:**
+- Tracing disabled: 0% overhead
+- samplingRate 0.1: < 2% overhead
+- samplingRate 1.0: < 5% overhead
+
+### Trace Hierarchy
+
+Each Prometheus scrape creates a trace with the following span structure:
+
+```
+prometheus.scrape (root span)
+├── netbackup.fetch_storage
+│   └── http.request (GET /storage/storage-units)
+└── netbackup.fetch_jobs
+    ├── netbackup.fetch_job_page (offset=0)
+    │   └── http.request (GET /admin/jobs?offset=0)
+    ├── netbackup.fetch_job_page (offset=1)
+    │   └── http.request (GET /admin/jobs?offset=1)
+    └── netbackup.fetch_job_page (offset=N)
+        └── http.request (GET /admin/jobs?offset=N)
+```
+
+### Span Attributes
+
+Traces include rich attributes for analysis:
+
+**Root Span (prometheus.scrape):**
+- `scrape.duration_ms`: Total scrape duration
+- `scrape.storage_metrics_count`: Number of storage metrics collected
+- `scrape.job_metrics_count`: Number of job metrics collected
+- `scrape.status`: "success" or "partial_failure"
+
+**Storage Fetch (netbackup.fetch_storage):**
+- `netbackup.endpoint`: API endpoint path
+- `netbackup.storage_units`: Number of storage units retrieved
+- `netbackup.api_version`: API version used
+
+**Job Fetch (netbackup.fetch_jobs):**
+- `netbackup.endpoint`: API endpoint path
+- `netbackup.time_window`: Scraping interval
+- `netbackup.total_jobs`: Total jobs retrieved
+- `netbackup.total_pages`: Number of pages fetched
+
+**HTTP Request (http.request):**
+- `http.method`: HTTP method (GET, POST, etc.)
+- `http.url`: Full request URL
+- `http.status_code`: HTTP response status code
+- `http.duration_ms`: Request duration in milliseconds
+
+### Example Configurations
+
+**Development (trace everything):**
+
+```yaml
+opentelemetry:
+    enabled: true
+    endpoint: "localhost:4317"
+    insecure: true
+    samplingRate: 1.0
+```
+
+**Production (sample 10%):**
+
+```yaml
+opentelemetry:
+    enabled: true
+    endpoint: "otel-collector.prod.example.com:4317"
+    insecure: false
+    samplingRate: 0.1
+```
+
+**High-frequency scraping (minimal overhead):**
+
+```yaml
+opentelemetry:
+    enabled: true
+    endpoint: "otel-collector.example.com:4317"
+    insecure: false
+    samplingRate: 0.01
+```
+
+### Docker Compose with OpenTelemetry
+
+See the complete example in the "Docker Compose with OpenTelemetry" section below.
+
+### Analyzing Traces
+
+**Identify slow API calls:**
+
+1. Open your trace backend (Jaeger, Tempo, etc.)
+2. Search for traces with service name "nbu-exporter"
+3. Sort by duration to find slow scrapes
+4. Drill down into spans to identify bottlenecks
+
+**Common queries:**
+
+- Find scrapes taking > 30 seconds: `duration > 30s`
+- Find failed API calls: `http.status_code >= 400`
+- Find specific endpoints: `netbackup.endpoint = "/admin/jobs"`
+- Find high pagination: `netbackup.total_pages > 10`
+
+**Example trace analysis:**
+
+```
+Trace: prometheus.scrape (45.2s total)
+├── netbackup.fetch_storage (2.1s) ✓ Normal
+└── netbackup.fetch_jobs (43.1s) ⚠️ Slow!
+    ├── netbackup.fetch_job_page (15.2s) ⚠️ Bottleneck
+    ├── netbackup.fetch_job_page (14.8s) ⚠️ Bottleneck
+    └── netbackup.fetch_job_page (13.1s) ⚠️ Bottleneck
+```
+
+**Diagnosis**: Job pagination is slow. Consider:
+- Reducing `scrapingInterval` to fetch fewer jobs
+- Checking NetBackup server performance
+- Verifying network latency
+
+### Troubleshooting
+
+**Traces not appearing:**
+
+1. Verify OpenTelemetry is enabled: `enabled: true`
+2. Check collector endpoint is reachable: `telnet localhost 4317`
+3. Enable debug logging: `./nbu_exporter --config config.yaml --debug`
+4. Check exporter logs for connection errors
+5. Verify sampling rate is not too low (try `samplingRate: 1.0` for testing)
+
+**Connection refused errors:**
+
+```
+WARN[0001] Failed to initialize OpenTelemetry: connection refused
+```
+
+**Solution**: Ensure your OTLP collector is running and accessible at the configured endpoint.
+
+**High overhead:**
+
+If tracing is causing performance issues:
+
+1. Reduce sampling rate: `samplingRate: 0.1` or lower
+2. Verify batch span processor is configured (automatic)
+3. Check collector performance and resource limits
+4. Consider disabling tracing temporarily: `enabled: false`
+
+**TLS certificate errors:**
+
+```
+ERROR: x509: certificate signed by unknown authority
+```
+
+**Solution**: Either:
+- Install the collector's CA certificate on the exporter host
+- Use `insecure: true` for development/testing (not recommended for production)
+- Configure the collector with a valid TLS certificate
+
+### Backward Compatibility
+
+OpenTelemetry integration is fully backward compatible:
+
+- **No configuration changes required**: Existing deployments work without modification
+- **Opt-in feature**: Tracing is disabled by default
+- **Zero overhead when disabled**: No performance impact on existing installations
+- **Graceful degradation**: If initialization fails, the exporter continues operating normally
+
 ## Grafana Dashboard
 
 A pre-built Grafana dashboard is included in the `grafana/` directory:
@@ -222,6 +434,139 @@ services:
       retries: 3
       start_period: 40s
 ```
+
+### Docker Compose with OpenTelemetry
+
+Complete example with OpenTelemetry Collector and Jaeger for trace visualization:
+
+```yaml
+version: '3.8'
+
+services:
+  nbu_exporter:
+    image: nbu_exporter:latest
+    container_name: nbu_exporter
+    ports:
+      - "2112:2112"
+    volumes:
+      - ./config.yaml:/etc/nbu_exporter/config.yaml:ro
+      - ./log:/var/log/nbu_exporter
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+    restart: unless-stopped
+    depends_on:
+      - otel-collector
+    networks:
+      - monitoring
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics
+      - "13133:13133" # Health check
+    restart: unless-stopped
+    depends_on:
+      - jaeger
+    networks:
+      - monitoring
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14250:14250" # gRPC
+      - "14268:14268" # HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
+```
+
+**OpenTelemetry Collector Configuration** (`otel-collector-config.yaml`):
+
+```yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+  
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+
+exporters:
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+  
+  logging:
+    loglevel: info
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [jaeger, logging]
+```
+
+**Configuration for OpenTelemetry** (`config.yaml`):
+
+```yaml
+server:
+    host: "localhost"
+    port: "2112"
+    uri: "/metrics"
+    scrapingInterval: "1h"
+    logName: "log/nbu-exporter.log"
+
+nbuserver:
+    scheme: "https"
+    host: "master.my.domain"
+    port: "1556"
+    apiKey: "your-api-key"
+    # ... other settings
+
+opentelemetry:
+    enabled: true
+    endpoint: "otel-collector:4317"
+    insecure: true
+    samplingRate: 1.0  # Trace all scrapes for testing
+```
+
+**Start the stack:**
+
+```bash
+docker-compose up -d
+```
+
+**Access the services:**
+
+- **Prometheus Metrics**: http://localhost:2112/metrics
+- **Jaeger UI**: http://localhost:16686
+- **Collector Metrics**: http://localhost:8888/metrics
+- **Collector Health**: http://localhost:13133
 
 ### Verify Container
 
@@ -414,6 +759,17 @@ nbuserver:
 | `apiKey` | string | Yes | - | NetBackup API key |
 | `contentType` | string | Yes | - | API content type header |
 | `insecureSkipVerify` | bool | No | false | Skip TLS certificate verification (not recommended for production) |
+
+### OpenTelemetry Section (Optional)
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `enabled` | bool | No | false | Enable or disable OpenTelemetry distributed tracing |
+| `endpoint` | string | Yes* | - | OTLP gRPC endpoint for trace export (e.g., "localhost:4317") |
+| `insecure` | bool | No | false | Use insecure connection (no TLS) for OTLP export |
+| `samplingRate` | float | No | 1.0 | Sampling rate for trace collection (0.0 to 1.0) |
+
+*Required when `enabled` is `true`
 
 ## Security Considerations
 

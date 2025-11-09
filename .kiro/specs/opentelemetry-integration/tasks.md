@@ -110,114 +110,114 @@
     - Set span status based on scrape outcome
     - _Requirements: 2.6_
 
-- [ ] 6. Instrument storage fetching operations
-  - [ ] 6.1 Add span creation to FetchStorage
+- [x] 6. Instrument storage fetching operations
+  - [x] 6.1 Add span creation to FetchStorage
     - Start child span "netbackup.fetch_storage" from parent context
     - Set span kind to `trace.SpanKindClient`
     - Record `netbackup.endpoint` attribute with storage path
     - _Requirements: 2.2, 5.2_
-  - [ ] 6.2 Record storage operation attributes
+  - [x] 6.2 Record storage operation attributes
     - Record `netbackup.storage_units` attribute with count of units retrieved
     - Record `netbackup.api_version` attribute
     - Record operation duration
     - _Requirements: 5.1, 5.2_
-  - [ ] 6.3 Handle errors in storage fetching
+  - [x] 6.3 Handle errors in storage fetching
     - Record errors as span events
     - Set span status to error on failures
     - Propagate errors to caller
     - _Requirements: 2.6_
 
-- [ ] 7. Instrument job fetching operations
-  - [ ] 7.1 Add span creation to FetchAllJobs
+- [x] 7. Instrument job fetching operations
+  - [x] 7.1 Add span creation to FetchAllJobs
     - Start child span "netbackup.fetch_jobs" from parent context
     - Set span kind to `trace.SpanKindClient`
     - Record `netbackup.endpoint` attribute with jobs path
     - Record `netbackup.time_window` attribute with scraping interval
     - Record `netbackup.start_time` attribute with ISO 8601 timestamp
     - _Requirements: 2.3, 5.3_
-  - [ ] 7.2 Add span creation to FetchJobDetails for pagination
+  - [x] 7.2 Add span creation to FetchJobDetails for pagination
     - Start child span "netbackup.fetch_job_page" from parent context
     - Record `netbackup.page_offset` attribute
     - Calculate and record `netbackup.page_number` attribute
     - _Requirements: 2.4, 5.3_
-  - [ ] 7.3 Record job operation attributes
+  - [x] 7.3 Record job operation attributes
     - Record `netbackup.total_jobs` attribute in FetchAllJobs
     - Record `netbackup.total_pages` attribute after pagination completes
     - Record `netbackup.jobs_in_page` attribute in FetchJobDetails
     - _Requirements: 5.2, 5.3_
-  - [ ] 7.4 Handle errors in job fetching
+  - [x] 7.4 Handle errors in job fetching
     - Record errors as span events
     - Set span status to error on failures
     - Propagate errors to caller
     - _Requirements: 2.6_
 
-- [ ] 8. Instrument API version detection
-  - [ ] 8.1 Add span creation to version detection
+- [x] 8. Instrument API version detection
+  - [x] 8.1 Add span creation to version detection
     - Start span "netbackup.detect_version" in DetectVersion method
     - Record attempted versions as span attributes
     - Record detected version as span attribute
     - _Requirements: 5.5_
-  - [ ] 8.2 Record version detection results
+  - [x] 8.2 Record version detection results
     - Record each version attempt as span event
     - Record success/failure for each attempt
     - Set span status based on detection outcome
     - _Requirements: 5.5_
 
-- [ ] 9. Integrate telemetry manager into main application
-  - [ ] 9.1 Initialize telemetry manager in main
+- [x] 9. Integrate telemetry manager into main application
+  - [x] 9.1 Initialize telemetry manager in main
     - Create telemetry manager from configuration in main.go
     - Call `Initialize()` after configuration validation
     - Handle initialization errors with warning logs
     - _Requirements: 1.1, 1.2, 6.4_
-  - [ ] 9.2 Pass tracer to components
+  - [x] 9.2 Pass tracer to components
     - Update Server struct to hold telemetry manager
     - Pass tracer to NbuCollector during creation
     - Pass tracer to NbuClient during creation
     - _Requirements: 1.1_
-  - [ ] 9.3 Implement graceful shutdown
+  - [x] 9.3 Implement graceful shutdown
     - Call `telemetryManager.Shutdown()` in shutdown handler
     - Add timeout context for shutdown (10 seconds)
     - Log shutdown status
     - _Requirements: 1.4_
-  - [ ] 9.4 Handle disabled telemetry
+  - [x] 9.4 Handle disabled telemetry
     - Check if telemetry is enabled before initialization
     - Skip tracer passing if telemetry is disabled
     - Ensure nil-safe operations throughout
     - _Requirements: 1.2, 6.1, 6.2, 6.3_
 
-- [ ] 10. Implement trace context propagation
-  - [ ] 10.1 Configure global propagators
+- [x] 10. Implement trace context propagation
+  - [x] 10.1 Configure global propagators
     - Set W3C Trace Context as default propagator
     - Add Baggage propagator for cross-cutting concerns
     - Use `otel.SetTextMapPropagator()` with composite propagator
     - _Requirements: 7.1, 7.5_
-  - [ ] 10.2 Implement context extraction
+  - [x] 10.2 Implement context extraction
     - Extract trace context from incoming HTTP requests (if applicable)
     - Use propagator to extract parent context
     - _Requirements: 7.2_
-  - [ ] 10.3 Implement context injection
+  - [x] 10.3 Implement context injection
     - Inject trace context into outgoing NetBackup API requests
     - Use propagator to inject context into headers
     - _Requirements: 7.3, 7.4_
 
-- [ ] 11. Add configuration examples and documentation
-  - [ ] 11.1 Create example configuration file
+- [-] 11. Add configuration examples and documentation
+  - [x] 11.1 Create example configuration file
     - Add commented OpenTelemetry section to example config.yaml
     - Include all configuration options with descriptions
     - Provide examples for common scenarios (development, production)
     - _Requirements: 10.1_
-  - [ ] 11.2 Update README with OpenTelemetry documentation
+  - [x] 11.2 Update README with OpenTelemetry documentation
     - Add OpenTelemetry section to README
     - Document all configuration options
     - Explain sampling rate behavior
     - Provide troubleshooting guidance
     - _Requirements: 10.2, 10.5_
-  - [ ] 11.3 Create Docker Compose example
+  - [x] 11.3 Create Docker Compose example
     - Create docker-compose.yaml with exporter, collector, and Jaeger
     - Create otel-collector-config.yaml for collector configuration
     - Add instructions for running the example
     - _Requirements: 10.3_
-  - [ ] 11.4 Document trace queries and analysis
+  - [x] 11.4 Document trace queries and analysis
     - Provide example trace queries for common scenarios
     - Document how to identify slow API calls
     - Explain span attributes and their meanings
@@ -260,7 +260,7 @@
     - Verify overhead is acceptable (< 5% for sampling=0.1)
     - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [ ] 13. Validate and finalize implementation
+- [-] 13. Validate and finalize implementation
   - [ ] 13.1 Run all tests and verify passing
     - Execute unit tests with `go test ./...`
     - Execute integration tests

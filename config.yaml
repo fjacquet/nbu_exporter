@@ -21,3 +21,62 @@ nbuserver:
     apiKey: "my-api-key"
     contentType: "application/vnd.netbackup+json; version=13.0"  # Should match apiVersion
     insecureSkipVerify: false  # Set to true to skip TLS certificate verification (not recommended for production)
+
+# Optional: OpenTelemetry distributed tracing configuration
+# Enables distributed tracing for NetBackup API calls and Prometheus scrape cycles
+# Useful for diagnosing slow scrapes and identifying performance bottlenecks
+opentelemetry:
+    # Enable or disable OpenTelemetry tracing
+    # When disabled, the exporter operates normally with zero tracing overhead
+    # Default: false
+    enabled: false
+    
+    # OTLP gRPC endpoint for trace export
+    # This should point to your OpenTelemetry Collector or observability backend
+    # Examples:
+    #   - Local collector: "localhost:4317"
+    #   - Remote collector: "otel-collector.example.com:4317"
+    #   - Jaeger: "jaeger:4317"
+    #   - Tempo: "tempo:4317"
+    # Required when enabled is true
+    endpoint: "localhost:4317"
+    
+    # Use insecure connection (no TLS) for OTLP export
+    # Set to true for development/testing environments
+    # Set to false for production environments with TLS-enabled collectors
+    # Default: false
+    # Note: This is separate from nbuserver.insecureSkipVerify
+    insecure: true
+    
+    # Sampling rate for trace collection (0.0 to 1.0)
+    # Controls what percentage of scrape cycles are traced
+    # Examples:
+    #   - 1.0: Trace all scrapes (100%) - useful for debugging
+    #   - 0.1: Trace 10% of scrapes - good for production monitoring
+    #   - 0.01: Trace 1% of scrapes - minimal overhead for high-frequency scraping
+    # Default: 1.0
+    # Performance impact: < 2% overhead at 0.1, < 5% overhead at 1.0
+    samplingRate: 0.1
+
+# Example configurations for different scenarios:
+
+# Development/Testing (trace everything):
+# opentelemetry:
+#     enabled: true
+#     endpoint: "localhost:4317"
+#     insecure: true
+#     samplingRate: 1.0
+
+# Production (sample 10% of scrapes):
+# opentelemetry:
+#     enabled: true
+#     endpoint: "otel-collector.prod.example.com:4317"
+#     insecure: false
+#     samplingRate: 0.1
+
+# High-frequency scraping (minimal overhead):
+# opentelemetry:
+#     enabled: true
+#     endpoint: "otel-collector.example.com:4317"
+#     insecure: false
+#     samplingRate: 0.01
