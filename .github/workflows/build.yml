@@ -44,15 +44,10 @@ jobs:
           
       - name: Run linting
         run: |
+          go env -w GOTOOLCHAIN=go${{ env.GO_VERSION }}.4+auto
           go fmt ./...
           go vet ./...
-
-      - name: Download dependencies
-        run: go mod download
-
-      - name: Build
-        run: |
-          go env -w GOTOOLCHAIN=go${{ env.GO_VERSION }}+auto
+          go mod download
           go build -v ./...
           go test ./... -coverprofile=coverage.out -covermode=atomic 
 
