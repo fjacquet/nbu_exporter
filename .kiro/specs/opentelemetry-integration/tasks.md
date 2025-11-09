@@ -200,7 +200,7 @@
     - Use propagator to inject context into headers
     - _Requirements: 7.3, 7.4_
 
-- [-] 11. Add configuration examples and documentation
+- [x] 11. Add configuration examples and documentation
   - [x] 11.1 Create example configuration file
     - Add commented OpenTelemetry section to example config.yaml
     - Include all configuration options with descriptions
