@@ -51,7 +51,12 @@ jobs:
           go build -v ./...
           go test ./... -coverprofile=coverage.out -covermode=atomic 
 
-         
+      - name: check test coverage
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          config: ./.testcoverage.yml
+
+
       # - name: SonarQube Scan
       #   if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
       #   uses: SonarSource/sonarqube-scan-action@v6
