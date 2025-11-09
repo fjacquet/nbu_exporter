@@ -50,36 +50,36 @@
     - Implement `IsEnabled()` method to check telemetry status
     - _Requirements: 1.2, 6.4_
 
-- [ ] 4. Instrument HTTP client for NetBackup API calls
-  - [ ] 4.1 Add tracer to NbuClient struct
+- [x] 4. Instrument HTTP client for NetBackup API calls
+  - [x] 4.1 Add tracer to NbuClient struct
     - Add `tracer trace.Tracer` field to NbuClient struct
     - Update `NewNbuClient()` to accept optional tracer
     - Initialize tracer from global provider if available
     - _Requirements: 2.5_
-  - [ ] 4.2 Implement span creation for HTTP requests
+  - [x] 4.2 Implement span creation for HTTP requests
     - Create `createHTTPSpan()` helper method
     - Start span with operation name "http.request"
     - Set span kind to `trace.SpanKindClient`
     - Add nil-safe checks for tracer
     - _Requirements: 2.5, 6.2_
-  - [ ] 4.3 Record HTTP semantic convention attributes
+  - [x] 4.3 Record HTTP semantic convention attributes
     - Implement `recordHTTPAttributes()` method
     - Record `http.method`, `http.url`, `http.status_code` attributes
     - Record `http.request_content_length` and `http.response_content_length`
     - Record `http.duration_ms` for request timing
     - Follow OpenTelemetry HTTP semantic conventions
     - _Requirements: 2.5, 5.4, 5.6_
-  - [ ] 4.4 Implement error recording and span status
+  - [x] 4.4 Implement error recording and span status
     - Record error messages as span events
     - Set span status to `codes.Error` on HTTP failures
     - Add error attribute with error message
     - _Requirements: 2.6_
-  - [ ] 4.5 Implement trace context injection
+  - [x] 4.5 Implement trace context injection
     - Configure W3C Trace Context propagator
     - Inject trace context into outgoing HTTP request headers
     - Use `otel.GetTextMapPropagator().Inject()` for context injection
     - _Requirements: 7.1, 7.4_
-  - [ ] 4.6 Update FetchData method with instrumentation
+  - [x] 4.6 Update FetchData method with instrumentation
     - Wrap HTTP request with span creation
     - Propagate context through request
     - Record attributes before and after request
