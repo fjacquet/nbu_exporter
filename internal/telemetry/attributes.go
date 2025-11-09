@@ -1,5 +1,22 @@
 package telemetry
 
+// This file defines centralized span attribute constants for OpenTelemetry instrumentation.
+// Using constants instead of string literals prevents typos, enables IDE autocomplete,
+// and makes refactoring easier.
+//
+// Attributes are organized into three categories:
+//   - HTTP: Standard HTTP semantic conventions
+//   - NetBackup: NetBackup-specific attributes for API calls and data operations
+//   - Scrape: Prometheus scrape cycle metrics
+//
+// Usage:
+//
+//	span.SetAttributes(
+//	    attribute.String(telemetry.AttrHTTPMethod, "GET"),
+//	    attribute.String(telemetry.AttrHTTPURL, url),
+//	    attribute.Int(telemetry.AttrHTTPStatusCode, statusCode),
+//	)
+
 // HTTP semantic convention attributes
 const (
 	AttrHTTPMethod                = "http.method"

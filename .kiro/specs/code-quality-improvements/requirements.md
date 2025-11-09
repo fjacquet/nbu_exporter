@@ -138,3 +138,37 @@ This specification addresses code quality improvements identified during analysi
 3. THE System SHALL extract loop bodies into separate functions when they contain complex logic
 4. WHERE functions are refactored, THE System SHALL maintain identical behavior and test coverage
 5. THE System SHALL pass SonarCloud cognitive complexity threshold of 15 for all functions
+
+### Requirement 12: Centralize Test Helper Functions
+
+**User Story:** As a developer, I want duplicate test helper functions consolidated in a shared package, so that test code is maintainable and follows DRY principles.
+
+#### Acceptance Criteria
+
+1. WHEN test helper functions are duplicated across multiple test files, THE System SHALL consolidate them into a shared testutil package
+2. THE System SHALL provide fluent builder interfaces for common test objects (Config, MockServer)
+3. WHEN creating test configurations, THE System SHALL use the TestConfigBuilder instead of manual struct initialization
+4. WHEN creating mock HTTP servers, THE System SHALL use the MockServerBuilder instead of inline httptest.NewServer calls
+5. THE System SHALL provide a LoadTestData helper for loading test fixtures from files
+
+### Requirement 13: Enhance Error Context
+
+**User Story:** As a developer, I want error messages to include sufficient context for debugging, so that I can quickly identify and resolve issues.
+
+#### Acceptance Criteria
+
+1. WHEN HTTP requests fail, THE System SHALL include the request URL in error messages
+2. WHEN JSON unmarshaling fails, THE System SHALL include the HTTP status code and content-type in error messages
+3. WHEN non-JSON responses are received, THE System SHALL include a preview of the response body in error messages
+4. THE System SHALL provide actionable debugging information in all error messages
+
+### Requirement 14: Complete Package Documentation
+
+**User Story:** As a developer, I want comprehensive package-level documentation, so that I understand the purpose and usage of each package.
+
+#### Acceptance Criteria
+
+1. THE System SHALL provide package-level documentation for all internal packages
+2. WHEN documenting packages, THE System SHALL describe key components and their relationships
+3. THE System SHALL include usage examples in package documentation
+4. WHERE design patterns are used, THE System SHALL document them in package comments

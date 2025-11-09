@@ -8,15 +8,17 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/fjacquet/nbu_exporter/internal/testutil"
 )
 
 // extractVersionFromAcceptHeader extracts the API version from the Accept header
 func extractVersionFromAcceptHeader(acceptHeader string) string {
-	if strings.Contains(acceptHeader, "version=13.0") {
+	if strings.Contains(acceptHeader, testutil.APIVersion130) {
 		return "13.0"
-	} else if strings.Contains(acceptHeader, "version=12.0") {
+	} else if strings.Contains(acceptHeader, testutil.APIVersion120) {
 		return "12.0"
-	} else if strings.Contains(acceptHeader, "version=3.0") {
+	} else if strings.Contains(acceptHeader, testutil.APIVersion30) {
 		return "3.0"
 	}
 	return ""
@@ -36,7 +38,7 @@ func isVersionSupported(requestedVersion string, supportedVersions []string) boo
 func writeVersionResponse(w http.ResponseWriter, requestedVersion string, supported bool) {
 	if supported {
 		response := createMinimalJobsResponse()
-		w.Header().Set("Content-Type", fmt.Sprintf("application/vnd.netbackup+json;version=%s", requestedVersion))
+		w.Header().Set(testutil.ContentTypeHeader, fmt.Sprintf("application/vnd.netbackup+json;version=%s", requestedVersion))
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(response)
 	} else {
@@ -131,11 +133,11 @@ func TestFallbackBehavior(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
 		requestedVersion := ""
-		if strings.Contains(acceptHeader, "version=13.0") {
+		if strings.Contains(acceptHeader, testutil.APIVersion130) {
 			requestedVersion = "13.0"
-		} else if strings.Contains(acceptHeader, "version=12.0") {
+		} else if strings.Contains(acceptHeader, testutil.APIVersion120) {
 			requestedVersion = "12.0"
-		} else if strings.Contains(acceptHeader, "version=3.0") {
+		} else if strings.Contains(acceptHeader, testutil.APIVersion30) {
 			requestedVersion = "3.0"
 		}
 
@@ -144,7 +146,7 @@ func TestFallbackBehavior(t *testing.T) {
 		// Only v3.0 works
 		if requestedVersion == "3.0" {
 			response := createMinimalJobsResponse()
-			w.Header().Set("Content-Type", "application/vnd.netbackup+json;version=3.0")
+			w.Header().Set(testutil.ContentTypeHeader, "application/vnd.netbackup+json;version=3.0")
 			w.WriteHeader(http.StatusOK)
 			_ = json.NewEncoder(w).Encode(response)
 		} else {
@@ -193,14 +195,14 @@ func TestConfigurationOverride(t *testing.T) {
 		acceptHeader := r.Header.Get("Accept")
 
 		// Track if version detection was attempted (would try 13.0 first)
-		if strings.Contains(acceptHeader, "version=13.0") {
+		if strings.Contains(acceptHeader, testutil.APIVersion130) {
 			detectionAttempted = true
 		}
 
 		// Only accept v12.0
-		if strings.Contains(acceptHeader, "version=12.0") {
+		if strings.Contains(acceptHeader, testutil.APIVersion120) {
 			response := createMinimalJobsResponse()
-			w.Header().Set("Content-Type", "application/vnd.netbackup+json;version=12.0")
+			w.Header().Set(testutil.ContentTypeHeader, "application/vnd.netbackup+json;version=12.0")
 			w.WriteHeader(http.StatusOK)
 			_ = json.NewEncoder(w).Encode(response)
 		} else {

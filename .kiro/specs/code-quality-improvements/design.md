@@ -492,6 +492,325 @@ No changes to existing data models. All improvements are internal refactorings.
 **Choice**: Keep validation in Config.Validate()
 **Rationale**: Centralized validation, fails fast at startup, consistent with existing pattern
 
+### 9. Centralized Test Helpers
+
+**File**: `internal/testutil/helpers.go`
+
+**Purpose**: Consolidate duplicate test helper functions into a shared package with fluent builder interfaces.
+
+**TestConfigBuilder Pattern**:
+
+```go
+package testutil
+
+import (
+    "strings"
+    "github.com/fjacquet/nbu_exporter/internal/models"
+)
+
+// TestConfigBuilder provides a fluent interface for building test configurations
+type TestConfigBuilder struct {
+    cfg models.Config
+}
+
+func NewTestConfig() *TestConfigBuilder {
+    return &TestConfigBuilder{
+        cfg: models.Config{
+            Server: models.ServerConfig{
+                Host:             "localhost",
+                Port:             "2112",
+                URI:              "/metrics",
+                ScrapingInterval: "5m",
+                LogName:          "test.log",
+            },
+            NbuServer: models.NbuServerConfig{
+                Scheme:             "http",
+                InsecureSkipVerify: true,
+            },
+        },
+    }
+}
+
+func (b *TestConfigBuilder) WithAPIVersion(version string) *TestConfigBuilder {
+    b.cfg.NbuServer.APIVersion = version
+    return b
+}
+
+func (b *TestConfigBuilder) WithServerURL(url string) *TestConfigBuilder {
+    parts := strings.Split(strings.TrimPrefix(url, "http://"), ":")
+    b.cfg.NbuServer.Host = parts[0]
+    if len(parts) > 1 {
+        b.cfg.NbuServer.Port = parts[1]
+    }
+    return b
+}
+
+func (b *TestConfigBuilder) WithAPIKey(key string) *TestConfigBuilder {
+    b.cfg.NbuServer.APIKey = key
+    return b
+}
+
+func (b *TestConfigBuilder) Build() models.Config {
+    return b.cfg
+}
+```
+
+**MockServerBuilder Pattern**:
+
+```go
+// MockServerBuilder provides a fluent interface for building mock HTTP servers
+type MockServerBuilder struct {
+    handlers map[string]http.HandlerFunc
+}
+
+func NewMockServer() *MockServerBuilder {
+    return &MockServerBuilder{
+        handlers: make(map[string]http.HandlerFunc),
+    }
+}
+
+func (b *MockServerBuilder) WithJobsEndpoint(version string, response interface{}) *MockServerBuilder {
+    b.handlers["/admin/jobs"] = func(w http.ResponseWriter, r *http.Request) {
+        if validateAPIVersion(r, version) {
+            writeJSONResponse(w, response)
+        } else {
+            w.WriteHeader(http.StatusNotAcceptable)
+        }
+    }
+    return b
+}
+
+func (b *MockServerBuilder) WithStorageEndpoint(version string, response interface{}) *MockServerBuilder {
+    b.handlers["/storage/storage-units"] = func(w http.ResponseWriter, r *http.Request) {
+        if validateAPIVersion(r, version) {
+            writeJSONResponse(w, response)
+        } else {
+            w.WriteHeader(http.StatusNotAcceptable)
+        }
+    }
+    return b
+}
+
+func (b *MockServerBuilder) Build() *httptest.Server {
+    return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        if handler, ok := b.handlers[r.URL.Path]; ok {
+            handler(w, r)
+        } else {
+            w.WriteHeader(http.StatusNotFound)
+        }
+    }))
+}
+```
+
+**Helper Functions**:
+
+```go
+// LoadTestData loads test data from a file
+func LoadTestData(t *testing.T, filename string) []byte {
+    t.Helper()
+    data, err := os.ReadFile(filename)
+    require.NoError(t, err, "Failed to read test data file: %s", filename)
+    return data
+}
+
+// validateAPIVersion checks if the request has the correct API version header
+func validateAPIVersion(r *http.Request, expectedVersion string) bool {
+    acceptHeader := r.Header.Get("Accept")
+    return strings.Contains(acceptHeader, fmt.Sprintf("version=%s", expectedVersion))
+}
+
+// writeJSONResponse writes a JSON response to the ResponseWriter
+func writeJSONResponse(w http.ResponseWriter, data interface{}) {
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(data)
+}
+```
+
+**Usage Example**:
+
+```go
+// In test files
+func TestSomething(t *testing.T) {
+    // Build test config with fluent interface
+    cfg := testutil.NewTestConfig().
+        WithAPIVersion("13.0").
+        WithServerURL(server.URL).
+        WithAPIKey("test-key").
+        Build()
+    
+    // Build mock server with fluent interface
+    server := testutil.NewMockServer().
+        WithJobsEndpoint("13.0", jobsResponse).
+        WithStorageEndpoint("13.0", storageResponse).
+        Build()
+    defer server.Close()
+    
+    // Load test data
+    data := testutil.LoadTestData(t, "testdata/jobs.json")
+}
+```
+
+**Rationale**:
+
+- Eliminates duplicate helper functions across test files
+- Provides consistent, maintainable test infrastructure
+- Fluent interface improves test readability
+- Reduces cognitive load when writing new tests
+- Follows builder pattern for complex object construction
+
+### 10. Reduced Cognitive Complexity in Tests
+
+**Issue**: `TestNewNbuCollectorAutomaticDetection` has cognitive complexity of 24 (threshold: 15)
+
+**Solution**: Extract helper functions to reduce complexity
+
+**Helper Functions**:
+
+```go
+// createVersionMockServer creates a mock server that responds to version detection requests
+func createVersionMockServer(t *testing.T, responses map[string]int) *httptest.Server {
+    return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        version := extractVersionFromHeader(r.Header.Get("Accept"))
+        handleVersionResponse(w, version, responses)
+    }))
+}
+
+// extractVersionFromHeader extracts the API version from the Accept header
+func extractVersionFromHeader(acceptHeader string) string {
+    for _, v := range []string{"13.0", "12.0", "3.0"} {
+        if strings.Contains(acceptHeader, fmt.Sprintf("version=%s", v)) {
+            return v
+        }
+    }
+    return ""
+}
+
+// handleVersionResponse writes the appropriate response based on version and configured responses
+func handleVersionResponse(w http.ResponseWriter, version string, responses map[string]int) {
+    if statusCode, ok := responses[version]; ok {
+        w.WriteHeader(statusCode)
+        if statusCode == http.StatusOK {
+            json.NewEncoder(w).Encode(map[string]interface{}{"data": []interface{}{}})
+        }
+    } else {
+        w.WriteHeader(http.StatusNotAcceptable)
+    }
+}
+
+// assertCollectorResult validates the collector creation result
+func assertCollectorResult(t *testing.T, collector *NbuCollector, err error, tt testCase) {
+    if tt.expectError {
+        assert.Error(t, err)
+        assert.Nil(t, collector)
+    } else {
+        require.NoError(t, err)
+        require.NotNil(t, collector)
+        assert.Equal(t, tt.expectedVersion, collector.cfg.NbuServer.APIVersion)
+    }
+}
+```
+
+**Refactored Test**:
+
+```go
+func TestNewNbuCollectorAutomaticDetection(t *testing.T) {
+    tests := []struct {
+        name            string
+        serverResponses map[string]int
+        expectedVersion string
+        expectError     bool
+    }{
+        // test cases
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            server := createVersionMockServer(t, tt.serverResponses)
+            defer server.Close()
+            
+            cfg := createTestConfigWithServer(server)
+            collector, err := NewNbuCollector(cfg)
+            
+            assertCollectorResult(t, collector, err, tt)
+        })
+    }
+}
+```
+
+**Rationale**:
+
+- Reduces cognitive complexity from 24 to below 15
+- Improves test readability and maintainability
+- Makes test intent clearer
+- Easier to debug test failures
+
+### 11. Enhanced Error Context
+
+**Pattern**: Add more context to error messages for better debugging
+
+**Before**:
+
+```go
+if err := json.Unmarshal(resp.Body(), target); err != nil {
+    return fmt.Errorf("failed to unmarshal JSON response: %w", err)
+}
+```
+
+**After**:
+
+```go
+if err := json.Unmarshal(resp.Body(), target); err != nil {
+    return fmt.Errorf("failed to unmarshal JSON response from %s (status: %d, content-type: %s): %w", 
+        url, resp.StatusCode(), resp.Header().Get("Content-Type"), err)
+}
+```
+
+**Rationale**:
+
+- Provides actionable debugging information
+- Includes request context (URL, status, content-type)
+- Helps identify root cause faster
+- Follows best practices for error messages
+
+### 12. Package-Level Documentation
+
+**Pattern**: Add comprehensive package documentation to all internal packages
+
+**Example for testutil package**:
+
+```go
+// Package testutil provides shared testing utilities and constants for the NBU exporter.
+//
+// This package centralizes common test constants, helper functions, and mock builders
+// to reduce duplication across test files and improve test maintainability.
+//
+// Key Components:
+//   - Constants: Shared test values (API keys, endpoints, error messages)
+//   - TestConfigBuilder: Fluent interface for building test configurations
+//   - MockServerBuilder: Fluent interface for creating mock HTTP servers
+//   - Helper Functions: Common test utilities (data loading, assertions)
+//
+// Usage Example:
+//
+// cfg := testutil.NewTestConfig().
+//     WithAPIVersion("13.0").
+//     WithServerURL(server.URL).
+//     Build()
+//
+// server := testutil.NewMockServer().
+//     WithJobsEndpoint("13.0", jobsResponse).
+//     Build()
+// defer server.Close()
+package testutil
+```
+
+**Rationale**:
+
+- Improves discoverability of package functionality
+- Provides usage examples for developers
+- Documents design patterns and conventions
+- Follows Go documentation best practices
+
 ## Future Enhancements
 
 ### Potential Improvements (Out of Scope)

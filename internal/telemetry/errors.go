@@ -1,5 +1,28 @@
 package telemetry
 
+// This file defines error message templates for common failure scenarios.
+// Templates provide consistent, actionable error messages with troubleshooting steps.
+//
+// Using templates instead of inline error messages:
+//   - Centralizes error message maintenance
+//   - Ensures consistent formatting and content
+//   - Makes it easier to update troubleshooting steps
+//   - Reduces code duplication
+//
+// Usage:
+//
+//	if resp.StatusCode() == http.StatusNotAcceptable {
+//	    return fmt.Errorf(telemetry.ErrAPIVersionNotSupportedTemplate,
+//	        apiVersion, apiVersion, url)
+//	}
+//
+// Each template includes:
+//   - Clear description of the error
+//   - Explanation of common causes
+//   - Step-by-step troubleshooting instructions
+//   - Example configuration or commands
+//   - Relevant context (URL, status code, etc.)
+
 // Error message templates for common scenarios
 const (
 	// ErrAPIVersionNotSupportedTemplate is returned when the NetBackup server doesn't support the configured API version

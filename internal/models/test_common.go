@@ -10,8 +10,6 @@ const (
 	testPathNetBackup = testutil.TestPathNetBackup
 	testPathAdminJobs = testutil.TestPathAdminJobs
 
-
-
 	// Test error messages
 	testInvalidAPIVersion            = testutil.TestInvalidAPIVersion
 	testErrorValidateUnexpected      = testutil.TestErrorValidateUnexpected

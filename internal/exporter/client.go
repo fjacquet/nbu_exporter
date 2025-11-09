@@ -244,7 +244,10 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 			return err
 		}
 
-		err := fmt.Errorf("HTTP request to %s returned status %d: %s", url, resp.StatusCode(), resp.Status())
+		// Include URL, status code, and content-type in error message
+		contentTypeHeader := resp.Header().Get("Content-Type")
+		err := fmt.Errorf("HTTP request failed: url=%s, status=%d (%s), content-type=%s",
+			url, resp.StatusCode(), resp.Status(), contentTypeHeader)
 		c.recordError(span, err)
 		return err
 	}
@@ -265,18 +268,23 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 			bodyPreview,
 		)
 		logging.LogError(errMsg)
-		err := fmt.Errorf("server returned %s instead of JSON: %s", contentType, bodyPreview)
+		// Include URL, status code, and content-type in structured error message
+		// Keep "instead of JSON" for backward compatibility with tests
+		err := fmt.Errorf("server returned %s instead of JSON: url=%s, status=%d, preview=%s",
+			contentType, url, resp.StatusCode(), bodyPreview)
 		c.recordError(span, err)
 		return err
 	}
 
 	if err := json.Unmarshal(resp.Body(), target); err != nil {
-		// Provide more context for JSON unmarshaling errors
+		// Provide more context for JSON unmarshaling errors including URL, status code, and content-type
 		bodyPreview := string(resp.Body())
 		if len(bodyPreview) > 200 {
 			bodyPreview = bodyPreview[:200] + "..."
 		}
-		unmarshalErr := fmt.Errorf("failed to unmarshal JSON response from %s: %w\nResponse preview: %s", url, err, bodyPreview)
+		contentTypeHeader := resp.Header().Get("Content-Type")
+		unmarshalErr := fmt.Errorf("failed to unmarshal JSON response: url=%s, status=%d, content-type=%s, error=%w\nResponse preview: %s",
+			url, resp.StatusCode(), contentTypeHeader, err, bodyPreview)
 		c.recordError(span, unmarshalErr)
 		return unmarshalErr
 	}
@@ -322,18 +330,22 @@ func (c *NbuClient) DetectAPIVersion(ctx context.Context) (string, error) {
 		Get(testURL)
 
 	if err != nil {
-		return "", fmt.Errorf("failed to detect API version: %w", err)
+		return "", fmt.Errorf("failed to detect API version: url=%s, error=%w", testURL, err)
 	}
 
 	// Check for version-specific error responses
 	if resp.StatusCode() == 406 {
 		// 406 Not Acceptable typically means the API version is not supported
-		return "", fmt.Errorf("API version %s not supported by NetBackup server (HTTP 406)", c.cfg.NbuServer.APIVersion)
+		contentTypeHeader := resp.Header().Get("Content-Type")
+		return "", fmt.Errorf("API version %s not supported by NetBackup server: url=%s, status=406, content-type=%s",
+			c.cfg.NbuServer.APIVersion, testURL, contentTypeHeader)
 	}
 
 	if resp.IsError() {
 		// Other errors might indicate connectivity issues, not version problems
-		return "", fmt.Errorf("API connectivity test failed with status %d: %s", resp.StatusCode(), resp.Status())
+		contentTypeHeader := resp.Header().Get("Content-Type")
+		return "", fmt.Errorf("API connectivity test failed: url=%s, status=%d (%s), content-type=%s",
+			testURL, resp.StatusCode(), resp.Status(), contentTypeHeader)
 	}
 
 	// If we get here, the configured API version is working

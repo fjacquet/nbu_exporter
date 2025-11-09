@@ -1,6 +1,3 @@
-// Package testutil provides shared test utilities and helper functions.
-// This file contains fluent builders and common test helpers to reduce
-// duplication across test files and improve test maintainability.
 package testutil
 
 import (
