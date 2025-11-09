@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestStorages_UnmarshalJSON_WithOptionalFields(t *testing.T) {
+func TestStoragesUnmarshalJSONWithOptionalFields(t *testing.T) {
 	// Read the test fixture with 10.5 API response
 	data, err := os.ReadFile("../../testdata/api-10.5/storage-units-response.json")
 	if err != nil {
@@ -109,7 +109,7 @@ func TestStorages_UnmarshalJSON_WithOptionalFields(t *testing.T) {
 	}
 }
 
-func TestStorages_UnmarshalJSON_WithoutOptionalFields(t *testing.T) {
+func TestStoragesUnmarshalJSONWithoutOptionalFields(t *testing.T) {
 	// Test JSON without optional fields (backward compatibility)
 	jsonData := `{
 		"data": [{
@@ -204,7 +204,7 @@ func TestStorages_UnmarshalJSON_WithoutOptionalFields(t *testing.T) {
 	}
 }
 
-func TestStorages_Pagination(t *testing.T) {
+func TestStoragesPagination(t *testing.T) {
 	// Read the test fixture
 	data, err := os.ReadFile("../../testdata/api-10.5/storage-units-response.json")
 	if err != nil {
@@ -249,7 +249,7 @@ func TestStorages_Pagination(t *testing.T) {
 	}
 }
 
-func TestStorages_RequiredFields(t *testing.T) {
+func TestStoragesRequiredFields(t *testing.T) {
 	tests := []struct {
 		name        string
 		jsonData    string

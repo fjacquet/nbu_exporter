@@ -18,7 +18,7 @@ import (
 
 // TestPerformance_StartupTimeWithVersionDetection measures the startup time
 // when automatic version detection is enabled.
-func TestPerformance_StartupTimeWithVersionDetection(t *testing.T) {
+func TestPerformanceStartupTimeWithVersionDetection(t *testing.T) {
 	// Create a mock server that supports version 12.0
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
@@ -59,7 +59,7 @@ func TestPerformance_StartupTimeWithVersionDetection(t *testing.T) {
 
 // TestPerformance_StartupTimeWithExplicitVersion measures the startup time
 // when API version is explicitly configured (no detection).
-func TestPerformance_StartupTimeWithExplicitVersion(t *testing.T) {
+func TestPerformanceStartupTimeWithExplicitVersion(t *testing.T) {
 	// Create a mock server
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := map[string]interface{}{
@@ -91,7 +91,7 @@ func TestPerformance_StartupTimeWithExplicitVersion(t *testing.T) {
 
 // TestPerformance_CompareStartupTimes compares startup times between
 // explicit configuration and automatic detection.
-func TestPerformance_CompareStartupTimes(t *testing.T) {
+func TestPerformanceCompareStartupTimes(t *testing.T) {
 	// Create a mock server
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
@@ -144,7 +144,7 @@ func TestPerformance_CompareStartupTimes(t *testing.T) {
 
 // TestPerformance_RuntimePerformance verifies that runtime performance
 // (metric collection) is not degraded by multi-version support.
-func TestPerformance_RuntimePerformance(t *testing.T) {
+func TestPerformanceRuntimePerformance(t *testing.T) {
 	versions := []string{"3.0", "12.0", "13.0"}
 	runtimeDurations := make(map[string]time.Duration)
 
@@ -216,7 +216,7 @@ func TestPerformance_RuntimePerformance(t *testing.T) {
 
 // TestPerformance_ConnectionReuse verifies that HTTP connections are reused
 // across multiple API calls within a scraping cycle.
-func TestPerformance_ConnectionReuse(t *testing.T) {
+func TestPerformanceConnectionReuse(t *testing.T) {
 	connectionCount := 0
 	requestCount := 0
 
@@ -270,7 +270,7 @@ func TestPerformance_ConnectionReuse(t *testing.T) {
 
 // TestPerformance_MemoryUsage verifies that the multi-version implementation
 // doesn't significantly increase memory usage.
-func TestPerformance_MemoryUsage(t *testing.T) {
+func TestPerformanceMemoryUsage(t *testing.T) {
 	// This is a simplified test - in production, you'd use runtime.MemStats
 	// to measure actual memory allocation
 
@@ -311,7 +311,7 @@ func TestPerformance_MemoryUsage(t *testing.T) {
 
 // TestPerformance_ConcurrentScrapes verifies that the collector can handle
 // concurrent scrape requests without performance degradation.
-func TestPerformance_ConcurrentScrapes(t *testing.T) {
+func TestPerformanceConcurrentScrapes(t *testing.T) {
 	// Create mock server
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Add small delay to simulate real API

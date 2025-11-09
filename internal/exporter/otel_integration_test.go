@@ -15,7 +15,7 @@ import (
 
 // TestIntegration_EndToEndTracing tests end-to-end tracing with a test collector
 // This test verifies that spans are created and propagated correctly through the system
-func TestIntegration_EndToEndTracing(t *testing.T) {
+func TestIntegrationEndToEndTracing(t *testing.T) {
 	// Create a test server that simulates NetBackup API
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -93,7 +93,7 @@ func TestIntegration_EndToEndTracing(t *testing.T) {
 }
 
 // TestIntegration_BackwardCompatibility tests that the system works without OpenTelemetry config
-func TestIntegration_BackwardCompatibility(t *testing.T) {
+func TestIntegrationBackwardCompatibility(t *testing.T) {
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -170,7 +170,7 @@ func TestIntegration_BackwardCompatibility(t *testing.T) {
 }
 
 // TestIntegration_GracefulDegradation tests graceful degradation with invalid endpoint
-func TestIntegration_GracefulDegradation(t *testing.T) {
+func TestIntegrationGracefulDegradation(t *testing.T) {
 	// Create a test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -250,7 +250,7 @@ func TestIntegration_GracefulDegradation(t *testing.T) {
 }
 
 // TestIntegration_TracePropagation tests that trace context is propagated correctly
-func TestIntegration_TracePropagation(t *testing.T) {
+func TestIntegrationTracePropagation(t *testing.T) {
 	// Create a test server that checks for trace headers
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check for trace headers (may not be present if no global tracer provider)
@@ -328,7 +328,7 @@ func TestIntegration_TracePropagation(t *testing.T) {
 }
 
 // TestIntegration_SamplingRates tests different sampling rates
-func TestIntegration_SamplingRates(t *testing.T) {
+func TestIntegrationSamplingRates(t *testing.T) {
 	tests := []struct {
 		name         string
 		samplingRate float64

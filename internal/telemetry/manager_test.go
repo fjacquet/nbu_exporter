@@ -52,7 +52,7 @@ func TestNewManager(t *testing.T) {
 }
 
 // TestManager_Initialize_Disabled tests initialization when telemetry is disabled
-func TestManager_Initialize_Disabled(t *testing.T) {
+func TestManagerInitializeDisabled(t *testing.T) {
 	config := Config{
 		Enabled: false,
 	}
@@ -80,7 +80,7 @@ func TestManager_Initialize_Disabled(t *testing.T) {
 // without errors, and the manager can be used (spans will be dropped if collector is unavailable).
 // This is an example of graceful degradation - the system continues to operate even when
 // the telemetry backend is unavailable, allowing the exporter to function without tracing.
-func TestManager_Initialize_InvalidEndpoint(t *testing.T) {
+func TestManagerInitializeInvalidEndpoint(t *testing.T) {
 	tests := []struct {
 		name     string
 		endpoint string
@@ -139,7 +139,7 @@ func TestManager_Initialize_InvalidEndpoint(t *testing.T) {
 // Note: This test requires a real OTLP collector or will gracefully fail.
 // Graceful degradation: if no collector is available, the manager initializes but
 // may disable itself, allowing the application to continue without tracing.
-func TestManager_Initialize_ValidConfig(t *testing.T) {
+func TestManagerInitializeValidConfig(t *testing.T) {
 	config := Config{
 		Enabled:         true,
 		Endpoint:        "localhost:4317",
@@ -176,7 +176,7 @@ func TestManager_Initialize_ValidConfig(t *testing.T) {
 }
 
 // TestManager_Shutdown_NotInitialized tests shutdown when not initialized
-func TestManager_Shutdown_NotInitialized(t *testing.T) {
+func TestManagerShutdownNotInitialized(t *testing.T) {
 	config := Config{
 		Enabled: false,
 	}
@@ -193,7 +193,7 @@ func TestManager_Shutdown_NotInitialized(t *testing.T) {
 // TestManager_Shutdown_WithTimeout tests shutdown with context timeout
 // Graceful degradation: initialization errors are ignored to allow testing shutdown behavior
 // even when the telemetry backend is unavailable.
-func TestManager_Shutdown_WithTimeout(t *testing.T) {
+func TestManagerShutdownWithTimeout(t *testing.T) {
 	config := Config{
 		Enabled:        true,
 		Endpoint:       "localhost:4317",
@@ -228,7 +228,7 @@ func TestManager_Shutdown_WithTimeout(t *testing.T) {
 // TestManager_IsEnabled tests the IsEnabled method
 // Graceful degradation: initialization errors are ignored as the test focuses on
 // the enabled state behavior, not initialization success.
-func TestManager_IsEnabled(t *testing.T) {
+func TestManagerIsEnabled(t *testing.T) {
 	tests := []struct {
 		name           string
 		config         Config
@@ -294,7 +294,7 @@ func TestManager_IsEnabled(t *testing.T) {
 }
 
 // TestManager_CreateSampler tests sampler creation logic
-func TestManager_CreateSampler(t *testing.T) {
+func TestManagerCreateSampler(t *testing.T) {
 	tests := []struct {
 		name         string
 		samplingRate float64
@@ -343,7 +343,7 @@ func TestManager_CreateSampler(t *testing.T) {
 }
 
 // TestManager_CreateResource tests resource creation
-func TestManager_CreateResource(t *testing.T) {
+func TestManagerCreateResource(t *testing.T) {
 	tests := []struct {
 		name            string
 		serviceName     string
@@ -394,7 +394,7 @@ func TestManager_CreateResource(t *testing.T) {
 }
 
 // TestManager_DisabledMode tests that disabled mode works correctly
-func TestManager_DisabledMode(t *testing.T) {
+func TestManagerDisabledMode(t *testing.T) {
 	config := Config{
 		Enabled: false,
 	}

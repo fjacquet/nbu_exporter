@@ -20,7 +20,7 @@ import (
 // TestNewNbuCollector_ExplicitVersion tests collector creation with an explicitly configured API version.
 // It verifies that when an API version is provided in the configuration, the collector
 // is created successfully without performing version detection.
-func TestNewNbuCollector_ExplicitVersion(t *testing.T) {
+func TestNewNbuCollectorExplicitVersion(t *testing.T) {
 	tests := []struct {
 		name       string
 		apiVersion string
@@ -73,7 +73,7 @@ func TestNewNbuCollector_ExplicitVersion(t *testing.T) {
 // TestNewNbuCollector_AutomaticDetection tests collector creation with automatic version detection.
 // It verifies that when no API version is configured, the collector performs automatic
 // detection and selects the highest supported version.
-func TestNewNbuCollector_AutomaticDetection(t *testing.T) {
+func TestNewNbuCollectorAutomaticDetection(t *testing.T) {
 	// Skip this test as it requires a real NetBackup server or complex mocking
 	// The version detection logic is already tested in version_detector_test.go
 	t.Skip("Skipping automatic detection test - covered by version_detector_test.go")
@@ -175,7 +175,7 @@ func TestNewNbuCollector_AutomaticDetection(t *testing.T) {
 // TestNewNbuCollector_DetectionFailure tests error handling when version detection fails.
 // It verifies that appropriate errors are returned when the NetBackup server is unreachable
 // or returns unexpected responses.
-func TestNewNbuCollector_DetectionFailure(t *testing.T) {
+func TestNewNbuCollectorDetectionFailure(t *testing.T) {
 	// Skip this test as it requires a real NetBackup server or complex mocking
 	// The error handling logic is already tested in version_detector_test.go
 	t.Skip("Skipping detection failure test - covered by version_detector_test.go")
@@ -236,7 +236,7 @@ func TestNewNbuCollector_DetectionFailure(t *testing.T) {
 
 // TestNbuCollector_APIVersionMetric tests that the API version metric is properly exposed.
 // It verifies that the nbu_api_version metric is registered and contains the correct version label.
-func TestNbuCollector_APIVersionMetric(t *testing.T) {
+func TestNbuCollectorAPIVersionMetric(t *testing.T) {
 	// Create a mock server
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -289,7 +289,7 @@ func TestNbuCollector_APIVersionMetric(t *testing.T) {
 
 // TestNbuCollector_Describe tests that all metric descriptors are properly registered.
 // It verifies that the Describe method sends all expected metric descriptors to the channel.
-func TestNbuCollector_Describe(t *testing.T) {
+func TestNbuCollectorDescribe(t *testing.T) {
 	// Create a mock server
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -346,7 +346,7 @@ func TestNbuCollector_Describe(t *testing.T) {
 }
 
 // TestNbuCollector_CreateScrapeSpan_NilSafe tests that span creation is nil-safe
-func TestNbuCollector_CreateScrapeSpan_NilSafe(t *testing.T) {
+func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
 			Port             string `yaml:"port"`
@@ -402,7 +402,7 @@ func TestNbuCollector_CreateScrapeSpan_NilSafe(t *testing.T) {
 }
 
 // TestNbuCollector_CreateScrapeSpan_WithTracer tests span creation with tracer
-func TestNbuCollector_CreateScrapeSpan_WithTracer(t *testing.T) {
+func TestNbuCollectorCreateScrapeSpanWithTracer(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
 			Port             string `yaml:"port"`
@@ -464,7 +464,7 @@ func TestNbuCollector_CreateScrapeSpan_WithTracer(t *testing.T) {
 }
 
 // TestNbuCollector_Collect_WithoutTracing tests Collect without tracing
-func TestNbuCollector_Collect_WithoutTracing(t *testing.T) {
+func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 	// This test verifies that Collect works without tracing enabled
 	// We can't easily test the full Collect method without a real NetBackup server,
 	// but we can verify that the tracer nil-safety works
@@ -568,7 +568,7 @@ func TestNbuCollector_Collect_WithoutTracing(t *testing.T) {
 }
 
 // TestNbuCollector_TracingDisabled tests that collector works without tracing
-func TestNbuCollector_TracingDisabled(t *testing.T) {
+func TestNbuCollectorTracingDisabled(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
 			Port             string `yaml:"port"`

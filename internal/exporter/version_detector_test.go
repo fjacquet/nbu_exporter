@@ -51,7 +51,7 @@ func setupVersionDetectorTest(serverURL, acceptedVersion string) (*NbuClient, *A
 	return client, detector, cfg
 }
 
-func TestAPIVersionDetector_DetectVersion_Success(t *testing.T) {
+func TestAPIVersionDetectorDetectVersionSuccess(t *testing.T) {
 	tests := []struct {
 		name            string
 		serverVersion   string // Version the mock server will accept
@@ -93,7 +93,7 @@ func TestAPIVersionDetector_DetectVersion_Success(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_DetectVersion_Fallback(t *testing.T) {
+func TestAPIVersionDetectorDetectVersionFallback(t *testing.T) {
 	tests := []struct {
 		name            string
 		serverVersion   string // Version the mock server will accept
@@ -133,7 +133,7 @@ func TestAPIVersionDetector_DetectVersion_Fallback(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_DetectVersion_AllVersionsFail(t *testing.T) {
+func TestAPIVersionDetectorDetectVersionAllVersionsFail(t *testing.T) {
 	// Create a test server that rejects all versions
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotAcceptable)
@@ -158,7 +158,7 @@ func TestAPIVersionDetector_DetectVersion_AllVersionsFail(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_DetectVersion_AuthenticationError(t *testing.T) {
+func TestAPIVersionDetectorDetectVersionAuthenticationError(t *testing.T) {
 	// Create a test server that returns 401 Unauthorized
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -177,7 +177,7 @@ func TestAPIVersionDetector_DetectVersion_AuthenticationError(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_TryVersion_RetryLogic(t *testing.T) {
+func TestAPIVersionDetectorTryVersionRetryLogic(t *testing.T) {
 	tests := []struct {
 		name           string
 		failureCount   int // Number of times to fail before succeeding
@@ -247,7 +247,7 @@ func TestAPIVersionDetector_TryVersion_RetryLogic(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_TryVersion_HTTPStatusCodes(t *testing.T) {
+func TestAPIVersionDetectorTryVersionHTTPStatusCodes(t *testing.T) {
 	tests := []struct {
 		name           string
 		statusCode     int
@@ -313,7 +313,7 @@ func TestAPIVersionDetector_TryVersion_HTTPStatusCodes(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_TryVersion_ContextCancellation(t *testing.T) {
+func TestAPIVersionDetectorTryVersionContextCancellation(t *testing.T) {
 	// Create a test server with a delay
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(100 * time.Millisecond)
@@ -333,7 +333,7 @@ func TestAPIVersionDetector_TryVersion_ContextCancellation(t *testing.T) {
 	}
 }
 
-func TestAPIVersionDetector_ExponentialBackoff(t *testing.T) {
+func TestAPIVersionDetectorExponentialBackoff(t *testing.T) {
 	attemptTimes := []time.Time{}
 
 	// Create a test server that tracks request times

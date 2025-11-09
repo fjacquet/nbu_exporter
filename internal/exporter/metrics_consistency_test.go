@@ -21,7 +21,7 @@ import (
 
 // TestMetricsConsistency_JobMetrics verifies that job metrics have consistent
 // names and labels across all API versions.
-func TestMetricsConsistency_JobMetrics(t *testing.T) {
+func TestMetricsConsistencyJobMetrics(t *testing.T) {
 	versions := []string{"3.0", "12.0", "13.0"}
 
 	for _, version := range versions {
@@ -77,7 +77,7 @@ func TestMetricsConsistency_JobMetrics(t *testing.T) {
 
 // TestMetricsConsistency_StorageMetrics verifies that storage metrics have consistent
 // names and labels across all API versions.
-func TestMetricsConsistency_StorageMetrics(t *testing.T) {
+func TestMetricsConsistencyStorageMetrics(t *testing.T) {
 	versions := []string{"3.0", "12.0", "13.0"}
 
 	for _, version := range versions {
@@ -127,7 +127,7 @@ func TestMetricsConsistency_StorageMetrics(t *testing.T) {
 
 // TestMetricsConsistency_LabelValues verifies that label values remain consistent
 // across API versions for the same data.
-func TestMetricsConsistency_LabelValues(t *testing.T) {
+func TestMetricsConsistencyLabelValues(t *testing.T) {
 	// Create identical job data for all versions
 	jobData := createTestJobData()
 
@@ -191,7 +191,7 @@ func TestMetricsConsistency_LabelValues(t *testing.T) {
 
 // TestMetricsConsistency_MetricTypes verifies that metric types (gauge, counter)
 // remain consistent across API versions.
-func TestMetricsConsistency_MetricTypes(t *testing.T) {
+func TestMetricsConsistencyMetricTypes(t *testing.T) {
 	versions := []string{"3.0", "12.0", "13.0"}
 	metricTypes := make(map[string]map[string]string) // version -> metric name -> type
 
@@ -241,7 +241,7 @@ func TestMetricsConsistency_MetricTypes(t *testing.T) {
 
 // TestMetricsConsistency_GrafanaDashboard verifies that the Grafana dashboard
 // queries work with metrics from all API versions.
-func TestMetricsConsistency_GrafanaDashboard(t *testing.T) {
+func TestMetricsConsistencyGrafanaDashboard(t *testing.T) {
 	// Read the Grafana dashboard JSON
 	dashboardPath := "../../grafana/NBU Statistics-1629904585394.json"
 	if _, err := os.Stat(dashboardPath); os.IsNotExist(err) {
@@ -290,7 +290,7 @@ func TestMetricsConsistency_GrafanaDashboard(t *testing.T) {
 
 // TestMetricsConsistency_PrometheusExport verifies that metrics can be exported
 // in Prometheus format consistently across versions.
-func TestMetricsConsistency_PrometheusExport(t *testing.T) {
+func TestMetricsConsistencyPrometheusExport(t *testing.T) {
 	versions := []string{"3.0", "12.0", "13.0"}
 
 	for _, version := range versions {

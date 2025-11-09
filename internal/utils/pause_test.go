@@ -54,7 +54,7 @@ func TestPause(t *testing.T) {
 	}
 }
 
-func TestPause_InvalidDuration(t *testing.T) {
+func TestPauseInvalidDuration(t *testing.T) {
 	tests := []struct {
 		name     string
 		interval string

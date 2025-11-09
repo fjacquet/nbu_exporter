@@ -20,7 +20,7 @@ import (
 // TestBackwardCompatibility_ExplicitVersion120 verifies that configurations with
 // explicitly set apiVersion: "12.0" continue to work without changes.
 // This is the most common existing configuration for NetBackup 10.5 deployments.
-func TestBackwardCompatibility_ExplicitVersion120(t *testing.T) {
+func TestBackwardCompatibilityExplicitVersion120(t *testing.T) {
 	// Create a mock server that responds to API version 12.0 requests
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Verify the Accept header contains version 12.0
@@ -67,7 +67,7 @@ func TestBackwardCompatibility_ExplicitVersion120(t *testing.T) {
 
 // TestBackwardCompatibility_ExplicitVersion30 verifies that configurations with
 // explicitly set apiVersion: "3.0" continue to work for NetBackup 10.0-10.4 deployments.
-func TestBackwardCompatibility_ExplicitVersion30(t *testing.T) {
+func TestBackwardCompatibilityExplicitVersion30(t *testing.T) {
 	// Create a mock server that responds to API version 3.0 requests
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Verify the Accept header contains version 3.0
@@ -114,7 +114,7 @@ func TestBackwardCompatibility_ExplicitVersion30(t *testing.T) {
 
 // TestBackwardCompatibility_MissingVersion verifies that configurations without
 // an apiVersion field trigger automatic version detection and work correctly.
-func TestBackwardCompatibility_MissingVersion(t *testing.T) {
+func TestBackwardCompatibilityMissingVersion(t *testing.T) {
 	// Track which versions were attempted
 	attemptedVersions := []string{}
 
@@ -187,7 +187,7 @@ func TestBackwardCompatibility_MissingVersion(t *testing.T) {
 // 1. Configuration structure remains unchanged
 // 2. Metric names and labels remain consistent
 // 3. API endpoints remain the same
-func TestBackwardCompatibility_NoBreakingChanges(t *testing.T) {
+func TestBackwardCompatibilityNoBreakingChanges(t *testing.T) {
 	t.Run("ConfigurationStructure", func(t *testing.T) {
 		// Verify that Config struct still has all expected fields
 		cfg := models.Config{}
@@ -238,7 +238,7 @@ func TestBackwardCompatibility_NoBreakingChanges(t *testing.T) {
 
 // TestBackwardCompatibility_CollectorInitialization verifies that collector
 // initialization works correctly with different configuration scenarios.
-func TestBackwardCompatibility_CollectorInitialization(t *testing.T) {
+func TestBackwardCompatibilityCollectorInitialization(t *testing.T) {
 	t.Run("WithExplicitVersion", func(t *testing.T) {
 		// Create a mock server
 		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -293,7 +293,7 @@ func TestBackwardCompatibility_CollectorInitialization(t *testing.T) {
 
 // TestBackwardCompatibility_ErrorMessages verifies that error messages
 // remain helpful and don't expose internal implementation details.
-func TestBackwardCompatibility_ErrorMessages(t *testing.T) {
+func TestBackwardCompatibilityErrorMessages(t *testing.T) {
 	t.Run("UnsupportedVersion", func(t *testing.T) {
 		// Create a mock server that returns 406 for all versions
 		server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

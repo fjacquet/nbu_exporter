@@ -153,7 +153,7 @@ func TestPrepareLogs(t *testing.T) {
 	}
 }
 
-func TestPrepareLogs_InvalidPath(t *testing.T) {
+func TestPrepareLogsInvalidPath(t *testing.T) {
 	// Test with invalid path (directory that doesn't exist)
 	err := PrepareLogs("/nonexistent/directory/test.log")
 	if err == nil {
@@ -161,7 +161,7 @@ func TestPrepareLogs_InvalidPath(t *testing.T) {
 	}
 }
 
-func TestPrepareLogs_JSONFormatter(t *testing.T) {
+func TestPrepareLogsJSONFormatter(t *testing.T) {
 	tmpDir := t.TempDir()
 	logFile := filepath.Join(tmpDir, "json-test.log")
 

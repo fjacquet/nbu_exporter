@@ -165,7 +165,7 @@ nbuserver:
 	}
 }
 
-func TestReadFile_NonExistentFile(t *testing.T) {
+func TestReadFileNonExistentFile(t *testing.T) {
 	var cfg models.Config
 	err := ReadFile(&cfg, "/nonexistent/path/config.yaml")
 	if err == nil {
@@ -173,7 +173,7 @@ func TestReadFile_NonExistentFile(t *testing.T) {
 	}
 }
 
-func TestReadFile_InvalidPermissions(t *testing.T) {
+func TestReadFileInvalidPermissions(t *testing.T) {
 	if os.Getuid() == 0 {
 		t.Skip("Skipping permission test when running as root")
 	}

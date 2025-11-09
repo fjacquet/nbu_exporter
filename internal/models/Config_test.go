@@ -8,7 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func TestConfig_SetDefaults(t *testing.T) {
+func TestConfigSetDefaults(t *testing.T) {
 	tests := []struct {
 		name           string
 		config         Config
@@ -66,7 +66,7 @@ func TestConfig_SetDefaults(t *testing.T) {
 	}
 }
 
-func TestConfig_Validate_APIVersion(t *testing.T) {
+func TestConfigValidateAPIVersion(t *testing.T) {
 	tests := []struct {
 		name       string
 		apiVersion string
@@ -190,7 +190,7 @@ func TestConfig_Validate_APIVersion(t *testing.T) {
 	}
 }
 
-func TestConfig_ParseYAML_APIVersion(t *testing.T) {
+func TestConfigParseYAMLAPIVersion(t *testing.T) {
 	tests := []struct {
 		name           string
 		yaml           string
@@ -273,7 +273,7 @@ nbuserver:
 	}
 }
 
-func TestConfig_BackwardCompatibility(t *testing.T) {
+func TestConfigBackwardCompatibility(t *testing.T) {
 	tests := []struct {
 		name           string
 		yaml           string
@@ -397,7 +397,7 @@ func TestAPIVersionConstants(t *testing.T) {
 	}
 }
 
-func TestConfig_GetNBUBaseURL(t *testing.T) {
+func TestConfigGetNBUBaseURL(t *testing.T) {
 	tests := []struct {
 		name     string
 		config   Config
@@ -461,7 +461,7 @@ func TestConfig_GetNBUBaseURL(t *testing.T) {
 	}
 }
 
-func TestConfig_GetServerAddress(t *testing.T) {
+func TestConfigGetServerAddress(t *testing.T) {
 	tests := []struct {
 		name     string
 		config   Config
@@ -511,7 +511,7 @@ func TestConfig_GetServerAddress(t *testing.T) {
 	}
 }
 
-func TestConfig_GetScrapingDuration(t *testing.T) {
+func TestConfigGetScrapingDuration(t *testing.T) {
 	tests := []struct {
 		name        string
 		interval    string
@@ -582,7 +582,7 @@ func TestConfig_GetScrapingDuration(t *testing.T) {
 	}
 }
 
-func TestConfig_MaskAPIKey(t *testing.T) {
+func TestConfigMaskAPIKey(t *testing.T) {
 	tests := []struct {
 		name     string
 		apiKey   string
@@ -647,7 +647,7 @@ func TestConfig_MaskAPIKey(t *testing.T) {
 	}
 }
 
-func TestConfig_BuildURL(t *testing.T) {
+func TestConfigBuildURL(t *testing.T) {
 	config := Config{
 		NbuServer: struct {
 			Port               string `yaml:"port"`
@@ -734,7 +734,7 @@ func TestConfig_BuildURL(t *testing.T) {
 	}
 }
 
-func TestConfig_Validate_ServerFields(t *testing.T) {
+func TestConfigValidateServerFields(t *testing.T) {
 	baseConfig := func() Config {
 		return Config{
 			Server: struct {
@@ -893,7 +893,7 @@ func TestConfig_Validate_ServerFields(t *testing.T) {
 	}
 }
 
-func TestConfig_Validate_SupportedVersions(t *testing.T) {
+func TestConfigValidateSupportedVersions(t *testing.T) {
 	tests := []struct {
 		name       string
 		apiVersion string
@@ -994,7 +994,7 @@ func TestConfig_Validate_SupportedVersions(t *testing.T) {
 	}
 }
 
-func TestConfig_Validate_OpenTelemetry(t *testing.T) {
+func TestConfigValidateOpenTelemetry(t *testing.T) {
 	baseConfig := func() Config {
 		return Config{
 			Server: struct {
@@ -1126,7 +1126,7 @@ func TestConfig_Validate_OpenTelemetry(t *testing.T) {
 	}
 }
 
-func TestConfig_IsOTelEnabled(t *testing.T) {
+func TestConfigIsOTelEnabled(t *testing.T) {
 	tests := []struct {
 		name     string
 		enabled  bool
@@ -1165,7 +1165,7 @@ func TestConfig_IsOTelEnabled(t *testing.T) {
 	}
 }
 
-func TestConfig_GetOTelConfig(t *testing.T) {
+func TestConfigGetOTelConfig(t *testing.T) {
 	tests := []struct {
 		name         string
 		enabled      bool
@@ -1230,7 +1230,7 @@ func TestConfig_GetOTelConfig(t *testing.T) {
 	}
 }
 
-func TestConfig_ValidateOTelEndpoint(t *testing.T) {
+func TestConfigValidateOTelEndpoint(t *testing.T) {
 	baseConfig := func() Config {
 		return Config{
 			Server: struct {
@@ -1380,7 +1380,7 @@ func TestConfig_ValidateOTelEndpoint(t *testing.T) {
 	}
 }
 
-func TestConfig_ParseYAML_OpenTelemetry(t *testing.T) {
+func TestConfigParseYAMLOpenTelemetry(t *testing.T) {
 	tests := []struct {
 		name         string
 		yaml         string
