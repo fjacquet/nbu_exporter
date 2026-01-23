@@ -2,6 +2,7 @@ package exporter
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -1320,4 +1321,89 @@ func TestNbuClientCloseTimeout(t *testing.T) {
 
 	// Cancel the request to clean up
 	requestCancel()
+}
+
+func TestNbuClient_RetryConfiguration(t *testing.T) {
+	cfg := createBasicTestConfig("13.0", "test-key")
+	client := NewNbuClient(cfg)
+	if client == nil {
+		t.Fatal("NewNbuClient returned nil")
+	}
+
+	// Verify retry count is configured (resty exposes this)
+	if client.client.RetryCount != 3 {
+		t.Errorf("RetryCount = %d, want 3", client.client.RetryCount)
+	}
+
+	// Verify retry wait times
+	if client.client.RetryWaitTime != 5*time.Second {
+		t.Errorf("RetryWaitTime = %v, want 5s", client.client.RetryWaitTime)
+	}
+	if client.client.RetryMaxWaitTime != 60*time.Second {
+		t.Errorf("RetryMaxWaitTime = %v, want 60s", client.client.RetryMaxWaitTime)
+	}
+}
+
+func TestNbuClient_ConnectionPoolConfiguration(t *testing.T) {
+	cfg := createBasicTestConfig("13.0", "test-key")
+	client := NewNbuClient(cfg)
+	if client == nil {
+		t.Fatal("NewNbuClient returned nil")
+	}
+
+	// Access underlying transport
+	httpClient := client.client.GetClient()
+	transport, ok := httpClient.Transport.(*http.Transport)
+	if !ok {
+		t.Fatal("Expected *http.Transport")
+	}
+
+	// Verify connection pool settings
+	if transport.MaxIdleConns != 100 {
+		t.Errorf("MaxIdleConns = %d, want 100", transport.MaxIdleConns)
+	}
+	if transport.MaxIdleConnsPerHost != 20 {
+		t.Errorf("MaxIdleConnsPerHost = %d, want 20", transport.MaxIdleConnsPerHost)
+	}
+	if transport.IdleConnTimeout != 90*time.Second {
+		t.Errorf("IdleConnTimeout = %v, want 90s", transport.IdleConnTimeout)
+	}
+}
+
+func TestNbuClient_TLSInTransport(t *testing.T) {
+	tests := []struct {
+		name               string
+		insecureSkipVerify bool
+	}{
+		{"secure", false},
+		{"insecure", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := createBasicTestConfig("13.0", "test-key")
+			cfg.NbuServer.InsecureSkipVerify = tt.insecureSkipVerify
+
+			client := NewNbuClient(cfg)
+			if client == nil {
+				t.Fatal("NewNbuClient returned nil")
+			}
+
+			httpClient := client.client.GetClient()
+			transport, ok := httpClient.Transport.(*http.Transport)
+			if !ok {
+				t.Fatal("Expected *http.Transport")
+			}
+			if transport.TLSClientConfig == nil {
+				t.Fatal("TLSClientConfig is nil")
+			}
+
+			if transport.TLSClientConfig.InsecureSkipVerify != tt.insecureSkipVerify {
+				t.Errorf("InsecureSkipVerify = %v, want %v", transport.TLSClientConfig.InsecureSkipVerify, tt.insecureSkipVerify)
+			}
+			if transport.TLSClientConfig.MinVersion != tls.VersionTLS12 {
+				t.Errorf("MinVersion = %d, want %d", transport.TLSClientConfig.MinVersion, tls.VersionTLS12)
+			}
+		})
+	}
 }

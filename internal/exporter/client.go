@@ -30,6 +30,16 @@ const (
 	defaultTimeout        = 1 * time.Minute    // Default timeout for HTTP requests
 	contentType           = "application/json" // Content type for API requests
 	httpContentTypeHeader = "Content-Type"     // HTTP header name for content type
+
+	// Retry configuration
+	retryCount       = 3                // Number of retry attempts
+	retryWaitTime    = 5 * time.Second  // Initial wait time between retries
+	retryMaxWaitTime = 60 * time.Second // Maximum wait time between retries
+
+	// Connection pool configuration
+	maxIdleConns        = 100              // Total idle connections across all hosts
+	maxIdleConnsPerHost = 20               // Idle connections per host (default is 2, too low)
+	idleConnTimeout     = 90 * time.Second // Timeout for idle connections
 )
 
 // HTTP header names used in NetBackup API requests.
@@ -82,11 +92,36 @@ func NewNbuClient(cfg models.Config) *NbuClient {
 	}
 
 	client := resty.New().
-		SetTLSClientConfig(&tls.Config{
+		SetTimeout(defaultTimeout).
+		// Configure retry with exponential backoff
+		SetRetryCount(retryCount).
+		SetRetryWaitTime(retryWaitTime).
+		SetRetryMaxWaitTime(retryMaxWaitTime).
+		AddRetryCondition(func(r *resty.Response, err error) bool {
+			// Retry on network errors
+			if err != nil {
+				return true
+			}
+			// Retry on rate limiting (429) and server errors (5xx)
+			return r.StatusCode() == http.StatusTooManyRequests ||
+				r.StatusCode() >= 500
+		})
+
+	// Enable automatic Retry-After header handling for 429 responses
+	client.AddRetryAfterErrorCondition()
+
+	// Configure connection pool and TLS in http.Transport for unified config
+	httpClient := client.GetClient()
+	httpClient.Transport = &http.Transport{
+		MaxIdleConns:        maxIdleConns,
+		MaxIdleConnsPerHost: maxIdleConnsPerHost,
+		IdleConnTimeout:     idleConnTimeout,
+		TLSHandshakeTimeout: 10 * time.Second,
+		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: cfg.NbuServer.InsecureSkipVerify,
 			MinVersion:         tls.VersionTLS12, // Enforce TLS 1.2 minimum
-		}).
-		SetTimeout(defaultTimeout)
+		},
+	}
 
 	// Initialize tracer from global provider if available
 	var tracer trace.Tracer
