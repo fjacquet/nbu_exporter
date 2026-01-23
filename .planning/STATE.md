@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 
 ## Current Position
 
-Phase: 3 of 6 (Architecture Improvements)
-Plan: 5 of 5 complete
-Status: Complete
-Last activity: 2026-01-23 — Completed plan 03-05 (Connection Lifecycle Integration)
+Phase: 4 of 6 (Test Coverage)
+Plan: 1 of 4 complete
+Status: In progress
+Last activity: 2026-01-23 — Completed plan 04-01 (Main Package Integration Tests)
 
 ## Progress
 
@@ -30,6 +30,7 @@ Last activity: 2026-01-23 — Completed plan 03-05 (Connection Lifecycle Integra
 - [x] Phase 3 research complete (03-RESEARCH.md)
 - [x] Phase 3 planning complete (5 plans: 03-01, 03-02, 03-03, 03-04, 03-05)
 - [x] Phase 3 execution (5 of 5 plans complete: 03-01, 03-02, 03-03, 03-04, 03-05)
+- [ ] Phase 4 execution (1 of 4 plans complete: 04-01)
 
 ## Accumulated Context
 
@@ -76,6 +77,8 @@ Last activity: 2026-01-23 — Completed plan 03-05 (Connection Lifecycle Integra
 - (03-05) Shutdown order: HTTP server → Telemetry → Collector ensures traces flushed before connections close
 - (03-05) Server stores collector reference for cleanup in Shutdown()
 - (03-05) NbuCollector.Close() delegates to NbuClient.Close() for connection draining
+- (04-01) Use httptest.NewTLSServer for mocking NBU API in integration tests
+- (04-01) Use port 0 for test servers to let OS assign random available port
 
 **Phase 1 Plans:**
 
@@ -103,9 +106,20 @@ Last activity: 2026-01-23 — Completed plan 03-05 (Connection Lifecycle Integra
 | 03-04 | ImmutableConfig Type             | TD-01        | immutable.go, immutable_test.go                            |
 | 03-05 | Connection Lifecycle Integration | FRAG-02      | prometheus.go, main.go                                     |
 
+**Phase 4 Plans:**
+
+| Plan  | Focus                          | Requirements | Files Modified                          |
+| ----- | ------------------------------ | ------------ | --------------------------------------- |
+| 04-01 | Main Package Integration Tests | TEST-01, TD-04 | main_test.go, testdata/*.yaml         |
+| 04-02 | Exporter Package Tests         | TEST-02      | *_test.go files in internal/exporter   |
+| 04-03 | Models Package Tests           | TEST-03      | *_test.go files in internal/models     |
+| 04-04 | Utils Package Tests            | TEST-04      | *_test.go files in internal/utils      |
+
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 04-01 Execution):** Completed plan 04-01 (Main Package Integration Tests). Created main_test.go with 25 tests covering: NewServer initialization, validateConfig (success/file-not-found/invalid/malformed), setupLogging (success/debug/invalid-path), healthHandler (returns 200 OK), waitForShutdown (signal/error/nil-error), Server lifecycle (start/shutdown integration), error channel propagation, extractTraceContextMiddleware (3 variants), and config helper methods. Test fixtures updated/created in testdata/ (valid_config.yaml, invalid_config.yaml, malformed_config.yaml). Coverage: main package reaches 60.0% (target met). One auto-fix: removed unused fmt import from internal/testutil/helpers_test.go (pre-existing build error). Three atomic commits: (1) test fixtures, (2) main_test.go, (3) testutil fix. All tests pass with race detector. Duration: 3 minutes.
 
 **2026-01-23 (Plan 03-05 Execution):** Completed plan 03-05 (Connection Lifecycle Integration). Added Close() and CloseWithContext() methods to NbuCollector that delegate to internal NbuClient.Close(). Added collector field to Server struct to track reference for cleanup. Updated Server.Shutdown() with documented three-step order: (1) Stop HTTP server (no new scrapes), (2) Shutdown OpenTelemetry (flush pending spans), (3) Close collector (drains API connections). Order ensures traces flushed before connections close. All tests pass with race detector. Fixes FRAG-02 (connection pool lifecycle explicitly managed). No deviations from plan. Duration: 5 minutes.
 
@@ -153,4 +167,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after completing Phase 3 (all 5 plans)_
+_Last updated: 2026-01-23 after completing Phase 4 Plan 01 (1 of 4 plans)_
