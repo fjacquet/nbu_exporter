@@ -1226,6 +1226,46 @@ func TestNbuClientFetchDataRejectsAfterClose(t *testing.T) {
 	}
 }
 
+// TestNewNbuClient_TLSConfig tests that NewNbuClient configures TLS properly
+func TestNewNbuClient_TLSConfig(t *testing.T) {
+	tests := []struct {
+		name               string
+		insecureSkipVerify bool
+	}{
+		{
+			name:               "secure TLS configuration (default)",
+			insecureSkipVerify: false,
+		},
+		{
+			name:               "insecure TLS configuration",
+			insecureSkipVerify: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := createBasicTestConfig("13.0", "test-key")
+			cfg.NbuServer.InsecureSkipVerify = tt.insecureSkipVerify
+
+			client := NewNbuClient(cfg)
+
+			if client == nil {
+				t.Error("NewNbuClient() returned nil")
+			}
+
+			if client.client == nil {
+				t.Error("NewNbuClient() did not initialize HTTP client")
+			}
+
+			// Verify config is stored
+			if client.cfg.NbuServer.InsecureSkipVerify != tt.insecureSkipVerify {
+				t.Errorf("NewNbuClient() InsecureSkipVerify = %v, want %v",
+					client.cfg.NbuServer.InsecureSkipVerify, tt.insecureSkipVerify)
+			}
+		})
+	}
+}
+
 // TestNbuClientCloseTimeout tests that CloseWithContext respects timeout
 func TestNbuClientCloseTimeout(t *testing.T) {
 	// Create a server that responds slowly

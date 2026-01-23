@@ -78,12 +78,13 @@ type NbuClient struct {
 func NewNbuClient(cfg models.Config) *NbuClient {
 	// Log security warning if TLS verification is disabled
 	if cfg.NbuServer.InsecureSkipVerify {
-		log.Warn("TLS certificate verification is disabled - this is insecure for production use")
+		log.Error("SECURITY WARNING: TLS certificate verification disabled - this is insecure for production use")
 	}
 
 	client := resty.New().
 		SetTLSClientConfig(&tls.Config{
 			InsecureSkipVerify: cfg.NbuServer.InsecureSkipVerify,
+			MinVersion:         tls.VersionTLS12, // Enforce TLS 1.2 minimum
 		}).
 		SetTimeout(defaultTimeout)
 
@@ -207,6 +208,10 @@ func isExplicitVersionConfigured(cfg *models.Config) bool {
 // Returns a map containing:
 //   - Accept: Versioned content type header for API version negotiation
 //   - Authorization: API key for authentication
+//
+// SECURITY: The API key is included in the Authorization header. This value should
+// never be logged or included in error messages. Use Config.MaskAPIKey() if key
+// context is needed for debugging.
 //
 // This method is called internally by FetchData before each HTTP request.
 func (c *NbuClient) getHeaders() map[string]string {
