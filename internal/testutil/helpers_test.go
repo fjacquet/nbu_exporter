@@ -2,6 +2,7 @@ package testutil_test
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +13,32 @@ import (
 
 	"github.com/fjacquet/nbu_exporter/internal/testutil"
 )
+
+// mockTB is a mock implementation of testing.TB that captures fatal calls
+type mockTB struct {
+	testing.TB
+	helperCalled bool
+	fatalCalled  bool
+	fatalMsg     string
+}
+
+func newMockTB() *mockTB {
+	return &mockTB{}
+}
+
+func (m *mockTB) Helper() {
+	m.helperCalled = true
+}
+
+func (m *mockTB) Fatalf(format string, args ...interface{}) {
+	m.fatalCalled = true
+	m.fatalMsg = fmt.Sprintf(format, args...)
+}
+
+func (m *mockTB) Fatal(args ...interface{}) {
+	m.fatalCalled = true
+	m.fatalMsg = fmt.Sprint(args...)
+}
 
 const (
 	errMsgCloseBody = "Failed to close response body: %v"
@@ -659,5 +686,96 @@ func TestAssertionHelpersEdgeCases(t *testing.T) {
 	t.Run("AssertEqual_Negative", func(t *testing.T) {
 		testutil.AssertEqual(t, -1, -1, "negative int comparison")
 		testutil.AssertEqual(t, -3.14, -3.14, "negative float comparison")
+	})
+}
+
+// TestAssertionHelpersFailurePaths tests the failure paths using mockTB
+func TestAssertionHelpersFailurePaths(t *testing.T) {
+	t.Run("AssertNoError_Fails_NoMsg", func(t *testing.T) {
+		mock := newMockTB()
+		testutil.AssertNoError(mock, errors.New("test error"))
+		if !mock.fatalCalled {
+			t.Error("Expected Fatalf to be called")
+		}
+		if !strings.Contains(mock.fatalMsg, "test error") {
+			t.Errorf("Expected message to contain error, got %q", mock.fatalMsg)
+		}
+	})
+
+	t.Run("AssertNoError_Fails_WithMsg", func(t *testing.T) {
+		mock := newMockTB()
+		testutil.AssertNoError(mock, errors.New("net error"), "fetch from %s failed", "server")
+		if !mock.fatalCalled {
+			t.Error("Expected Fatalf to be called")
+		}
+		if !strings.Contains(mock.fatalMsg, "fetch from server failed") {
+			t.Errorf("Expected custom message, got %q", mock.fatalMsg)
+		}
+	})
+
+	t.Run("AssertError_Fails_NoMsg", func(t *testing.T) {
+		mock := newMockTB()
+		testutil.AssertError(mock, nil)
+		if !mock.fatalCalled {
+			t.Error("Expected Fatal to be called")
+		}
+		if !strings.Contains(mock.fatalMsg, "Expected error") {
+			t.Errorf("Expected default message, got %q", mock.fatalMsg)
+		}
+	})
+
+	t.Run("AssertError_Fails_WithMsg", func(t *testing.T) {
+		mock := newMockTB()
+		testutil.AssertError(mock, nil, "validate %s should fail", "input")
+		if !mock.fatalCalled {
+			t.Error("Expected Fatalf to be called")
+		}
+		if !strings.Contains(mock.fatalMsg, "validate input should fail") {
+			t.Errorf("Expected custom message, got %q", mock.fatalMsg)
+		}
+	})
+
+	t.Run("AssertContains_Fails_NoMsg", func(t *testing.T) {
+		mock := newMockTB()
+		testutil.AssertContains(mock, "hello", "xyz")
+		if !mock.fatalCalled {
+			t.Error("Expected Fatalf to be called")
+		}
+		if !strings.Contains(mock.fatalMsg, "hello") || !strings.Contains(mock.fatalMsg, "xyz") {
+			t.Errorf("Expected both strings in message, got %q", mock.fatalMsg)
+		}
+	})
+
+	t.Run("AssertContains_Fails_WithMsg", func(t *testing.T) {
+		mock := newMockTB()
+		testutil.AssertContains(mock, "hello", "xyz", "response should contain %s", "xyz")
+		if !mock.fatalCalled {
+			t.Error("Expected Fatalf to be called")
+		}
+		if !strings.Contains(mock.fatalMsg, "response should contain xyz") {
+			t.Errorf("Expected custom message, got %q", mock.fatalMsg)
+		}
+	})
+
+	t.Run("AssertEqual_Fails_NoMsg", func(t *testing.T) {
+		mock := newMockTB()
+		testutil.AssertEqual(mock, 42, 43)
+		if !mock.fatalCalled {
+			t.Error("Expected Fatalf to be called")
+		}
+		if !strings.Contains(mock.fatalMsg, "42") || !strings.Contains(mock.fatalMsg, "43") {
+			t.Errorf("Expected both values in message, got %q", mock.fatalMsg)
+		}
+	})
+
+	t.Run("AssertEqual_Fails_WithMsg", func(t *testing.T) {
+		mock := newMockTB()
+		testutil.AssertEqual(mock, "expected", "actual", "value should be %q", "expected")
+		if !mock.fatalCalled {
+			t.Error("Expected Fatalf to be called")
+		}
+		if !strings.Contains(mock.fatalMsg, "value should be") {
+			t.Errorf("Expected custom message, got %q", mock.fatalMsg)
+		}
 	})
 }

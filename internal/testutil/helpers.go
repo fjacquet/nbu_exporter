@@ -208,7 +208,8 @@ func writeJSONResponse(w http.ResponseWriter, data interface{}) {
 }
 
 // AssertNoError is a helper that fails the test if err is not nil.
-func AssertNoError(t *testing.T, err error, msgAndArgs ...interface{}) {
+// It accepts testing.TB interface for testability while remaining compatible with *testing.T.
+func AssertNoError(t testing.TB, err error, msgAndArgs ...interface{}) {
 	t.Helper()
 	if err != nil {
 		if len(msgAndArgs) > 0 {
@@ -222,7 +223,8 @@ func AssertNoError(t *testing.T, err error, msgAndArgs ...interface{}) {
 }
 
 // AssertError is a helper that fails the test if err is nil.
-func AssertError(t *testing.T, err error, msgAndArgs ...interface{}) {
+// It accepts testing.TB interface for testability while remaining compatible with *testing.T.
+func AssertError(t testing.TB, err error, msgAndArgs ...interface{}) {
 	t.Helper()
 	if err == nil {
 		if len(msgAndArgs) > 0 {
@@ -235,7 +237,8 @@ func AssertError(t *testing.T, err error, msgAndArgs ...interface{}) {
 }
 
 // AssertContains is a helper that fails the test if the string doesn't contain the substring.
-func AssertContains(t *testing.T, s, substr string, msgAndArgs ...interface{}) {
+// It accepts testing.TB interface for testability while remaining compatible with *testing.T.
+func AssertContains(t testing.TB, s, substr string, msgAndArgs ...interface{}) {
 	t.Helper()
 	if !strings.Contains(s, substr) {
 		if len(msgAndArgs) > 0 {
@@ -248,7 +251,8 @@ func AssertContains(t *testing.T, s, substr string, msgAndArgs ...interface{}) {
 }
 
 // AssertEqual is a helper that fails the test if the values are not equal.
-func AssertEqual(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) {
+// It accepts testing.TB interface for testability while remaining compatible with *testing.T.
+func AssertEqual(t testing.TB, expected, actual interface{}, msgAndArgs ...interface{}) {
 	t.Helper()
 	if expected != actual {
 		if len(msgAndArgs) > 0 {
