@@ -50,10 +50,10 @@ Requirements for codebase improvements milestone. Each maps to roadmap phases.
 
 ### Missing Features
 
-- [ ] **FEAT-01**: Add caching for storage metrics
-- [ ] **FEAT-02**: Implement health check with NetBackup connectivity verification
-- [ ] **FEAT-03**: Add metric staleness tracking
-- [ ] **FEAT-04**: Implement dynamic configuration reload
+- [x] **FEAT-01**: Add caching for storage metrics ✓
+- [x] **FEAT-02**: Implement health check with NetBackup connectivity verification ✓
+- [x] **FEAT-03**: Add metric staleness tracking ✓
+- [x] **FEAT-04**: Implement dynamic configuration reload ✓
 
 ## Future Requirements
 
@@ -103,10 +103,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PERF-02     | Phase 5 | Complete |
 | PERF-03     | Phase 5 | Complete |
 | PERF-04     | Phase 3 | Complete |
-| FEAT-01     | Phase 6 | Pending  |
-| FEAT-02     | Phase 6 | Pending  |
-| FEAT-03     | Phase 6 | Pending  |
-| FEAT-04     | Phase 6 | Pending  |
+| FEAT-01     | Phase 6 | Complete |
+| FEAT-02     | Phase 6 | Complete |
+| FEAT-03     | Phase 6 | Complete |
+| FEAT-04     | Phase 6 | Complete |
 
 **Coverage:**
 

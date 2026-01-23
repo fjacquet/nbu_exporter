@@ -162,11 +162,11 @@ Last activity: 2026-01-23 — Phase 6 verified (4/4 must-haves, 100%)
 
 **Phase 6 Plans:**
 
-| Plan  | Focus                    | Requirements | Files Modified                                         |
-| ----- | ------------------------ | ------------ | ------------------------------------------------------ |
-| 06-01 | Storage Metrics Cache    | FEAT-01      | cache.go, Config.go, prometheus.go                     |
-| 06-02 | Health Check & Up Metric | FEAT-02      | health.go, prometheus.go, main.go                      |
-| 06-03 | Dynamic Config Reload    | FEAT-03      | safe_config.go, watcher.go, main.go, main_test.go      |
+| Plan  | Focus                    | Requirements | Files Modified                                    |
+| ----- | ------------------------ | ------------ | ------------------------------------------------- |
+| 06-01 | Storage Metrics Cache    | FEAT-01      | cache.go, Config.go, prometheus.go                |
+| 06-02 | Health Check & Up Metric | FEAT-02      | health.go, prometheus.go, main.go                 |
+| 06-03 | Dynamic Config Reload    | FEAT-03      | safe_config.go, watcher.go, main.go, main_test.go |
 
 **Blockers:** None
 
