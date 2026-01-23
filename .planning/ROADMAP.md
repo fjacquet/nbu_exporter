@@ -141,11 +141,14 @@ Plans:
 2. Health endpoint verifies NetBackup connectivity and API version before returning success status
 3. Stale metrics are identified and either refreshed or marked as unavailable in exposition
 4. Configuration changes (credentials, server address) can be applied without restarting the exporter
-   **Plans**: TBD
+
+**Plans:** 3 plans (3 waves - sequential due to file dependencies)
 
 Plans:
 
-- [ ] 06-01: [TBD during phase planning]
+- [ ] 06-01-PLAN.md - Storage Metrics Caching (FEAT-01) - Wave 1
+- [ ] 06-02-PLAN.md - Health Check and Up Metric (FEAT-02, FEAT-03) - Wave 2
+- [ ] 06-03-PLAN.md - Dynamic Configuration Reload (FEAT-04) - Wave 3
 
 ## Progress
 
@@ -159,9 +162,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Architecture Improvements  | 5/5            | Complete    | 2026-01-23 |
 | 4. Test Coverage              | 4/4            | Complete    | 2026-01-23 |
 | 5. Performance Optimizations  | 3/3            | Complete    | 2026-01-23 |
-| 6. Operational Features       | 0/TBD          | Not started | -          |
+| 6. Operational Features       | 0/3            | Ready       | -          |
 
 ---
 
 _Roadmap created: 2026-01-23_
-_Last updated: 2026-01-23 after Phase 5 planning_
+_Last updated: 2026-01-23 after Phase 6 planning_
