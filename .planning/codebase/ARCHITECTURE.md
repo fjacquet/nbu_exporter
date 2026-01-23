@@ -7,6 +7,7 @@
 **Overall:** Layered Prometheus Exporter with Pull-Based Metrics Collection
 
 **Key Characteristics:**
+
 - On-demand metric collection triggered by Prometheus scrape requests
 - Graceful degradation for partial API failures
 - Optional OpenTelemetry distributed tracing support
@@ -16,6 +17,7 @@
 ## Layers
 
 **Entry Point / Server Lifecycle:**
+
 - Purpose: HTTP server setup, CLI parsing, graceful shutdown coordination
 - Location: `main.go`
 - Contains: `Server` struct managing HTTP server lifecycle, Prometheus registry, telemetry manager
@@ -23,6 +25,7 @@
 - Used by: Entry point executable
 
 **Prometheus Collector:**
+
 - Purpose: Implements `prometheus.Collector` interface to expose NetBackup metrics on-demand
 - Location: `internal/exporter/prometheus.go`
 - Contains: `NbuCollector` struct with `Describe()` and `Collect()` methods
@@ -30,6 +33,7 @@
 - Used by: Prometheus registry on each `/metrics` scrape
 
 **NetBackup API Communication Layer:**
+
 - Purpose: HTTP client management, API requests, pagination, request tracing
 - Location: `internal/exporter/client.go`, `internal/exporter/netbackup.go`
 - Contains:
@@ -40,6 +44,7 @@
 - Used by: `NbuCollector.Collect()`
 
 **Data Models and Configuration:**
+
 - Purpose: YAML config parsing, API response DTOs, validation
 - Location: `internal/models/`
 - Contains:
@@ -50,6 +55,7 @@
 - Used by: All layers for config and data structures
 
 **Telemetry / Observability:**
+
 - Purpose: Optional OpenTelemetry integration for distributed tracing
 - Location: `internal/telemetry/`
 - Contains: `Manager` - Lifecycle for TracerProvider, OTLP exporter, sampling
@@ -57,6 +63,7 @@
 - Used by: `Server`, `NbuCollector`, `NbuClient` for span creation
 
 **Cross-Cutting Concerns:**
+
 - Logging: `internal/logging/` - Logrus wrapper with JSON formatting and file output
 - Utilities: `internal/utils/` - File operations, date parsing, pause helpers
 - Testing: `internal/testutil/` - Shared test fixtures and constants
@@ -85,16 +92,19 @@
 ## Key Abstractions
 
 **Prometheus Collector Interface:**
+
 - Purpose: Standardized metric exposition for Prometheus
 - Examples: `NbuCollector` implements `prometheus.Collector`
 - Pattern: `Describe()` lists metrics, `Collect()` computes and sends metrics
 
 **NetBackupClient Interface:**
+
 - Purpose: Abstract HTTP communication for testing without real API
 - Examples: `FetchData()`, `DetectAPIVersion()`, `Close()`
 - Pattern: Enables mock implementations in unit tests; `NbuClient` is primary implementation
 
 **Metric Key Structures:**
+
 - Purpose: Organize and parse composite metric labels from pipe-delimited strings
 - Examples:
   - `StorageMetricKey{Name: "disk-pool-1", Type: "MEDIA_SERVER", Size: "free"}` → `"disk-pool-1|MEDIA_SERVER|free"`
@@ -102,6 +112,7 @@
 - Pattern: Keys and labels are reversible (string methods for maps, labels methods for Prometheus)
 
 **Configuration Builder:**
+
 - Purpose: Centralize URL construction with base paths and query parameters
 - Examples: `BuildURL("/admin/jobs", map[string]string{"page[limit]": "100"})`
 - Pattern: Eliminates URL construction duplication across API methods
@@ -109,6 +120,7 @@
 ## Entry Points
 
 **HTTP Server Entry Point:**
+
 - Location: `main.go`
 - Triggers: Application startup via Cobra CLI command
 - Responsibilities:
@@ -120,6 +132,7 @@
   - Handle graceful shutdown on SIGINT/SIGTERM
 
 **/metrics Endpoint Entry Point:**
+
 - Location: `main.go` HTTP handler (via `promhttp.HandlerFor`)
 - Triggers: Prometheus scrape request (typically every 15-60s)
 - Responsibilities:
@@ -128,6 +141,7 @@
   - Return metrics with `Content-Type: text/plain`
 
 **/health Endpoint Entry Point:**
+
 - Location: `main.go` - `Server.healthHandler()`
 - Triggers: External health checks (load balancers, Kubernetes)
 - Responsibilities: Return HTTP 200 OK (simple liveness check)
@@ -139,19 +153,23 @@
 **Patterns:**
 
 - **Collector-Level Graceful Degradation**: If storage fetch fails, continue with job metrics. If job fetch fails, continue with storage metrics. Errors logged but don't prevent exposition.
+
   - Example: `FetchStorage()` error recorded in span but `Collect()` continues to `FetchJobDetails()`
 
 - **Timeout Protection**:
+
   - Collection timeout: 2 minutes per `Collect()` call
   - Version detection: 30 seconds
   - Context-based cancellation propagated to all API calls
 
 - **Span Error Recording** (when OTEL enabled):
+
   - `span.RecordError(err)` captures error details
   - `span.SetStatus(codes.Error, msg)` marks span as failed
   - Errors visible in trace UI for debugging
 
 - **Telemetry Initialization Failure**:
+
   - If OpenTelemetry initialization fails, manager disables tracing and logs warning
   - Application continues normally without tracing (no startup failure)
 
@@ -163,20 +181,24 @@
 ## Cross-Cutting Concerns
 
 **Logging:** Logrus with JSON formatter and dual output (stdout + file)
+
 - Format: Pretty-printed JSON with timestamp, level, message
 - Levels: DEBUG (with `-d` flag), INFO, WARN, ERROR, FATAL
 - Location: Configured via `internal/logging/PrepareLogs()`
 
 **Validation:** Configuration validation with specific error messages
+
 - Happens in `Config.Validate()` before collector creation
 - Validates: ports (1-65535), schemes (http/https), API version format, duration parsing
 - Blocks startup on validation failure
 
 **Authentication:** API key header-based (Bearer token)
+
 - Header: `Authorization: Bearer {APIKey}`
 - Masking: `Config.MaskAPIKey()` shows only first/last 4 chars for safe logging
 
 **OpenTelemetry Tracing:**
+
 - Global propagator: W3C Trace Context
 - Root spans: `prometheus.scrape` from `/metrics` endpoint
 - Child spans: `netbackup.fetch_storage`, `netbackup.fetch_jobs`, `netbackup.fetch_job_page`
@@ -185,4 +207,4 @@
 
 ---
 
-*Architecture analysis: 2026-01-22*
+_Architecture analysis: 2026-01-22_

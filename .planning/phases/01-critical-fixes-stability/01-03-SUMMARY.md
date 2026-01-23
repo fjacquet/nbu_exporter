@@ -57,6 +57,7 @@ completed: 2026-01-23
 - **Files modified:** 2
 
 ## Accomplishments
+
 - NbuClient now tracks active requests with atomic counter and mutex-protected state
 - Close() waits up to 30 seconds for active requests to complete before forcing cleanup
 - CloseWithContext() allows custom timeout control for advanced shutdown scenarios
@@ -71,10 +72,12 @@ Each task was committed atomically:
 2. **Task 2: Update interface and add cleanup tests** - `e14e191` (test)
 
 ## Files Created/Modified
+
 - `internal/exporter/client.go` - Added connection tracking fields (activeReqs, closed, closeChan), updated FetchData() to track request lifecycle, implemented Close() and CloseWithContext() with timeout
 - `internal/exporter/client_test.go` - Added TestNbuClientCloseIdempotent, TestNbuClientCloseWaitsForActiveRequests, TestNbuClientFetchDataRejectsAfterClose, TestNbuClientCloseTimeout
 
 ## Decisions Made
+
 - **Atomic counter for activeReqs:** Using atomic.Int32 minimizes lock contention since FetchData is called frequently. Mutex only protects closed flag and closeChan, not the hot path.
 - **Local channel reference pattern:** Close() stores `ch := c.closeChan` while holding lock, then releases lock before reading from `ch`. This prevents race condition where FetchData's defer closes the channel while Close() is reading it.
 - **30-second default timeout:** Balances graceful shutdown (most requests complete in < 2 minutes per existing timeout) vs preventing indefinite hangs on exporter restart.
@@ -85,6 +88,7 @@ Each task was committed atomically:
 ### Auto-fixed Issues
 
 **1. [Rule 3 - Blocking] Fixed NewAPIVersionDetector call signature**
+
 - **Found during:** Task 1 (building after adding connection tracking)
 - **Issue:** Plan 01-01 changed NewAPIVersionDetector to accept (client, baseURL, apiKey) but calls in client.go and test files still used old (client, cfg) signature. Build failed with "not enough arguments" error.
 - **Fix:** Updated performVersionDetectionIfNeeded() to extract baseURL and apiKey from config and pass individually. Updated test file calls similarly.
@@ -93,6 +97,7 @@ Each task was committed atomically:
 - **Committed in:** 67cf9c9 (Task 1 commit)
 
 **2. [Rule 1 - Bug] Fixed data race in Close() channel access**
+
 - **Found during:** Task 2 (running race detector on tests)
 - **Issue:** Close() created closeChan, released lock, then read from c.closeChan. FetchData's defer could close and nil out c.closeChan concurrently, causing data race detected by `go test -race`.
 - **Fix:** Store local reference `ch := c.closeChan` while holding lock, then read from `ch` after releasing lock. Applied to both Close() and CloseWithContext().
@@ -106,12 +111,15 @@ Each task was committed atomically:
 **Impact on plan:** Blocking fix from previous plan was necessary to compile. Race fix was caught by tests and essential for correctness. No scope creep.
 
 ## Issues Encountered
+
 None - implementation followed plan with only necessary bug fixes.
 
 ## User Setup Required
+
 None - no external service configuration required.
 
 ## Next Phase Readiness
+
 - Proper resource cleanup complete, ready for security hardening in Phase 2
 - Connection tracking pattern can be applied to other resources (telemetry manager, prometheus registry)
 - No blockers for next phase

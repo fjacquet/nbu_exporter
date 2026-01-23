@@ -5,15 +5,18 @@
 ## Test Framework
 
 **Runner:**
+
 - Framework: Go's standard `testing` package
 - Config: No separate test configuration file; uses Go defaults
 - Test discovery: Automatic file naming convention (`*_test.go`)
 
 **Assertion Library:**
+
 - Primary: `github.com/stretchr/testify/assert` and `testify/require`
 - Custom helpers: `internal/testutil` package with `AssertNoError()`, `AssertContains()`, `AssertEqual()`, `AssertError()`
 
 **Run Commands:**
+
 ```bash
 go test ./...              # Run all tests
 go test -race ./...        # Run all tests with race detection
@@ -28,11 +31,13 @@ make sure                  # Run fmt, test, build, and golangci-lint
 ## Test File Organization
 
 **Location:**
+
 - Co-located with source: test files in same package as code being tested
 - Pattern: `filename.go` paired with `filename_test.go` in same directory
 - Example: `internal/exporter/prometheus.go` → `internal/exporter/prometheus_test.go`
 
 **Naming:**
+
 - Files: `<source>_test.go` (e.g., `Config_test.go`, `client_test.go`, `prometheus_test.go`)
 - Functions: `Test<FunctionName>_<Scenario>` or `Test<FunctionName><Scenario>` (PascalCase, underscores separate concerns)
 - Examples:
@@ -44,6 +49,7 @@ make sure                  # Run fmt, test, build, and golangci-lint
   - `TestJobMetricsCollection`
 
 **Structure:**
+
 ```
 internal/
 ├── exporter/
@@ -75,58 +81,63 @@ internal/
 ## Test Structure
 
 **Suite Organization:**
+
 - Table-driven tests as primary pattern for multiple scenarios
 - Subtests using `t.Run()` for grouping related test cases
 - Each test case in the table defines: name, inputs, expected outputs, and expected error status
 
 **Table-Driven Pattern (from `prometheus_test.go`):**
+
 ```go
 func TestNewNbuCollectorExplicitVersion(t *testing.T) {
-	tests := []struct {
-		name       string
-		apiVersion string
-	}{
-		{
-			name:       "API version 13.0",
-			apiVersion: models.APIVersion130,
-		},
-		{
-			name:       "API version 12.0",
-			apiVersion: models.APIVersion120,
-		},
-		// More test cases...
-	}
+ tests := []struct {
+  name       string
+  apiVersion string
+ }{
+  {
+   name:       "API version 13.0",
+   apiVersion: models.APIVersion130,
+  },
+  {
+   name:       "API version 12.0",
+   apiVersion: models.APIVersion120,
+  },
+  // More test cases...
+ }
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup
-			server := httptest.NewTLSServer(...)
-			defer server.Close()
+ for _, tt := range tests {
+  t.Run(tt.name, func(t *testing.T) {
+   // Setup
+   server := httptest.NewTLSServer(...)
+   defer server.Close()
 
-			cfg := /* test config */
+   cfg := /* test config */
 
-			// Execute
-			collector, err := NewNbuCollector(cfg)
+   // Execute
+   collector, err := NewNbuCollector(cfg)
 
-			// Assert
-			require.NoError(t, err)
-			require.NotNil(t, collector)
-			assert.Equal(t, tt.apiVersion, collector.cfg.NbuServer.APIVersion)
-		})
-	}
+   // Assert
+   require.NoError(t, err)
+   require.NotNil(t, collector)
+   assert.Equal(t, tt.apiVersion, collector.cfg.NbuServer.APIVersion)
+  })
+ }
 }
 ```
 
 **Patterns:**
+
 - Setup: Create mock servers, test data, configuration
 - Defer cleanup: `defer server.Close()` for resources
 - Execute: Call function being tested
 - Assert: Verify results using testify assertions
 
 **Assertions:**
+
 - `require.*`: Fails test immediately if assertion fails (use for setup/critical checks)
 - `assert.*`: Records failure but continues test (use for multiple checks in same test)
 - Examples:
+
   ```go
   require.NoError(t, err, "Collector creation should succeed")
   require.NotNil(t, collector, "Collector should not be nil")
@@ -138,10 +149,12 @@ func TestNewNbuCollectorExplicitVersion(t *testing.T) {
 ## Mocking
 
 **Framework:**
+
 - `net/http/httptest` for HTTP server mocking (built-in)
 - Custom `MockServerBuilder` from `internal/testutil` for fluent mock configuration
 
 **Patterns (from `testutil/helpers.go`):**
+
 ```go
 // Fluent builder pattern for HTTP mocks
 server := testutil.NewMockServer().
@@ -165,11 +178,13 @@ server := testutil.NewMockServer().
 ```
 
 **What to Mock:**
+
 - External HTTP services (NetBackup API via httptest)
 - File system operations (use actual test files or in-memory equivalents)
 - OpenTelemetry tracer provider (set to nil for tests without tracing)
 
 **What NOT to Mock:**
+
 - Configuration validation logic (test with real Config structs)
 - Error wrapping and propagation (test with actual errors)
 - Internal helper functions (test directly, don't mock)
@@ -178,12 +193,14 @@ server := testutil.NewMockServer().
 ## Fixtures and Factories
 
 **Test Data:**
+
 - Files: Raw test responses stored in project (e.g., `testdata/jobs-response.json`, referenced in integration tests)
 - Loading: `testutil.LoadTestData(t, filename)` for file-based fixtures
 - Helper functions: `createConfigWithAPIVersion()`, `createTestConfig()`, `createVersionMockServer()` in test files
 - Constants: Centralized in `internal/testutil/constants.go` and aliased in `test_common.go` per package
 
 **Example from `integration_test.go`:**
+
 ```go
 // Helper function for test config creation
 func createTestConfig(serverURL string, apiVersion string) models.Config {
@@ -204,11 +221,13 @@ func TestStorageMetricsCollection(t *testing.T) {
 ```
 
 **Location:**
+
 - Shared constants: `internal/testutil/constants.go` (API keys, endpoints, versions)
 - Package-specific aliases: `test_common.go` in each package that needs constants (e.g., `internal/exporter/test_common.go`)
 - Factories: Inline in test files or in `testutil` for reusable builders
 
 **From `testutil/constants.go`:**
+
 ```go
 const (
     // HTTP headers
@@ -234,11 +253,13 @@ const (
 ## Coverage
 
 **Requirements:**
+
 - Overall target: 70% total coverage (enforced via `.testcoverage.yml`)
 - File/package targets: None enforced (set to 0)
 - Gaps: Some complex integration points, OTEL tracing initialization
 
 **View Coverage:**
+
 ```bash
 go test ./... -coverprofile=coverage.out
 go tool cover -html=coverage.out -o coverage.html  # Open in browser
@@ -250,6 +271,7 @@ go tool cover -func=coverage.out | grep total:      # Summary line
 ## Test Types
 
 **Unit Tests:**
+
 - Scope: Individual functions and methods in isolation
 - Approach: Use table-driven tests with various inputs
 - Examples: `TestConfigSetDefaults()`, `TestNewNbuClientWithVersionDetection()`, `TestNbuCollectorDescribe()`
@@ -257,6 +279,7 @@ go tool cover -func=coverage.out | grep total:      # Summary line
 - Coverage: Majority of test files (15+ test files)
 
 **Integration Tests:**
+
 - Scope: Multiple components working together (collector, client, API responses)
 - Approach: Use mock HTTP servers to simulate NetBackup API responses
 - Files: `internal/exporter/integration_test.go`, `internal/exporter/end_to_end_test.go`
@@ -264,16 +287,19 @@ go tool cover -func=coverage.out | grep total:      # Summary line
 - Example: `TestStorageMetricsCollection()`, `TestJobMetricsCollection()`
 
 **E2E Tests:**
+
 - Not used: No full end-to-end tests requiring real NetBackup server
 - Alternative: Integration tests with httptest servers provide sufficient coverage
 - File: `end_to_end_test.go` contains integration-level tests (not full E2E)
 
 **Backward Compatibility Tests:**
+
 - File: `internal/exporter/backward_compatibility_test.go`
 - Purpose: Verify multiple API versions (3.0, 12.0, 13.0) work correctly
 - Pattern: Separate test cases for each API version's response format
 
 **Performance Tests:**
+
 - File: `internal/exporter/performance_test.go`
 - Benchmark tests: `BenchmarkXXX` function naming (Go standard)
 - Run with: `go test -bench=. ./internal/exporter/`
@@ -281,17 +307,21 @@ go tool cover -func=coverage.out | grep total:      # Summary line
 ## Common Patterns
 
 **Helper Functions (using `t.Helper()`):**
+
 - Marked with `t.Helper()` to report errors at caller's location, not helper location
 - Examples from `helpers.go`:
+
   ```go
   func testAcceptedVersion(t *testing.T, server *httptest.Server) {
       t.Helper()
       // Test implementation
   }
   ```
+
 - Used for: test setup, assertions, data loading
 
 **Async Testing:**
+
 ```go
 // From prometheus_test.go - using goroutine with channel
 metricChan := make(chan prometheus.Metric, 10)
@@ -308,6 +338,7 @@ for metric := range metricChan {
 ```
 
 **Timeout Testing:**
+
 ```go
 // Wait with timeout
 done := make(chan bool)
@@ -325,6 +356,7 @@ case <-time.After(5 * time.Second):
 ```
 
 **Error Testing:**
+
 ```go
 // Expecting error
 collector, err := NewNbuCollector(cfg)
@@ -340,6 +372,7 @@ require.NotNil(t, collector)
 ```
 
 **Skipped Tests:**
+
 ```go
 func TestNewNbuCollectorAutomaticDetection(t *testing.T) {
     t.Skip("Skipping automatic detection test - covered by version_detector_test.go")
@@ -350,17 +383,20 @@ func TestNewNbuCollectorAutomaticDetection(t *testing.T) {
 ## Test Dependencies
 
 **Direct:**
+
 - `github.com/stretchr/testify` - Assertions
 - `net/http/httptest` - HTTP mock servers
 - Go standard `testing` package
 
 **Internal:**
+
 - `internal/testutil` - Mock builders, shared constants, helper functions
 - `internal/models` - Test configuration creation
 
 ## Test Execution
 
 **From Makefile:**
+
 ```bash
 make test              # go test ./...
 make test-coverage     # go test ./... -coverprofile=coverage.out -covermode=atomic
@@ -368,6 +404,7 @@ make sure              # go fmt ./..., go test ./..., go build ./..., golangci-l
 ```
 
 **With Options:**
+
 ```bash
 go test ./internal/exporter -run TestVersionDetection    # Specific test
 go test -race ./...                                       # Race detector
@@ -377,4 +414,4 @@ go test ./... -timeout 10m                                # Custom timeout
 
 ---
 
-*Testing analysis: 2026-01-22*
+_Testing analysis: 2026-01-22_

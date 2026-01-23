@@ -46,6 +46,7 @@ gaps:
 | 12 | Main function handles shutdown gracefully on server errors | ✓ VERIFIED | waitForShutdown (main.go:327-341) uses select for both signals and errors. Returns error (line 336), RunE handles it (line 374-380), calls server.Shutdown() regardless. |
 
 **Score:** 15/16 truths verified (93.75%)
+
 - **Verified:** 15 truths fully verified
 - **Design Decision:** 1 truth (BuildURL error return) implemented differently but goal achieved
 
@@ -103,6 +104,7 @@ Phase 1 addresses the following requirements from REQUIREMENTS.md:
 | `internal/models/Config.go:362` | Silent error ignore: `u, _ := url.Parse()` | ℹ️ Info | No impact - documented as assuming validated config | Accepted design decision, documented in comments |
 
 **Summary:**
+
 - **Blockers:** 0
 - **Warnings:** 0
 - **Info:** 1 (documented design decision)
@@ -118,6 +120,7 @@ go test ./... -v -count=1 -race
 ```
 
 **Key Test Results:**
+
 - ✓ `TestAPIVersionDetectorConfigImmutability` - PASS (verifies no config mutation)
 - ✓ `TestAPIVersionDetectorContextCancellationNoConfigMutation` - PASS (verifies context cancellation safety)
 - ✓ `TestConfigValidateInvalidURL` - PASS (verifies URL validation)
@@ -129,6 +132,7 @@ go test ./... -v -count=1 -race
 **Race detector:** No data races detected
 
 **Build verification:**
+
 ```bash
 make cli  # SUCCESS
 go build ./...  # SUCCESS
@@ -153,12 +157,14 @@ go vet ./...  # SUCCESS
 **Deviation: BuildURL() doesn't return error**
 
 **Rationale (from 01-02-SUMMARY.md):**
+
 - Maintains backward compatibility
 - URL validation happens early in Config.Validate() (fail-fast at startup)
 - BuildURL documented to assume validated config
 - Goal achieved: invalid URLs caught with clear errors at startup
 
 **Impact:**
+
 - ✓ Goal achieved through different means
 - ✓ No regression risk (Validate() always called before BuildURL usage)
 - ✓ Better developer experience (clear documentation of contract)
@@ -180,17 +186,20 @@ go vet ./...  # SUCCESS
 ### Phase Readiness
 
 **Completeness:** 100%
+
 - All 4 plans executed and verified
 - All must-haves present (15 verified, 1 design decision)
 - All tests passing with race detection
 
 **Quality:**
+
 - No blocking issues
 - No race conditions
 - No memory leaks
 - Comprehensive test coverage for new functionality
 
 **Next Phase Readiness:**
+
 - ✓ Config is now immutable after initialization
 - ✓ Resource cleanup pattern established
 - ✓ Error handling patterns established
@@ -208,6 +217,7 @@ Phase 1 successfully achieved its goal of fixing critical bugs and stability iss
 4. **URL validation:** ✓ Invalid URLs caught at startup with clear messages
 
 **Final Status: PASSED**
+
 - 15/16 truths verified (93.75%)
 - 1 design decision (BuildURL error handling) achieves goal through alternative approach
 - All requirements satisfied

@@ -84,21 +84,25 @@ Each task was committed atomically:
 ## Decisions Made
 
 **1. TLS enforcement via environment variable gate**
+
 - Rationale: Requires explicit action to enable insecure mode, preventing accidental production deployment with TLS verification disabled
 - Implementation: Config.Validate() checks for NBU_INSECURE_MODE=true when InsecureSkipVerify=true
 - Impact: Deployment documentation must mention this requirement for development/testing environments
 
 **2. TLS 1.2 minimum version**
+
 - Rationale: Industry standard, TLS 1.0 and 1.1 deprecated (RFC 8996), most NetBackup deployments use 1.2+
 - Implementation: Set MinVersion in resty TLS config
 - Impact: Very old NetBackup servers (pre-2014) may not connect (acceptable trade-off for security)
 
 **3. Error-level security warnings**
+
 - Rationale: Warn-level logs often filtered in production; Error level ensures visibility in log aggregation systems
 - Implementation: Changed log.Warn to log.Error for InsecureSkipVerify warning
 - Impact: Better visibility for security audits and compliance checks
 
 **4. API key protection audit approach**
+
 - Rationale: Comprehensive grep audit more reliable than manual review for detecting leaks
 - Implementation: Verified API key only appears in Authorization headers (required for auth) and parameter passing
 - Impact: Zero API key exposure confirmed in error messages, logs, and telemetry
@@ -124,6 +128,7 @@ export NBU_INSECURE_MODE=true
 Without this environment variable, the exporter will refuse to start if `insecureSkipVerify: true` is set in config.yaml.
 
 **Production environments:**
+
 - Use valid TLS certificates
 - Keep `insecureSkipVerify: false` (default)
 - No environment variable needed
@@ -131,6 +136,7 @@ Without this environment variable, the exporter will refuse to start if `insecur
 ## Next Phase Readiness
 
 **Ready for Phase 2 Plan 2 (Authentication Improvements):**
+
 - TLS enforcement provides foundation for secure authentication
 - API key protection audit establishes baseline for future security enhancements
 - Environment variable gate pattern can be reused for other security-sensitive settings

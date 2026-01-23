@@ -52,6 +52,7 @@ completed: 2026-01-23
 - **Files modified:** 2
 
 ## Accomplishments
+
 - Invalid NBU server URLs now caught during config validation with descriptive errors
 - BuildURL() documented to assume validated config (maintains backward compatibility)
 - Comprehensive test coverage for URL validation scenarios
@@ -64,10 +65,12 @@ Each task was committed atomically:
 2. **Task 2: Add comprehensive URL validation tests** - `faf2b50` (test)
 
 ## Files Created/Modified
+
 - `internal/models/Config.go` - Added validateNBUBaseURL() method, updated Validate() and BuildURL() documentation
 - `internal/models/Config_test.go` - Added TestConfigValidateInvalidURL and TestConfigBuildURLAfterValidation, fixed broken test YAML
 
 ## Decisions Made
+
 - **Keep BuildURL() signature unchanged:** Maintains backward compatibility. Since Config.Validate() is called at startup before BuildURL() is used, URL validation happens early enough to catch errors.
 - **Validate during Config.Validate() not BuildURL():** Fail fast at startup rather than during API calls. Provides better error messages and clearer failure point.
 - **Document BuildURL() assumption:** Clear documentation that BuildURL() assumes validated config helps future developers understand the contract.
@@ -77,8 +80,9 @@ Each task was committed atomically:
 ### Auto-fixed Issues
 
 **1. [Rule 1 - Bug] Fixed broken test YAML with literal string constants**
+
 - **Found during:** Task 1 (running tests after adding URL validation)
-- **Issue:** TestConfigBackwardCompatibility used literal strings like "testServerNBUMaster" instead of actual values ("nbu-master"), creating invalid URLs like "https://testServerNBUMaster:1556testPathNetBackup"
+- **Issue:** TestConfigBackwardCompatibility used literal strings like "testServerNBUMaster" instead of actual values ("nbu-master"), creating invalid URLs like "<https://testServerNBUMaster:1556testPathNetBackup>"
 - **Fix:** Replaced literal constant names with actual values in YAML strings
 - **Files modified:** internal/models/Config_test.go
 - **Verification:** TestConfigBackwardCompatibility now passes
@@ -90,12 +94,15 @@ Each task was committed atomically:
 **Impact on plan:** Bug fix was necessary for tests to pass with new URL validation. No scope creep.
 
 ## Issues Encountered
+
 None
 
 ## User Setup Required
+
 None - no external service configuration required.
 
 ## Next Phase Readiness
+
 - URL validation complete and tested
 - Config validation now catches malformed URLs early
 - Ready for additional config improvements or security hardening

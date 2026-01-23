@@ -5,6 +5,7 @@
 ## APIs & External Services
 
 **NetBackup REST API:**
+
 - Service: Veritas NetBackup backup infrastructure monitoring
 - What it's used for: Fetching storage capacity metrics and job statistics for Prometheus exposition
 - SDK/Client: Custom HTTP client via `github.com/go-resty/resty/v2`
@@ -25,19 +26,23 @@
 ## Data Storage
 
 **Databases:**
+
 - None - exporter is stateless, no persistent storage
 
 **File Storage:**
+
 - Local log file: Path configured in `server.logName` (e.g., `log/nbu-exporter.log`)
 - Structured logging via `github.com/sirupsen/logrus`
 
 **Caching:**
+
 - None - metrics fetched on-demand for each Prometheus scrape cycle
 - No in-memory cache between scrapes
 
 ## Authentication & Identity
 
 **Auth Provider:**
+
 - Custom - API key authentication only
 - Implementation: Bearer token in `Authorization` HTTP header
 - Configuration: `nbuserver.apiKey` loaded from config file (no env var support)
@@ -46,15 +51,18 @@
 ## Monitoring & Observability
 
 **Error Tracking:**
+
 - None - errors logged to file via logrus but not sent to external service
 
 **Logs:**
+
 - Approach: File-based structured logging (JSON and text formats supported)
 - Output: `server.logName` file path from config
 - Levels: INFO, DEBUG (when `--debug` CLI flag used), WARN, ERROR
 - Persistence: Logs rotated manually by external tools (logrotate, Docker volume management)
 
 **Distributed Tracing (Optional):**
+
 - Framework: OpenTelemetry (disabled by default)
 - Export: OTLP gRPC protocol
 - Endpoint: `opentelemetry.endpoint` (e.g., "localhost:4317" or "otel-collector.example.com:4317")
@@ -67,11 +75,13 @@
 ## CI/CD & Deployment
 
 **Hosting:**
+
 - Flexible: Runs on any platform (Linux, macOS, Windows)
 - Docker: Multi-stage build produces Alpine-based image `nbu_exporter:latest`
 - Kubernetes: Compatible via Helm or manual manifests (examples in `docs/veritas-*/`)
 
 **CI Pipeline:**
+
 - GitHub Actions workflows in `.github/workflows/`
   - `build.yml` - Go build and test
   - `coverage.yml` - Test coverage reporting
@@ -80,42 +90,46 @@
 - Test coverage: Configured thresholds in `.testcoverage.yml`
 
 **Container Registry:**
+
 - No push to external registry in base Makefile (manual docker push required)
 - Dockerfile uses latest golang and alpine base images (no pinned versions)
 
 ## Environment Configuration
 
 **Required env vars:**
+
 - None - all configuration via YAML file
 
 **Config file sections:**
+
 ```yaml
 server:
-  host: "0.0.0.0"          # Binding address
-  port: "2112"             # HTTP port
-  uri: "/metrics"          # Prometheus metrics endpoint
-  scrapingInterval: "1h"   # Data collection window for job statistics
-  logName: "log/nbu-exporter.log"  # Log file path
+  host: "0.0.0.0" # Binding address
+  port: "2112" # HTTP port
+  uri: "/metrics" # Prometheus metrics endpoint
+  scrapingInterval: "1h" # Data collection window for job statistics
+  logName: "log/nbu-exporter.log" # Log file path
 
 nbuserver:
   host: "master.my.domain" # NetBackup master hostname
-  port: "1556"             # NetBackup REST API port
-  scheme: "https"          # http or https
-  uri: "/netbackup"        # API base path
-  domain: "my.domain"      # Windows domain (for auth context)
-  domainType: "NT"         # Domain type (NT = Windows, UNIX = Unix)
-  apiKey: "secret-key"     # Required: obtained from NetBackup UI
-  apiVersion: "13.0"       # Optional: auto-detected if omitted
+  port: "1556" # NetBackup REST API port
+  scheme: "https" # http or https
+  uri: "/netbackup" # API base path
+  domain: "my.domain" # Windows domain (for auth context)
+  domainType: "NT" # Domain type (NT = Windows, UNIX = Unix)
+  apiKey: "secret-key" # Required: obtained from NetBackup UI
+  apiVersion: "13.0" # Optional: auto-detected if omitted
   insecureSkipVerify: false # Skip TLS cert verification (dev only)
 
 opentelemetry:
-  enabled: false           # Enable distributed tracing
-  endpoint: "localhost:4317"  # OTLP gRPC collector endpoint
-  insecure: true           # Insecure connection (no TLS)
-  samplingRate: 0.1        # Sample 10% of traces (0.0-1.0)
+  enabled: false # Enable distributed tracing
+  endpoint: "localhost:4317" # OTLP gRPC collector endpoint
+  insecure: true # Insecure connection (no TLS)
+  samplingRate: 0.1 # Sample 10% of traces (0.0-1.0)
 ```
 
 **Secrets location:**
+
 - API key: Embedded in `config.yaml` (requires file-level access control)
 - No environment variable support for secrets
 - Recommendation: Use Docker secrets or Kubernetes secrets to mount config file
@@ -123,15 +137,18 @@ opentelemetry:
 ## Webhooks & Callbacks
 
 **Incoming:**
+
 - `/health` - Health check endpoint (returns HTTP 200 OK)
 - `/metrics` - Prometheus metrics endpoint (configurable via `server.uri`)
 
 **Outgoing:**
+
 - None - exporter is passive (pull-based via Prometheus scrapes)
 
 ## Metrics Exposition
 
 **Prometheus Integration:**
+
 - Endpoint: `http://{host}:{port}{uri}` (default: `http://localhost:2112/metrics`)
 - Format: Prometheus text-based exposition format
 - Handler: `github.com/prometheus/client_golang/prometheus/promhttp`
@@ -147,4 +164,4 @@ opentelemetry:
 
 ---
 
-*Integration audit: 2026-01-22*
+_Integration audit: 2026-01-22_

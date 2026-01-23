@@ -74,11 +74,13 @@ nbu_exporter/
 ## Directory Purposes
 
 **root directory:**
+
 - Purpose: Configuration, build, and entry point
 - Contains: `main.go` (single entry point), config templates, Makefile, module definition
 - Key files: `main.go`, `config.yaml`, `Makefile`, `go.mod`
 
 **internal/exporter:**
+
 - Purpose: Core Prometheus collector and NetBackup API communication
 - Contains: Collector implementation, HTTP client, pagination logic, version detection, tracing helpers
 - Key files:
@@ -88,6 +90,7 @@ nbu_exporter/
   - `version_detector.go` - Auto-detection of supported API versions
 
 **internal/models:**
+
 - Purpose: Configuration models and API response DTOs
 - Contains: YAML config struct, API response structures (JSON:API format), metric key types
 - Key files:
@@ -96,18 +99,21 @@ nbu_exporter/
   - `test_common.go` - Test fixture builders
 
 **internal/telemetry:**
+
 - Purpose: Optional OpenTelemetry distributed tracing
 - Contains: TracerProvider lifecycle, OTLP gRPC exporter, sampling configuration
 - Key files:
   - `manager.go` - Manager struct for tracer initialization and shutdown
 
 **internal/logging:**
+
 - Purpose: Centralized logging with JSON formatting
 - Contains: Logrus setup, dual output (stdout + file), field injection
 - Key files:
   - `logging.go` - `PrepareLogs()`, LogInfo(), LogError() wrappers
 
 **internal/utils:**
+
 - Purpose: General-purpose utility functions
 - Contains: File I/O, configuration parsing, date operations, rate limiting
 - Key files:
@@ -116,12 +122,14 @@ nbu_exporter/
   - `pause.go` - Wait/delay functions
 
 **internal/testutil:**
+
 - Purpose: Shared testing infrastructure
 - Contains: Mock factories, test data builders, common test constants
 - Key files:
   - `testutil.go` - Test fixture builders for all models
 
 **testdata:**
+
 - Purpose: Test fixture data files (JSON responses, configs)
 - Contains: Sample API responses for different versions, test configurations
 - Not committed: Can be generated or excluded from VCS
@@ -129,21 +137,25 @@ nbu_exporter/
 ## Key File Locations
 
 **Entry Points:**
+
 - `main.go` - Application entry point, Cobra CLI, HTTP server lifecycle
 - HTTP handlers: `main.go` - `Server.Start()` sets up `/metrics` and `/health`
 
 **Configuration:**
+
 - `config.yaml` - Example configuration file (user-provided at runtime)
 - `config-auto-detect.yaml` - Example with automatic API version detection
 - `internal/models/Config.go` - Config struct definition and validation
 
 **Core Logic:**
+
 - `internal/exporter/prometheus.go` - `NbuCollector.Collect()` - metric collection orchestration
 - `internal/exporter/netbackup.go` - `FetchStorage()`, `FetchJobDetails()` - API pagination
 - `internal/exporter/client.go` - `NbuClient.FetchData()` - HTTP request execution
 - `internal/exporter/version_detector.go` - API version detection logic
 
 **Testing:**
+
 - `internal/exporter/*_test.go` - Collector and API client tests
 - `internal/models/*_test.go` - Config validation tests
 - `internal/exporter/end_to_end_test.go` - Full integration tests
@@ -152,29 +164,35 @@ nbu_exporter/
 ## Naming Conventions
 
 **Files:**
+
 - Main package file: lowercase with underscores between words, matching function name (e.g., `prometheus.go` contains `NbuCollector`)
 - Test files: `{source}_test.go` (e.g., `prometheus.go` → `prometheus_test.go`)
 - Integration tests: `{name}_integration_test.go` (e.g., `version_detection_integration_test.go`)
 - Package docs: Docstring at top of first file in package explaining package purpose
 
 **Directories:**
+
 - Lowercase, single word when possible (e.g., `exporter`, `models`, `logging`)
 - No hyphens or underscores in directory names
 - One responsibility per directory (cohesive packages)
 
 **Functions:**
+
 - Public: PascalCase, exported (e.g., `FetchStorage`, `NewNbuClient`, `Validate`)
 - Private: camelCase, unexported (e.g., `createSpan`, `handlePagination`, `validatePort`)
 
 **Variables:**
+
 - camelCase: local variables and parameters (e.g., `storageMetrics`, `pageLimit`)
 - UPPER_SNAKE_CASE: package-level constants (e.g., `pageLimit = "100"`, `collectionTimeout`)
 
 **Types:**
+
 - PascalCase: struct and interface names (e.g., `NbuClient`, `StorageMetricKey`, `NetBackupClient`)
 - Suffix `-er` for interfaces when appropriate (e.g., `NetBackupClient`)
 
 **Packages:**
+
 - lowercase: package names are lowercase (e.g., `exporter`, `telemetry`, `models`)
 - No underscores in package names
 - Internal packages under `internal/` to prevent external imports
@@ -182,56 +200,66 @@ nbu_exporter/
 ## Where to Add New Code
 
 **New Feature in Prometheus Metrics:**
+
 - Primary code: `internal/exporter/prometheus.go` - Add `prometheus.Desc` and metric exposure in `Collect()`
 - Data fetching: `internal/exporter/netbackup.go` - Add fetch function if new API endpoint needed
 - Models: `internal/models/` - Add response DTO if new API data required
 - Tests: `internal/exporter/{feature}_test.go`
 
 **New Component/Module:**
+
 - Implementation: `internal/{package_name}/` - Create new package directory
 - API: `internal/{package_name}/{name}.go` - Main implementation file
 - Interface: `internal/{package_name}/interface.go` - If multiple implementations expected
 - Tests: `internal/{package_name}/{name}_test.go`
 
 **Utilities (cross-cutting code):**
+
 - Shared helpers: `internal/utils/{category}.go` - File I/O, date parsing, etc.
 - Logging: Use `internal/logging/` convenience functions
 - Testing: Add test fixtures to `internal/testutil/`
 
 **Configuration or Models:**
+
 - Add to: `internal/models/Config.go` for configuration or new `internal/models/{name}.go` for API models
 - Include validation methods on Config struct
 - Document configuration fields with comments
 
 **Testing Helpers:**
+
 - Add to: `internal/testutil/testutil.go` for shared test factories
 - Create mocks in test files themselves, or `internal/exporter/test_common.go` if used across tests
 
 **External Integration (new API/service):**
+
 - New package: `internal/integrations/{service_name}/` if significant
 - Otherwise: Extend `internal/exporter/` if NetBackup API related
 
 ## Special Directories
 
 **vendor/:**
+
 - Purpose: Vendored Go dependencies
 - Generated: Yes (via `go mod vendor`)
 - Committed: Yes (ensures reproducible builds)
 - Edit: Never - update via `go get` then `go mod vendor`
 
 **testdata/:**
+
 - Purpose: Test fixture files (JSON responses, YAML configs)
 - Generated: Can be generated from live API responses
 - Committed: Yes (test data should be in VCS)
 - Format: JSON for API responses, YAML for configs
 
 **bin/:**
+
 - Purpose: Compiled binaries
 - Generated: Yes (via `make cli`)
 - Committed: No (.gitignore)
 - Location: Created by Makefile during build
 
 **.planning/:**
+
 - Purpose: GSD orchestrator planning documents
 - Generated: Yes (by GSD commands)
 - Committed: Yes (planning artifacts are version controlled)
@@ -239,4 +267,4 @@ nbu_exporter/
 
 ---
 
-*Structure analysis: 2026-01-22*
+_Structure analysis: 2026-01-22_
