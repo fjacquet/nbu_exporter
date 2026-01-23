@@ -26,6 +26,15 @@ const (
 	sizeTypeFree     = "free"                   // Metric dimension for free capacity
 	sizeTypeUsed     = "used"                   // Metric dimension for used capacity
 	bytesPerKilobyte = 1024                     // Conversion factor from kilobytes to bytes
+
+	// Pre-allocation capacity hints for job metrics.
+	// Typical environments have 20-100 unique job type/policy/status combinations:
+	//   - Job types: ~5-10 (BACKUP, RESTORE, VERIFY, etc.)
+	//   - Policy types: ~5-20
+	//   - Status codes: ~10-20 common values
+	// These values are intentionally generous to avoid reallocations in most cases.
+	expectedJobMetricKeys    = 100 // Capacity hint for job size/count maps
+	expectedStatusMetricKeys = 50  // Capacity hint for job status count map
 )
 
 // FetchStorage retrieves storage unit information from the NetBackup API and returns
@@ -259,10 +268,12 @@ func FetchAllJobs(
 	startTime := time.Now().Add(duration).UTC()
 	log.Debugf("Fetching jobs since %s", startTime.Format(time.RFC3339))
 
-	// Use typed maps for aggregation (struct keys are comparable in Go)
-	sizeMap := make(map[JobMetricKey]float64)
-	countMap := make(map[JobMetricKey]float64)
-	statusMap := make(map[JobStatusKey]float64)
+	// Use typed maps for aggregation with pre-allocated capacity hints.
+	// Struct keys are comparable in Go, enabling direct map lookups.
+	// Pre-allocation reduces memory reallocations during job processing.
+	sizeMap := make(map[JobMetricKey]float64, expectedJobMetricKeys)
+	countMap := make(map[JobMetricKey]float64, expectedJobMetricKeys)
+	statusMap := make(map[JobStatusKey]float64, expectedStatusMetricKeys)
 
 	// Track page count
 	pageCount := 0
@@ -295,7 +306,12 @@ func FetchAllJobs(
 		return nil, nil, nil, err
 	}
 
-	// Convert maps to typed slices
+	// Convert maps to typed slices with pre-allocated capacity.
+	// Slice capacity is set to exact map size (known at this point) to avoid reallocations.
+	jobsSize = make([]JobMetricValue, 0, len(sizeMap))
+	jobsCount = make([]JobMetricValue, 0, len(countMap))
+	statusCount = make([]JobStatusMetricValue, 0, len(statusMap))
+
 	for key, value := range sizeMap {
 		jobsSize = append(jobsSize, JobMetricValue{Key: key, Value: value})
 	}
