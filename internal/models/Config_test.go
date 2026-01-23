@@ -1494,3 +1494,163 @@ opentelemetry:
 		})
 	}
 }
+
+func TestConfigValidateInvalidURL(t *testing.T) {
+	tests := []struct {
+		name          string
+		host          string
+		port          string
+		scheme        string
+		uri           string
+		expectError   bool
+		errorContains string
+	}{
+		{
+			name:        "valid URL components",
+			host:        "nbu-master.example.com",
+			port:        "1556",
+			scheme:      "https",
+			uri:         "/netbackup",
+			expectError: false,
+		},
+		{
+			name:          "host with space (invalid hostname)",
+			host:          "nbu master.example.com",
+			port:          "1556",
+			scheme:        "https",
+			uri:           "/netbackup",
+			expectError:   true,
+			errorContains: "invalid",
+		},
+		{
+			name:          "empty host caught by existing validation",
+			host:          "",
+			port:          "1556",
+			scheme:        "https",
+			uri:           "/netbackup",
+			expectError:   true,
+			errorContains: "host is required",
+		},
+		{
+			name:          "invalid scheme rejected by scheme validation",
+			host:          "nbu-master.example.com",
+			port:          "1556",
+			scheme:        "ftp",
+			uri:           "/netbackup",
+			expectError:   true,
+			errorContains: "scheme",
+		},
+		{
+			name:        "localhost is valid",
+			host:        "localhost",
+			port:        "1556",
+			scheme:      "http",
+			uri:         "/netbackup",
+			expectError: false,
+		},
+		{
+			name:        "IP address is valid",
+			host:        "192.168.1.100",
+			port:        "1556",
+			scheme:      "https",
+			uri:         "/netbackup",
+			expectError: false,
+		},
+		{
+			name:        "URI with special characters is valid",
+			host:        "nbu-master.example.com",
+			port:        "1556",
+			scheme:      "https",
+			uri:         "/netbackup/api",
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := createBaseTestConfig()
+			cfg.NbuServer.Host = tt.host
+			cfg.NbuServer.Port = tt.port
+			cfg.NbuServer.Scheme = tt.scheme
+			cfg.NbuServer.URI = tt.uri
+
+			err := cfg.Validate()
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Validate() expected error, got nil")
+				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
+					t.Errorf("Validate() error = %v, want error containing %q", err, tt.errorContains)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("Validate() unexpected error = %v", err)
+				}
+			}
+		})
+	}
+}
+
+func TestConfigBuildURLAfterValidation(t *testing.T) {
+	tests := []struct {
+		name         string
+		path         string
+		queryParams  map[string]string
+		wantContains []string
+	}{
+		{
+			name:        "builds URL with path and params",
+			path:        "/admin/jobs",
+			queryParams: map[string]string{"page[limit]": "100"},
+			wantContains: []string{
+				"/admin/jobs",
+				"page%5Blimit%5D=100",
+			},
+		},
+		{
+			name:        "encodes query parameters correctly",
+			path:        "/admin/jobs",
+			queryParams: map[string]string{"filter": "status eq 0"},
+			wantContains: []string{
+				"/admin/jobs",
+				"filter=",
+			},
+		},
+		{
+			name: "handles multiple query parameters",
+			path: "/storage/storage-units",
+			queryParams: map[string]string{
+				"page[limit]":  "50",
+				"page[offset]": "0",
+			},
+			wantContains: []string{
+				"/storage/storage-units",
+				"page%5Blimit%5D=50",
+			},
+		},
+		{
+			name:         "path without query params",
+			path:         "/admin/jobs",
+			queryParams:  map[string]string{},
+			wantContains: []string{"/admin/jobs"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := createBaseTestConfig()
+			err := cfg.Validate() // Ensure config is validated before BuildURL
+			if err != nil {
+				t.Fatalf("Validate() unexpected error = %v", err)
+			}
+
+			result := cfg.BuildURL(tt.path, tt.queryParams)
+
+			for _, expected := range tt.wantContains {
+				if !strings.Contains(result, expected) {
+					t.Errorf("BuildURL() = %v, want to contain %q", result, expected)
+				}
+			}
+		})
+	}
+}
