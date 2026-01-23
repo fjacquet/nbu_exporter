@@ -156,11 +156,7 @@ func TestIntegrationBackwardCompatibility(t *testing.T) {
 	}
 
 	// Create client and verify it works without tracing
-	client := NewNbuClient(cfg)
-	if client.tracer != nil {
-		// Tracer may be set from global provider, set to nil for this test
-		client.tracer = nil
-	}
+	client := NewNbuClient(cfg) // No TracerProvider option = noop tracing
 
 	var result map[string]interface{}
 	err = client.FetchData(context.Background(), server.URL, &result)

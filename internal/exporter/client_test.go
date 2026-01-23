@@ -814,11 +814,7 @@ func TestNbuClientTracingDisabled(t *testing.T) {
 	defer server.Close()
 
 	cfg := createBasicTestConfig("13.0", testAPIKey)
-	client := NewNbuClient(cfg)
-	// Ensure tracer is nil (no global tracer provider set)
-	if client.tracer != nil {
-		client.tracer = nil
-	}
+	client := NewNbuClient(cfg) // No TracerProvider option = noop tracing
 
 	var result mockAPIResponse
 	err := client.FetchData(context.Background(), server.URL, &result)
@@ -831,23 +827,25 @@ func TestNbuClientTracingDisabled(t *testing.T) {
 	}
 }
 
-// TestNbuClientCreateHTTPSpanNilSafe tests that span creation is nil-safe
+// TestNbuClientCreateHTTPSpanNilSafe tests that TracerWrapper always returns valid spans
 func TestNbuClientCreateHTTPSpanNilSafe(t *testing.T) {
 	cfg := createBasicTestConfig("13.0", testAPIKey)
-	client := NewNbuClient(cfg)
-	client.tracer = nil // Ensure tracer is nil
+	client := NewNbuClient(cfg) // No TracerProvider = noop tracer
 
 	ctx := context.Background()
-	newCtx, span := createSpan(ctx, client.tracer, testOperationName, trace.SpanKindClient)
+	newCtx, span := client.tracing.StartSpan(ctx, testOperationName, trace.SpanKindClient)
 
-	// Should return original context and nil span
-	if newCtx != ctx {
-		t.Error("createSpan() should return original context when tracer is nil")
+	// TracerWrapper should always return valid context and span (noop if no provider)
+	if newCtx == nil {
+		t.Error("TracerWrapper.StartSpan() should return valid context")
 	}
 
-	if span != nil {
-		t.Error("createHTTPSpan() should return nil span when tracer is nil")
+	if span == nil {
+		t.Error("TracerWrapper.StartSpan() should return valid span (noop if tracing disabled)")
 	}
+
+	// Should not panic
+	span.End()
 }
 
 // TestNbuClientRecordHTTPAttributesNilSafe tests that attribute recording is nil-safe
@@ -869,11 +867,10 @@ func TestNbuClientRecordErrorNilSafe(t *testing.T) {
 	client.recordError(nil, testErr)
 }
 
-// TestNbuClientInjectTraceContextNilSafe tests that trace context injection is nil-safe
+// TestNbuClientInjectTraceContextNilSafe tests that trace context injection works with noop tracer
 func TestNbuClientInjectTraceContextNilSafe(t *testing.T) {
 	cfg := createBasicTestConfig("13.0", testAPIKey)
-	client := NewNbuClient(cfg)
-	client.tracer = nil // Ensure tracer is nil
+	client := NewNbuClient(cfg) // No TracerProvider = noop tracer
 
 	headers := map[string]string{
 		"Authorization": testAPIKey,

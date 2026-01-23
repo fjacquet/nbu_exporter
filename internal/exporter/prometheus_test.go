@@ -14,7 +14,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel"
 )
 
 // TestNewNbuCollector_ExplicitVersion tests collector creation with an explicitly configured API version.
@@ -400,23 +399,28 @@ func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 	}
 
 	client := NewNbuClient(cfg)
+	tracing := NewTracerWrapper(nil, "test-collector") // noop tracer
+
 	collector := &NbuCollector{
-		cfg:    cfg,
-		client: client,
-		tracer: nil, // Ensure tracer is nil
+		cfg:     cfg,
+		client:  client,
+		tracing: tracing,
 	}
 
 	ctx := context.Background()
 	newCtx, span := collector.createScrapeSpan(ctx)
 
-	// Should return original context and nil span when tracer is nil
-	if newCtx != ctx {
-		t.Error("createScrapeSpan() should return original context when tracer is nil")
+	// TracerWrapper always returns valid context and span
+	if newCtx == nil {
+		t.Error("createScrapeSpan() should return valid context")
 	}
 
-	if span != nil {
-		t.Error("createScrapeSpan() should return nil span when tracer is nil")
+	if span == nil {
+		t.Error("createScrapeSpan() should return valid span (noop if no provider)")
 	}
+
+	// Should not panic
+	span.End()
 }
 
 // TestNbuCollector_CreateScrapeSpan_WithTracer tests span creation with tracer
@@ -457,28 +461,29 @@ func TestNbuCollectorCreateScrapeSpanWithTracer(t *testing.T) {
 
 	client := NewNbuClient(cfg)
 
-	// Get tracer from global provider (may be nil if not initialized)
-	tracer := otel.Tracer("nbu-exporter-test")
+	// Create TracerWrapper (nil provider = noop)
+	tracing := NewTracerWrapper(nil, "test-collector")
 
 	collector := &NbuCollector{
-		cfg:    cfg,
-		client: client,
-		tracer: tracer,
+		cfg:     cfg,
+		client:  client,
+		tracing: tracing,
 	}
 
 	ctx := context.Background()
 	newCtx, span := collector.createScrapeSpan(ctx)
 
-	// Context should be different (has span attached)
-	if newCtx == ctx {
-		t.Error("createScrapeSpan() should return new context with span")
+	// TracerWrapper always returns valid context and span
+	if newCtx == nil {
+		t.Error("createScrapeSpan() should return valid context")
 	}
 
-	// Span may be nil if no global tracer provider is set
-	// This is acceptable - the test verifies the code doesn't panic
-	if span != nil {
-		span.End()
+	if span == nil {
+		t.Error("createScrapeSpan() should return valid span")
 	}
+
+	// Should not panic
+	span.End()
 }
 
 // TestNbuCollector_Collect_WithoutTracing tests Collect without tracing
@@ -524,10 +529,12 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 	client := NewNbuClient(cfg)
 	// Disable retries for faster test execution
 	client.client.SetRetryCount(0)
+	tracing := NewTracerWrapper(nil, "test-collector") // noop tracer
+
 	collector := &NbuCollector{
-		cfg:    cfg,
-		client: client,
-		tracer: nil, // Ensure tracer is nil
+		cfg:     cfg,
+		client:  client,
+		tracing: tracing,
 		nbuDiskSize: prometheus.NewDesc(
 			"nbu_disk_bytes",
 			"The quantity of storage bytes",
@@ -623,24 +630,29 @@ func TestNbuCollectorTracingDisabled(t *testing.T) {
 		},
 	}
 
-	client := NewNbuClient(cfg)
-	client.tracer = nil // Ensure tracer is nil
+	client := NewNbuClient(cfg) // No TracerProvider option = noop tracing
+
+	// Create TracerWrapper for collector (nil provider = noop)
+	tracing := NewTracerWrapper(nil, "test-collector")
 
 	collector := &NbuCollector{
-		cfg:    cfg,
-		client: client,
-		tracer: nil,
+		cfg:     cfg,
+		client:  client,
+		tracing: tracing,
 	}
 
-	// Verify that createScrapeSpan works without tracer
+	// Verify that createScrapeSpan works with noop tracer
 	ctx := context.Background()
 	newCtx, span := collector.createScrapeSpan(ctx)
 
-	if newCtx != ctx {
-		t.Error("createScrapeSpan() should return original context when tracer is nil")
+	if newCtx == nil {
+		t.Error("createScrapeSpan() should return valid context")
 	}
 
-	if span != nil {
-		t.Error("createScrapeSpan() should return nil span when tracer is nil")
+	if span == nil {
+		t.Error("createScrapeSpan() should return valid span (noop if no provider)")
 	}
+
+	// Should not panic
+	span.End()
 }

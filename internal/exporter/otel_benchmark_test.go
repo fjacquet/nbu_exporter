@@ -69,8 +69,7 @@ func BenchmarkFetchDataWithoutTracing(b *testing.B) {
 		},
 	}
 
-	client := NewNbuClient(cfg)
-	client.tracer = nil // Ensure tracing is disabled
+	client := NewNbuClient(cfg) // No TracerProvider option = noop tracing
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -259,10 +258,8 @@ func BenchmarkSpanCreation(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		ctx, span := createSpan(context.Background(), client.tracer, benchTestOperation, trace.SpanKindClient)
-		if span != nil {
-			span.End()
-		}
+		ctx, span := client.tracing.StartSpan(context.Background(), benchTestOperation, trace.SpanKindClient)
+		span.End()
 		_ = ctx
 	}
 }
@@ -308,15 +305,12 @@ func BenchmarkAttributeRecording(b *testing.B) {
 	}
 
 	client := NewNbuClient(cfg)
-	ctx, span := createSpan(context.Background(), client.tracer, benchTestOperation, trace.SpanKindClient)
-	defer func() {
-		if span != nil {
-			span.End()
-		}
-	}()
+	ctx, span := client.tracing.StartSpan(context.Background(), benchTestOperation, trace.SpanKindClient)
+	defer span.End()
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		client.recordHTTPAttributes(span, benchHTTPMethod, benchExampleURL, benchHTTPStatus, 0, benchResponseSize, benchDuration)
 	}
+	_ = ctx
 }
