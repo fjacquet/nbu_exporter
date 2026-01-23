@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 
 ## Current Position
 
-Phase: 4 of 6 (Test Coverage)
-Plan: 4 of 4 complete
-Status: Phase complete
-Last activity: 2026-01-23 — Completed plan 04-03 (Telemetry Manager Tests)
+Phase: 5 of 6 (Performance Optimizations)
+Plan: 2 of 3 complete
+Status: In progress
+Last activity: 2026-01-23 — Completed plan 05-02 (Parallel Collection with errgroup)
 
 ## Progress
 
@@ -31,6 +31,7 @@ Last activity: 2026-01-23 — Completed plan 04-03 (Telemetry Manager Tests)
 - [x] Phase 3 planning complete (5 plans: 03-01, 03-02, 03-03, 03-04, 03-05)
 - [x] Phase 3 execution (5 of 5 plans complete: 03-01, 03-02, 03-03, 03-04, 03-05)
 - [x] Phase 4 execution (4 of 4 plans complete: 04-01, 04-02, 04-03, 04-04)
+- [ ] Phase 5 execution (2 of 3 plans complete: 05-01, 05-02)
 
 ## Accumulated Context
 
@@ -87,6 +88,9 @@ Last activity: 2026-01-23 — Completed plan 04-03 (Telemetry Manager Tests)
 - (04-03) Telemetry coverage 83.7% is maximum achievable without production code changes
 - (04-03) Error paths in createExporter/createResource require dependency injection to test
 - (04-03) OTLP gRPC exporter doesn't fail at creation time due to async connection
+- (05-02) Always return nil from g.Go() to preserve graceful degradation behavior
+- (05-02) Pass gCtx (group context) to both collectors for proper cancellation propagation
+- (05-02) Errors tracked in separate variables rather than errgroup error return
 
 **Phase 1 Plans:**
 
@@ -123,9 +127,19 @@ Last activity: 2026-01-23 — Completed plan 04-03 (Telemetry Manager Tests)
 | 04-03 | Telemetry Manager Tests            | TEST-03          | internal/telemetry/manager_test.go          |
 | 04-04 | Concurrent Tests & Client Edge Cases | TEST-04, TEST-05 | concurrent_test.go, client_test.go        |
 
+**Phase 5 Plans:**
+
+| Plan  | Focus                              | Requirements | Files Modified             |
+| ----- | ---------------------------------- | ------------ | -------------------------- |
+| 05-01 | Connection Pooling Optimization    | PERF-01      | client.go                  |
+| 05-02 | Parallel Collection with errgroup  | PERF-02      | prometheus.go, go.mod      |
+| 05-03 | Response Caching                   | PERF-03      | TBD                        |
+
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 05-02 Execution):** Completed plan 05-02 (Parallel Collection with errgroup). Added golang.org/x/sync v0.19.0 dependency. Refactored collectAllMetrics to use errgroup.WithContext for parallel storage and job metric collection. Key design: always return nil from g.Go() to preserve graceful degradation (storage failure doesn't cancel job fetching and vice versa). Errors tracked in separate variables (storageErr, jobsErr). Total scrape time now max(storage_time, jobs_time) instead of sum. All tests pass with race detector. Two atomic commits: (1) errgroup dependency, (2) parallel collection implementation. Fixes PERF-02. Duration: 4 minutes.
 
 **2026-01-23 (Plan 04-03 Execution):** Completed plan 04-03 (Telemetry Manager Tests). Tests from plan already existed in codebase (from previous work). Added 8 new edge case tests: deadline exceeded context tests (createExporter, Initialize), resource attribute value verification, negative sampling rate tests, empty endpoint/service name tests, concurrent TracerProvider access. Coverage: 83.7% (up from 76.6% baseline). Note: 90%+ target requires production code changes for dependency injection - OTLP gRPC exporter doesn't fail at creation time (async), resource.New rarely fails, os.Hostname rarely fails. These error paths are untestable without mocking. One atomic commit: edge case tests. All tests pass with race detector. Addresses TEST-03 requirement. Duration: 12 minutes.
 
@@ -181,4 +195,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after completing Phase 4 Plan 03 (4 of 4 plans - Phase 4 complete)_
+_Last updated: 2026-01-23 after completing Phase 5 Plan 02 (2 of 3 plans in Phase 5)_
