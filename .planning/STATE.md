@@ -41,6 +41,10 @@ Last activity: 2026-01-23 — Completed 01-03-PLAN.md (Resource Cleanup)
 - (01-02) Keep BuildURL() signature unchanged for backward compatibility
 - (01-02) Validate URL during Config.Validate() instead of at BuildURL() time
 - (01-02) Document BuildURL() assumption of validated config
+- (01-03) Use atomic int32 for activeReqs counter to minimize lock contention
+- (01-03) Store local channel reference before releasing lock to prevent data race
+- (01-03) Default 30-second timeout for Close() balances graceful shutdown vs hang prevention
+- (01-03) CloseWithContext() provides custom timeout control for advanced use cases
 - (01-04) Use buffered error channel (capacity 1) for async server errors to prevent goroutine leak
 - (01-04) Server errors trigger graceful shutdown via Shutdown() rather than abrupt exit
 - (01-04) Error channel pattern: goroutine errors communicated via buffered channel instead of log.Fatalf
@@ -57,6 +61,8 @@ Last activity: 2026-01-23 — Completed 01-03-PLAN.md (Resource Cleanup)
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 01-03 Execution):** Completed plan 01-03 (Resource Cleanup). Implemented graceful HTTP client shutdown with connection draining. NbuClient now tracks active requests with atomic counter and mutex-protected state. Close() waits up to 30 seconds for active requests to complete before forcing cleanup. CloseWithContext() allows custom timeout control. Two auto-fixes: (1) Fixed blocking compilation issue from plan 01-01 (NewAPIVersionDetector signature), (2) Fixed data race in Close() by storing local channel reference before releasing lock. All tests pass with race detector. Fixes TD-05 (resource cleanup on shutdown). Duration: 10 minutes.
 
 **2026-01-23 (Plan 01-02 Execution):** Completed plan 01-02 (URL Validation). Added validateNBUBaseURL() method to validate NBU server URL format during config initialization. Invalid URLs now caught at startup with clear error messages instead of silently failing in BuildURL(). BuildURL() signature unchanged for backward compatibility. Added comprehensive tests for URL validation scenarios. One auto-fix: corrected broken test YAML using literal strings instead of actual values. Fixes FRAG-03 (URL parsing errors silently ignored). Duration: 10 minutes.
 
@@ -82,4 +88,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after completing plan 01-02_
+_Last updated: 2026-01-23 after completing plan 01-03 (Phase 1 complete)_
