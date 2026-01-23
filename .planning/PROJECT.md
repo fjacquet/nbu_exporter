@@ -5,6 +5,7 @@
 **Goal:** Address technical debt, bugs, security concerns, and test coverage gaps identified in codebase analysis.
 
 **Target features:**
+
 - Fix known bugs and fragile code patterns
 - Improve security posture (API key handling, TLS enforcement, rate limiting)
 - Reduce technical debt (config mutation, global state, resource cleanup)
@@ -35,6 +36,7 @@ Improve code reliability and maintainability by fixing identified concerns witho
 <!-- Current scope. Building toward these. -->
 
 **Tech Debt:**
+
 - [ ] **TD-01**: Fix configuration mutation during version detection (immutable config pattern)
 - [ ] **TD-02**: Eliminate global OpenTelemetry state (dependency injection)
 - [ ] **TD-03**: Replace pipe-delimited metric keys with structured format
@@ -43,26 +45,31 @@ Improve code reliability and maintainability by fixing identified concerns witho
 - [ ] **TD-06**: Replace fatal log in async goroutine with error channel
 
 **Known Bugs:**
+
 - [ ] **BUG-01**: Fix version detection state restoration on context cancellation
 
 **Security:**
+
 - [ ] **SEC-01**: Implement secure API key handling in memory
 - [ ] **SEC-02**: Enforce TLS verification by default with explicit opt-out
 - [ ] **SEC-03**: Add rate limiting and backoff for metric collection
 
 **Performance:**
+
 - [ ] **PERF-01**: Increase pagination page size for job fetching
 - [ ] **PERF-02**: Parallelize storage and job metric collection
 - [ ] **PERF-03**: Implement streaming metrics to reduce memory accumulation
 - [ ] **PERF-04**: Cache split results for pipe-delimited keys
 
 **Fragile Areas:**
+
 - [ ] **FRAG-01**: Remove shared config reference from APIVersionDetector
 - [ ] **FRAG-02**: Add connection pool lifecycle management
 - [ ] **FRAG-03**: Handle URL parsing errors in BuildURL
 - [ ] **FRAG-04**: Centralize tracer nil-checks into wrapper method
 
 **Test Coverage:**
+
 - [ ] **TEST-01**: Add integration tests for main.go (0% → target 60%+)
 - [ ] **TEST-02**: Increase testutil coverage (51.9% → 80%+)
 - [ ] **TEST-03**: Increase telemetry coverage (78.3% → 90%+)
@@ -70,6 +77,7 @@ Improve code reliability and maintainability by fixing identified concerns witho
 - [ ] **TEST-05**: Add client error handling edge case tests
 
 **Missing Features:**
+
 - [ ] **FEAT-01**: Add caching for storage metrics
 - [ ] **FEAT-02**: Implement health check with NetBackup connectivity verification
 - [ ] **FEAT-03**: Add metric staleness tracking
@@ -89,6 +97,7 @@ Improve code reliability and maintainability by fixing identified concerns witho
 This is a brownfield improvement project on an existing, functional Prometheus exporter. The codebase is well-structured with clear separation of concerns but has accumulated technical debt and has gaps in test coverage identified during codebase analysis.
 
 **Current state:**
+
 - Go 1.25 with modern dependency versions
 - 97.1% coverage in exporter package, but 0% in main.go
 - Functional but with reliability concerns around resource cleanup and error handling
@@ -107,11 +116,12 @@ This is a brownfield improvement project on an existing, functional Prometheus e
 
 <!-- Decisions that constrain future work. Add throughout project lifecycle. -->
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
+| Decision                                                                                 | Rationale                                       | Outcome   |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------- | --------- |
 | Address concerns in priority order: Bugs → Security → Tech Debt → Performance → Features | Fix breaking issues first, then improve quality | — Pending |
-| Maintain backwards compatibility for Prometheus metrics | Avoid breaking existing dashboards and alerts | — Pending |
-| Require test coverage for all changes | Prevent regression, improve confidence | — Pending |
+| Maintain backwards compatibility for Prometheus metrics                                  | Avoid breaking existing dashboards and alerts   | — Pending |
+| Require test coverage for all changes                                                    | Prevent regression, improve confidence          | — Pending |
 
 ---
-*Last updated: 2026-01-23 after initial project definition*
+
+_Last updated: 2026-01-23 after initial project definition_

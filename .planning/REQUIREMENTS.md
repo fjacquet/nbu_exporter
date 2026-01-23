@@ -68,51 +68,55 @@ Deferred to future milestones. Not in current roadmap.
 
 Explicitly excluded. Documented to prevent scope creep.
 
-| Feature | Reason |
-|---------|--------|
-| Certificate pinning | TLS verification improvements sufficient for now |
-| Mobile/web dashboard | Not core exporter functionality |
-| Real-time streaming metrics | Would require architectural changes |
+| Feature                     | Reason                                           |
+| --------------------------- | ------------------------------------------------ |
+| Certificate pinning         | TLS verification improvements sufficient for now |
+| Mobile/web dashboard        | Not core exporter functionality                  |
+| Real-time streaming metrics | Would require architectural changes              |
 
 ## Traceability
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| BUG-01 | — | Pending |
-| SEC-01 | — | Pending |
-| SEC-02 | — | Pending |
-| SEC-03 | — | Pending |
-| TD-01 | — | Pending |
-| TD-02 | — | Pending |
-| TD-03 | — | Pending |
-| TD-04 | — | Pending |
-| TD-05 | — | Pending |
-| TD-06 | — | Pending |
-| FRAG-01 | — | Pending |
-| FRAG-02 | — | Pending |
-| FRAG-03 | — | Pending |
-| FRAG-04 | — | Pending |
-| TEST-01 | — | Pending |
-| TEST-02 | — | Pending |
-| TEST-03 | — | Pending |
-| TEST-04 | — | Pending |
-| TEST-05 | — | Pending |
-| PERF-01 | — | Pending |
-| PERF-02 | — | Pending |
-| PERF-03 | — | Pending |
-| PERF-04 | — | Pending |
-| FEAT-01 | — | Pending |
-| FEAT-02 | — | Pending |
-| FEAT-03 | — | Pending |
-| FEAT-04 | — | Pending |
+| Requirement | Phase   | Status  |
+| ----------- | ------- | ------- |
+| BUG-01      | Phase 1 | Pending |
+| SEC-01      | Phase 2 | Pending |
+| SEC-02      | Phase 2 | Pending |
+| SEC-03      | Phase 2 | Pending |
+| TD-01       | Phase 3 | Pending |
+| TD-02       | Phase 3 | Pending |
+| TD-03       | Phase 3 | Pending |
+| TD-04       | Phase 4 | Pending |
+| TD-05       | Phase 1 | Pending |
+| TD-06       | Phase 1 | Pending |
+| FRAG-01     | Phase 1 | Pending |
+| FRAG-02     | Phase 3 | Pending |
+| FRAG-03     | Phase 1 | Pending |
+| FRAG-04     | Phase 3 | Pending |
+| TEST-01     | Phase 4 | Pending |
+| TEST-02     | Phase 4 | Pending |
+| TEST-03     | Phase 4 | Pending |
+| TEST-04     | Phase 4 | Pending |
+| TEST-05     | Phase 4 | Pending |
+| PERF-01     | Phase 5 | Pending |
+| PERF-02     | Phase 5 | Pending |
+| PERF-03     | Phase 5 | Pending |
+| PERF-04     | Phase 5 | Pending |
+| FEAT-01     | Phase 6 | Pending |
+| FEAT-02     | Phase 6 | Pending |
+| FEAT-03     | Phase 6 | Pending |
+| FEAT-04     | Phase 6 | Pending |
 
 **Coverage:**
+
 - v1.1 requirements: 27 total
-- Mapped to phases: 0
-- Unmapped: 27 (pending roadmap creation)
+- Mapped to phases: 27
+- Unmapped: 0 (100% coverage)
+
+**Note:** TD-04 and TEST-01 both address main.go test coverage (0% → 60%+) and will be implemented together in Phase 4.
 
 ---
-*Requirements defined: 2026-01-23*
-*Last updated: 2026-01-23 after initial definition*
+
+_Requirements defined: 2026-01-23_
+_Last updated: 2026-01-23 after roadmap creation_
