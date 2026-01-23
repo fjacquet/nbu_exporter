@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 Phase: 3 of 6 (Architecture Improvements)
 Plan: 2 of 5 complete
 Status: In progress
-Last activity: 2026-01-23 — Completed plan 03-04 (ImmutableConfig type)
+Last activity: 2026-01-23 — Completed plan 03-02 (TracerProvider Injection)
 
 ## Progress
 
@@ -29,7 +29,7 @@ Last activity: 2026-01-23 — Completed plan 03-04 (ImmutableConfig type)
 - [x] Phase 2 execution complete (2 of 2 plans: 02-01, 02-02)
 - [x] Phase 3 research complete (03-RESEARCH.md)
 - [x] Phase 3 planning complete (5 plans: 03-01, 03-02, 03-03, 03-04, 03-05)
-- [ ] Phase 3 execution (2 of 5 plans complete: 03-01, 03-04)
+- [ ] Phase 3 execution (2 of 5 plans complete: 03-01, 03-02)
 
 ## Accumulated Context
 
@@ -61,6 +61,10 @@ Last activity: 2026-01-23 — Completed plan 03-04 (ImmutableConfig type)
 - (03-01) Use noop.NewTracerProvider() as default instead of nil tracer for zero-overhead disabled tracing
 - (03-01) TracerWrapper guarantees valid span return (never nil) to eliminate nil-checks
 - (03-01) Keep deprecated createSpan for backward compatibility during migration
+- (03-02) Options pattern for TracerProvider injection eliminates global otel.GetTracerProvider() calls
+- (03-02) TracerProvider flows explicitly: telemetry.Manager → main.go → NbuCollector → NbuClient
+- (03-02) Components work correctly without TracerProvider (noop default via TracerWrapper)
+- (03-02) Separate SDK trace import (sdktrace) from API trace import in telemetry.Manager
 - (03-04) ImmutableConfig extracts values after validation and version detection complete
 - (03-04) All ImmutableConfig fields private with accessor methods returning copies/values
 - (03-04) Incremental adoption allows gradual migration of existing components
@@ -84,17 +88,19 @@ Last activity: 2026-01-23 — Completed plan 03-04 (ImmutableConfig type)
 
 **Phase 3 Plans:**
 
-| Plan  | Focus                            | Requirements | Files Modified                         |
-| ----- | -------------------------------- | ------------ | -------------------------------------- |
-| 03-01 | TracerWrapper with Noop Default  | FRAG-04      | tracing.go, tracing_test.go            |
-| 03-02 | Migrate to TracerWrapper         | FRAG-04      | netbackup.go, prometheus.go            |
-| 03-03 | Collector Responsibility Split   | TD-02, TD-03 | prometheus.go, collector.go            |
-| 03-04 | ImmutableConfig Type             | TD-01        | immutable.go, immutable_test.go        |
-| 03-05 | Migrate to ImmutableConfig       | TD-01        | client.go, prometheus.go, main.go      |
+| Plan  | Focus                            | Requirements | Files Modified                                             |
+| ----- | -------------------------------- | ------------ | ---------------------------------------------------------- |
+| 03-01 | TracerWrapper with Noop Default  | TD-02        | tracing.go, tracing_test.go                                |
+| 03-02 | TracerProvider Injection         | TD-02        | client.go, prometheus.go, netbackup.go, manager.go, main.go |
+| 03-03 | Collector Responsibility Split   | TD-03        | prometheus.go, collector.go                                |
+| 03-04 | ImmutableConfig Type             | TD-01        | immutable.go, immutable_test.go                            |
+| 03-05 | Migrate to ImmutableConfig       | TD-01        | client.go, prometheus.go, main.go                          |
 
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 03-02 Execution):** Completed plan 03-02 (TracerProvider Injection). Implemented options pattern for TracerProvider injection in NbuClient (WithTracerProvider) and NbuCollector (WithCollectorTracerProvider). Eliminated all global otel.GetTracerProvider() and otel.Tracer() calls from component constructors. TracerProvider flows explicitly: telemetry.Manager.TracerProvider() → main.go → NbuCollector → NbuClient. Updated telemetry.Manager to separate SDK/API trace imports and expose TracerProvider() method. All components work correctly without TracerProvider (noop default via TracerWrapper). Updated all tests to use new options pattern and TracerWrapper behavior. Four atomic commits: (1) NbuClient options, (2) NbuCollector options, (3) main.go injection, (4) test updates. All tests pass with race detector. Fixes TD-02 (eliminate global OpenTelemetry state). No deviations from plan. Duration: 10 minutes.
 
 **2026-01-23 (Plan 03-04 Execution):** Completed plan 03-04 (ImmutableConfig Type). Created ImmutableConfig type with private fields and accessor methods, enabling thread-safe runtime configuration through snapshot pattern. NewImmutableConfig constructor extracts values from validated Config after validation and version detection complete. All fields private with accessor methods returning copies/values (never references). Added MaskedAPIKey() for safe logging. Comprehensive tests verify immutability guarantees and snapshot behavior (Config changes don't affect ImmutableConfig). Two atomic commits: (1) ImmutableConfig type creation, (2) comprehensive tests. All tests pass with race detector. Fixes TD-01 (configuration objects immutable after initialization). Incremental adoption documented; component migration deferred to future phase. No deviations from plan. Duration: 3 minutes.
 
@@ -136,4 +142,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after completing plan 03-04_
+_Last updated: 2026-01-23 after completing plan 03-02_
