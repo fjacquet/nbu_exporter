@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 Phase: 5 of 6 (Performance Optimizations)
 Plan: 2 of 3 complete
 Status: In progress
-Last activity: 2026-01-23 — Completed plan 05-02 (Parallel Collection with errgroup)
+Last activity: 2026-01-23 — Completed plan 05-01 (Batched Job Pagination)
 
 ## Progress
 
@@ -88,6 +88,9 @@ Last activity: 2026-01-23 — Completed plan 05-02 (Parallel Collection with err
 - (04-03) Telemetry coverage 83.7% is maximum achievable without production code changes
 - (04-03) Error paths in createExporter/createResource require dependency injection to test
 - (04-03) OTLP gRPC exporter doesn't fail at creation time due to async connection
+- (05-01) Separate jobPageLimit constant (100) from storage pagination for independent tuning
+- (05-01) Loop over all jobs in batch response with range instead of single-item access
+- (05-01) Remove AttrNetBackupPageNumber (meaningless with batches), keep AttrNetBackupPageOffset
 - (05-02) Always return nil from g.Go() to preserve graceful degradation behavior
 - (05-02) Pass gCtx (group context) to both collectors for proper cancellation propagation
 - (05-02) Errors tracked in separate variables rather than errgroup error return
@@ -129,15 +132,17 @@ Last activity: 2026-01-23 — Completed plan 05-02 (Parallel Collection with err
 
 **Phase 5 Plans:**
 
-| Plan  | Focus                              | Requirements | Files Modified             |
-| ----- | ---------------------------------- | ------------ | -------------------------- |
-| 05-01 | Connection Pooling Optimization    | PERF-01      | client.go                  |
-| 05-02 | Parallel Collection with errgroup  | PERF-02      | prometheus.go, go.mod      |
-| 05-03 | Response Caching                   | PERF-03      | TBD                        |
+| Plan  | Focus                              | Requirements | Files Modified                   |
+| ----- | ---------------------------------- | ------------ | -------------------------------- |
+| 05-01 | Batched Job Pagination (100/page)  | PERF-01      | netbackup.go, netbackup_test.go  |
+| 05-02 | Parallel Collection with errgroup  | PERF-02      | prometheus.go, go.mod            |
+| 05-03 | Response Caching                   | PERF-03      | TBD                              |
 
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 05-01 Execution):** Completed plan 05-01 (Batched Job Pagination). Increased job page size from 1 to 100 items per API call, reducing API calls by ~100x for large job sets. Added jobPageLimit constant (100) separate from storage pagination. Updated FetchJobDetails to use range loop over all jobs in batch response. Removed AttrNetBackupPageNumber from span attributes (meaningless with batches). Created netbackup_test.go with 4 batch processing tests: BatchProcessing (verifies all jobs counted), BatchPagination (150 jobs across 2 pages), EmptyBatch (returns -1), MixedJobTypes (different types counted separately). Fixed test helpers in api_compatibility_test.go and integration_test.go for batch pagination. Two atomic commits: (1) batch pagination implementation, (2) batch processing tests. All tests pass with race detector. Fixes PERF-01. Duration: 10 minutes.
 
 **2026-01-23 (Plan 05-02 Execution):** Completed plan 05-02 (Parallel Collection with errgroup). Added golang.org/x/sync v0.19.0 dependency. Refactored collectAllMetrics to use errgroup.WithContext for parallel storage and job metric collection. Key design: always return nil from g.Go() to preserve graceful degradation (storage failure doesn't cancel job fetching and vice versa). Errors tracked in separate variables (storageErr, jobsErr). Total scrape time now max(storage_time, jobs_time) instead of sum. All tests pass with race detector. Two atomic commits: (1) errgroup dependency, (2) parallel collection implementation. Fixes PERF-02. Duration: 4 minutes.
 
@@ -195,4 +200,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after completing Phase 5 Plan 02 (2 of 3 plans in Phase 5)_
+_Last updated: 2026-01-23 after completing Phase 5 Plan 01 (Batched Job Pagination - 2 of 3 plans in Phase 5)_
