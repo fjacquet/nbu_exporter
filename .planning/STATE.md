@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 2 of 6 (Security Hardening)
-Plan: Not started (needs planning)
-Status: Phase 1 complete and verified
-Last activity: 2026-01-23 — Phase 1 verified (15/16 must-haves, 93.75%)
+Plan: 1 of 2 complete (Wave 1)
+Status: Phase 2 in progress
+Last activity: 2026-01-23 — Completed 02-01-PLAN.md
 
 ## Progress
 
@@ -24,6 +24,9 @@ Last activity: 2026-01-23 — Phase 1 verified (15/16 must-haves, 93.75%)
 - [x] Phase 1 planning complete (4 plans)
 - [x] Phase 1 execution (4 of 4 plans complete: 01-01, 01-02, 01-03, 01-04)
 - [x] Phase 1 verification passed (15/16 must-haves, 93.75%)
+- [x] Phase 2 research complete (02-RESEARCH.md)
+- [x] Phase 2 planning complete (2 plans: 02-01, 02-02)
+- [x] Phase 2 execution (1 of 2 plans complete: 02-01)
 
 ## Accumulated Context
 
@@ -48,19 +51,31 @@ Last activity: 2026-01-23 — Phase 1 verified (15/16 must-haves, 93.75%)
 - (01-04) Use buffered error channel (capacity 1) for async server errors to prevent goroutine leak
 - (01-04) Server errors trigger graceful shutdown via Shutdown() rather than abrupt exit
 - (01-04) Error channel pattern: goroutine errors communicated via buffered channel instead of log.Fatalf
+- (02-01) TLS insecure mode requires NBU_INSECURE_MODE=true environment variable for explicit opt-in
+- (02-01) TLS 1.2 is minimum supported version (industry standard, blocks older protocols)
+- (02-01) Security warnings log at Error level (not Warn) for better visibility
+- (02-01) API key protection verified via comprehensive audit - no code changes needed
 
 **Phase 1 Plans:**
 
-| Plan  | Focus                      | Requirements     | Files Modified                                             |
-| ----- | -------------------------- | ---------------- | ---------------------------------------------------------- |
-| 01-01 | Version Detection Immutability | BUG-01, FRAG-01 | version_detector.go, client.go, version_detector_test.go  |
-| 01-02 | URL Validation             | FRAG-03          | Config.go, Config_test.go                                  |
-| 01-03 | Resource Cleanup           | TD-05            | client.go, client_test.go, interface.go                    |
-| 01-04 | Error Channel Pattern      | TD-06            | main.go                                                    |
+| Plan  | Focus                          | Requirements    | Files Modified                                           |
+| ----- | ------------------------------ | --------------- | -------------------------------------------------------- |
+| 01-01 | Version Detection Immutability | BUG-01, FRAG-01 | version_detector.go, client.go, version_detector_test.go |
+| 01-02 | URL Validation                 | FRAG-03         | Config.go, Config_test.go                                |
+| 01-03 | Resource Cleanup               | TD-05           | client.go, client_test.go, interface.go                  |
+| 01-04 | Error Channel Pattern          | TD-06           | main.go                                                  |
+
+**Phase 2 Plans:**
+
+| Plan  | Focus                              | Requirements | Files Modified                                              |
+| ----- | ---------------------------------- | ------------ | ----------------------------------------------------------- |
+| 02-01 | TLS Enforcement & API Key Security | SEC-01, SEC-02 | Config.go, Config_test.go, client.go, client_test.go |
 
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 02-01 Execution):** Completed plan 02-01 (TLS Enforcement & API Key Security). Implemented TLS enforcement requiring NBU_INSECURE_MODE=true environment variable for insecure mode. TLS 1.2 enforced as minimum version in HTTP client. Comprehensive API key protection audit completed - verified API key never appears in error messages, logs, or span attributes. Security warnings upgraded to Error level for better visibility. Three atomic commits: (1) TLS enforcement validation, (2) TLS 1.2 minimum and security logging, (3) API key audit verification. All tests pass with race detector. Fixes SEC-01 (secure API key handling) and SEC-02 (TLS enforcement). No deviations from plan. Duration: 5 minutes.
 
 **2026-01-23 (Plan 01-03 Execution):** Completed plan 01-03 (Resource Cleanup). Implemented graceful HTTP client shutdown with connection draining. NbuClient now tracks active requests with atomic counter and mutex-protected state. Close() waits up to 30 seconds for active requests to complete before forcing cleanup. CloseWithContext() allows custom timeout control. Two auto-fixes: (1) Fixed blocking compilation issue from plan 01-01 (NewAPIVersionDetector signature), (2) Fixed data race in Close() by storing local channel reference before releasing lock. All tests pass with race detector. Fixes TD-05 (resource cleanup on shutdown). Duration: 10 minutes.
 
@@ -71,12 +86,14 @@ Last activity: 2026-01-23 — Phase 1 verified (15/16 must-haves, 93.75%)
 **2026-01-23 (Plan 01-04 Execution):** Completed plan 01-04 (Error Channel Pattern). Replaced log.Fatalf in HTTP server goroutine with buffered error channel. Main function now uses select to handle both shutdown signals and server errors gracefully. No deviations from plan. Duration: 4 minutes.
 
 **2026-01-23 (Phase 1 Planning):** Created 4 plans for Phase 1:
+
 - 01-01: Refactor version detection to return detected version without mutating config
 - 01-02: Add URL validation during config initialization
 - 01-03: Implement proper connection drain in NbuClient.Close()
 - 01-04: Replace log.Fatalf in goroutine with error channel pattern
 
 All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
+
 - Specific file changes with code examples
 - Verification criteria
 - Test requirements
@@ -92,4 +109,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after Phase 1 verification_
+_Last updated: 2026-01-23 after Phase 2 Plan 1 execution_
