@@ -4,8 +4,40 @@ import (
 	"context"
 
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
+// TracerWrapper provides nil-safe tracing by using noop.TracerProvider as default.
+// All span methods are guaranteed safe to call - no nil-checks needed.
+type TracerWrapper struct {
+	tracer trace.Tracer
+}
+
+// NewTracerWrapper creates a TracerWrapper from a TracerProvider.
+// If tp is nil, uses noop.NewTracerProvider() to ensure all operations are safe.
+func NewTracerWrapper(tp trace.TracerProvider, instrumentationName string) *TracerWrapper {
+	if tp == nil {
+		tp = noop.NewTracerProvider()
+	}
+	return &TracerWrapper{
+		tracer: tp.Tracer(instrumentationName),
+	}
+}
+
+// StartSpan creates a new span with the given operation name and kind.
+// Always returns a valid span (noop if tracing disabled) - no nil-check needed.
+func (w *TracerWrapper) StartSpan(ctx context.Context, operation string, kind trace.SpanKind) (context.Context, trace.Span) {
+	return w.tracer.Start(ctx, operation, trace.WithSpanKind(kind))
+}
+
+// Tracer returns the underlying tracer for advanced use cases.
+func (w *TracerWrapper) Tracer() trace.Tracer {
+	return w.tracer
+}
+
+// Deprecated: Use TracerWrapper.StartSpan instead. This function will be removed
+// after all call sites are migrated to use TracerWrapper.
+//
 // createSpan creates a new span with the given operation name and span kind.
 // Returns the original context and nil span if tracer is nil (tracing disabled).
 //
