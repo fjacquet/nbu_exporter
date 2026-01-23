@@ -224,11 +224,7 @@ func TestConfigurationOverride(t *testing.T) {
 	client.client.SetRetryCount(0)
 
 	// Make a request - should use configured version without detection
-	jobsSize := make(map[string]float64)
-	jobsCount := make(map[string]float64)
-	jobsStatusCount := make(map[string]float64)
-
-	err := FetchAllJobs(context.Background(), client, jobsSize, jobsCount, jobsStatusCount, "5m")
+	_, _, _, err := FetchAllJobs(context.Background(), client, "5m")
 	if err != nil {
 		t.Fatalf("FetchAllJobs failed: %v", err)
 	}

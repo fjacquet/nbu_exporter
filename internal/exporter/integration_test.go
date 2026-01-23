@@ -40,10 +40,15 @@ func TestStorageMetricsCollection(t *testing.T) {
 	cfg := createTestConfig(server.URL, "12.0")
 	client := NewNbuClient(cfg)
 
-	storageMetrics := make(map[string]float64)
-	err := FetchStorage(context.Background(), client, storageMetrics)
+	storageSlice, err := FetchStorage(context.Background(), client)
 	if err != nil {
 		t.Fatalf("FetchStorage failed: %v", err)
+	}
+
+	// Convert to map for verification
+	storageMetrics := make(map[string]float64)
+	for _, m := range storageSlice {
+		storageMetrics[m.Key.String()] = m.Value
 	}
 
 	// Verify we got metrics for disk storage units (excluding tape)
@@ -132,35 +137,37 @@ func testJobMetricsCollectionWithServer(t *testing.T, serverURL string) {
 	cfg := createTestConfig(serverURL, "12.0")
 	client := NewNbuClient(cfg)
 
-	jobsSize := make(map[string]float64)
-	jobsCount := make(map[string]float64)
-	jobsStatusCount := make(map[string]float64)
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err := FetchAllJobs(ctx, client, jobsSize, jobsCount, jobsStatusCount, "5m")
+	jobsSizeSlice, jobsCountSlice, jobsStatusSlice, err := FetchAllJobs(ctx, client, "5m")
 	if err != nil {
 		t.Fatalf(testErrorFetchAllJobsFailed, err)
 	}
 
-	verifyJobMetricsCollected(t, jobsSize, jobsCount, jobsStatusCount)
+	verifyJobMetricsCollected(t, jobsSizeSlice, jobsCountSlice, jobsStatusSlice)
 }
 
 // verifyJobMetricsCollected verifies that job metrics were collected
-func verifyJobMetricsCollected(t *testing.T, jobsSize, jobsCount, jobsStatusCount map[string]float64) {
+func verifyJobMetricsCollected(t *testing.T, jobsSizeSlice []JobMetricValue, jobsCountSlice []JobMetricValue, jobsStatusSlice []JobStatusMetricValue) {
 	t.Helper()
 
-	if len(jobsCount) == 0 {
+	if len(jobsCountSlice) == 0 {
 		t.Error("No job count metrics collected")
 	}
 
-	if len(jobsSize) == 0 {
+	if len(jobsSizeSlice) == 0 {
 		t.Error("No job size metrics collected")
 	}
 
-	if len(jobsStatusCount) == 0 {
+	if len(jobsStatusSlice) == 0 {
 		t.Error("No job status metrics collected")
+	}
+
+	// Convert to map for verification
+	jobsCount := make(map[string]float64)
+	for _, m := range jobsCountSlice {
+		jobsCount[m.Key.String()] = m.Value
 	}
 
 	// Verify specific job metrics
@@ -294,11 +301,7 @@ func TestPaginationHandling(t *testing.T) {
 	cfg := createTestConfig(server.URL, "12.0")
 	client := NewNbuClient(cfg)
 
-	jobsSize := make(map[string]float64)
-	jobsCount := make(map[string]float64)
-	jobsStatusCount := make(map[string]float64)
-
-	err := FetchAllJobs(context.Background(), client, jobsSize, jobsCount, jobsStatusCount, "5m")
+	_, jobsCountSlice, _, err := FetchAllJobs(context.Background(), client, "5m")
 	if err != nil {
 		t.Fatalf(testErrorFetchAllJobsFailed, err)
 	}
@@ -310,8 +313,8 @@ func TestPaginationHandling(t *testing.T) {
 
 	// Verify we collected metrics from all pages
 	totalJobs := 0
-	for _, count := range jobsCount {
-		totalJobs += int(count)
+	for _, m := range jobsCountSlice {
+		totalJobs += int(m.Value)
 	}
 
 	if totalJobs != expectedPages {
@@ -427,11 +430,7 @@ func TestFilteringByTime(t *testing.T) {
 	cfg := createTestConfig(server.URL, "12.0")
 	client := NewNbuClient(cfg)
 
-	jobsSize := make(map[string]float64)
-	jobsCount := make(map[string]float64)
-	jobsStatusCount := make(map[string]float64)
-
-	err := FetchAllJobs(context.Background(), client, jobsSize, jobsCount, jobsStatusCount, "5m")
+	_, _, _, err := FetchAllJobs(context.Background(), client, "5m")
 	if err != nil {
 		t.Fatalf(testErrorFetchAllJobsFailed, err)
 	}

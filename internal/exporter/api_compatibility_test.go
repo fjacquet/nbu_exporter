@@ -52,19 +52,34 @@ func testJobsAPIForVersion(t *testing.T, version, filename string) {
 	cfg := createTestConfig(server.URL, version)
 	client := NewNbuClient(cfg)
 
-	jobsSize, jobsCount, jobsStatusCount := createJobMetricMaps()
-
-	err := FetchAllJobs(context.Background(), client, jobsSize, jobsCount, jobsStatusCount, "5m")
+	jobsSizeSlice, jobsCountSlice, _, err := FetchAllJobs(context.Background(), client, "5m")
 	if err != nil {
 		t.Fatalf(fetchJobsErrorFormat, version, err)
 	}
 
+	// Convert slices to maps for verification
+	jobsSize := jobMetricSliceToMap(jobsSizeSlice)
+	jobsCount := jobMetricSliceToMap(jobsCountSlice)
+
 	verifyJobMetrics(t, jobsSize, jobsCount)
 }
 
-// createJobMetricMaps creates empty metric maps for job testing
-func createJobMetricMaps() (map[string]float64, map[string]float64, map[string]float64) {
-	return make(map[string]float64), make(map[string]float64), make(map[string]float64)
+// jobMetricSliceToMap converts a JobMetricValue slice to a map keyed by String()
+func jobMetricSliceToMap(slice []JobMetricValue) map[string]float64 {
+	result := make(map[string]float64)
+	for _, v := range slice {
+		result[v.Key.String()] = v.Value
+	}
+	return result
+}
+
+// storageMetricSliceToMap converts a StorageMetricValue slice to a map keyed by String()
+func storageMetricSliceToMap(slice []StorageMetricValue) map[string]float64 {
+	result := make(map[string]float64)
+	for _, v := range slice {
+		result[v.Key.String()] = v.Value
+	}
+	return result
 }
 
 // verifyJobMetrics verifies that job metrics were collected correctly
@@ -118,12 +133,13 @@ func testStorageAPIForVersion(t *testing.T, version, filename string) {
 	cfg := createTestConfig(server.URL, version)
 	client := NewNbuClient(cfg)
 
-	storageMetrics := make(map[string]float64)
-	err := FetchStorage(context.Background(), client, storageMetrics)
+	storageSlice, err := FetchStorage(context.Background(), client)
 	if err != nil {
 		t.Fatalf(fetchStorageErrorFormat, version, err)
 	}
 
+	// Convert slice to map for verification
+	storageMetrics := storageMetricSliceToMap(storageSlice)
 	verifyStorageMetrics(t, storageMetrics, version)
 }
 
@@ -177,14 +193,12 @@ func collectJobMetricsForAllVersions(t *testing.T, versions []string) map[string
 		jobsCfg := createTestConfig(jobsServer.URL, version)
 		jobsClient := NewNbuClient(jobsCfg)
 
-		jobsSize, jobsCount, jobsStatusCount := createJobMetricMaps()
-
-		err := FetchAllJobs(context.Background(), jobsClient, jobsSize, jobsCount, jobsStatusCount, "5m")
+		_, jobsCountSlice, _, err := FetchAllJobs(context.Background(), jobsClient, "5m")
 		if err != nil {
 			t.Fatalf(fetchJobsErrorFormat, version, err)
 		}
 
-		allJobMetrics[version] = jobsCount
+		allJobMetrics[version] = jobMetricSliceToMap(jobsCountSlice)
 		jobsServer.Close()
 	}
 
@@ -205,13 +219,12 @@ func collectStorageMetricsForAllVersions(t *testing.T, versions []string) map[st
 		storageCfg := createTestConfig(storageServer.URL, version)
 		storageClient := NewNbuClient(storageCfg)
 
-		storageMetrics := make(map[string]float64)
-		err := FetchStorage(context.Background(), storageClient, storageMetrics)
+		storageSlice, err := FetchStorage(context.Background(), storageClient)
 		if err != nil {
 			t.Fatalf(fetchStorageErrorFormat, version, err)
 		}
 
-		allStorageMetrics[version] = storageMetrics
+		allStorageMetrics[version] = storageMetricSliceToMap(storageSlice)
 		storageServer.Close()
 	}
 
@@ -304,11 +317,7 @@ func TestAuthenticationWithAllVersions(t *testing.T) {
 			cfg := createTestConfig(server.URL, version)
 			client := NewNbuClient(cfg)
 
-			jobsSize := make(map[string]float64)
-			jobsCount := make(map[string]float64)
-			jobsStatusCount := make(map[string]float64)
-
-			err := FetchAllJobs(context.Background(), client, jobsSize, jobsCount, jobsStatusCount, "5m")
+			_, _, _, err := FetchAllJobs(context.Background(), client, "5m")
 			if err != nil {
 				t.Fatalf("FetchAllJobs failed for version %s: %v", version, err)
 			}
@@ -475,11 +484,7 @@ func TestErrorHandlingAcrossVersions(t *testing.T) {
 			// Disable retries for this test to avoid slow exponential backoff
 			client.client.SetRetryCount(0)
 
-			jobsSize := make(map[string]float64)
-			jobsCount := make(map[string]float64)
-			jobsStatusCount := make(map[string]float64)
-
-			err := FetchAllJobs(context.Background(), client, jobsSize, jobsCount, jobsStatusCount, "5m")
+			_, _, _, err := FetchAllJobs(context.Background(), client, "5m")
 
 			// Should handle error gracefully
 			if err == nil {

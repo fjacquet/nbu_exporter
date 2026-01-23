@@ -27,41 +27,18 @@ const (
 	bytesPerKilobyte = 1024                     // Conversion factor from kilobytes to bytes
 )
 
-// FetchStorage retrieves storage unit information from the NetBackup API and populates
-// the provided metrics map with capacity data. It fetches all storage units and extracts
-// free and used capacity metrics for non-tape storage.
+// FetchStorage retrieves storage unit information from the NetBackup API and returns
+// typed metric values. It fetches all storage units and extracts free and used capacity
+// metrics for non-tape storage.
 //
 // Tape storage units are excluded from metrics as they don't report meaningful capacity values.
 //
 // Parameters:
 //   - ctx: Context for request cancellation and timeout
-//   - client: NetBackup API client (interface for testability)
-//   - storageMetrics: Map to populate with storage metrics (key format: "name|type|size")
+//   - client: NetBackup API client
 //
-// The function populates storageMetrics with entries like:
-//   - "disk-pool-1|MEDIA_SERVER|free" -> 5368709120000 (bytes)
-//   - "disk-pool-1|MEDIA_SERVER|used" -> 5368709120000 (bytes)
-//
-// Returns an error if the API request fails or response cannot be parsed.
-//
-// Example usage:
-//
-//	storageMetrics := make(map[string]float64)
-//	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-//	defer cancel()
-//
-//	if err := FetchStorage(ctx, client, storageMetrics); err != nil {
-//	    log.Errorf("Failed to fetch storage: %v", err)
-//	    return err
-//	}
-//
-//	// Access metrics using structured keys
-//	for key, value := range storageMetrics {
-//	    labels := strings.Split(key, "|")
-//	    name, storageType, sizeType := labels[0], labels[1], labels[2]
-//	    log.Infof("Storage %s (%s) %s: %.2f GB", name, storageType, sizeType, value/1e9)
-//	}
-func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[string]float64) error {
+// Returns a slice of StorageMetricValue and an error if the API request fails.
+func FetchStorage(ctx context.Context, client *NbuClient) ([]StorageMetricValue, error) {
 	// Start child span "netbackup.fetch_storage" from parent context
 	ctx, span := client.tracing.StartSpan(ctx, "netbackup.fetch_storage", trace.SpanKindClient)
 	defer span.End()
@@ -74,14 +51,12 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
 	})
 
 	if err := client.FetchData(ctx, url, &storages); err != nil {
-		// Record error as span event and set span status to error
-		if span != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-		}
-		return fmt.Errorf("failed to fetch storage data: %w", err)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, fmt.Errorf("failed to fetch storage data: %w", err)
 	}
 
+	var metrics []StorageMetricValue
 	for _, data := range storages.Data {
 		// Skip tape storage units
 		if data.Attributes.StorageType == storageTypeTape {
@@ -91,25 +66,26 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
 		stuName := data.Attributes.Name
 		stuType := data.Attributes.StorageServerType
 
-		freeKey := StorageMetricKey{Name: stuName, Type: stuType, Size: sizeTypeFree}
-		usedKey := StorageMetricKey{Name: stuName, Type: stuType, Size: sizeTypeUsed}
-
-		storageMetrics[freeKey.String()] = float64(data.Attributes.FreeCapacityBytes)
-		storageMetrics[usedKey.String()] = float64(data.Attributes.UsedCapacityBytes)
+		metrics = append(metrics, StorageMetricValue{
+			Key:   StorageMetricKey{Name: stuName, Type: stuType, Size: sizeTypeFree},
+			Value: float64(data.Attributes.FreeCapacityBytes),
+		})
+		metrics = append(metrics, StorageMetricValue{
+			Key:   StorageMetricKey{Name: stuName, Type: stuType, Size: sizeTypeUsed},
+			Value: float64(data.Attributes.UsedCapacityBytes),
+		})
 	}
 
 	// Batch span attributes for storage operation
-	if span != nil {
-		attrs := []attribute.KeyValue{
-			attribute.String(telemetry.AttrNetBackupEndpoint, storagePath),
-			attribute.Int(telemetry.AttrNetBackupStorageUnits, len(storages.Data)),
-			attribute.String(telemetry.AttrNetBackupAPIVersion, client.cfg.NbuServer.APIVersion),
-		}
-		span.SetAttributes(attrs...)
+	attrs := []attribute.KeyValue{
+		attribute.String(telemetry.AttrNetBackupEndpoint, storagePath),
+		attribute.Int(telemetry.AttrNetBackupStorageUnits, len(storages.Data)),
+		attribute.String(telemetry.AttrNetBackupAPIVersion, client.cfg.NbuServer.APIVersion),
 	}
+	span.SetAttributes(attrs...)
 
 	log.Debugf("Fetched storage data for %d storage units", len(storages.Data))
-	return nil
+	return metrics, nil
 }
 
 // FetchJobDetails retrieves a single job record at the specified pagination offset and
@@ -122,24 +98,20 @@ func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[str
 // Parameters:
 //   - ctx: Context for request cancellation and timeout
 //   - client: Configured NetBackup API client
-//   - jobsSize: Map to accumulate bytes transferred per job type/status
-//   - jobsCount: Map to accumulate job counts per job type/status
-//   - jobsStatusCount: Map to accumulate job counts per action/status
+//   - jobsSize: Typed map to accumulate bytes transferred per job type/status
+//   - jobsCount: Typed map to accumulate job counts per job type/status
+//   - jobsStatusCount: Typed map to accumulate job counts per action/status
 //   - offset: Pagination offset for the current request
 //   - startTime: Filter to only include jobs completed after this time
 //
 // Returns:
 //   - Next pagination offset (or -1 if no more jobs)
 //   - Error if the API request fails
-//
-// The function updates metrics maps with keys like:
-//   - jobsSize["BACKUP|VMWARE|0"] += bytes transferred
-//   - jobsCount["BACKUP|VMWARE|0"] += 1
-//   - jobsStatusCount["BACKUP|0"] += 1
 func FetchJobDetails(
 	ctx context.Context,
 	client *NbuClient,
-	jobsSize, jobsCount, jobsStatusCount map[string]float64,
+	jobsSize, jobsCount map[JobMetricKey]float64,
+	jobsStatusCount map[JobStatusKey]float64,
 	offset int,
 	startTime time.Time,
 ) (int, error) {
@@ -159,23 +131,18 @@ func FetchJobDetails(
 	url := client.cfg.BuildURL(jobsPath, queryParams)
 
 	if err := client.FetchData(ctx, url, &jobs); err != nil {
-		// Record error as span event and set span status to error
-		if span != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-		}
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return -1, fmt.Errorf("failed to fetch job details at offset %d: %w", offset, err)
 	}
 
 	// No more jobs to process
 	if len(jobs.Data) == 0 {
-		if span != nil {
-			attrs := []attribute.KeyValue{
-				attribute.Int(telemetry.AttrNetBackupJobsInPage, 0),
-			}
-			span.SetAttributes(attrs...)
-			span.SetStatus(codes.Ok, "No more jobs to process")
+		attrs := []attribute.KeyValue{
+			attribute.Int(telemetry.AttrNetBackupJobsInPage, 0),
 		}
+		span.SetAttributes(attrs...)
+		span.SetStatus(codes.Ok, "No more jobs to process")
 		return -1, nil
 	}
 
@@ -193,36 +160,27 @@ func FetchJobDetails(
 		Status: strconv.Itoa(job.Attributes.Status),
 	}
 
-	// Update metrics
-	jobsCount[jobKey.String()]++
-	jobsStatusCount[statusKey.String()]++
-	jobsSize[jobKey.String()] += float64(job.Attributes.KilobytesTransferred * bytesPerKilobyte)
+	// Update metrics using typed keys directly
+	jobsCount[jobKey]++
+	jobsStatusCount[statusKey]++
+	jobsSize[jobKey] += float64(job.Attributes.KilobytesTransferred * bytesPerKilobyte)
 
 	// Batch span attributes for job page
-	if span != nil {
-		// Calculate page number (assuming page size of 1 based on limit)
-		pageNumber := offset + 1
-		attrs := []attribute.KeyValue{
-			attribute.Int(telemetry.AttrNetBackupPageOffset, offset),
-			attribute.Int(telemetry.AttrNetBackupPageNumber, pageNumber),
-			attribute.Int(telemetry.AttrNetBackupJobsInPage, len(jobs.Data)),
-		}
-		span.SetAttributes(attrs...)
+	pageNumber := offset + 1
+	attrs := []attribute.KeyValue{
+		attribute.Int(telemetry.AttrNetBackupPageOffset, offset),
+		attribute.Int(telemetry.AttrNetBackupPageNumber, pageNumber),
+		attribute.Int(telemetry.AttrNetBackupJobsInPage, len(jobs.Data)),
 	}
+	span.SetAttributes(attrs...)
 
 	// Check if we've reached the last page
 	if jobs.Meta.Pagination.Offset == jobs.Meta.Pagination.Last {
-		if span != nil {
-			span.SetStatus(codes.Ok, "Last page reached")
-		}
+		span.SetStatus(codes.Ok, "Last page reached")
 		return -1, nil
 	}
 
-	// Set span status to OK for successful page fetch
-	if span != nil {
-		span.SetStatus(codes.Ok, "Page fetched successfully")
-	}
-
+	span.SetStatus(codes.Ok, "Page fetched successfully")
 	return jobs.Meta.Pagination.Next, nil
 }
 
@@ -269,115 +227,86 @@ func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, o
 // the configured time window. It calculates the start time based on the scraping interval
 // and fetches all jobs that completed after that time.
 //
-// The function uses pagination to efficiently process large job datasets and populates
-// three metrics maps with aggregated statistics:
+// The function uses pagination to efficiently process large job datasets and returns
+// three typed slices with aggregated statistics:
 //   - jobsSize: Total bytes transferred per job type/policy/status
 //   - jobsCount: Number of jobs per job type/policy/status
-//   - jobsStatusCount: Number of jobs per action/status (simplified aggregation)
+//   - statusCount: Number of jobs per action/status (simplified aggregation)
 //
 // Parameters:
 //   - ctx: Context for request cancellation and timeout
 //   - client: Configured NetBackup API client
-//   - jobsSize: Map to populate with bytes transferred metrics
-//   - jobsCount: Map to populate with job count metrics
-//   - jobsStatusCount: Map to populate with status count metrics
 //   - scrapingInterval: Duration string (e.g., "5m", "1h") defining the time window
 //
-// Returns an error if:
+// Returns typed slices and an error if:
 //   - The scraping interval cannot be parsed
 //   - Any API request fails during pagination
-//
-// Example usage:
-//
-//	jobsSize := make(map[string]float64)
-//	jobsCount := make(map[string]float64)
-//	jobsStatusCount := make(map[string]float64)
-//	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-//	defer cancel()
-//
-//	err := FetchAllJobs(ctx, client, jobsSize, jobsCount, jobsStatusCount, "5m")
-//	if err != nil {
-//	    log.Errorf("Failed to fetch jobs: %v", err)
-//	    return err
-//	}
-//
-//	// Access aggregated metrics
-//	for key, count := range jobsCount {
-//	    labels := strings.Split(key, "|")
-//	    action, policyType, status := labels[0], labels[1], labels[2]
-//	    bytes := jobsSize[key]
-//	    log.Infof("Jobs: %s/%s (status %s) - count: %.0f, bytes: %.2f GB",
-//	        action, policyType, status, count, bytes/1e9)
-//	}
 func FetchAllJobs(
 	ctx context.Context,
 	client *NbuClient,
-	jobsSize, jobsCount, jobsStatusCount map[string]float64,
 	scrapingInterval string,
-) error {
+) (jobsSize []JobMetricValue, jobsCount []JobMetricValue, statusCount []JobStatusMetricValue, err error) {
 	// Start child span "netbackup.fetch_jobs" from parent context
 	ctx, span := client.tracing.StartSpan(ctx, "netbackup.fetch_jobs", trace.SpanKindClient)
 	defer span.End()
 
-	duration, err := time.ParseDuration("-" + scrapingInterval)
-	if err != nil {
-		// Record error as span event and set span status to error
-		if span != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-		}
-		return fmt.Errorf("invalid scraping interval %s: %w", scrapingInterval, err)
+	duration, parseErr := time.ParseDuration("-" + scrapingInterval)
+	if parseErr != nil {
+		span.RecordError(parseErr)
+		span.SetStatus(codes.Error, parseErr.Error())
+		return nil, nil, nil, fmt.Errorf("invalid scraping interval %s: %w", scrapingInterval, parseErr)
 	}
 
 	startTime := time.Now().Add(duration).UTC()
 	log.Debugf("Fetching jobs since %s", startTime.Format(time.RFC3339))
 
-	// Track initial job counts to calculate total jobs fetched
-	initialJobCount := 0
-	for _, count := range jobsCount {
-		initialJobCount += int(count)
-	}
+	// Use typed maps for aggregation (struct keys are comparable in Go)
+	sizeMap := make(map[JobMetricKey]float64)
+	countMap := make(map[JobMetricKey]float64)
+	statusMap := make(map[JobStatusKey]float64)
 
 	// Track page count
 	pageCount := 0
 
 	err = HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
 		pageCount++
-		return FetchJobDetails(ctx, client, jobsSize, jobsCount, jobsStatusCount, offset, startTime)
+		return FetchJobDetails(ctx, client, sizeMap, countMap, statusMap, offset, startTime)
 	})
 
 	// Calculate total jobs fetched
-	finalJobCount := 0
-	for _, count := range jobsCount {
-		finalJobCount += int(count)
+	totalJobs := 0
+	for _, count := range countMap {
+		totalJobs += int(count)
 	}
-	totalJobs := finalJobCount - initialJobCount
 
 	// Batch span attributes for job operation
-	if span != nil {
-		attrs := []attribute.KeyValue{
-			attribute.String(telemetry.AttrNetBackupEndpoint, jobsPath),
-			attribute.String(telemetry.AttrNetBackupTimeWindow, scrapingInterval),
-			attribute.String(telemetry.AttrNetBackupStartTime, startTime.Format(time.RFC3339)),
-			attribute.Int(telemetry.AttrNetBackupTotalJobs, totalJobs),
-			attribute.Int(telemetry.AttrNetBackupTotalPages, pageCount),
-		}
-		span.SetAttributes(attrs...)
+	attrs := []attribute.KeyValue{
+		attribute.String(telemetry.AttrNetBackupEndpoint, jobsPath),
+		attribute.String(telemetry.AttrNetBackupTimeWindow, scrapingInterval),
+		attribute.String(telemetry.AttrNetBackupStartTime, startTime.Format(time.RFC3339)),
+		attribute.Int(telemetry.AttrNetBackupTotalJobs, totalJobs),
+		attribute.Int(telemetry.AttrNetBackupTotalPages, pageCount),
 	}
+	span.SetAttributes(attrs...)
 
 	// Handle errors in job fetching
 	if err != nil {
-		if span != nil {
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-		}
-		return err
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		return nil, nil, nil, err
 	}
 
-	// Set span status to OK for successful requests
-	if span != nil {
-		span.SetStatus(codes.Ok, fmt.Sprintf("Fetched %d jobs across %d pages", totalJobs, pageCount))
+	// Convert maps to typed slices
+	for key, value := range sizeMap {
+		jobsSize = append(jobsSize, JobMetricValue{Key: key, Value: value})
+	}
+	for key, value := range countMap {
+		jobsCount = append(jobsCount, JobMetricValue{Key: key, Value: value})
+	}
+	for key, value := range statusMap {
+		statusCount = append(statusCount, JobStatusMetricValue{Key: key, Value: value})
 	}
 
-	return nil
+	span.SetStatus(codes.Ok, fmt.Sprintf("Fetched %d jobs across %d pages", totalJobs, pageCount))
+	return jobsSize, jobsCount, statusCount, nil
 }

@@ -100,17 +100,13 @@ func TestEndToEndWorkflowAPI130(t *testing.T) {
 
 	// Test storage metrics collection
 	ctx := context.Background()
-	storageMetrics := make(map[string]float64)
-	err := FetchStorage(ctx, client, storageMetrics)
+	storageMetrics, err := FetchStorage(ctx, client)
 	require.NoError(t, err)
 	assert.NotEmpty(t, storageMetrics, "Storage metrics should not be empty")
 	assert.Greater(t, len(storageMetrics), 0, "Should have at least one storage metric")
 
 	// Test job metrics collection
-	jobsSize := make(map[string]float64)
-	jobsCount := make(map[string]float64)
-	jobsStatusCount := make(map[string]float64)
-	err = FetchAllJobs(ctx, client, jobsSize, jobsCount, jobsStatusCount, "24h")
+	_, jobsCount, _, err := FetchAllJobs(ctx, client, "24h")
 	require.NoError(t, err)
 	assert.NotEmpty(t, jobsCount, "Job count metrics should not be empty")
 	assert.Greater(t, len(jobsCount), 0, "Should have at least one job metric")
@@ -308,8 +304,7 @@ func TestEndToEndFallbackScenario(t *testing.T) {
 	assert.Equal(t, "3.0", cfg.NbuServer.APIVersion, "Should fallback to API 3.0")
 
 	// Verify metrics can be collected with API 3.0
-	storageMetrics := make(map[string]float64)
-	err = FetchStorage(ctx, client, storageMetrics)
+	storageMetrics, err := FetchStorage(ctx, client)
 	require.NoError(t, err)
 	assert.NotEmpty(t, storageMetrics, "Should collect storage metrics with API 3.0")
 	assert.Greater(t, len(storageMetrics), 0, "Should have at least one storage metric")
@@ -381,8 +376,7 @@ func TestEndToEndErrorScenarios(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			defer cancel()
 
-			storageMetrics := make(map[string]float64)
-			err := FetchStorage(ctx, client, storageMetrics)
+			_, err := FetchStorage(ctx, client)
 
 			if tt.expectError {
 				require.Error(t, err)
