@@ -63,10 +63,8 @@ const (
 //	}
 func FetchStorage(ctx context.Context, client *NbuClient, storageMetrics map[string]float64) error {
 	// Start child span "netbackup.fetch_storage" from parent context
-	ctx, span := createSpan(ctx, client.tracer, "netbackup.fetch_storage", trace.SpanKindClient)
-	if span != nil {
-		defer span.End()
-	}
+	ctx, span := client.tracing.StartSpan(ctx, "netbackup.fetch_storage", trace.SpanKindClient)
+	defer span.End()
 
 	var storages models.Storages
 
@@ -146,10 +144,8 @@ func FetchJobDetails(
 	startTime time.Time,
 ) (int, error) {
 	// Start child span "netbackup.fetch_job_page" from parent context
-	ctx, span := createSpan(ctx, client.tracer, "netbackup.fetch_job_page", trace.SpanKindClient)
-	if span != nil {
-		defer span.End()
-	}
+	ctx, span := client.tracing.StartSpan(ctx, "netbackup.fetch_job_page", trace.SpanKindClient)
+	defer span.End()
 
 	var jobs models.Jobs
 
@@ -320,10 +316,8 @@ func FetchAllJobs(
 	scrapingInterval string,
 ) error {
 	// Start child span "netbackup.fetch_jobs" from parent context
-	ctx, span := createSpan(ctx, client.tracer, "netbackup.fetch_jobs", trace.SpanKindClient)
-	if span != nil {
-		defer span.End()
-	}
+	ctx, span := client.tracing.StartSpan(ctx, "netbackup.fetch_jobs", trace.SpanKindClient)
+	defer span.End()
 
 	duration, err := time.ParseDuration("-" + scrapingInterval)
 	if err != nil {

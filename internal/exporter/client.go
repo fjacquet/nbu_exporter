@@ -42,6 +42,27 @@ const (
 	idleConnTimeout     = 90 * time.Second // Timeout for idle connections
 )
 
+// ClientOption configures optional NbuClient settings.
+type ClientOption func(*clientOptions)
+
+type clientOptions struct {
+	tracerProvider trace.TracerProvider
+}
+
+func defaultClientOptions() clientOptions {
+	return clientOptions{
+		tracerProvider: nil, // Will use noop via TracerWrapper
+	}
+}
+
+// WithTracerProvider sets the TracerProvider for distributed tracing.
+// If not provided, tracing operations use a noop provider (no overhead).
+func WithTracerProvider(tp trace.TracerProvider) ClientOption {
+	return func(o *clientOptions) {
+		o.tracerProvider = tp
+	}
+}
+
 // HTTP header names used in NetBackup API requests.
 const (
 	HeaderAccept        = "Accept"        // Accept header for content negotiation
@@ -60,9 +81,9 @@ const (
 // It manages TLS configuration, request headers, and provides methods for
 // fetching data from various NetBackup API endpoints.
 type NbuClient struct {
-	client *resty.Client // HTTP client with TLS configuration
-	cfg    models.Config // Application configuration including API settings
-	tracer trace.Tracer  // OpenTelemetry tracer for distributed tracing (nil if tracing disabled)
+	client  *resty.Client   // HTTP client with TLS configuration
+	cfg     models.Config   // Application configuration including API settings
+	tracing *TracerWrapper  // OpenTelemetry tracer wrapper for nil-safe distributed tracing
 
 	// Connection tracking for graceful shutdown
 	mu         sync.Mutex    // Protects closed and closeChan
@@ -73,19 +94,25 @@ type NbuClient struct {
 
 // NewNbuClient creates a new NetBackup API client with the provided configuration.
 // It initializes the HTTP client with appropriate TLS settings and timeout values.
-// If OpenTelemetry is enabled globally, the client will automatically initialize
-// a tracer for distributed tracing of HTTP requests.
+// TracerProvider can be injected via WithTracerProvider option for distributed tracing.
 //
 // The client is configured with:
 //   - TLS verification based on cfg.NbuServer.InsecureSkipVerify
 //   - Default timeout of 1 minute for all requests
-//   - Optional OpenTelemetry tracer from global provider
+//   - Optional OpenTelemetry tracer via options
 //
 // Example:
 //
 //	cfg := models.Config{...}
-//	client := NewNbuClient(cfg)
-func NewNbuClient(cfg models.Config) *NbuClient {
+//	client := NewNbuClient(cfg)  // Without tracing
+//	client := NewNbuClient(cfg, WithTracerProvider(tp))  // With tracing
+func NewNbuClient(cfg models.Config, opts ...ClientOption) *NbuClient {
+	// Apply options
+	options := defaultClientOptions()
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	// Log security warning if TLS verification is disabled
 	if cfg.NbuServer.InsecureSkipVerify {
 		log.Error("SECURITY WARNING: TLS certificate verification disabled - this is insecure for production use")
@@ -123,17 +150,13 @@ func NewNbuClient(cfg models.Config) *NbuClient {
 		},
 	}
 
-	// Initialize tracer from global provider if available
-	var tracer trace.Tracer
-	tracerProvider := otel.GetTracerProvider()
-	if tracerProvider != nil {
-		tracer = tracerProvider.Tracer("nbu-exporter/http-client")
-	}
+	// Create TracerWrapper with injected provider (uses noop if nil)
+	tracing := NewTracerWrapper(options.tracerProvider, "nbu-exporter/http-client")
 
 	return &NbuClient{
 		client:     client,
 		cfg:        cfg,
-		tracer:     tracer,
+		tracing:    tracing,
 		activeReqs: 0,
 		closed:     false,
 	}
@@ -144,7 +167,7 @@ func NewNbuClient(cfg models.Config) *NbuClient {
 // create a client when you want automatic version detection.
 //
 // The function:
-//   - Creates a new HTTP client with the provided configuration
+//   - Creates a new HTTP client with the provided configuration and options
 //   - If apiVersion is not set in config, performs automatic version detection
 //   - Updates the configuration with the detected version
 //   - Returns the configured client ready for use
@@ -152,6 +175,7 @@ func NewNbuClient(cfg models.Config) *NbuClient {
 // Parameters:
 //   - ctx: Context for version detection requests (supports cancellation and timeout)
 //   - cfg: Application configuration (will be modified if version detection occurs)
+//   - opts: Optional ClientOption for configuration (e.g., WithTracerProvider)
 //
 // Returns:
 //   - Configured NbuClient with detected or configured API version
@@ -160,13 +184,13 @@ func NewNbuClient(cfg models.Config) *NbuClient {
 // Example:
 //
 //	cfg := models.Config{...}
-//	client, err := NewNbuClientWithVersionDetection(ctx, &cfg)
+//	client, err := NewNbuClientWithVersionDetection(ctx, &cfg, WithTracerProvider(tp))
 //	if err != nil {
 //	    log.Fatalf("Failed to create client: %v", err)
 //	}
-func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config) (*NbuClient, error) {
-	// Create the base client
-	client := NewNbuClient(*cfg)
+func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config, opts ...ClientOption) (*NbuClient, error) {
+	// Create the base client with options
+	client := NewNbuClient(*cfg, opts...)
 
 	// Perform version detection if needed
 	if err := performVersionDetectionIfNeeded(ctx, client, cfg); err != nil {
@@ -303,11 +327,9 @@ func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{
 		}
 	}()
 
-	// Create span for HTTP request using consolidated helper
-	ctx, span := createSpan(ctx, c.tracer, "http.request", trace.SpanKindClient)
-	if span != nil {
-		defer span.End()
-	}
+	// Create span for HTTP request using TracerWrapper
+	ctx, span := c.tracing.StartSpan(ctx, "http.request", trace.SpanKindClient)
+	defer span.End()
 
 	// Record start time for duration calculation
 	startTime := time.Now()
@@ -513,18 +535,14 @@ func (c *NbuClient) recordError(span trace.Span, err error) {
 
 // injectTraceContext injects trace context into HTTP request headers using W3C Trace Context propagation.
 // This enables distributed tracing across service boundaries.
+// TracerWrapper ensures this is always safe to call (uses noop if tracing disabled).
 //
 // Parameters:
 //   - ctx: Context containing the trace information
 //   - headers: Map of HTTP headers to inject trace context into
 //
-// Returns the headers map with trace context injected (if tracing is enabled)
+// Returns the headers map with trace context injected
 func (c *NbuClient) injectTraceContext(ctx context.Context, headers map[string]string) map[string]string {
-	// If tracer is not initialized, return headers unchanged
-	if c.tracer == nil {
-		return headers
-	}
-
 	// Create a carrier that implements the TextMapCarrier interface
 	carrier := propagation.MapCarrier{}
 	for k, v := range headers {
