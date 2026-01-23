@@ -22,28 +22,28 @@ The established libraries/tools for this domain:
 
 ### Core
 
-| Library | Version | Purpose | Why Standard |
-|---------|---------|---------|--------------|
-| crypto/subtle | stdlib | Constant-time comparison | Prevents timing attacks on secrets |
-| crypto/tls | stdlib | TLS configuration | Standard Go TLS implementation |
-| github.com/go-resty/resty/v2 | v2.x | HTTP client with retry | Built-in exponential backoff, 429 handling |
-| golang.org/x/time/rate | latest | Client-side rate limiting | Official Go rate limiter (token bucket) |
+| Library                      | Version | Purpose                   | Why Standard                               |
+| ---------------------------- | ------- | ------------------------- | ------------------------------------------ |
+| crypto/subtle                | stdlib  | Constant-time comparison  | Prevents timing attacks on secrets         |
+| crypto/tls                   | stdlib  | TLS configuration         | Standard Go TLS implementation             |
+| github.com/go-resty/resty/v2 | v2.x    | HTTP client with retry    | Built-in exponential backoff, 429 handling |
+| golang.org/x/time/rate       | latest  | Client-side rate limiting | Official Go rate limiter (token bucket)    |
 
 ### Supporting
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| github.com/awnumar/memguard | latest | Memory-secure secret storage | If memory encryption required (likely overkill) |
-| github.com/hashicorp/go-retryablehttp | latest | Alternative retry HTTP client | If not using resty |
-| github.com/securego/gosec | latest | Security linting | CI/CD security auditing |
+| Library                               | Version | Purpose                       | When to Use                                     |
+| ------------------------------------- | ------- | ----------------------------- | ----------------------------------------------- |
+| github.com/awnumar/memguard           | latest  | Memory-secure secret storage  | If memory encryption required (likely overkill) |
+| github.com/hashicorp/go-retryablehttp | latest  | Alternative retry HTTP client | If not using resty                              |
+| github.com/securego/gosec             | latest  | Security linting              | CI/CD security auditing                         |
 
 ### Alternatives Considered
 
-| Instead of | Could Use | Tradeoff |
-|------------|-----------|----------|
-| resty retry | hashicorp/go-retryablehttp | More control, but resty already in use |
+| Instead of            | Could Use                                    | Tradeoff                               |
+| --------------------- | -------------------------------------------- | -------------------------------------- |
+| resty retry           | hashicorp/go-retryablehttp                   | More control, but resty already in use |
 | Environment variables | Secrets manager (Vault, AWS Secrets Manager) | Better for production, adds complexity |
-| crypto/subtle | Plain string comparison | Vulnerable to timing attacks |
+| crypto/subtle         | Plain string comparison                      | Vulnerable to timing attacks           |
 
 **Installation:**
 
@@ -226,14 +226,14 @@ func (c *RateLimitedClient) Get(ctx context.Context, url string) (*resty.Respons
 
 Problems that look simple but have existing solutions:
 
-| Problem | Don't Build | Use Instead | Why |
-|---------|-------------|-------------|-----|
-| Exponential backoff | Custom sleep calculation | resty.SetRetryCount/SetRetryWaitTime | Handles jitter, Retry-After headers, edge cases |
-| Rate limiting | Custom token tracking | golang.org/x/time/rate.Limiter | Token bucket algorithm, thread-safe, context-aware |
-| Retry-After parsing | Manual header parsing | resty.AddRetryAfterErrorCondition | Handles multiple formats (seconds, HTTP-date) |
-| Constant-time comparison | bytes.Equal or == | crypto/subtle.ConstantTimeCompare | Prevents timing attacks |
-| TLS configuration | Custom certificate validation | crypto/tls standard config | Security audited, handles edge cases |
-| Secret zeroing | Manual memory overwrite | Accept Go GC limitations | Go GC makes true zeroing impractical |
+| Problem                  | Don't Build                   | Use Instead                          | Why                                                |
+| ------------------------ | ----------------------------- | ------------------------------------ | -------------------------------------------------- |
+| Exponential backoff      | Custom sleep calculation      | resty.SetRetryCount/SetRetryWaitTime | Handles jitter, Retry-After headers, edge cases    |
+| Rate limiting            | Custom token tracking         | golang.org/x/time/rate.Limiter       | Token bucket algorithm, thread-safe, context-aware |
+| Retry-After parsing      | Manual header parsing         | resty.AddRetryAfterErrorCondition    | Handles multiple formats (seconds, HTTP-date)      |
+| Constant-time comparison | bytes.Equal or ==             | crypto/subtle.ConstantTimeCompare    | Prevents timing attacks                            |
+| TLS configuration        | Custom certificate validation | crypto/tls standard config           | Security audited, handles edge cases               |
+| Secret zeroing           | Manual memory overwrite       | Accept Go GC limitations             | Go GC makes true zeroing impractical               |
 
 **Key insight:** HTTP client retry logic has many edge cases (connection resets, DNS failures, partial responses). Use battle-tested libraries instead of custom implementations.
 
@@ -248,7 +248,7 @@ Problems that look simple but have existing solutions:
 - Implement MaskAPIKey() method (already exists in Config.go)
 - Use structured logging with explicit field exclusion
 - Never log full request/response in production
-**Warning signs:**
+  **Warning signs:**
 - Logs contain "apiKey:" or "Authorization:" with full values
 - Error messages include full HTTP headers
 
@@ -272,7 +272,7 @@ Problems that look simple but have existing solutions:
 - Add validation in Config.Validate() to warn on insecure mode
 - Require explicit INSECURE_MODE=true environment variable
 - Log ERROR-level message on startup if TLS disabled
-**Warning signs:**
+  **Warning signs:**
 - No TLS warnings in production logs
 - Config files with insecureSkipVerify: true
 
@@ -285,7 +285,7 @@ Problems that look simple but have existing solutions:
 - Always read and close response bodies (already done in FetchData)
 - Configure MaxIdleConnsPerHost to reasonable value (20-100)
 - Set IdleConnTimeout to reclaim stale connections (90s)
-**Warning signs:**
+  **Warning signs:**
 - "too many open files" errors
 - Increasing response times over scrape cycles
 - Connections stuck in TIME_WAIT state
@@ -309,7 +309,7 @@ Problems that look simple but have existing solutions:
 - Document that env vars are for local dev only
 - Recommend secrets manager for production (AWS Secrets Manager, Vault)
 - Support file-based secrets for Kubernetes
-**Warning signs:**
+  **Warning signs:**
 - API keys visible in `ps auxe` output
 - Crash dumps contain secrets
 
@@ -396,14 +396,14 @@ func configureTLSWithPooling(insecureSkipVerify bool) *tls.Config {
 
 ## State of the Art
 
-| Old Approach | Current Approach | When Changed | Impact |
-|--------------|------------------|--------------|--------|
-| Environment variables for secrets | Secrets managers (Vault, AWS SM) | 2024-2025 | Env vars now considered insecure for production |
-| TLS 1.0/1.1 | TLS 1.2 minimum, 1.3 preferred | Go 1.27 (2026) | Go 1.27 defaults to TLS 1.2 minimum |
-| Manual retry logic | Built-in resty retry with backoff | resty v2.0+ (2019) | Handles edge cases automatically |
-| Manual Retry-After parsing | AddRetryAfterErrorCondition() | resty v2.7+ (2022) | Parses both seconds and HTTP-date formats |
-| String comparison for secrets | crypto/subtle.ConstantTimeCompare | Always available | Security best practice |
-| Certificate validity 398 days | 200 days (March 2026), 47 days (2029) | CA/Browser Forum | Requires automated cert rotation |
+| Old Approach                      | Current Approach                      | When Changed       | Impact                                          |
+| --------------------------------- | ------------------------------------- | ------------------ | ----------------------------------------------- |
+| Environment variables for secrets | Secrets managers (Vault, AWS SM)      | 2024-2025          | Env vars now considered insecure for production |
+| TLS 1.0/1.1                       | TLS 1.2 minimum, 1.3 preferred        | Go 1.27 (2026)     | Go 1.27 defaults to TLS 1.2 minimum             |
+| Manual retry logic                | Built-in resty retry with backoff     | resty v2.0+ (2019) | Handles edge cases automatically                |
+| Manual Retry-After parsing        | AddRetryAfterErrorCondition()         | resty v2.7+ (2022) | Parses both seconds and HTTP-date formats       |
+| String comparison for secrets     | crypto/subtle.ConstantTimeCompare     | Always available   | Security best practice                          |
+| Certificate validity 398 days     | 200 days (March 2026), 47 days (2029) | CA/Browser Forum   | Requires automated cert rotation                |
 
 **Deprecated/outdated:**
 
@@ -418,16 +418,19 @@ func configureTLSWithPooling(insecureSkipVerify bool) *tls.Config {
 Things that couldn't be fully resolved:
 
 1. **Memory zeroing in Go for API keys**
+
    - What we know: Go's GC makes true zeroing impractical; memguard provides encryption-at-rest in memory
    - What's unclear: Whether the complexity of memguard is worth it for this use case
    - Recommendation: Accept Go's limitations. Focus on preventing leaks (no logging, constant-time comparison). Memguard is overkill for Prometheus exporter.
 
 2. **Rate limiting values for NetBackup API**
+
    - What we know: Resty supports rate limiting and backoff; NetBackup API may have limits
    - What's unclear: NetBackup API's actual rate limits (vendor-specific)
    - Recommendation: Start conservative (10 req/sec), monitor for 429 responses, tune based on actual behavior. Make rate limit configurable.
 
 3. **Secrets manager integration**
+
    - What we know: Production should use secrets managers, not env vars
    - What's unclear: Which secrets manager(s) to support (Vault, AWS, GCP, Azure)
    - Recommendation: Document env var limitations, suggest secrets managers in README. Don't implement integration (out of scope, adds significant complexity).

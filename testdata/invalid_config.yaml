@@ -1,0 +1,11 @@
+# Invalid test configuration for main_test.go
+# Missing required nbuserver section and has invalid port
+
+server:
+  host: "localhost"
+  port: "-1"
+  uri: "/metrics"
+  logName: "/dev/null"
+  scrapingInterval: "5m"
+
+# Missing nbuserver section entirely - required for valid config

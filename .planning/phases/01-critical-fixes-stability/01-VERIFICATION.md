@@ -26,24 +26,24 @@ gaps:
 
 ### Observable Truths
 
-| # | Truth | Status | Evidence |
-|---|-------|--------|----------|
+| #                                              | Truth                                                                                | Status             | Evidence                                                                                                                                                                                                    |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Plan 01-01: Version Detection Immutability** |
-| 1 | Version detection returns detected version without mutating input config | ✓ VERIFIED | APIVersionDetector (line 49-55) stores only immutable `baseURL string` and `apiKey string`, not `*models.Config`. DetectVersion (line 111) returns `string` without mutation. |
-| 2 | Context cancellation during version detection leaves no inconsistent state | ✓ VERIFIED | No config mutation during detection. Test `TestAPIVersionDetectorContextCancellationNoConfigMutation` passes (ran successfully). |
-| 3 | APIVersionDetector does not hold mutable reference to config | ✓ VERIFIED | Struct fields (version_detector.go:51-52) are `baseURL string` and `apiKey string`, not `cfg *models.Config`. |
-| **Plan 01-02: URL Validation** |
-| 4 | Invalid URLs in configuration are caught during Validate() with clear error messages | ✓ VERIFIED | validateNBUBaseURL (Config.go:166-181) checks parse errors, missing scheme, missing host. Returns descriptive errors. Called in Validate() line 106. |
-| 5 | BuildURL() returns error instead of silently failing on invalid base URL | ⚠️ DESIGN_DECISION | BuildURL (line 362) uses `u, _ := url.Parse()` - ignores error. However, documented (line 347-348) to assume validated config. Validation happens in Config.Validate() (line 106) for fail-fast at startup. |
-| 6 | Config validation fails fast on malformed NBU server settings | ✓ VERIFIED | validateNBUBaseURL called early in Validate() chain (line 106), before API version and OTel validation. Test `TestConfigValidateInvalidURL` passes. |
-| **Plan 01-03: Resource Cleanup** |
-| 7 | NbuClient.Close() waits for active requests before closing connections | ✓ VERIFIED | Close() (client.go:513-548) checks `activeReqs` counter, creates closeChan, waits with 30s timeout (line 529), then closes connections. Test `TestNbuClientCloseWaitsForActiveRequests` passes. |
-| 8 | Exporter can be stopped and restarted multiple times without connection leaks | ✓ VERIFIED | Close() is idempotent (line 515-518 returns error on second call). Test `TestNbuClientCloseIdempotent` passes. CloseIdleConnections called (line 544). |
-| 9 | Close() uses context deadline to bound waiting time | ✓ VERIFIED | Lines 529-530: `context.WithTimeout(context.Background(), 30*time.Second)` bounds wait time. CloseWithContext (line 560) accepts custom context. |
-| **Plan 01-04: Error Channel Pattern** |
-| 10 | HTTP server errors are sent through error channel instead of log.Fatalf | ✓ VERIFIED | main.go line 186: `s.serverErrChan <- fmt.Errorf("HTTP server error: %w", err)` instead of log.Fatalf. No log.Fatal in actual code (only in comments/examples). |
-| 11 | Exporter continues running even if metric collection errors occur | ✓ VERIFIED | prometheus.go lines 225-226: collects job metrics even if storage fetch fails. Errors logged (line 234) but collection continues. |
-| 12 | Main function handles shutdown gracefully on server errors | ✓ VERIFIED | waitForShutdown (main.go:327-341) uses select for both signals and errors. Returns error (line 336), RunE handles it (line 374-380), calls server.Shutdown() regardless. |
+| 1                                              | Version detection returns detected version without mutating input config             | ✓ VERIFIED         | APIVersionDetector (line 49-55) stores only immutable `baseURL string` and `apiKey string`, not `*models.Config`. DetectVersion (line 111) returns `string` without mutation.                               |
+| 2                                              | Context cancellation during version detection leaves no inconsistent state           | ✓ VERIFIED         | No config mutation during detection. Test `TestAPIVersionDetectorContextCancellationNoConfigMutation` passes (ran successfully).                                                                            |
+| 3                                              | APIVersionDetector does not hold mutable reference to config                         | ✓ VERIFIED         | Struct fields (version_detector.go:51-52) are `baseURL string` and `apiKey string`, not `cfg *models.Config`.                                                                                               |
+| **Plan 01-02: URL Validation**                 |
+| 4                                              | Invalid URLs in configuration are caught during Validate() with clear error messages | ✓ VERIFIED         | validateNBUBaseURL (Config.go:166-181) checks parse errors, missing scheme, missing host. Returns descriptive errors. Called in Validate() line 106.                                                        |
+| 5                                              | BuildURL() returns error instead of silently failing on invalid base URL             | ⚠️ DESIGN_DECISION | BuildURL (line 362) uses `u, _ := url.Parse()` - ignores error. However, documented (line 347-348) to assume validated config. Validation happens in Config.Validate() (line 106) for fail-fast at startup. |
+| 6                                              | Config validation fails fast on malformed NBU server settings                        | ✓ VERIFIED         | validateNBUBaseURL called early in Validate() chain (line 106), before API version and OTel validation. Test `TestConfigValidateInvalidURL` passes.                                                         |
+| **Plan 01-03: Resource Cleanup**               |
+| 7                                              | NbuClient.Close() waits for active requests before closing connections               | ✓ VERIFIED         | Close() (client.go:513-548) checks `activeReqs` counter, creates closeChan, waits with 30s timeout (line 529), then closes connections. Test `TestNbuClientCloseWaitsForActiveRequests` passes.             |
+| 8                                              | Exporter can be stopped and restarted multiple times without connection leaks        | ✓ VERIFIED         | Close() is idempotent (line 515-518 returns error on second call). Test `TestNbuClientCloseIdempotent` passes. CloseIdleConnections called (line 544).                                                      |
+| 9                                              | Close() uses context deadline to bound waiting time                                  | ✓ VERIFIED         | Lines 529-530: `context.WithTimeout(context.Background(), 30*time.Second)` bounds wait time. CloseWithContext (line 560) accepts custom context.                                                            |
+| **Plan 01-04: Error Channel Pattern**          |
+| 10                                             | HTTP server errors are sent through error channel instead of log.Fatalf              | ✓ VERIFIED         | main.go line 186: `s.serverErrChan <- fmt.Errorf("HTTP server error: %w", err)` instead of log.Fatalf. No log.Fatal in actual code (only in comments/examples).                                             |
+| 11                                             | Exporter continues running even if metric collection errors occur                    | ✓ VERIFIED         | prometheus.go lines 225-226: collects job metrics even if storage fetch fails. Errors logged (line 234) but collection continues.                                                                           |
+| 12                                             | Main function handles shutdown gracefully on server errors                           | ✓ VERIFIED         | waitForShutdown (main.go:327-341) uses select for both signals and errors. Returns error (line 336), RunE handles it (line 374-380), calls server.Shutdown() regardless.                                    |
 
 **Score:** 15/16 truths verified (93.75%)
 
@@ -52,34 +52,34 @@ gaps:
 
 ### Required Artifacts
 
-| Artifact | Expected | Status | Details |
-|----------|----------|--------|---------|
-| **Plan 01-01** |
-| `internal/exporter/version_detector.go` | Contains `func (d *APIVersionDetector) DetectVersion` | ✓ VERIFIED | Line 111, returns `(string, error)` without config mutation |
-| `internal/exporter/version_detector_test.go` | Contains `TestAPIVersionDetector.*ConfigImmutability` | ✓ VERIFIED | Line 391: `TestAPIVersionDetectorConfigImmutability` - test passes |
-| **Plan 01-02** |
-| `internal/models/Config.go` | Contains `validateNBUBaseURL` | ✓ VERIFIED | Line 166: function validates parsed URL, scheme, host |
-| `internal/models/Config_test.go` | Contains `TestConfig.*InvalidURL` | ✓ VERIFIED | Line 1498: `TestConfigValidateInvalidURL` - comprehensive test coverage |
-| **Plan 01-03** |
-| `internal/exporter/client.go` | Contains `func (c *NbuClient) Close` | ✓ VERIFIED | Line 513: Close() with connection draining logic |
-| `internal/exporter/client_test.go` | Contains `TestNbuClient.*Close` | ✓ VERIFIED | Lines 1124, 1145, 1211, 1230: four Close tests - all pass |
-| **Plan 01-04** |
-| `main.go` | Contains `serverErrChan` | ✓ VERIFIED | Line 84: `serverErrChan chan error` field in Server struct |
+| Artifact                                     | Expected                                              | Status     | Details                                                                 |
+| -------------------------------------------- | ----------------------------------------------------- | ---------- | ----------------------------------------------------------------------- |
+| **Plan 01-01**                               |
+| `internal/exporter/version_detector.go`      | Contains `func (d *APIVersionDetector) DetectVersion` | ✓ VERIFIED | Line 111, returns `(string, error)` without config mutation             |
+| `internal/exporter/version_detector_test.go` | Contains `TestAPIVersionDetector.*ConfigImmutability` | ✓ VERIFIED | Line 391: `TestAPIVersionDetectorConfigImmutability` - test passes      |
+| **Plan 01-02**                               |
+| `internal/models/Config.go`                  | Contains `validateNBUBaseURL`                         | ✓ VERIFIED | Line 166: function validates parsed URL, scheme, host                   |
+| `internal/models/Config_test.go`             | Contains `TestConfig.*InvalidURL`                     | ✓ VERIFIED | Line 1498: `TestConfigValidateInvalidURL` - comprehensive test coverage |
+| **Plan 01-03**                               |
+| `internal/exporter/client.go`                | Contains `func (c *NbuClient) Close`                  | ✓ VERIFIED | Line 513: Close() with connection draining logic                        |
+| `internal/exporter/client_test.go`           | Contains `TestNbuClient.*Close`                       | ✓ VERIFIED | Lines 1124, 1145, 1211, 1230: four Close tests - all pass               |
+| **Plan 01-04**                               |
+| `main.go`                                    | Contains `serverErrChan`                              | ✓ VERIFIED | Line 84: `serverErrChan chan error` field in Server struct              |
 
 **All artifacts verified:** 7/7 exist and contain expected implementations
 
 ### Key Link Verification
 
-| From | To | Via | Status | Details |
-|------|-----|-----|--------|---------|
-| **Plan 01-01** |
+| From                                    | To                            | Via                             | Status  | Details                                                                                                        |
+| --------------------------------------- | ----------------------------- | ------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| **Plan 01-01**                          |
 | `internal/exporter/version_detector.go` | `internal/exporter/client.go` | Config mutation after detection | ✓ WIRED | client.go:174: `cfg.NbuServer.APIVersion = detectedVersion` - single mutation point after successful detection |
-| **Plan 01-02** |
-| `internal/models/Config.go` | `Validate()` | validateNBUBaseURL called | ✓ WIRED | Config.go:106: `if err := c.validateNBUBaseURL()` - URL validation in validate chain |
-| **Plan 01-03** |
-| `internal/exporter/client.go` | `http.Transport` | CloseIdleConnections | ✓ WIRED | client.go:544: `c.client.GetClient().CloseIdleConnections()` - closes idle connections after drain |
-| **Plan 01-04** |
-| `main.go` goroutine | `main.go` select | Error channel communication | ✓ WIRED | Line 186 sends to `serverErrChan`, line 335 receives via `server.ErrorChan()` in select statement |
+| **Plan 01-02**                          |
+| `internal/models/Config.go`             | `Validate()`                  | validateNBUBaseURL called       | ✓ WIRED | Config.go:106: `if err := c.validateNBUBaseURL()` - URL validation in validate chain                           |
+| **Plan 01-03**                          |
+| `internal/exporter/client.go`           | `http.Transport`              | CloseIdleConnections            | ✓ WIRED | client.go:544: `c.client.GetClient().CloseIdleConnections()` - closes idle connections after drain             |
+| **Plan 01-04**                          |
+| `main.go` goroutine                     | `main.go` select              | Error channel communication     | ✓ WIRED | Line 186 sends to `serverErrChan`, line 335 receives via `server.ErrorChan()` in select statement              |
 
 **All key links verified:** 4/4 connections properly wired
 
@@ -87,21 +87,21 @@ gaps:
 
 Phase 1 addresses the following requirements from REQUIREMENTS.md:
 
-| Requirement | Status | Evidence |
-|-------------|--------|----------|
-| BUG-01: Version detection state restoration | ✓ SATISFIED | Version detector is immutable, no state to restore |
-| FRAG-01: Shared config reference | ✓ SATISFIED | Detector stores immutable values, not config reference |
-| FRAG-03: URL parsing errors ignored | ✓ SATISFIED | URL validation in Config.Validate() catches errors early |
-| TD-05: Resource cleanup | ✓ SATISFIED | Close() implements connection draining with timeout |
-| TD-06: Fatal log in goroutine | ✓ SATISFIED | Error channel pattern replaces log.Fatalf |
+| Requirement                                 | Status      | Evidence                                                 |
+| ------------------------------------------- | ----------- | -------------------------------------------------------- |
+| BUG-01: Version detection state restoration | ✓ SATISFIED | Version detector is immutable, no state to restore       |
+| FRAG-01: Shared config reference            | ✓ SATISFIED | Detector stores immutable values, not config reference   |
+| FRAG-03: URL parsing errors ignored         | ✓ SATISFIED | URL validation in Config.Validate() catches errors early |
+| TD-05: Resource cleanup                     | ✓ SATISFIED | Close() implements connection draining with timeout      |
+| TD-06: Fatal log in goroutine               | ✓ SATISFIED | Error channel pattern replaces log.Fatalf                |
 
 **All requirements satisfied:** 5/5 (100%)
 
 ### Anti-Patterns Found
 
-| File | Pattern | Severity | Impact | Resolution |
-|------|---------|----------|--------|------------|
-| `internal/models/Config.go:362` | Silent error ignore: `u, _ := url.Parse()` | ℹ️ Info | No impact - documented as assuming validated config | Accepted design decision, documented in comments |
+| File                            | Pattern                                    | Severity | Impact                                              | Resolution                                       |
+| ------------------------------- | ------------------------------------------ | -------- | --------------------------------------------------- | ------------------------------------------------ |
+| `internal/models/Config.go:362` | Silent error ignore: `u, _ := url.Parse()` | ℹ️ Info  | No impact - documented as assuming validated config | Accepted design decision, documented in comments |
 
 **Summary:**
 
@@ -143,12 +143,12 @@ go vet ./...  # SUCCESS
 
 ### Success Criteria from ROADMAP.md
 
-| Criterion | Status | Evidence |
-|-----------|--------|----------|
-| 1. Exporter handles context cancellation during version detection without leaving config in inconsistent state | ✓ ACHIEVED | APIVersionDetector immutable, test verifies no mutation on cancellation |
-| 2. Exporter can be stopped and restarted multiple times without connection leaks | ✓ ACHIEVED | Close() idempotent, waits for drain, calls CloseIdleConnections |
-| 3. Exporter continues running even if metric collection errors occur (no fatal exits from goroutines) | ✓ ACHIEVED | Collector continues on partial errors, server uses error channel instead of log.Fatalf |
-| 4. Invalid URLs in configuration are caught during startup with clear error messages | ✓ ACHIEVED | validateNBUBaseURL provides clear errors at Validate() time |
+| Criterion                                                                                                      | Status     | Evidence                                                                               |
+| -------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------- |
+| 1. Exporter handles context cancellation during version detection without leaving config in inconsistent state | ✓ ACHIEVED | APIVersionDetector immutable, test verifies no mutation on cancellation                |
+| 2. Exporter can be stopped and restarted multiple times without connection leaks                               | ✓ ACHIEVED | Close() idempotent, waits for drain, calls CloseIdleConnections                        |
+| 3. Exporter continues running even if metric collection errors occur (no fatal exits from goroutines)          | ✓ ACHIEVED | Collector continues on partial errors, server uses error channel instead of log.Fatalf |
+| 4. Invalid URLs in configuration are caught during startup with clear error messages                           | ✓ ACHIEVED | validateNBUBaseURL provides clear errors at Validate() time                            |
 
 **All success criteria achieved:** 4/4 (100%)
 
@@ -174,12 +174,12 @@ go vet ./...  # SUCCESS
 
 **4 Plans × 4 Files = 16 modifications**
 
-| Plan | Files Modified | Commit Count | Duration |
-|------|----------------|--------------|----------|
-| 01-01 | 4 files | 2 commits | 9 min |
-| 01-02 | 2 files | 2 commits | 10 min |
-| 01-03 | 2 files | 2 commits | 10 min |
-| 01-04 | 1 file | 2 commits | 4 min |
+| Plan  | Files Modified | Commit Count | Duration |
+| ----- | -------------- | ------------ | -------- |
+| 01-01 | 4 files        | 2 commits    | 9 min    |
+| 01-02 | 2 files        | 2 commits    | 10 min   |
+| 01-03 | 2 files        | 2 commits    | 10 min   |
+| 01-04 | 1 file         | 2 commits    | 4 min    |
 
 **Total:** 9 files modified, 8 commits, ~33 minutes execution time
 

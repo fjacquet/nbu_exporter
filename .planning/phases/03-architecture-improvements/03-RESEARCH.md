@@ -9,6 +9,7 @@
 This research investigates five architectural improvements for the NBU exporter: config immutability (TD-01), OpenTelemetry dependency injection (TD-02), structured metric keys (TD-03), connection pool lifecycle (FRAG-02), and tracer nil-check centralization (FRAG-04).
 
 Key findings:
+
 1. **Phase 1 already implemented significant portions** of TD-01, TD-02, and FRAG-02. The remaining work is refinement and extension of existing patterns.
 2. **Structured metric keys already exist** in `metrics.go` - the issue is the pipe-delimited `String()` method used for map keys, not the types themselves.
 3. **OpenTelemetry's noop package** provides the idiomatic pattern for tracer nil-safety, eliminating manual nil-checks entirely.
@@ -21,16 +22,19 @@ Key findings:
 ### TD-01: Config Immutability (Partially Complete)
 
 **What Phase 1 did:**
+
 - `APIVersionDetector` no longer holds `*models.Config` reference
 - Stores only immutable values: `baseURL string`, `apiKey string`
 - Version detection returns result; caller applies changes in single location
 
 **What remains:**
+
 - `NbuClient` still holds full `models.Config` (mutable struct)
 - `NbuCollector` holds `cfg models.Config` (copy, but still mutable)
 - Config validation mutates config via `SetDefaults()`
 
 **Current pattern (client.go:62-72):**
+
 ```go
 type NbuClient struct {
     client *resty.Client
@@ -43,6 +47,7 @@ type NbuClient struct {
 ### TD-02: OpenTelemetry Global State (Partially Addressed)
 
 **Current pattern (version_detector.go:67-72):**
+
 ```go
 // Initialize tracer from global provider if available
 var tracer trace.Tracer
@@ -53,11 +58,13 @@ if tracerProvider != nil {
 ```
 
 **Same pattern in:**
+
 - `client.go:127-131` - `NewNbuClient()`
 - `prometheus.go:84` - `NewNbuCollector()`
 - `main.go:143-148` - W3C propagator setup
 
 **What exists:**
+
 - `telemetry.Manager` handles TracerProvider lifecycle
 - `telemetry.Manager.Initialize()` registers global provider
 - Components fetch tracer from global after initialization
@@ -65,6 +72,7 @@ if tracerProvider != nil {
 ### TD-03: Metric Key Format
 
 **Current implementation (metrics.go):**
+
 ```go
 type StorageMetricKey struct {
     Name string
@@ -78,6 +86,7 @@ func (k StorageMetricKey) String() string {
 ```
 
 **Problem:** If label values contain `|` character, the `strings.Split(key, "|")` in prometheus.go will break:
+
 ```go
 // prometheus.go:311-318
 for key, value := range storageMetrics {
@@ -94,12 +103,14 @@ for key, value := range storageMetrics {
 ### FRAG-02: Connection Pool Lifecycle (Mostly Complete)
 
 **Phase 1 implemented:**
+
 - `NbuClient.Close()` with 30-second timeout
 - `NbuClient.CloseWithContext()` for custom timeouts
 - Active request tracking with atomic counter
 - `FetchData()` rejects requests after Close()
 
 **What remains:**
+
 - Server.Shutdown() doesn't call client.Close()
 - No integration between NbuCollector and client lifecycle
 - No documented cleanup sequence
@@ -107,6 +118,7 @@ for key, value := range storageMetrics {
 ### FRAG-04: Tracer Nil-Checks
 
 **Current pattern scattered across codebase:**
+
 ```go
 // tracing.go:28-32 - helper exists
 func createSpan(ctx context.Context, tracer trace.Tracer, operation string, kind trace.SpanKind) (context.Context, trace.Span) {
@@ -124,6 +136,7 @@ if span != nil {  // STILL NEEDED
 ```
 
 **Nil-checks scattered in:**
+
 - `version_detector.go`: 14 instances of `if span != nil`
 - `client.go`: 6 instances
 - `prometheus.go`: 8 instances
@@ -214,11 +227,13 @@ From official docs:
 > If no Span is currently set in ctx, an implementation of a Span that performs no operations is returned.
 
 **This means:**
+
 1. `trace.SpanFromContext(ctx)` is always safe to call
 2. The returned span is always safe to call methods on
 3. Manual nil-checks on spans are unnecessary
 
 **Recommended pattern using noop:**
+
 ```go
 import "go.opentelemetry.io/otel/trace/noop"
 
@@ -243,6 +258,7 @@ func (w *TracerWrapper) StartSpan(ctx context.Context, name string, opts ...trac
 ```
 
 **Usage without nil-checks:**
+
 ```go
 ctx, span := wrapper.StartSpan(ctx, "operation", trace.WithSpanKind(trace.SpanKindClient))
 defer span.End()  // Always safe, no nil-check needed
@@ -261,6 +277,7 @@ span.RecordError(err)  // Always safe
 **Solution options:**
 
 1. **Use the existing Labels() method directly** (Recommended)
+
 ```go
 // Instead of: map[string]float64 with String() keys
 // Use: map[StorageMetricKey]float64 directly
@@ -285,7 +302,8 @@ for _, m := range storageMetrics {
 }
 ```
 
-2. **URL-style encoding for String() method**
+1. **URL-style encoding for String() method**
+
 ```go
 func (k StorageMetricKey) String() string {
     // URL encode each field to handle special chars
@@ -295,7 +313,8 @@ func (k StorageMetricKey) String() string {
 }
 ```
 
-3. **JSON encoding for String() method**
+1. **JSON encoding for String() method**
+
 ```go
 func (k StorageMetricKey) String() string {
     b, _ := json.Marshal(k)
@@ -312,6 +331,7 @@ func (k StorageMetricKey) String() string {
 **Sources:** [Go transport.go](https://go.dev/src/net/http/transport.go), [HTTP Connection Pooling in Go](https://davidbacisin.com/writing/golang-http-connection-pools-1)
 
 **Current state is mostly complete.** Phase 1 implemented:
+
 - Close() with request draining
 - CloseWithContext() for custom timeouts
 - FetchData rejection after close
@@ -319,6 +339,7 @@ func (k StorageMetricKey) String() string {
 **Remaining work:**
 
 1. **Integrate with Server.Shutdown()**
+
 ```go
 func (s *Server) Shutdown() error {
     // 1. Stop accepting new scrapes
@@ -329,7 +350,8 @@ func (s *Server) Shutdown() error {
 }
 ```
 
-2. **Document cleanup sequence**
+1. **Document cleanup sequence**
+
 ```
 Shutdown Order:
 1. Stop HTTP server (no new scrapes)
@@ -343,12 +365,14 @@ Shutdown Order:
 ## Standard Stack
 
 ### Core
+
 | Library | Version | Purpose | Why Standard |
 |---------|---------|---------|--------------|
 | `go.opentelemetry.io/otel/trace/noop` | 1.39.0+ | Nil-safe tracing | Official OTel package for disabled tracing |
 | `go.opentelemetry.io/otel/trace` | 1.39.0+ | Tracing interfaces | Standard OTel Go API |
 
 ### Supporting
+
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
 | (existing) | - | No new dependencies needed | - |
@@ -358,6 +382,7 @@ Shutdown Order:
 ## Architecture Patterns
 
 ### Recommended Project Structure
+
 ```
 internal/
 ├── exporter/
@@ -425,6 +450,7 @@ exporter.NewNbuClient(cfg, WithTracerProvider(tp))
 **What goes wrong:** Version detection updates config, but other components already copied it
 **Why it happens:** Config passed by value creates copies that diverge
 **How to avoid:**
+
 - Complete version detection BEFORE creating components
 - Use pointer to shared immutable config after finalization
 **Warning signs:** Different components report different API versions
@@ -441,6 +467,7 @@ exporter.NewNbuClient(cfg, WithTracerProvider(tp))
 **What goes wrong:** Traces lost during shutdown, connections leaked
 **Why it happens:** Shutdown order matters - flush traces before closing connections
 **How to avoid:** Document and enforce shutdown order:
+
   1. Stop accepting requests
   2. Wait for active requests
   3. Flush telemetry
@@ -594,6 +621,7 @@ func NewImmutableConfig(cfg *models.Config) (ImmutableConfig, error) {
 | Manual nil span handling | SpanFromContext safety | Always true | Never returns nil span |
 
 **Deprecated/outdated:**
+
 - `trace.NewNoopTracerProvider()` - Use `noop.NewTracerProvider()` instead (official deprecation)
 
 ## Dependencies & Wave Structure
@@ -685,17 +713,20 @@ TD-03 (Metric Keys) -- Independent, can be done anytime
 ## Sources
 
 ### Primary (HIGH confidence)
+
 - `go.opentelemetry.io/otel/trace/noop` - [Official noop package](https://pkg.go.dev/go.opentelemetry.io/otel/trace/noop)
 - `go.opentelemetry.io/otel/trace` - [Official trace package](https://pkg.go.dev/go.opentelemetry.io/otel/trace)
 - OpenTelemetry Go Discussions - [Best practices for instrumenting](https://github.com/open-telemetry/opentelemetry-go/discussions/4532)
 - Prometheus client_golang - [labels.go](https://github.com/prometheus/client_golang/blob/main/prometheus/labels.go)
 
 ### Secondary (MEDIUM confidence)
+
 - Go performance patterns - [Immutable Data Sharing](https://goperf.dev/01-common-patterns/immutable-data/)
 - Go HTTP transport - [transport.go](https://go.dev/src/net/http/transport.go)
 - Functional Options Pattern - [DEV Community guide](https://dev.to/kittipat1413/understanding-the-options-pattern-in-go-390c)
 
 ### Codebase Analysis (HIGH confidence)
+
 - Phase 1 plans: `.planning/phases/01-critical-fixes-stability/01-01-PLAN.md`
 - Phase 1 resource cleanup: `.planning/phases/01-critical-fixes-stability/01-03-PLAN.md`
 - Current metrics implementation: `internal/exporter/metrics.go`
@@ -704,6 +735,7 @@ TD-03 (Metric Keys) -- Independent, can be done anytime
 ## Metadata
 
 **Confidence breakdown:**
+
 - Standard stack: HIGH - Using existing OpenTelemetry packages
 - Architecture patterns: HIGH - Verified against official docs and existing code
 - Pitfalls: HIGH - Identified from codebase analysis

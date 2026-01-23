@@ -53,6 +53,7 @@ completed: 2026-01-23
 - **Files modified:** 9 (5 source files + 4 test files)
 
 ## Accomplishments
+
 - NbuClient and NbuCollector accept TracerProvider via options pattern
 - Removed all global otel.GetTracerProvider() and otel.Tracer() calls from constructors
 - TracerProvider flows explicitly: telemetry.Manager → main.go → NbuCollector → NbuClient
@@ -71,6 +72,7 @@ Each task was committed atomically:
 ## Files Created/Modified
 
 **Source files:**
+
 - `internal/exporter/client.go` - Added ClientOption with WithTracerProvider, updated to use TracerWrapper
 - `internal/exporter/prometheus.go` - Added CollectorOption with WithCollectorTracerProvider, updated to use TracerWrapper
 - `internal/exporter/netbackup.go` - Updated to use client.tracing.StartSpan()
@@ -78,6 +80,7 @@ Each task was committed atomically:
 - `main.go` - Updated to inject TracerProvider from telemetry manager to collector
 
 **Test files:**
+
 - `internal/exporter/client_test.go` - Updated for TracerWrapper behavior
 - `internal/exporter/prometheus_test.go` - Updated collector test instantiation
 - `internal/exporter/otel_benchmark_test.go` - Updated benchmark tests
@@ -94,11 +97,13 @@ None - plan executed exactly as written.
 ## Issues Encountered
 
 **Issue: SDK vs API trace import conflict in telemetry.Manager**
+
 - **Problem:** Manager's tracerProvider field was `*sdktrace.TracerProvider` (SDK concrete type) but new method needed to return `trace.TracerProvider` (API interface)
 - **Solution:** Separated imports: `sdktrace "go.opentelemetry.io/otel/sdk/trace"` for SDK types, `"go.opentelemetry.io/otel/trace"` for API types
 - **Resolution:** Updated all SDK references to use `sdktrace.` prefix, API method returns interface type
 
 **Issue: Test expectations for nil-safety**
+
 - **Problem:** Old tests expected nil spans when tracer was disabled, but TracerWrapper always returns valid spans
 - **Solution:** Updated test expectations - TracerWrapper guarantees non-nil spans (noop if tracing disabled)
 - **Resolution:** Tests now verify spans are always valid and don't panic
@@ -112,6 +117,7 @@ None - plan executed exactly as written.
 **Concerns:** None
 
 **Notes:**
+
 - All existing tests pass without modification to tracing setup (as required)
 - Components gracefully degrade when TracerProvider is not provided
 - Options pattern established for future optional dependencies

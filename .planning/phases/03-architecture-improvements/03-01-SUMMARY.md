@@ -109,6 +109,7 @@ None - no external service configuration required.
 ## Next Phase Readiness
 
 TracerWrapper ready for use in migration tasks:
+
 - Plan 03-02 can refactor FetchStorage and FetchAllJobs to use TracerWrapper
 - Plan 03-03 can update NbuCollector.Collect to use TracerWrapper
 - All scattered nil-checks can be removed as migration progresses

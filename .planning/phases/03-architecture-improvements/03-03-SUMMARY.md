@@ -5,23 +5,27 @@
 ## What Was Done
 
 ### Task 1: Metric Value Types
+
 - **Status**: Already existed in metrics.go
 - Types `StorageMetricValue`, `JobMetricValue`, `JobStatusMetricValue` were already present
 - No changes needed
 
 ### Task 2: Updated netbackup.go
+
 - Changed `FetchStorage` signature from `func(ctx, client, map[string]float64) error` to `func(ctx, client) ([]StorageMetricValue, error)`
 - Changed `FetchJobDetails` to use typed map keys (`map[JobMetricKey]float64`, `map[JobStatusKey]float64`)
 - Changed `FetchAllJobs` to return typed slices instead of populating string-keyed maps
 - Simplified error handling by removing unnecessary nil checks (TracerWrapper handles noop)
 
 ### Task 3: Updated prometheus.go
+
 - Removed `"strings"` import (no longer needed for strings.Split)
 - Updated `collectAllMetrics`, `collectStorageMetrics`, `collectJobMetrics` signatures to return typed slices
 - Updated `exposeStorageMetrics`, `exposeJobSizeMetrics`, `exposeJobCountMetrics`, `exposeJobStatusMetrics` to use `m.Key.Labels()...` directly
 - Updated `updateScrapeSpan` and `recordScrapeAttributes` signatures to accept typed slices
 
 ### Task 4: Updated Test Files
+
 - `api_compatibility_test.go`: Added `jobMetricSliceToMap` and `storageMetricSliceToMap` helper functions, updated all test functions
 - `integration_test.go`: Updated all FetchStorage and FetchAllJobs calls, updated `verifyJobMetricsCollected` helper
 - `end_to_end_test.go`: Updated all FetchStorage calls

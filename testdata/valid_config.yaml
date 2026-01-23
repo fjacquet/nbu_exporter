@@ -1,0 +1,18 @@
+# Valid test configuration for main_test.go
+# Uses minimal valid values for testing server lifecycle
+
+server:
+  host: "localhost"
+  port: "0"  # Use random port for tests
+  uri: "/metrics"
+  logName: "/dev/null"  # No log file for tests
+  scrapingInterval: "5m"
+
+nbuserver:
+  scheme: "https"
+  host: "localhost"
+  port: "1556"
+  uri: "/netbackup"
+  apiKey: "test-api-key-12345678"
+  apiVersion: "13.0"
+  insecureSkipVerify: true
