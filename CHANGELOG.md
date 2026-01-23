@@ -74,6 +74,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Markdown line length relaxed to 120 characters
   - Tables excluded from line length checks
   - Prettier configured with 120 character width and LF line endings
+- **Storage Metrics Caching**: TTL-based caching for storage metrics reduces NetBackup API load
+  - Configurable cache TTL via `cacheTTL` field in config (default: 5 minutes)
+  - Uses patrickmn/go-cache for thread-safe caching with automatic expiration
+  - Cache hit returns instantly without API call, cache miss triggers fetch
+  - Metric HELP string documents caching behavior per Prometheus best practices
+- **Health Check with Connectivity Verification**: Enhanced `/health` endpoint verifies NetBackup API connectivity
+  - Returns HTTP 200 when NBU API is reachable
+  - Returns HTTP 503 with "UNHEALTHY" message when NBU API is unreachable
+  - Uses lightweight version endpoint for connectivity test (5-second timeout)
+  - Returns "OK (starting)" during startup phase before collector initialization
+- **Staleness Tracking Metrics**: New metrics for monitoring data freshness
+  - `nbu_up`: Gauge metric (1 = healthy, 0 = unhealthy) reflecting NBU API connectivity
+  - `nbu_last_scrape_timestamp_seconds`: Unix timestamp of last successful collection with `source` label
+- **Dynamic Configuration Reload**: Configuration changes can be applied without restarting the exporter
+  - SafeConfig wrapper provides thread-safe config access via RWMutex
+  - SIGHUP signal handler triggers manual config reload
+  - fsnotify file watcher detects config file changes (watches directory for vim/emacs atomic saves)
+  - Storage cache automatically flushed when NBU server address changes
 
 ### Changed
 

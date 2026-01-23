@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 
 Phase: 6 of 6 (Operational Features)
 Plan: 3 of 3 (Phase 6 complete)
-Status: Phase 6 complete
-Last activity: 2026-01-23 — Completed 06-03-PLAN.md (Dynamic Configuration Reload)
+Status: Milestone v1.1 COMPLETE
+Last activity: 2026-01-23 — Phase 6 verified (4/4 must-haves, 100%)
 
 ## Progress
 
@@ -37,6 +37,8 @@ Last activity: 2026-01-23 — Completed 06-03-PLAN.md (Dynamic Configuration Rel
 - [x] Phase 6 Plan 1 complete (06-01 Storage Metrics Caching)
 - [x] Phase 6 Plan 2 complete (06-02 Health Check & Up Metric)
 - [x] Phase 6 Plan 3 complete (06-03 Dynamic Configuration Reload)
+- [x] Phase 6 verification passed (4/4 must-haves, 100%)
+- [x] **Milestone v1.1 COMPLETE** (6/6 phases, all plans executed and verified)
 
 ## Accumulated Context
 
@@ -236,4 +238,8 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after Phase 6 Plan 3 complete (Phase 6 complete)_
+**2026-01-23 (Phase 6 Verification):** Phase 6 verified by gsd-verifier. Score: 4/4 must-haves (100%). All 4 success criteria from ROADMAP.md met: (1) Storage metrics cached with configurable TTL, (2) Health endpoint verifies NBU connectivity, (3) Staleness metrics exposed (nbu_up, nbu_last_scrape_timestamp_seconds), (4) Config changes without restart via SafeConfig + SIGHUP + fsnotify. All 4 requirements satisfied (FEAT-01, FEAT-02, FEAT-03, FEAT-04). Report: .planning/phases/06-operational-features/06-VERIFICATION.md. **Milestone v1.1 COMPLETE** - all 6 phases executed and verified.
+
+---
+
+_Last updated: 2026-01-23 after Phase 6 verification (Milestone v1.1 complete)_
