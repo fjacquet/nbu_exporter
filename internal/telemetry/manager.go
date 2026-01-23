@@ -12,7 +12,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/sdk/trace"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -22,7 +23,7 @@ import (
 // proper resource cleanup during application shutdown.
 type Manager struct {
 	enabled        bool
-	tracerProvider *trace.TracerProvider
+	tracerProvider *sdktrace.TracerProvider
 	config         Config
 }
 
@@ -106,10 +107,10 @@ func (m *Manager) Initialize(ctx context.Context) error {
 	sampler := m.createSampler()
 
 	// Create TracerProvider with batch span processor
-	m.tracerProvider = trace.NewTracerProvider(
-		trace.WithBatcher(exporter),
-		trace.WithResource(res),
-		trace.WithSampler(sampler),
+	m.tracerProvider = sdktrace.NewTracerProvider(
+		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(res),
+		sdktrace.WithSampler(sampler),
 	)
 
 	// Register global tracer provider
@@ -122,7 +123,7 @@ func (m *Manager) Initialize(ctx context.Context) error {
 }
 
 // createExporter creates an OTLP gRPC exporter with the configured endpoint and TLS settings.
-func (m *Manager) createExporter(ctx context.Context) (trace.SpanExporter, error) {
+func (m *Manager) createExporter(ctx context.Context) (sdktrace.SpanExporter, error) {
 	opts := []otlptracegrpc.Option{
 		otlptracegrpc.WithEndpoint(m.config.Endpoint),
 	}
@@ -167,13 +168,13 @@ func (m *Manager) createResource() (*resource.Resource, error) {
 }
 
 // createSampler creates a sampler based on the configured sampling rate.
-func (m *Manager) createSampler() trace.Sampler {
+func (m *Manager) createSampler() sdktrace.Sampler {
 	if m.config.SamplingRate >= 1.0 {
 		// Sample all traces
-		return trace.AlwaysSample()
+		return sdktrace.AlwaysSample()
 	}
 	// Sample based on trace ID ratio
-	return trace.TraceIDRatioBased(m.config.SamplingRate)
+	return sdktrace.TraceIDRatioBased(m.config.SamplingRate)
 }
 
 // Shutdown flushes pending telemetry data and cleans up resources.
@@ -210,4 +211,15 @@ func (m *Manager) Shutdown(ctx context.Context) error {
 // Returns true if tracing is enabled and operational, false otherwise.
 func (m *Manager) IsEnabled() bool {
 	return m.enabled
+}
+
+// TracerProvider returns the configured TracerProvider for explicit injection.
+// Returns nil if telemetry is not initialized or disabled.
+//
+// This method enables dependency injection of the TracerProvider to components
+// that need distributed tracing, avoiding global state access.
+//
+// Returns the TracerProvider instance, or nil if not available.
+func (m *Manager) TracerProvider() trace.TracerProvider {
+	return m.tracerProvider
 }

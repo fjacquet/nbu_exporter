@@ -36,6 +36,7 @@ import (
 	"github.com/spf13/cobra"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -129,6 +130,7 @@ func NewServer(cfg models.Config) *Server {
 // asynchronously and logs fatal errors if startup fails.
 func (s *Server) Start() error {
 	// Initialize OpenTelemetry if enabled
+	var tracerProvider trace.TracerProvider
 	if s.telemetryManager != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -140,6 +142,9 @@ func (s *Server) Start() error {
 
 		// Configure W3C Trace Context propagation if telemetry is enabled
 		if s.telemetryManager.IsEnabled() {
+			// Get TracerProvider for injection
+			tracerProvider = s.telemetryManager.TracerProvider()
+
 			otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 				propagation.TraceContext{},
 				propagation.Baggage{},
@@ -148,8 +153,13 @@ func (s *Server) Start() error {
 		}
 	}
 
-	// Create NetBackup collector with version detection
-	collector, err := exporter.NewNbuCollector(s.cfg)
+	// Create NetBackup collector with injected TracerProvider
+	var collectorOpts []exporter.CollectorOption
+	if tracerProvider != nil {
+		collectorOpts = append(collectorOpts, exporter.WithCollectorTracerProvider(tracerProvider))
+	}
+
+	collector, err := exporter.NewNbuCollector(s.cfg, collectorOpts...)
 	if err != nil {
 		return fmt.Errorf("failed to create collector: %w", err)
 	}
