@@ -55,6 +55,8 @@ func setupVersionDetectorTest(serverURL, acceptedVersion string) (*NbuClient, *A
 	cfg.NbuServer.APIVersion = "" // Will be detected
 	cfg.NbuServer.URI = ""        // No base URI for test server
 	client := NewNbuClient(cfg)
+	// Disable retries for faster test execution
+	client.client.SetRetryCount(0)
 	baseURL := cfg.GetNBUBaseURL()
 	detector := NewAPIVersionDetector(client, baseURL, cfg.NbuServer.APIKey)
 	return client, detector, cfg
@@ -430,6 +432,8 @@ func TestAPIVersionDetectorConfigImmutability(t *testing.T) {
 
 			// Create detector - should not mutate config
 			client := NewNbuClient(cfg)
+			// Disable retries for faster test execution
+			client.client.SetRetryCount(0)
 			detector := NewAPIVersionDetector(client, cfg.GetNBUBaseURL(), cfg.NbuServer.APIKey)
 
 			// Run detection
@@ -457,6 +461,8 @@ func TestAPIVersionDetectorContextCancellationNoConfigMutation(t *testing.T) {
 	cfg.NbuServer.APIVersion = originalVersion
 
 	client := NewNbuClient(cfg)
+	// Disable retries for faster test execution
+	client.client.SetRetryCount(0)
 	detector := NewAPIVersionDetector(client, cfg.GetNBUBaseURL(), cfg.NbuServer.APIKey)
 
 	// Cancel context immediately

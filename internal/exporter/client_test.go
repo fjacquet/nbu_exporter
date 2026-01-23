@@ -246,6 +246,8 @@ func TestNbuClientFetchDataNotAcceptableError(t *testing.T) {
 			}
 
 			client := NewNbuClient(cfg)
+			// Disable retries for faster test execution
+			client.client.SetRetryCount(0)
 			var result mockAPIResponse
 
 			err := client.FetchData(context.Background(), server.URL, &result)
@@ -305,6 +307,8 @@ func TestNbuClientFetchDataOtherErrors(t *testing.T) {
 
 			cfg := createBasicTestConfig(tt.apiVersion, testAPIKey)
 			client := NewNbuClient(cfg)
+			// Disable retries for faster test execution (especially for 500 errors)
+			client.client.SetRetryCount(0)
 			var result mockAPIResponse
 
 			err := client.FetchData(context.Background(), server.URL, &result)
@@ -470,6 +474,8 @@ func TestNbuClientVersionFailureErrorMessages(t *testing.T) {
 
 			cfg := createMinimalConfig(tt.apiVersion, testAPIKey)
 			client := NewNbuClient(cfg)
+			// Disable retries for faster test execution
+			client.client.SetRetryCount(0)
 			var result mockAPIResponse
 
 			err := client.FetchData(context.Background(), server.URL, &result)
@@ -592,28 +598,24 @@ func TestNewNbuClientWithVersionDetectionExplicitVersion(t *testing.T) {
 // TestNewNbuClientWithVersionDetectionAutoDetection tests automatic version detection
 // when no version is configured
 // Note: This test is simplified to avoid complex mock server setup.
-// Full integration tests for version detection are in version_detector_test.go
-func TestNewNbuClientWithVersionDetectionAutoDetection(t *testing.T) {
-	t.Run("returns error when detection fails", func(t *testing.T) {
-		// Create a server that always returns 406
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(406)
-		}))
-		defer server.Close()
+// Note: Full version detection tests (including failure scenarios) are in version_detector_test.go
+// This test verifies client creation with pre-configured version (bypasses slow detection)
+func TestNewNbuClientWithVersionDetectionPreConfigured(t *testing.T) {
+	t.Run("skips detection when version is configured", func(t *testing.T) {
+		cfg := createBasicTestConfig("13.0", testAPIKey)
 
-		cfg := models.Config{}
-		// Parse the test server URL to get host and port
-		cfg.NbuServer.Scheme = "http"
-		cfg.NbuServer.Host = "localhost"
-		cfg.NbuServer.Port = "9999" // Non-existent port to trigger failure
-		cfg.NbuServer.URI = ""
-		cfg.NbuServer.APIKey = testAPIKey
-		cfg.NbuServer.APIVersion = "" // Empty to trigger detection
-		cfg.NbuServer.InsecureSkipVerify = true
+		// When version is already set, detection is skipped
+		client, err := NewNbuClientWithVersionDetection(context.Background(), &cfg)
+		if err != nil {
+			t.Fatalf("NewNbuClientWithVersionDetection() unexpected error: %v", err)
+		}
+		if client == nil {
+			t.Fatal("NewNbuClientWithVersionDetection() returned nil client")
+		}
 
-		_, err := NewNbuClientWithVersionDetection(context.Background(), &cfg)
-		if err == nil {
-			t.Error("NewNbuClientWithVersionDetection() expected error when all versions fail, got nil")
+		// Verify the configured version is preserved
+		if client.cfg.NbuServer.APIVersion != "13.0" {
+			t.Errorf("API version = %s, want 13.0", client.cfg.NbuServer.APIVersion)
 		}
 	})
 }
@@ -924,6 +926,8 @@ func TestNbuClientFetchDataErrorWithTracing(t *testing.T) {
 
 	cfg := createBasicTestConfig("13.0", testAPIKey)
 	client := NewNbuClient(cfg)
+	// Disable retries for faster test execution
+	client.client.SetRetryCount(0)
 
 	var result mockAPIResponse
 	err := client.FetchData(context.Background(), server.URL, &result)

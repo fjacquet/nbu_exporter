@@ -117,6 +117,8 @@ func TestVersionDetectionWithMockServers(t *testing.T) {
 
 			cfg := createTestConfig(server.URL, "") // Empty version to trigger detection
 			client := NewNbuClient(cfg)
+			// Disable retries for faster test execution
+			client.client.SetRetryCount(0)
 
 			baseURL := cfg.GetNBUBaseURL()
 			detector := NewAPIVersionDetector(client, baseURL, cfg.NbuServer.APIKey)
@@ -163,6 +165,8 @@ func TestFallbackBehavior(t *testing.T) {
 
 	cfg := createTestConfig(server.URL, "")
 	client := NewNbuClient(cfg)
+	// Disable retries for faster test execution
+	client.client.SetRetryCount(0)
 
 	baseURL := cfg.GetNBUBaseURL()
 	detector := NewAPIVersionDetector(client, baseURL, cfg.NbuServer.APIKey)
@@ -216,6 +220,8 @@ func TestConfigurationOverride(t *testing.T) {
 	// Configure with explicit version 12.0
 	cfg := createTestConfig(server.URL, "12.0")
 	client := NewNbuClient(cfg)
+	// Disable retries for faster test execution
+	client.client.SetRetryCount(0)
 
 	// Make a request - should use configured version without detection
 	jobsSize := make(map[string]float64)

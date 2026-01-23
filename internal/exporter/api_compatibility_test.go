@@ -453,6 +453,7 @@ func verifyStorageFields(t *testing.T, storage models.Storages) {
 }
 
 // TestErrorHandlingAcrossVersions tests error handling with different API versions
+// Note: Disables retries to avoid slow exponential backoff on 500 errors
 func TestErrorHandlingAcrossVersions(t *testing.T) {
 	versions := []string{"3.0", "12.0", "13.0"}
 
@@ -471,6 +472,8 @@ func TestErrorHandlingAcrossVersions(t *testing.T) {
 
 			cfg := createTestConfig(server.URL, version)
 			client := NewNbuClient(cfg)
+			// Disable retries for this test to avoid slow exponential backoff
+			client.client.SetRetryCount(0)
 
 			jobsSize := make(map[string]float64)
 			jobsCount := make(map[string]float64)

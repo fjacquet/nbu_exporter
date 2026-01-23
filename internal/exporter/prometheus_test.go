@@ -522,6 +522,8 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 	}
 
 	client := NewNbuClient(cfg)
+	// Disable retries for faster test execution
+	client.client.SetRetryCount(0)
 	collector := &NbuCollector{
 		cfg:    cfg,
 		client: client,
