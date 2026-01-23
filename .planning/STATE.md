@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 3 of 6 (Architecture Improvements)
-Plan: 2 of 5 complete
+Plan: 3 of 5 complete
 Status: In progress
-Last activity: 2026-01-23 — Completed plan 03-02 (TracerProvider Injection)
+Last activity: 2026-01-23 — Completed plan 03-03 (Structured Metric Keys)
 
 ## Progress
 
@@ -29,7 +29,7 @@ Last activity: 2026-01-23 — Completed plan 03-02 (TracerProvider Injection)
 - [x] Phase 2 execution complete (2 of 2 plans: 02-01, 02-02)
 - [x] Phase 3 research complete (03-RESEARCH.md)
 - [x] Phase 3 planning complete (5 plans: 03-01, 03-02, 03-03, 03-04, 03-05)
-- [ ] Phase 3 execution (2 of 5 plans complete: 03-01, 03-02)
+- [ ] Phase 3 execution (3 of 5 plans complete: 03-01, 03-02, 03-03)
 
 ## Accumulated Context
 
@@ -65,6 +65,10 @@ Last activity: 2026-01-23 — Completed plan 03-02 (TracerProvider Injection)
 - (03-02) TracerProvider flows explicitly: telemetry.Manager → main.go → NbuCollector → NbuClient
 - (03-02) Components work correctly without TracerProvider (noop default via TracerWrapper)
 - (03-02) Separate SDK trace import (sdktrace) from API trace import in telemetry.Manager
+- (03-03) FetchStorage returns []StorageMetricValue instead of populating map[string]float64
+- (03-03) FetchAllJobs returns typed slices (jobsSize, jobsCount, statusCount) instead of maps
+- (03-03) Labels() method used directly for Prometheus exposition (no strings.Split)
+- (03-03) Struct keys as map keys for aggregation (JobMetricKey, JobStatusKey are comparable)
 - (03-04) ImmutableConfig extracts values after validation and version detection complete
 - (03-04) All ImmutableConfig fields private with accessor methods returning copies/values
 - (03-04) Incremental adoption allows gradual migration of existing components
@@ -99,6 +103,8 @@ Last activity: 2026-01-23 — Completed plan 03-02 (TracerProvider Injection)
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 03-03 Execution):** Completed plan 03-03 (Structured Metric Keys). Replaced pipe-delimited string map keys with typed struct slices. FetchStorage now returns []StorageMetricValue instead of populating map[string]float64. FetchAllJobs returns typed slices (jobsSize, jobsCount, statusCount). exposeXxxMetrics methods use key.Labels()... directly, eliminating strings.Split parsing. Updated all test files (api_compatibility_test.go, integration_test.go, end_to_end_test.go, version_detection_integration_test.go) with helper functions jobMetricSliceToMap and storageMetricSliceToMap for verification. Metric value types (StorageMetricValue, JobMetricValue, JobStatusMetricValue) already existed in metrics.go. All tests pass with race detector. Fixes TD-03 (handle special characters safely in metric labels). No deviations from plan. Duration: 15 minutes.
 
 **2026-01-23 (Plan 03-02 Execution):** Completed plan 03-02 (TracerProvider Injection). Implemented options pattern for TracerProvider injection in NbuClient (WithTracerProvider) and NbuCollector (WithCollectorTracerProvider). Eliminated all global otel.GetTracerProvider() and otel.Tracer() calls from component constructors. TracerProvider flows explicitly: telemetry.Manager.TracerProvider() → main.go → NbuCollector → NbuClient. Updated telemetry.Manager to separate SDK/API trace imports and expose TracerProvider() method. All components work correctly without TracerProvider (noop default via TracerWrapper). Updated all tests to use new options pattern and TracerWrapper behavior. Four atomic commits: (1) NbuClient options, (2) NbuCollector options, (3) main.go injection, (4) test updates. All tests pass with race detector. Fixes TD-02 (eliminate global OpenTelemetry state). No deviations from plan. Duration: 10 minutes.
 
@@ -142,4 +148,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after completing plan 03-02_
+_Last updated: 2026-01-23 after completing plan 03-03_
