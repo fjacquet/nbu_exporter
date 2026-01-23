@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/logging"
@@ -51,6 +53,12 @@ type NbuClient struct {
 	client *resty.Client // HTTP client with TLS configuration
 	cfg    models.Config // Application configuration including API settings
 	tracer trace.Tracer  // OpenTelemetry tracer for distributed tracing (nil if tracing disabled)
+
+	// Connection tracking for graceful shutdown
+	mu         sync.Mutex    // Protects closed and closeChan
+	activeReqs int32         // Count of active requests (atomic)
+	closed     bool          // Whether Close() has been called
+	closeChan  chan struct{} // Signaled when all requests complete
 }
 
 // NewNbuClient creates a new NetBackup API client with the provided configuration.
@@ -87,9 +95,11 @@ func NewNbuClient(cfg models.Config) *NbuClient {
 	}
 
 	return &NbuClient{
-		client: client,
-		cfg:    cfg,
-		tracer: tracer,
+		client:     client,
+		cfg:        cfg,
+		tracer:     tracer,
+		activeReqs: 0,
+		closed:     false,
 	}
 }
 
@@ -134,6 +144,10 @@ func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config) (
 // This function is extracted to avoid duplication between NewNbuClientWithVersionDetection
 // and NewNbuCollector.
 //
+// The function creates an immutable detector with only the values needed for detection.
+// Config mutation happens ONLY after successful detection, in a single location.
+// If detection fails or context is cancelled, config remains unchanged.
+//
 // Parameters:
 //   - ctx: Context for version detection requests
 //   - client: The NbuClient instance to use for detection
@@ -143,13 +157,20 @@ func NewNbuClientWithVersionDetection(ctx context.Context, cfg *models.Config) (
 func performVersionDetectionIfNeeded(ctx context.Context, client *NbuClient, cfg *models.Config) error {
 	if shouldPerformVersionDetection(cfg) {
 		logging.LogInfo("API version not configured, performing automatic detection")
-		detector := NewAPIVersionDetector(client, cfg)
+
+		// Create detector with immutable values - does not mutate config
+		detector := NewAPIVersionDetector(
+			client,
+			cfg.GetNBUBaseURL(),
+			cfg.NbuServer.APIKey,
+		)
+
 		detectedVersion, err := detector.DetectVersion(ctx)
 		if err != nil {
 			return fmt.Errorf("automatic API version detection failed: %w", err)
 		}
 
-		// Update configuration with detected version
+		// Single point of config mutation - only after successful detection
 		cfg.NbuServer.APIVersion = detectedVersion
 		client.cfg.NbuServer.APIVersion = detectedVersion
 		logging.LogInfo(fmt.Sprintf("Automatically detected API version: %s", detectedVersion))
@@ -221,6 +242,27 @@ func (c *NbuClient) getHeaders() map[string]string {
 //	var jobs models.Jobs
 //	err := client.FetchData(ctx, "https://nbu:1556/admin/jobs", &jobs)
 func (c *NbuClient) FetchData(ctx context.Context, url string, target interface{}) error {
+	// Check if client is closed
+	c.mu.Lock()
+	if c.closed {
+		c.mu.Unlock()
+		return fmt.Errorf("client is closed")
+	}
+	atomic.AddInt32(&c.activeReqs, 1)
+	c.mu.Unlock()
+
+	// Track request completion
+	defer func() {
+		if atomic.AddInt32(&c.activeReqs, -1) == 0 {
+			c.mu.Lock()
+			if c.closed && c.closeChan != nil {
+				close(c.closeChan)
+				c.closeChan = nil
+			}
+			c.mu.Unlock()
+		}
+	}()
+
 	// Create span for HTTP request using consolidated helper
 	ctx, span := createSpan(ctx, c.tracer, "http.request", trace.SpanKindClient)
 	if span != nil {
@@ -462,18 +504,86 @@ func (c *NbuClient) injectTraceContext(ctx context.Context, headers map[string]s
 }
 
 // Close releases resources associated with the HTTP client.
-// It closes idle connections in the underlying HTTP client connection pool
-// and clears the client reference to allow garbage collection.
+// It waits for active requests to complete (up to 30 seconds)
+// before closing connections.
 //
-// Returns an error if the client is already closed (nil).
+// Returns an error if:
+//   - The client is already closed
+//   - Timeout exceeded while waiting for active requests
 func (c *NbuClient) Close() error {
-	if c.client == nil {
+	c.mu.Lock()
+	if c.closed {
+		c.mu.Unlock()
 		return fmt.Errorf("client already closed")
 	}
+	c.closed = true
 
-	// Close idle connections in the underlying HTTP client
-	c.client.GetClient().CloseIdleConnections()
-	c.client = nil
+	// Check if there are active requests
+	activeCount := atomic.LoadInt32(&c.activeReqs)
+	if activeCount > 0 {
+		c.closeChan = make(chan struct{})
+		c.mu.Unlock()
+
+		// Wait for active requests with timeout
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		select {
+		case <-c.closeChan:
+			log.Debug("All active requests completed during shutdown")
+		case <-ctx.Done():
+			log.Warnf("Timeout waiting for %d active requests during shutdown", activeCount)
+		}
+	} else {
+		c.mu.Unlock()
+	}
+
+	// Close idle connections
+	if c.client != nil {
+		c.client.GetClient().CloseIdleConnections()
+		c.client = nil
+	}
+
+	return nil
+}
+
+// CloseWithContext releases resources with explicit timeout control.
+// Use this when you need custom shutdown timeout behavior.
+//
+// Parameters:
+//   - ctx: Context for shutdown timeout
+//
+// Returns an error if:
+//   - The client is already closed
+//   - Context is cancelled while waiting for active requests
+func (c *NbuClient) CloseWithContext(ctx context.Context) error {
+	c.mu.Lock()
+	if c.closed {
+		c.mu.Unlock()
+		return fmt.Errorf("client already closed")
+	}
+	c.closed = true
+
+	activeCount := atomic.LoadInt32(&c.activeReqs)
+	if activeCount > 0 {
+		c.closeChan = make(chan struct{})
+		c.mu.Unlock()
+
+		select {
+		case <-c.closeChan:
+			log.Debug("All active requests completed during shutdown")
+		case <-ctx.Done():
+			log.Warnf("Context cancelled while waiting for %d active requests", activeCount)
+			return ctx.Err()
+		}
+	} else {
+		c.mu.Unlock()
+	}
+
+	if c.client != nil {
+		c.client.GetClient().CloseIdleConnections()
+		c.client = nil
+	}
 
 	return nil
 }

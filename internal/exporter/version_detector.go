@@ -42,23 +42,28 @@ var DefaultRetryConfig = RetryConfig{
 // It tests versions in descending order (13.0 → 12.0 → 3.0) and returns the first
 // working version. This allows the exporter to work with NetBackup 10.0, 10.5, and 11.0
 // without manual configuration.
+//
+// The detector is immutable - it does not modify any configuration during detection.
+// It returns the detected version string, and the caller is responsible for applying
+// the detected version to the configuration.
 type APIVersionDetector struct {
-	client          *NbuClient     // HTTP client for making test requests
-	cfg             *models.Config // Application configuration
-	retryConfig     RetryConfig    // Retry configuration for transient failures
-	tracer          trace.Tracer   // OpenTelemetry tracer for distributed tracing (nil if tracing disabled)
-	originalVersion string         // Original API version to restore after testing
+	client      *NbuClient   // HTTP client for making test requests
+	baseURL     string       // NetBackup base URL (immutable)
+	apiKey      string       // API key for authentication (immutable)
+	retryConfig RetryConfig  // Retry configuration for transient failures
+	tracer      trace.Tracer // OpenTelemetry tracer for distributed tracing (nil if tracing disabled)
 }
 
-// NewAPIVersionDetector creates a new version detector with the provided client and configuration.
+// NewAPIVersionDetector creates a new version detector with the provided client and immutable configuration values.
 // It uses the default retry configuration for handling transient failures.
 //
 // Parameters:
 //   - client: Configured NetBackup API client
-//   - cfg: Application configuration
+//   - baseURL: NetBackup base URL (e.g., "https://netbackup:1556/netbackup")
+//   - apiKey: API key for authentication
 //
 // Returns a new APIVersionDetector instance.
-func NewAPIVersionDetector(client *NbuClient, cfg *models.Config) *APIVersionDetector {
+func NewAPIVersionDetector(client *NbuClient, baseURL, apiKey string) *APIVersionDetector {
 	// Initialize tracer from global provider if available
 	var tracer trace.Tracer
 	tracerProvider := otel.GetTracerProvider()
@@ -68,7 +73,8 @@ func NewAPIVersionDetector(client *NbuClient, cfg *models.Config) *APIVersionDet
 
 	return &APIVersionDetector{
 		client:      client,
-		cfg:         cfg,
+		baseURL:     baseURL,
+		apiKey:      apiKey,
 		retryConfig: DefaultRetryConfig,
 		tracer:      tracer,
 	}
@@ -152,7 +158,7 @@ func (d *APIVersionDetector) DetectVersion(ctx context.Context) (string, error) 
 			"- Verify API key is valid and not expired\n"+
 			"- Try manually specifying apiVersion in config.yaml",
 		models.SupportedAPIVersions,
-		d.cfg.GetNBUBaseURL(),
+		d.baseURL,
 	)
 
 	// Record error on span
@@ -173,6 +179,8 @@ func (d *APIVersionDetector) DetectVersion(ctx context.Context) (string, error) 
 // - Network errors: Retry with exponential backoff
 // - Other errors: Log and try next version
 //
+// This method is immutable - it does not modify any configuration state.
+//
 // Parameters:
 //   - ctx: Context for request cancellation and timeout
 //   - version: API version to test (e.g., "13.0")
@@ -183,30 +191,19 @@ func (d *APIVersionDetector) DetectVersion(ctx context.Context) (string, error) 
 func (d *APIVersionDetector) tryVersion(ctx context.Context, version string) bool {
 	span := trace.SpanFromContext(ctx)
 
-	d.setTemporaryVersion(version)
-	defer d.restoreOriginalVersion()
-
-	testURL := d.buildTestURL()
+	testURL := d.buildTestURL(version)
 	return d.retryVersionTest(ctx, version, testURL, span)
 }
 
-// setTemporaryVersion temporarily sets the API version for testing
-func (d *APIVersionDetector) setTemporaryVersion(version string) {
-	d.originalVersion = d.cfg.NbuServer.APIVersion
-	d.cfg.NbuServer.APIVersion = version
-	d.client.cfg.NbuServer.APIVersion = version
-}
-
-// restoreOriginalVersion restores the original API version
-func (d *APIVersionDetector) restoreOriginalVersion() {
-	d.cfg.NbuServer.APIVersion = d.originalVersion
-	d.client.cfg.NbuServer.APIVersion = d.originalVersion
-}
-
-// buildTestURL builds the test URL for version detection
-func (d *APIVersionDetector) buildTestURL() string {
-	baseURL := d.cfg.GetNBUBaseURL()
-	return fmt.Sprintf("%s/admin/jobs?page[limit]=1", baseURL)
+// buildTestURL builds the test URL for version detection with the specified API version.
+// This method is immutable - it builds the URL without modifying any state.
+//
+// Parameters:
+//   - version: API version to include in the URL path
+//
+// Returns the test URL for the jobs endpoint
+func (d *APIVersionDetector) buildTestURL(version string) string {
+	return fmt.Sprintf("%s/admin/jobs?page[limit]=1", d.baseURL)
 }
 
 // retryVersionTest implements retry logic with exponential backoff
@@ -214,7 +211,7 @@ func (d *APIVersionDetector) retryVersionTest(ctx context.Context, version, test
 	delay := d.retryConfig.InitialDelay
 
 	for attempt := 1; attempt <= d.retryConfig.MaxAttempts; attempt++ {
-		resp, err := d.makeVersionTestRequest(ctx, testURL)
+		resp, err := d.makeVersionTestRequest(ctx, testURL, version)
 
 		if err != nil {
 			if d.shouldRetry(attempt) {
@@ -234,11 +231,26 @@ func (d *APIVersionDetector) retryVersionTest(ctx context.Context, version, test
 	return false
 }
 
-// makeVersionTestRequest makes the HTTP request to test the API version
-func (d *APIVersionDetector) makeVersionTestRequest(ctx context.Context, testURL string) (*resty.Response, error) {
+// makeVersionTestRequest makes the HTTP request to test the API version.
+// It builds headers inline with the specified version instead of relying on client state.
+// This ensures the request is immutable and does not depend on client configuration.
+//
+// Parameters:
+//   - ctx: Context for request cancellation and timeout
+//   - testURL: Full URL to test
+//   - version: API version to test (used in Accept header)
+//
+// Returns the HTTP response and any error encountered
+func (d *APIVersionDetector) makeVersionTestRequest(ctx context.Context, testURL, version string) (*resty.Response, error) {
+	// Build headers inline with the test version
+	headers := map[string]string{
+		HeaderAccept:        fmt.Sprintf("application/vnd.netbackup+json;version=%s", version),
+		HeaderAuthorization: d.apiKey,
+	}
+
 	return d.client.client.R().
 		SetContext(ctx).
-		SetHeaders(d.client.getHeaders()).
+		SetHeaders(headers).
 		Get(testURL)
 }
 

@@ -118,7 +118,8 @@ func TestVersionDetectionWithMockServers(t *testing.T) {
 			cfg := createTestConfig(server.URL, "") // Empty version to trigger detection
 			client := NewNbuClient(cfg)
 
-			detector := NewAPIVersionDetector(client, &cfg)
+			baseURL := cfg.GetNBUBaseURL()
+			detector := NewAPIVersionDetector(client, baseURL, cfg.NbuServer.APIKey)
 			detectedVersion, err := detector.DetectVersion(context.Background())
 
 			validateVersionDetectionResult(t, detectedVersion, err, tt.expectedVersion, tt.expectError)
@@ -163,7 +164,8 @@ func TestFallbackBehavior(t *testing.T) {
 	cfg := createTestConfig(server.URL, "")
 	client := NewNbuClient(cfg)
 
-	detector := NewAPIVersionDetector(client, &cfg)
+	baseURL := cfg.GetNBUBaseURL()
+	detector := NewAPIVersionDetector(client, baseURL, cfg.NbuServer.APIKey)
 	detectedVersion, err := detector.DetectVersion(context.Background())
 
 	if err != nil {

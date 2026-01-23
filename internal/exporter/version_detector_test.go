@@ -55,7 +55,8 @@ func setupVersionDetectorTest(serverURL, acceptedVersion string) (*NbuClient, *A
 	cfg.NbuServer.APIVersion = "" // Will be detected
 	cfg.NbuServer.URI = ""        // No base URI for test server
 	client := NewNbuClient(cfg)
-	detector := NewAPIVersionDetector(client, &cfg)
+	baseURL := cfg.GetNBUBaseURL()
+	detector := NewAPIVersionDetector(client, baseURL, cfg.NbuServer.APIKey)
 	return client, detector, cfg
 }
 
