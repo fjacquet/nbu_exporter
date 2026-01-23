@@ -1191,3 +1191,233 @@ func TestManagerSamplerDescription(t *testing.T) {
 		})
 	}
 }
+
+// TestManagerCreateExporterDeadlineExceeded tests createExporter with deadline exceeded context
+func TestManagerCreateExporterDeadlineExceeded(t *testing.T) {
+	config := Config{
+		Enabled:        true,
+		Endpoint:       testEndpoint,
+		Insecure:       true,
+		SamplingRate:   1.0,
+		ServiceName:    testServiceName,
+		ServiceVersion: testServiceVersion,
+	}
+
+	manager := NewManager(config)
+
+	// Create a context with a deadline in the past
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-1*time.Hour))
+	defer cancel()
+
+	// createExporter may succeed or fail depending on async gRPC behavior
+	// The key is that it handles the situation gracefully
+	exporter, err := manager.createExporter(ctx)
+	if err != nil {
+		t.Logf("createExporter with expired deadline returned error (may be expected): %v", err)
+		// This is the error path we're trying to cover
+	} else if exporter == nil {
+		t.Error("createExporter returned nil exporter without error")
+	}
+}
+
+// TestManagerInitializeDeadlineExceeded tests Initialize with deadline exceeded context
+func TestManagerInitializeDeadlineExceeded(t *testing.T) {
+	config := Config{
+		Enabled:        true,
+		Endpoint:       testEndpoint,
+		Insecure:       true,
+		SamplingRate:   1.0,
+		ServiceName:    testServiceName,
+		ServiceVersion: testServiceVersion,
+	}
+
+	manager := NewManager(config)
+
+	// Create a context with a deadline in the past
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-1*time.Hour))
+	defer cancel()
+
+	// Initialize with expired deadline - should handle gracefully
+	err := manager.Initialize(ctx)
+	if err != nil {
+		t.Logf("Initialize with expired deadline returned error (may be expected): %v", err)
+	}
+
+	// Manager should either be enabled (init succeeded despite deadline) or disabled (graceful degradation)
+	// Clean up if needed
+	if manager.IsEnabled() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		_ = manager.Shutdown(shutdownCtx)
+	}
+}
+
+// TestManagerResourceAttributeValues verifies specific resource attribute values
+func TestManagerResourceAttributeValues(t *testing.T) {
+	config := Config{
+		Enabled:         true,
+		ServiceName:     "test-service-name",
+		ServiceVersion:  "v1.2.3-test",
+		NetBackupServer: "nbu-server-hostname",
+	}
+
+	manager := NewManager(config)
+	resource, err := manager.createResource()
+	if err != nil {
+		t.Fatalf("createResource() failed: %v", err)
+	}
+
+	attrs := resource.Attributes()
+
+	// Build a map for easier lookup
+	attrMap := make(map[string]string)
+	for _, attr := range attrs {
+		attrMap[string(attr.Key)] = attr.Value.AsString()
+	}
+
+	// Verify service.name
+	if got := attrMap["service.name"]; got != "test-service-name" {
+		t.Errorf("service.name = %q, want %q", got, "test-service-name")
+	}
+
+	// Verify service.version
+	if got := attrMap["service.version"]; got != "v1.2.3-test" {
+		t.Errorf("service.version = %q, want %q", got, "v1.2.3-test")
+	}
+
+	// Verify peer.service (NetBackup server)
+	if got := attrMap["peer.service"]; got != "nbu-server-hostname" {
+		t.Errorf("peer.service = %q, want %q", got, "nbu-server-hostname")
+	}
+
+	// Verify host.name exists and is not empty
+	if got, ok := attrMap["host.name"]; !ok || got == "" {
+		t.Error("host.name attribute missing or empty")
+	}
+}
+
+// TestManagerNegativeSamplingRate tests createSampler with negative sampling rate
+func TestManagerNegativeSamplingRate(t *testing.T) {
+	rates := []float64{-1.0, -0.5, -0.001, -100.0}
+
+	for _, rate := range rates {
+		t.Run(fmt.Sprintf("rate_%.1f", rate), func(t *testing.T) {
+			config := Config{
+				Enabled:      true,
+				SamplingRate: rate,
+			}
+
+			manager := NewManager(config)
+			sampler := manager.createSampler()
+
+			if sampler == nil {
+				t.Error("createSampler() returned nil for negative rate")
+			}
+
+			// Negative rates should use TraceIDRatioBased (same as < 1.0)
+			desc := sampler.Description()
+			// Note: TraceIDRatioBased clamps negative values to 0
+			// Description format varies, just verify it's not AlwaysOnSampler
+			if desc == "AlwaysOnSampler" {
+				t.Errorf("negative rate should not use AlwaysOnSampler, got %s", desc)
+			}
+		})
+	}
+}
+
+// TestManagerCreateExporterEmptyEndpoint tests createExporter with empty endpoint
+func TestManagerCreateExporterEmptyEndpoint(t *testing.T) {
+	config := Config{
+		Enabled:        true,
+		Endpoint:       "", // Empty endpoint
+		Insecure:       true,
+		SamplingRate:   1.0,
+		ServiceName:    testServiceName,
+		ServiceVersion: testServiceVersion,
+	}
+
+	manager := NewManager(config)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	// Empty endpoint - exporter creation may succeed (uses default) or fail
+	exporter, err := manager.createExporter(ctx)
+	if err != nil {
+		t.Logf("createExporter with empty endpoint returned error (may be expected): %v", err)
+	} else if exporter == nil {
+		t.Error("createExporter returned nil exporter without error")
+	}
+}
+
+// TestManagerInitializeWithEmptyServiceName tests Initialize with empty service name
+func TestManagerInitializeWithEmptyServiceName(t *testing.T) {
+	config := Config{
+		Enabled:        true,
+		Endpoint:       testEndpoint,
+		Insecure:       true,
+		SamplingRate:   1.0,
+		ServiceName:    "", // Empty service name
+		ServiceVersion: testServiceVersion,
+	}
+
+	manager := NewManager(config)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := manager.Initialize(ctx)
+	if err != nil {
+		t.Logf("Initialize with empty service name returned error: %v", err)
+	}
+
+	// Cleanup
+	if manager.IsEnabled() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		_ = manager.Shutdown(shutdownCtx)
+	}
+}
+
+// TestManagerTracerProviderConcurrent tests TracerProvider concurrent access
+func TestManagerTracerProviderConcurrent(t *testing.T) {
+	config := Config{
+		Enabled:        true,
+		Endpoint:       testEndpoint,
+		Insecure:       true,
+		SamplingRate:   1.0,
+		ServiceName:    testServiceName,
+		ServiceVersion: testServiceVersion,
+	}
+
+	manager := NewManager(config)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	err := manager.Initialize(ctx)
+	if err != nil {
+		t.Logf("Initialize returned error: %v", err)
+	}
+
+	// Concurrent access to TracerProvider
+	const numGoroutines = 10
+	done := make(chan bool, numGoroutines)
+
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			_ = manager.TracerProvider()
+			_ = manager.IsEnabled()
+			done <- true
+		}()
+	}
+
+	// Wait for all goroutines
+	for i := 0; i < numGoroutines; i++ {
+		<-done
+	}
+
+	// Cleanup
+	if manager.IsEnabled() {
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCancel()
+		_ = manager.Shutdown(shutdownCtx)
+	}
+}
