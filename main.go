@@ -75,10 +75,11 @@ var (
 //
 //	server.Shutdown()
 type Server struct {
-	cfg              models.Config        // Application configuration
-	httpSrv          *http.Server         // HTTP server instance
-	registry         *prometheus.Registry // Prometheus metrics registry
-	telemetryManager *telemetry.Manager   // OpenTelemetry telemetry manager (nil if disabled)
+	cfg              models.Config            // Application configuration
+	httpSrv          *http.Server             // HTTP server instance
+	registry         *prometheus.Registry     // Prometheus metrics registry
+	telemetryManager *telemetry.Manager       // OpenTelemetry telemetry manager (nil if disabled)
+	collector        *exporter.NbuCollector   // NetBackup collector (for cleanup)
 	// serverErrChan receives HTTP server errors. It is buffered (capacity 1)
 	// to ensure the goroutine can send an error even if the main select
 	// hasn't started listening yet (race between Start() return and select).
@@ -164,6 +165,9 @@ func (s *Server) Start() error {
 		return fmt.Errorf("failed to create collector: %w", err)
 	}
 
+	// Store collector reference for shutdown cleanup
+	s.collector = collector
+
 	// Register collector with Prometheus
 	if err := s.registry.Register(collector); err != nil {
 		return fmt.Errorf("failed to register collector: %w", err)
@@ -216,34 +220,59 @@ func (s *Server) ErrorChan() <-chan error {
 //  3. Waits for active requests to complete (up to shutdownTimeout)
 //  4. Forces shutdown if timeout is exceeded
 //
+// Shutdown gracefully shuts down the server components in the correct order.
+//
+// Shutdown Order:
+//  1. Stop HTTP server (no new scrapes accepted)
+//  2. Shutdown OpenTelemetry (flush pending spans)
+//  3. Close collector (drains API connections)
+//
+// Note: Telemetry is shutdown BEFORE client to ensure traces from
+// in-flight requests are flushed before connections close.
+//
 // Returns an error if shutdown fails or times out.
 func (s *Server) Shutdown() error {
-	// Shutdown OpenTelemetry first to flush pending spans
+	var errs []error
+
+	// Step 1: Shutdown HTTP server first (stops accepting new scrapes)
+	if s.httpSrv != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+		defer cancel()
+
+		log.Info("Shutting down HTTP server...")
+		if err := s.httpSrv.Shutdown(ctx); err != nil {
+			errs = append(errs, fmt.Errorf("HTTP server shutdown: %w", err))
+		}
+	}
+
+	// Step 2: Shutdown OpenTelemetry (flush pending spans)
 	if s.telemetryManager != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
 
+		log.Info("Shutting down telemetry...")
 		if err := s.telemetryManager.Shutdown(ctx); err != nil {
-			log.Warnf("OpenTelemetry shutdown error: %v", err)
-			// Continue with HTTP server shutdown even if telemetry shutdown fails
+			log.Warnf("Telemetry shutdown warning: %v", err)
+			// Don't add to errs - telemetry shutdown warnings are non-fatal
 		}
 	}
 
-	// Shutdown HTTP server
-	if s.httpSrv == nil {
-		return nil
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer cancel()
-
-	log.Info("Shutting down server...")
-	if err := s.httpSrv.Shutdown(ctx); err != nil {
-		return fmt.Errorf("server shutdown failed: %w", err)
+	// Step 3: Close collector (drains API connections)
+	if s.collector != nil {
+		log.Info("Closing collector connections...")
+		if err := s.collector.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("collector close: %w", err))
+		}
 	}
 
 	// Close error channel to signal no more errors will be sent
 	close(s.serverErrChan)
+
+	if len(errs) > 0 {
+		log.Errorf("Shutdown completed with %d errors", len(errs))
+		// Return first error for simplicity
+		return errs[0]
+	}
 
 	log.Info("Server stopped gracefully")
 	return nil

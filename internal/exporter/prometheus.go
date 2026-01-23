@@ -378,3 +378,37 @@ func (c *NbuCollector) exposeAPIVersionMetric(ch chan<- prometheus.Metric) {
 		c.cfg.NbuServer.APIVersion,
 	)
 }
+
+// Close releases resources associated with the collector, including
+// closing the internal HTTP client connections.
+//
+// Shutdown Order (documented):
+//  1. Stop accepting new scrapes (HTTP server stopped first)
+//  2. Wait for active Collect() calls to complete
+//  3. Close NbuClient (drains API connections)
+//  4. Shutdown OpenTelemetry (flush traces)
+//
+// This method should be called during graceful shutdown after the
+// HTTP server has stopped accepting requests.
+//
+// Returns an error if client closure fails.
+func (c *NbuCollector) Close() error {
+	if c.client != nil {
+		return c.client.Close()
+	}
+	return nil
+}
+
+// CloseWithContext releases resources with explicit timeout control.
+// Use this when you need custom shutdown timeout behavior.
+//
+// Parameters:
+//   - ctx: Context for shutdown timeout
+//
+// Returns an error if client closure fails or context is cancelled.
+func (c *NbuCollector) CloseWithContext(ctx context.Context) error {
+	if c.client != nil {
+		return c.client.CloseWithContext(ctx)
+	}
+	return nil
+}
