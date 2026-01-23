@@ -9,7 +9,7 @@ Requirements for codebase improvements milestone. Each maps to roadmap phases.
 
 ### Known Bugs
 
-- [ ] **BUG-01**: Fix version detection state restoration on context cancellation
+- [x] **BUG-01**: Fix version detection state restoration on context cancellation ✓
 
 ### Security
 
@@ -23,14 +23,14 @@ Requirements for codebase improvements milestone. Each maps to roadmap phases.
 - [ ] **TD-02**: Eliminate global OpenTelemetry state (dependency injection)
 - [ ] **TD-03**: Replace pipe-delimited metric keys with structured format
 - [ ] **TD-04**: Add test coverage for main.go entry point
-- [ ] **TD-05**: Implement proper resource cleanup in NbuClient.Close()
-- [ ] **TD-06**: Replace fatal log in async goroutine with error channel
+- [x] **TD-05**: Implement proper resource cleanup in NbuClient.Close() ✓
+- [x] **TD-06**: Replace fatal log in async goroutine with error channel ✓
 
 ### Fragile Areas
 
-- [ ] **FRAG-01**: Remove shared config reference from APIVersionDetector
+- [x] **FRAG-01**: Remove shared config reference from APIVersionDetector ✓
 - [ ] **FRAG-02**: Add connection pool lifecycle management
-- [ ] **FRAG-03**: Handle URL parsing errors in BuildURL
+- [x] **FRAG-03**: Handle URL parsing errors in BuildURL ✓
 - [ ] **FRAG-04**: Centralize tracer nil-checks into wrapper method
 
 ### Test Coverage
@@ -78,22 +78,22 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase   | Status  |
-| ----------- | ------- | ------- |
-| BUG-01      | Phase 1 | Pending |
-| SEC-01      | Phase 2 | Pending |
-| SEC-02      | Phase 2 | Pending |
-| SEC-03      | Phase 2 | Pending |
-| TD-01       | Phase 3 | Pending |
-| TD-02       | Phase 3 | Pending |
-| TD-03       | Phase 3 | Pending |
-| TD-04       | Phase 4 | Pending |
-| TD-05       | Phase 1 | Pending |
-| TD-06       | Phase 1 | Pending |
-| FRAG-01     | Phase 1 | Pending |
-| FRAG-02     | Phase 3 | Pending |
-| FRAG-03     | Phase 1 | Pending |
-| FRAG-04     | Phase 3 | Pending |
+| Requirement | Phase   | Status   |
+| ----------- | ------- | -------- |
+| BUG-01      | Phase 1 | Complete |
+| SEC-01      | Phase 2 | Pending  |
+| SEC-02      | Phase 2 | Pending  |
+| SEC-03      | Phase 2 | Pending  |
+| TD-01       | Phase 3 | Pending  |
+| TD-02       | Phase 3 | Pending  |
+| TD-03       | Phase 3 | Pending  |
+| TD-04       | Phase 4 | Pending  |
+| TD-05       | Phase 1 | Complete |
+| TD-06       | Phase 1 | Complete |
+| FRAG-01     | Phase 1 | Complete |
+| FRAG-02     | Phase 3 | Pending  |
+| FRAG-03     | Phase 1 | Complete |
+| FRAG-04     | Phase 3 | Pending  |
 | TEST-01     | Phase 4 | Pending |
 | TEST-02     | Phase 4 | Pending |
 | TEST-03     | Phase 4 | Pending |
@@ -119,4 +119,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 ---
 
 _Requirements defined: 2026-01-23_
-_Last updated: 2026-01-23 after roadmap creation_
+_Last updated: 2026-01-23 after Phase 1 completion_

@@ -13,7 +13,7 @@ This milestone addresses technical debt, bugs, security concerns, and test cover
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Critical Fixes & Stability** - Eliminate crashes and resource leaks
+- [x] **Phase 1: Critical Fixes & Stability** - Eliminate crashes and resource leaks ✓
 - [ ] **Phase 2: Security Hardening** - Protect sensitive data and enforce secure defaults
 - [ ] **Phase 3: Architecture Improvements** - Reduce technical debt and improve maintainability
 - [ ] **Phase 4: Test Coverage** - Increase confidence and prevent regressions
@@ -38,10 +38,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 
-- [ ] 01-01-PLAN.md - Version Detection Immutability (BUG-01 + FRAG-01)
-- [ ] 01-02-PLAN.md - URL Validation (FRAG-03)
-- [ ] 01-03-PLAN.md - Resource Cleanup (TD-05)
-- [ ] 01-04-PLAN.md - Error Channel Pattern (TD-06)
+- [x] 01-01-PLAN.md - Version Detection Immutability (BUG-01 + FRAG-01) ✓
+- [x] 01-02-PLAN.md - URL Validation (FRAG-03) ✓
+- [x] 01-03-PLAN.md - Resource Cleanup (TD-05) ✓
+- [x] 01-04-PLAN.md - Error Channel Pattern (TD-06) ✓
 
 ### Phase 2: Security Hardening
 
@@ -136,16 +136,16 @@ Plans:
 **Execution Order:**
 Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
-| Phase                         | Plans Complete | Status      | Completed |
-| ----------------------------- | -------------- | ----------- | --------- |
-| 1. Critical Fixes & Stability | 0/4            | Planned     | -         |
-| 2. Security Hardening         | 0/TBD          | Not started | -         |
-| 3. Architecture Improvements  | 0/TBD          | Not started | -         |
-| 4. Test Coverage              | 0/TBD          | Not started | -         |
-| 5. Performance Optimizations  | 0/TBD          | Not started | -         |
-| 6. Operational Features       | 0/TBD          | Not started | -         |
+| Phase                         | Plans Complete | Status      | Completed  |
+| ----------------------------- | -------------- | ----------- | ---------- |
+| 1. Critical Fixes & Stability | 4/4            | Complete ✓  | 2026-01-23 |
+| 2. Security Hardening         | 0/TBD          | Not started | -          |
+| 3. Architecture Improvements  | 0/TBD          | Not started | -          |
+| 4. Test Coverage              | 0/TBD          | Not started | -          |
+| 5. Performance Optimizations  | 0/TBD          | Not started | -          |
+| 6. Operational Features       | 0/TBD          | Not started | -          |
 
 ---
 
 _Roadmap created: 2026-01-23_
-_Last updated: 2026-01-23_
+_Last updated: 2026-01-23 after Phase 1 completion_
