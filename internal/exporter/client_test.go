@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -1406,5 +1407,270 @@ func TestNbuClient_TLSInTransport(t *testing.T) {
 				t.Errorf("MinVersion = %d, want %d", transport.TLSClientConfig.MinVersion, tls.VersionTLS12)
 			}
 		})
+	}
+}
+
+// TestClientNetworkTimeout tests behavior when server doesn't respond within timeout
+func TestClientNetworkTimeout(t *testing.T) {
+	// Create a server that delays response longer than client timeout
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Sleep longer than the client's context timeout
+		time.Sleep(5 * time.Second)
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(mockAPIResponse{})
+	}))
+	defer server.Close()
+
+	cfg := createBasicTestConfig("13.0", testAPIKey)
+	client := NewNbuClient(cfg)
+	// Disable retries for faster test execution
+	client.client.SetRetryCount(0)
+
+	// Create context with short timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	var result mockAPIResponse
+	err := client.FetchData(ctx, server.URL, &result)
+
+	if err == nil {
+		t.Error("FetchData() expected timeout error, got nil")
+		return
+	}
+
+	// Error should indicate timeout or deadline exceeded
+	errStr := err.Error()
+	if !strings.Contains(errStr, "deadline exceeded") &&
+		!strings.Contains(errStr, "timeout") &&
+		!strings.Contains(errStr, "context deadline exceeded") &&
+		!strings.Contains(errStr, "context canceled") {
+		t.Errorf("FetchData() error = %v, should indicate timeout", err)
+	}
+}
+
+// TestClientConnectionRefused tests behavior when server is unreachable
+func TestClientConnectionRefused(t *testing.T) {
+	cfg := createBasicTestConfig("13.0", testAPIKey)
+	client := NewNbuClient(cfg)
+	// Disable retries for faster test execution
+	client.client.SetRetryCount(0)
+
+	// Use a URL that should fail to connect (localhost with invalid port)
+	unreachableURL := "http://127.0.0.1:65534/nonexistent"
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	var result mockAPIResponse
+	err := client.FetchData(ctx, unreachableURL, &result)
+
+	if err == nil {
+		t.Error("FetchData() expected connection error, got nil")
+		return
+	}
+
+	// Error should indicate connection failure
+	errStr := err.Error()
+	if !strings.Contains(errStr, "connection refused") &&
+		!strings.Contains(errStr, "connect:") &&
+		!strings.Contains(errStr, "dial") &&
+		!strings.Contains(errStr, "network") &&
+		!strings.Contains(errStr, "no such host") {
+		t.Errorf("FetchData() error = %v, should indicate connection failure", err)
+	}
+}
+
+// TestClientHTTPErrorsComprehensive is a table-driven test for various HTTP status codes
+// including edge cases like 400, 502, 503 that weren't covered before
+func TestClientHTTPErrorsComprehensive(t *testing.T) {
+	tests := []struct {
+		name       string
+		statusCode int
+		wantErr    bool
+	}{
+		{
+			name:       "400 Bad Request",
+			statusCode: 400,
+			wantErr:    true,
+		},
+		{
+			name:       "401 Unauthorized",
+			statusCode: 401,
+			wantErr:    true,
+		},
+		{
+			name:       "403 Forbidden",
+			statusCode: 403,
+			wantErr:    true,
+		},
+		{
+			name:       "404 Not Found",
+			statusCode: 404,
+			wantErr:    true,
+		},
+		{
+			name:       "500 Internal Server Error",
+			statusCode: 500,
+			wantErr:    true,
+		},
+		{
+			name:       "502 Bad Gateway",
+			statusCode: 502,
+			wantErr:    true,
+		},
+		{
+			name:       "503 Service Unavailable",
+			statusCode: 503,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.statusCode)
+				json.NewEncoder(w).Encode(map[string]string{
+					"error": fmt.Sprintf("HTTP %d error", tt.statusCode),
+				})
+			}))
+			defer server.Close()
+
+			cfg := createBasicTestConfig("13.0", testAPIKey)
+			client := NewNbuClient(cfg)
+			// Disable retries for faster test execution (especially for 5xx errors)
+			client.client.SetRetryCount(0)
+			var result mockAPIResponse
+
+			err := client.FetchData(context.Background(), server.URL, &result)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("FetchData() expected error for status %d, got nil", tt.statusCode)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("FetchData() unexpected error for status %d: %v", tt.statusCode, err)
+				}
+			}
+		})
+	}
+}
+
+// TestClientPartialResponse tests handling of truncated/partial JSON response
+func TestClientPartialResponse(t *testing.T) {
+	tests := []struct {
+		name        string
+		body        string
+		expectError string
+	}{
+		{
+			name:        "truncated JSON object",
+			body:        `{"data": [{"id": "1"`,
+			expectError: errMsgUnmarshalJSON,
+		},
+		{
+			name:        "truncated JSON array",
+			body:        `{"data": [`,
+			expectError: errMsgUnmarshalJSON,
+		},
+		{
+			name:        "incomplete key",
+			body:        `{"dat`,
+			expectError: errMsgUnmarshalJSON,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set(contentTypeHeader, contentTypeJSON)
+				w.WriteHeader(http.StatusOK)
+				// Write partial response and close connection
+				_, _ = w.Write([]byte(tt.body))
+			}))
+			defer server.Close()
+
+			cfg := createBasicTestConfig("13.0", testAPIKey)
+			client := NewNbuClient(cfg)
+			var result mockAPIResponse
+
+			err := client.FetchData(context.Background(), server.URL, &result)
+			if err == nil {
+				t.Error("FetchData() expected error for partial response, got nil")
+				return
+			}
+
+			if !contains(err.Error(), tt.expectError) {
+				t.Errorf("FetchData() error = %v, should contain %v", err.Error(), tt.expectError)
+			}
+		})
+	}
+}
+
+// TestClientEmptyResponseBody tests handling of empty response body
+func TestClientEmptyResponseBody(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
+		w.WriteHeader(http.StatusOK)
+		// Write nothing - empty body
+	}))
+	defer server.Close()
+
+	cfg := createBasicTestConfig("13.0", testAPIKey)
+	client := NewNbuClient(cfg)
+	var result mockAPIResponse
+
+	err := client.FetchData(context.Background(), server.URL, &result)
+	if err == nil {
+		t.Error("FetchData() expected error for empty response, got nil")
+		return
+	}
+
+	// Error should indicate JSON parsing failure
+	if !contains(err.Error(), errMsgUnmarshalJSON) {
+		t.Errorf("FetchData() error = %v, should indicate JSON parsing failure", err)
+	}
+}
+
+// TestClientServerClosesDuringTransfer tests behavior when server closes connection mid-transfer
+func TestClientServerClosesDuringTransfer(t *testing.T) {
+	// Create a server that closes connection after sending partial headers
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("Failed to create listener: %v", err)
+	}
+
+	serverClosed := make(chan struct{})
+	go func() {
+		defer close(serverClosed)
+		conn, err := listener.Accept()
+		if err != nil {
+			return
+		}
+		// Read some data
+		buf := make([]byte, 1024)
+		conn.Read(buf)
+		// Close without sending response
+		conn.Close()
+	}()
+
+	cfg := createBasicTestConfig("13.0", testAPIKey)
+	client := NewNbuClient(cfg)
+	client.client.SetRetryCount(0)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	var result mockAPIResponse
+	testURL := fmt.Sprintf("http://%s/test", listener.Addr().String())
+	err = client.FetchData(ctx, testURL, &result)
+
+	// Close listener and wait for server goroutine
+	listener.Close()
+	<-serverClosed
+
+	if err == nil {
+		t.Error("FetchData() expected error when server closes connection, got nil")
 	}
 }
