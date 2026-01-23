@@ -73,11 +73,16 @@ Plans:
 3. Metric keys use structured format that handles special characters safely
 4. Connection pool lifecycle is explicitly managed with documented cleanup requirements
 5. Tracer nil-checks are centralized in a single wrapper method (DRY principle)
-   **Plans**: TBD
+
+**Plans:** 5 plans (4 waves)
 
 Plans:
 
-- [ ] 03-01: [TBD during phase planning]
+- [ ] 03-01-PLAN.md - Tracer Wrapper with noop default (FRAG-04) - Wave 1
+- [ ] 03-02-PLAN.md - TracerProvider Injection (TD-02) - Wave 2
+- [ ] 03-03-PLAN.md - Structured Metric Keys (TD-03) - Wave 3
+- [ ] 03-04-PLAN.md - Immutable Config (TD-01) - Wave 3
+- [ ] 03-05-PLAN.md - Connection Lifecycle Integration (FRAG-02) - Wave 4
 
 ### Phase 4: Test Coverage
 
@@ -142,7 +147,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | ----------------------------- | -------------- | ----------- | ---------- |
 | 1. Critical Fixes & Stability | 4/4            | Complete ✓  | 2026-01-23 |
 | 2. Security Hardening         | 2/2            | Complete ✓  | 2026-01-23 |
-| 3. Architecture Improvements  | 0/TBD          | Not started | -          |
+| 3. Architecture Improvements  | 0/5            | Planning ✓  | -          |
 | 4. Test Coverage              | 0/TBD          | Not started | -          |
 | 5. Performance Optimizations  | 0/TBD          | Not started | -          |
 | 6. Operational Features       | 0/TBD          | Not started | -          |
@@ -150,4 +155,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 ---
 
 _Roadmap created: 2026-01-23_
-_Last updated: 2026-01-23 after Phase 2 completion_
+_Last updated: 2026-01-23 after Phase 3 planning_
