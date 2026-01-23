@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 3 of 6 (Architecture Improvements)
-Plan: 3 of 5 complete
-Status: In progress
-Last activity: 2026-01-23 — Completed plan 03-03 (Structured Metric Keys)
+Plan: 5 of 5 complete
+Status: Complete
+Last activity: 2026-01-23 — Completed plan 03-05 (Connection Lifecycle Integration)
 
 ## Progress
 
@@ -29,7 +29,7 @@ Last activity: 2026-01-23 — Completed plan 03-03 (Structured Metric Keys)
 - [x] Phase 2 execution complete (2 of 2 plans: 02-01, 02-02)
 - [x] Phase 3 research complete (03-RESEARCH.md)
 - [x] Phase 3 planning complete (5 plans: 03-01, 03-02, 03-03, 03-04, 03-05)
-- [ ] Phase 3 execution (3 of 5 plans complete: 03-01, 03-02, 03-03)
+- [x] Phase 3 execution (5 of 5 plans complete: 03-01, 03-02, 03-03, 03-04, 03-05)
 
 ## Accumulated Context
 
@@ -73,6 +73,9 @@ Last activity: 2026-01-23 — Completed plan 03-03 (Structured Metric Keys)
 - (03-04) All ImmutableConfig fields private with accessor methods returning copies/values
 - (03-04) Incremental adoption allows gradual migration of existing components
 - (03-04) Full component migration (NbuClient, NbuCollector) deferred to future phase
+- (03-05) Shutdown order: HTTP server → Telemetry → Collector ensures traces flushed before connections close
+- (03-05) Server stores collector reference for cleanup in Shutdown()
+- (03-05) NbuCollector.Close() delegates to NbuClient.Close() for connection draining
 
 **Phase 1 Plans:**
 
@@ -98,11 +101,13 @@ Last activity: 2026-01-23 — Completed plan 03-03 (Structured Metric Keys)
 | 03-02 | TracerProvider Injection         | TD-02        | client.go, prometheus.go, netbackup.go, manager.go, main.go |
 | 03-03 | Collector Responsibility Split   | TD-03        | prometheus.go, collector.go                                |
 | 03-04 | ImmutableConfig Type             | TD-01        | immutable.go, immutable_test.go                            |
-| 03-05 | Migrate to ImmutableConfig       | TD-01        | client.go, prometheus.go, main.go                          |
+| 03-05 | Connection Lifecycle Integration | FRAG-02      | prometheus.go, main.go                                     |
 
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 03-05 Execution):** Completed plan 03-05 (Connection Lifecycle Integration). Added Close() and CloseWithContext() methods to NbuCollector that delegate to internal NbuClient.Close(). Added collector field to Server struct to track reference for cleanup. Updated Server.Shutdown() with documented three-step order: (1) Stop HTTP server (no new scrapes), (2) Shutdown OpenTelemetry (flush pending spans), (3) Close collector (drains API connections). Order ensures traces flushed before connections close. All tests pass with race detector. Fixes FRAG-02 (connection pool lifecycle explicitly managed). No deviations from plan. Duration: 5 minutes.
 
 **2026-01-23 (Plan 03-03 Execution):** Completed plan 03-03 (Structured Metric Keys). Replaced pipe-delimited string map keys with typed struct slices. FetchStorage now returns []StorageMetricValue instead of populating map[string]float64. FetchAllJobs returns typed slices (jobsSize, jobsCount, statusCount). exposeXxxMetrics methods use key.Labels()... directly, eliminating strings.Split parsing. Updated all test files (api_compatibility_test.go, integration_test.go, end_to_end_test.go, version_detection_integration_test.go) with helper functions jobMetricSliceToMap and storageMetricSliceToMap for verification. Metric value types (StorageMetricValue, JobMetricValue, JobStatusMetricValue) already existed in metrics.go. All tests pass with race detector. Fixes TD-03 (handle special characters safely in metric labels). No deviations from plan. Duration: 15 minutes.
 
@@ -148,4 +153,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after completing plan 03-03_
+_Last updated: 2026-01-23 after completing Phase 3 (all 5 plans)_
