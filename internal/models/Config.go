@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -187,15 +186,11 @@ func (c *Config) validateNBUBaseURL() error {
 }
 
 // validateTLSConfig validates TLS security settings.
-// InsecureSkipVerify requires explicit opt-in via NBU_INSECURE_MODE environment variable.
+// InsecureSkipVerify is controlled via config file - no additional validation needed.
+// The client.go logs an Error-level warning when insecure mode is enabled.
 func (c *Config) validateTLSConfig() error {
-	if c.NbuServer.InsecureSkipVerify {
-		insecureAllowed := os.Getenv("NBU_INSECURE_MODE") == "true"
-		if !insecureAllowed {
-			return fmt.Errorf("TLS verification disabled but NBU_INSECURE_MODE environment variable not set to 'true' - " +
-				"set NBU_INSECURE_MODE=true to explicitly allow insecure connections (not recommended for production)")
-		}
-	}
+	// TLS configuration is validated by the config file setting.
+	// Warning is logged at client initialization time.
 	return nil
 }
 
