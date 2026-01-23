@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Critical Fixes & Stability** - Eliminate crashes and resource leaks ✓
 - [x] **Phase 2: Security Hardening** - Protect sensitive data and enforce secure defaults ✓
-- [ ] **Phase 3: Architecture Improvements** - Reduce technical debt and improve maintainability
+- [x] **Phase 3: Architecture Improvements** - Reduce technical debt and improve maintainability ✓
 - [ ] **Phase 4: Test Coverage** - Increase confidence and prevent regressions
 - [ ] **Phase 5: Performance Optimizations** - Improve scrape performance and reduce resource usage
 - [ ] **Phase 6: Operational Features** - Add missing operational capabilities
@@ -78,11 +78,11 @@ Plans:
 
 Plans:
 
-- [ ] 03-01-PLAN.md - Tracer Wrapper with noop default (FRAG-04) - Wave 1
-- [ ] 03-02-PLAN.md - TracerProvider Injection (TD-02) - Wave 2
-- [ ] 03-03-PLAN.md - Structured Metric Keys (TD-03) - Wave 3
-- [ ] 03-04-PLAN.md - Immutable Config (TD-01) - Wave 3
-- [ ] 03-05-PLAN.md - Connection Lifecycle Integration (FRAG-02) - Wave 4
+- [x] 03-01-PLAN.md - Tracer Wrapper with noop default (FRAG-04) - Wave 1 ✓
+- [x] 03-02-PLAN.md - TracerProvider Injection (TD-02) - Wave 2 ✓
+- [x] 03-03-PLAN.md - Structured Metric Keys (TD-03) - Wave 3 ✓
+- [x] 03-04-PLAN.md - Immutable Config (TD-01) - Wave 3 ✓
+- [x] 03-05-PLAN.md - Connection Lifecycle Integration (FRAG-02) - Wave 4 ✓
 
 ### Phase 4: Test Coverage
 
@@ -93,16 +93,20 @@ Plans:
 
 1. Main package test coverage increases from 0% to 60%+ with integration tests covering server startup, graceful shutdown, and signal handling
 2. Testutil package coverage increases from 51.9% to 80%+
-3. Telemetry package coverage increases from 78.3% to 90%+
+3. Telemetry package coverage increases from 76.6% to 90%+
 4. Tests verify concurrent access to collector without race conditions
 5. Tests cover client error handling edge cases (network timeouts, unusual HTTP responses)
-   **Plans**: TBD
+
+**Plans:** 4 plans (all Wave 1 - parallel)
 
 Plans:
 
-- [ ] 04-01: [TBD during phase planning]
+- [ ] 04-01-PLAN.md - Main Package Integration Tests (TEST-01 + TD-04) - Wave 1
+- [ ] 04-02-PLAN.md - Testutil Coverage Expansion (TEST-02) - Wave 1
+- [ ] 04-03-PLAN.md - Telemetry Coverage Expansion (TEST-03) - Wave 1
+- [ ] 04-04-PLAN.md - Concurrent & Edge Case Tests (TEST-04 + TEST-05) - Wave 1
 
-**Note**: TD-04 and TEST-01 both address main.go test coverage and will be implemented together.
+**Note**: TD-04 and TEST-01 both address main.go test coverage and will be implemented together in plan 04-01.
 
 ### Phase 5: Performance Optimizations
 
@@ -147,12 +151,12 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | ----------------------------- | -------------- | ----------- | ---------- |
 | 1. Critical Fixes & Stability | 4/4            | Complete ✓  | 2026-01-23 |
 | 2. Security Hardening         | 2/2            | Complete ✓  | 2026-01-23 |
-| 3. Architecture Improvements  | 0/5            | Planning ✓  | -          |
-| 4. Test Coverage              | 0/TBD          | Not started | -          |
+| 3. Architecture Improvements  | 5/5            | Complete ✓  | 2026-01-23 |
+| 4. Test Coverage              | 0/4            | Planning ✓  | -          |
 | 5. Performance Optimizations  | 0/TBD          | Not started | -          |
 | 6. Operational Features       | 0/TBD          | Not started | -          |
 
 ---
 
 _Roadmap created: 2026-01-23_
-_Last updated: 2026-01-23 after Phase 3 planning_
+_Last updated: 2026-01-23 after Phase 4 planning_
