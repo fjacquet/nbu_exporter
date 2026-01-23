@@ -1654,3 +1654,47 @@ func TestConfigBuildURLAfterValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestValidate_InsecureSkipVerify_RequiresEnvVar(t *testing.T) {
+	// Ensure env var is not set
+	t.Setenv("NBU_INSECURE_MODE", "")
+
+	cfg := createBaseTestConfig()
+	cfg.NbuServer.InsecureSkipVerify = true
+
+	err := cfg.Validate()
+
+	if err == nil {
+		t.Error("Validate() expected error when InsecureSkipVerify=true without NBU_INSECURE_MODE, got nil")
+	} else if !strings.Contains(err.Error(), "NBU_INSECURE_MODE") {
+		t.Errorf("Validate() error should mention NBU_INSECURE_MODE, got: %v", err)
+	}
+}
+
+func TestValidate_InsecureSkipVerify_WithEnvVar(t *testing.T) {
+	// Set the environment variable to allow insecure mode
+	t.Setenv("NBU_INSECURE_MODE", "true")
+
+	cfg := createBaseTestConfig()
+	cfg.NbuServer.InsecureSkipVerify = true
+
+	err := cfg.Validate()
+
+	if err != nil {
+		t.Errorf("Validate() should succeed when NBU_INSECURE_MODE=true, got error: %v", err)
+	}
+}
+
+func TestValidate_SecureByDefault(t *testing.T) {
+	// Ensure env var is not set
+	t.Setenv("NBU_INSECURE_MODE", "")
+
+	cfg := createBaseTestConfig()
+	cfg.NbuServer.InsecureSkipVerify = false // Default secure mode
+
+	err := cfg.Validate()
+
+	if err != nil {
+		t.Errorf("Validate() should succeed with secure TLS by default, got error: %v", err)
+	}
+}

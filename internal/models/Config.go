@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -107,6 +108,10 @@ func (c *Config) Validate() error {
 		return err
 	}
 
+	if err := c.validateTLSConfig(); err != nil {
+		return err
+	}
+
 	if err := c.validateAPIVersion(); err != nil {
 		return err
 	}
@@ -178,6 +183,19 @@ func (c *Config) validateNBUBaseURL() error {
 		return fmt.Errorf("NBU server URL missing host: %s", baseURL)
 	}
 
+	return nil
+}
+
+// validateTLSConfig validates TLS security settings.
+// InsecureSkipVerify requires explicit opt-in via NBU_INSECURE_MODE environment variable.
+func (c *Config) validateTLSConfig() error {
+	if c.NbuServer.InsecureSkipVerify {
+		insecureAllowed := os.Getenv("NBU_INSECURE_MODE") == "true"
+		if !insecureAllowed {
+			return fmt.Errorf("TLS verification disabled but NBU_INSECURE_MODE environment variable not set to 'true' - " +
+				"set NBU_INSECURE_MODE=true to explicitly allow insecure connections (not recommended for production)")
+		}
+	}
 	return nil
 }
 
