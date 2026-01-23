@@ -53,11 +53,13 @@ Plans:
 1. API key is not visible in memory dumps or logs (except when debug mode is explicitly enabled)
 2. TLS verification is enabled by default; insecure mode requires explicit opt-in flag
 3. Exporter handles API rate limits gracefully with automatic backoff and retry
-   **Plans**: TBD
+
+**Plans:** 2 plans (Wave 1 + Wave 2 sequential)
 
 Plans:
 
-- [ ] 02-01: [TBD during phase planning]
+- [ ] 02-01-PLAN.md - TLS Enforcement & API Key Security (SEC-01 + SEC-02)
+- [ ] 02-02-PLAN.md - Rate Limiting & Retry with Backoff (SEC-03)
 
 ### Phase 3: Architecture Improvements
 
@@ -139,7 +141,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase                         | Plans Complete | Status      | Completed  |
 | ----------------------------- | -------------- | ----------- | ---------- |
 | 1. Critical Fixes & Stability | 4/4            | Complete ✓  | 2026-01-23 |
-| 2. Security Hardening         | 0/TBD          | Not started | -          |
+| 2. Security Hardening         | 0/2            | Planned     | -          |
 | 3. Architecture Improvements  | 0/TBD          | Not started | -          |
 | 4. Test Coverage              | 0/TBD          | Not started | -          |
 | 5. Performance Optimizations  | 0/TBD          | Not started | -          |
@@ -148,4 +150,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 ---
 
 _Roadmap created: 2026-01-23_
-_Last updated: 2026-01-23 after Phase 1 completion_
+_Last updated: 2026-01-23 after Phase 2 planning_
