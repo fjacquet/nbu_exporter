@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 2 of 6 (Security Hardening)
-Plan: 1 of 2 complete (Wave 1)
-Status: Phase 2 in progress
-Last activity: 2026-01-23 — Completed 02-01-PLAN.md
+Plan: 2 of 2 complete
+Status: Phase 2 complete ✓
+Last activity: 2026-01-23 — Completed Phase 2 (Security Hardening)
 
 ## Progress
 
@@ -26,7 +26,7 @@ Last activity: 2026-01-23 — Completed 02-01-PLAN.md
 - [x] Phase 1 verification passed (15/16 must-haves, 93.75%)
 - [x] Phase 2 research complete (02-RESEARCH.md)
 - [x] Phase 2 planning complete (2 plans: 02-01, 02-02)
-- [x] Phase 2 execution (1 of 2 plans complete: 02-01)
+- [x] Phase 2 execution complete (2 of 2 plans: 02-01, 02-02)
 
 ## Accumulated Context
 
@@ -67,13 +67,16 @@ Last activity: 2026-01-23 — Completed 02-01-PLAN.md
 
 **Phase 2 Plans:**
 
-| Plan  | Focus                              | Requirements | Files Modified                                              |
-| ----- | ---------------------------------- | ------------ | ----------------------------------------------------------- |
+| Plan  | Focus                              | Requirements   | Files Modified                                       |
+| ----- | ---------------------------------- | -------------- | ---------------------------------------------------- |
 | 02-01 | TLS Enforcement & API Key Security | SEC-01, SEC-02 | Config.go, Config_test.go, client.go, client_test.go |
+| 02-02 | Rate Limiting & Retry with Backoff | SEC-03         | client.go, client_test.go                            |
 
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 02-02 Execution):** Completed plan 02-02 (Rate Limiting & Retry with Backoff). Implemented exponential backoff retry logic in HTTP client with configurable parameters: 3 max retries, 5s initial delay, 60s max delay, 2.0 backoff factor. Connection pool tuned with MaxIdleConns=100, MaxIdleConnsPerHost=20, IdleConnTimeout=90s. Fixed test suite performance issue by disabling retries in unit tests with SetRetryCount(0). Tests reduced from 247s to ~35s. Fixes SEC-03 (rate limiting and backoff).
 
 **2026-01-23 (Plan 02-01 Execution):** Completed plan 02-01 (TLS Enforcement & API Key Security). Implemented TLS enforcement requiring NBU_INSECURE_MODE=true environment variable for insecure mode. TLS 1.2 enforced as minimum version in HTTP client. Comprehensive API key protection audit completed - verified API key never appears in error messages, logs, or span attributes. Security warnings upgraded to Error level for better visibility. Three atomic commits: (1) TLS enforcement validation, (2) TLS 1.2 minimum and security logging, (3) API key audit verification. All tests pass with race detector. Fixes SEC-01 (secure API key handling) and SEC-02 (TLS enforcement). No deviations from plan. Duration: 5 minutes.
 
@@ -109,4 +112,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after Phase 2 Plan 1 execution_
+_Last updated: 2026-01-23 after Phase 2 completion_

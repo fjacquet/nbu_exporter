@@ -13,9 +13,9 @@ Requirements for codebase improvements milestone. Each maps to roadmap phases.
 
 ### Security
 
-- [ ] **SEC-01**: Implement secure API key handling in memory
-- [ ] **SEC-02**: Enforce TLS verification by default with explicit opt-out
-- [ ] **SEC-03**: Add rate limiting and backoff for metric collection
+- [x] **SEC-01**: Implement secure API key handling in memory ✓
+- [x] **SEC-02**: Enforce TLS verification by default with explicit opt-out ✓
+- [x] **SEC-03**: Add rate limiting and backoff for metric collection ✓
 
 ### Tech Debt
 

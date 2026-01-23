@@ -14,7 +14,7 @@ This milestone addresses technical debt, bugs, security concerns, and test cover
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Critical Fixes & Stability** - Eliminate crashes and resource leaks ✓
-- [ ] **Phase 2: Security Hardening** - Protect sensitive data and enforce secure defaults
+- [x] **Phase 2: Security Hardening** - Protect sensitive data and enforce secure defaults ✓
 - [ ] **Phase 3: Architecture Improvements** - Reduce technical debt and improve maintainability
 - [ ] **Phase 4: Test Coverage** - Increase confidence and prevent regressions
 - [ ] **Phase 5: Performance Optimizations** - Improve scrape performance and reduce resource usage
@@ -58,8 +58,8 @@ Plans:
 
 Plans:
 
-- [ ] 02-01-PLAN.md - TLS Enforcement & API Key Security (SEC-01 + SEC-02)
-- [ ] 02-02-PLAN.md - Rate Limiting & Retry with Backoff (SEC-03)
+- [x] 02-01-PLAN.md - TLS Enforcement & API Key Security (SEC-01 + SEC-02) ✓
+- [x] 02-02-PLAN.md - Rate Limiting & Retry with Backoff (SEC-03) ✓
 
 ### Phase 3: Architecture Improvements
 
@@ -141,7 +141,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase                         | Plans Complete | Status      | Completed  |
 | ----------------------------- | -------------- | ----------- | ---------- |
 | 1. Critical Fixes & Stability | 4/4            | Complete ✓  | 2026-01-23 |
-| 2. Security Hardening         | 0/2            | Planned     | -          |
+| 2. Security Hardening         | 2/2            | Complete ✓  | 2026-01-23 |
 | 3. Architecture Improvements  | 0/TBD          | Not started | -          |
 | 4. Test Coverage              | 0/TBD          | Not started | -          |
 | 5. Performance Optimizations  | 0/TBD          | Not started | -          |
@@ -150,4 +150,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 ---
 
 _Roadmap created: 2026-01-23_
-_Last updated: 2026-01-23 after Phase 2 planning_
+_Last updated: 2026-01-23 after Phase 2 completion_
