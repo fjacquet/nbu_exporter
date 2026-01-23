@@ -13,10 +13,10 @@ This milestone addresses technical debt, bugs, security concerns, and test cover
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [x] **Phase 1: Critical Fixes & Stability** - Eliminate crashes and resource leaks ✓
-- [x] **Phase 2: Security Hardening** - Protect sensitive data and enforce secure defaults ✓
-- [x] **Phase 3: Architecture Improvements** - Reduce technical debt and improve maintainability ✓
-- [ ] **Phase 4: Test Coverage** - Increase confidence and prevent regressions
+- [x] **Phase 1: Critical Fixes & Stability** - Eliminate crashes and resource leaks
+- [x] **Phase 2: Security Hardening** - Protect sensitive data and enforce secure defaults
+- [x] **Phase 3: Architecture Improvements** - Reduce technical debt and improve maintainability
+- [x] **Phase 4: Test Coverage** - Increase confidence and prevent regressions
 - [ ] **Phase 5: Performance Optimizations** - Improve scrape performance and reduce resource usage
 - [ ] **Phase 6: Operational Features** - Add missing operational capabilities
 
@@ -38,10 +38,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 Plans:
 
-- [x] 01-01-PLAN.md - Version Detection Immutability (BUG-01 + FRAG-01) ✓
-- [x] 01-02-PLAN.md - URL Validation (FRAG-03) ✓
-- [x] 01-03-PLAN.md - Resource Cleanup (TD-05) ✓
-- [x] 01-04-PLAN.md - Error Channel Pattern (TD-06) ✓
+- [x] 01-01-PLAN.md - Version Detection Immutability (BUG-01 + FRAG-01)
+- [x] 01-02-PLAN.md - URL Validation (FRAG-03)
+- [x] 01-03-PLAN.md - Resource Cleanup (TD-05)
+- [x] 01-04-PLAN.md - Error Channel Pattern (TD-06)
 
 ### Phase 2: Security Hardening
 
@@ -58,8 +58,8 @@ Plans:
 
 Plans:
 
-- [x] 02-01-PLAN.md - TLS Enforcement & API Key Security (SEC-01 + SEC-02) ✓
-- [x] 02-02-PLAN.md - Rate Limiting & Retry with Backoff (SEC-03) ✓
+- [x] 02-01-PLAN.md - TLS Enforcement & API Key Security (SEC-01 + SEC-02)
+- [x] 02-02-PLAN.md - Rate Limiting & Retry with Backoff (SEC-03)
 
 ### Phase 3: Architecture Improvements
 
@@ -78,11 +78,11 @@ Plans:
 
 Plans:
 
-- [x] 03-01-PLAN.md - Tracer Wrapper with noop default (FRAG-04) - Wave 1 ✓
-- [x] 03-02-PLAN.md - TracerProvider Injection (TD-02) - Wave 2 ✓
-- [x] 03-03-PLAN.md - Structured Metric Keys (TD-03) - Wave 3 ✓
-- [x] 03-04-PLAN.md - Immutable Config (TD-01) - Wave 3 ✓
-- [x] 03-05-PLAN.md - Connection Lifecycle Integration (FRAG-02) - Wave 4 ✓
+- [x] 03-01-PLAN.md - Tracer Wrapper with noop default (FRAG-04) - Wave 1
+- [x] 03-02-PLAN.md - TracerProvider Injection (TD-02) - Wave 2
+- [x] 03-03-PLAN.md - Structured Metric Keys (TD-03) - Wave 3
+- [x] 03-04-PLAN.md - Immutable Config (TD-01) - Wave 3
+- [x] 03-05-PLAN.md - Connection Lifecycle Integration (FRAG-02) - Wave 4
 
 ### Phase 4: Test Coverage
 
@@ -101,10 +101,10 @@ Plans:
 
 Plans:
 
-- [ ] 04-01-PLAN.md - Main Package Integration Tests (TEST-01 + TD-04) - Wave 1
-- [ ] 04-02-PLAN.md - Testutil Coverage Expansion (TEST-02) - Wave 1
-- [ ] 04-03-PLAN.md - Telemetry Coverage Expansion (TEST-03) - Wave 1
-- [ ] 04-04-PLAN.md - Concurrent & Edge Case Tests (TEST-04 + TEST-05) - Wave 1
+- [x] 04-01-PLAN.md - Main Package Integration Tests (TEST-01 + TD-04) - Wave 1
+- [x] 04-02-PLAN.md - Testutil Coverage Expansion (TEST-02) - Wave 1
+- [x] 04-03-PLAN.md - Telemetry Coverage Expansion (TEST-03) - Wave 1
+- [x] 04-04-PLAN.md - Concurrent & Edge Case Tests (TEST-04 + TEST-05) - Wave 1
 
 **Note**: TD-04 and TEST-01 both address main.go test coverage and will be implemented together in plan 04-01.
 
@@ -119,11 +119,16 @@ Plans:
 2. Storage and job metrics are collected in parallel, reducing total scrape time to max(storage_time, jobs_time) instead of sum
 3. Metrics are streamed rather than accumulated in memory, bounding memory usage even for large job counts
 4. String split operations for metric keys are minimized through caching or structured storage
-   **Plans**: TBD
+
+**Plans:** 3 plans (2 waves)
+
+**Note:** PERF-04 (string split caching) was already completed in Phase 3 Plan 03-03 (TD-03 structured metric keys). The Labels() method now provides direct label access without string parsing.
 
 Plans:
 
-- [ ] 05-01: [TBD during phase planning]
+- [ ] 05-01-PLAN.md - Batch Pagination (PERF-01) - Wave 1
+- [ ] 05-02-PLAN.md - Parallel Collection (PERF-02) - Wave 1
+- [ ] 05-03-PLAN.md - Pre-allocation Optimization (PERF-03) - Wave 2
 
 ### Phase 6: Operational Features
 
@@ -149,14 +154,14 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase                         | Plans Complete | Status      | Completed  |
 | ----------------------------- | -------------- | ----------- | ---------- |
-| 1. Critical Fixes & Stability | 4/4            | Complete ✓  | 2026-01-23 |
-| 2. Security Hardening         | 2/2            | Complete ✓  | 2026-01-23 |
-| 3. Architecture Improvements  | 5/5            | Complete ✓  | 2026-01-23 |
-| 4. Test Coverage              | 0/4            | Planning ✓  | -          |
-| 5. Performance Optimizations  | 0/TBD          | Not started | -          |
+| 1. Critical Fixes & Stability | 4/4            | Complete    | 2026-01-23 |
+| 2. Security Hardening         | 2/2            | Complete    | 2026-01-23 |
+| 3. Architecture Improvements  | 5/5            | Complete    | 2026-01-23 |
+| 4. Test Coverage              | 4/4            | Complete    | 2026-01-23 |
+| 5. Performance Optimizations  | 0/3            | Planning    | -          |
 | 6. Operational Features       | 0/TBD          | Not started | -          |
 
 ---
 
 _Roadmap created: 2026-01-23_
-_Last updated: 2026-01-23 after Phase 4 planning_
+_Last updated: 2026-01-23 after Phase 5 planning_
