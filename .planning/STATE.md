@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 6 of 6 (Operational Features)
-Plan: 0 of TBD
-Status: Not started
-Last activity: 2026-01-23 — Phase 5 verified and complete
+Plan: 1 of TBD
+Status: In progress
+Last activity: 2026-01-23 — Completed 06-01-PLAN.md (Storage Metrics Caching)
 
 ## Progress
 
@@ -33,6 +33,8 @@ Last activity: 2026-01-23 — Phase 5 verified and complete
 - [x] Phase 4 execution (4 of 4 plans complete: 04-01, 04-02, 04-03, 04-04)
 - [x] Phase 5 execution (3 of 3 plans complete: 05-01, 05-02, 05-03)
 - [x] Phase 5 verification passed (4/4 must-haves, 100%)
+- [x] Phase 6 research complete (06-RESEARCH.md)
+- [x] Phase 6 Plan 1 complete (06-01 Storage Metrics Caching)
 
 ## Accumulated Context
 
@@ -97,6 +99,9 @@ Last activity: 2026-01-23 — Phase 5 verified and complete
 - (05-02) Errors tracked in separate variables rather than errgroup error return
 - (05-03) Map pre-allocation: 100 for job metric keys, 50 for status metric keys
 - (05-03) Slice pre-allocation uses exact map sizes (known after pagination completes)
+- (06-01) Use patrickmn/go-cache for TTL caching (well-tested, zero-dependency, thread-safe)
+- (06-01) Default cache TTL is 5 minutes (balance between API load reduction and data freshness)
+- (06-01) Include cache TTL in metric HELP string for self-documentation
 
 **Phase 1 Plans:**
 
@@ -141,9 +146,17 @@ Last activity: 2026-01-23 — Phase 5 verified and complete
 | 05-02 | Parallel Collection with errgroup | PERF-02      | prometheus.go, go.mod           |
 | 05-03 | Pre-allocation Capacity Hints     | PERF-03      | netbackup.go                    |
 
+**Phase 6 Plans:**
+
+| Plan  | Focus                  | Requirements | Files Modified                       |
+| ----- | ---------------------- | ------------ | ------------------------------------ |
+| 06-01 | Storage Metrics Cache  | FEAT-01      | cache.go, Config.go, prometheus.go   |
+
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 06-01 Execution):** Completed plan 06-01 (Storage Metrics Caching). Added patrickmn/go-cache dependency for TTL-based caching. Created StorageCache type with Get/Set/Flush/TTL methods in cache.go. Added CacheTTL configuration field to Config.Server struct with 5m default. Integrated cache with NbuCollector: storageCache field initialized in NewNbuCollector, collectStorageMetrics checks cache before API call, cache hit/miss events recorded in spans. Updated nbu_disk_bytes HELP string to document caching behavior with TTL. Added GetStorageCache method for external cache management. Comprehensive tests for cache (7 tests) and integration tests (2 tests). All test fixtures updated with CacheTTL field. Three atomic commits: (1) StorageCache implementation, (2) CacheTTL config, (3) NbuCollector integration. All tests pass with race detector. Duration: 10 minutes.
 
 **2026-01-23 (Plan 05-03 Execution):** Completed plan 05-03 (Pre-allocation Capacity Hints). Added expectedJobMetricKeys (100) and expectedStatusMetricKeys (50) constants for map pre-allocation. Updated FetchAllJobs to pre-allocate sizeMap, countMap, statusMap with capacity hints. Result slices (jobsSize, jobsCount, statusCount) pre-allocated with exact map sizes after aggregation completes. Reduces memory reallocations during job processing (5-10% GC pressure reduction for typical workloads). One atomic commit. All tests pass with race detector. Fixes PERF-03. Duration: 2 minutes. Phase 5 complete.
 
@@ -205,4 +218,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after Phase 5 verification passed_
+_Last updated: 2026-01-23 after Phase 6 Plan 1 complete_
