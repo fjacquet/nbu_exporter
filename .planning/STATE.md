@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 6 of 6 (Operational Features)
-Plan: 1 of TBD
+Plan: 2 of TBD
 Status: In progress
-Last activity: 2026-01-23 — Completed 06-01-PLAN.md (Storage Metrics Caching)
+Last activity: 2026-01-23 — Completed 06-02-PLAN.md (Health Check & Up Metric)
 
 ## Progress
 
@@ -35,6 +35,7 @@ Last activity: 2026-01-23 — Completed 06-01-PLAN.md (Storage Metrics Caching)
 - [x] Phase 5 verification passed (4/4 must-haves, 100%)
 - [x] Phase 6 research complete (06-RESEARCH.md)
 - [x] Phase 6 Plan 1 complete (06-01 Storage Metrics Caching)
+- [x] Phase 6 Plan 2 complete (06-02 Health Check & Up Metric)
 
 ## Accumulated Context
 
@@ -102,6 +103,11 @@ Last activity: 2026-01-23 — Completed 06-01-PLAN.md (Storage Metrics Caching)
 - (06-01) Use patrickmn/go-cache for TTL caching (well-tested, zero-dependency, thread-safe)
 - (06-01) Default cache TTL is 5 minutes (balance between API load reduction and data freshness)
 - (06-01) Include cache TTL in metric HELP string for self-documentation
+- (06-02) nbu_up=1 if ANY collection succeeds, 0 only if ALL fail (partial success = healthy)
+- (06-02) Cache hit updates lastStorageScrapeTime (cached data is valid for staleness tracking)
+- (06-02) Health endpoint returns 503 on NBU unreachable with lightweight version endpoint test
+- (06-02) Startup phase returns 200 'OK (starting)' before collector initialization
+- (06-02) 5-second default timeout for health check connectivity test
 
 **Phase 1 Plans:**
 
@@ -148,13 +154,16 @@ Last activity: 2026-01-23 — Completed 06-01-PLAN.md (Storage Metrics Caching)
 
 **Phase 6 Plans:**
 
-| Plan  | Focus                  | Requirements | Files Modified                       |
-| ----- | ---------------------- | ------------ | ------------------------------------ |
-| 06-01 | Storage Metrics Cache  | FEAT-01      | cache.go, Config.go, prometheus.go   |
+| Plan  | Focus                  | Requirements | Files Modified                                |
+| ----- | ---------------------- | ------------ | --------------------------------------------- |
+| 06-01 | Storage Metrics Cache  | FEAT-01      | cache.go, Config.go, prometheus.go            |
+| 06-02 | Health Check & Up Metric | FEAT-02    | health.go, prometheus.go, main.go             |
 
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 06-02 Execution):** Completed plan 06-02 (Health Check & Up Metric). Added nbu_up metric (1 if any collection succeeds, 0 if all fail) and nbu_last_scrape_timestamp_seconds with source label (storage/jobs). Created health.go with TestConnectivity() method using lightweight version detection endpoint (5s timeout). Added IsHealthy() method for quick check without API call. Enhanced /health endpoint to verify NBU connectivity: returns 200 OK when reachable, 503 when unreachable, 200 "OK (starting)" during startup phase. Updated prometheus.go with timestamp tracking fields and mutex protection. Added comprehensive health tests (7 tests). Three auto-fixes: (1) updated test descriptor counts from 6 to 8, (2) added CacheTTL to main_test.go config, (3) updated TestHealthHandler for startup phase response. Two atomic commits: (1) nbu_up and timestamp metrics, (2) TestConnectivity and health endpoint. All tests pass with race detector. Duration: 11 minutes.
 
 **2026-01-23 (Plan 06-01 Execution):** Completed plan 06-01 (Storage Metrics Caching). Added patrickmn/go-cache dependency for TTL-based caching. Created StorageCache type with Get/Set/Flush/TTL methods in cache.go. Added CacheTTL configuration field to Config.Server struct with 5m default. Integrated cache with NbuCollector: storageCache field initialized in NewNbuCollector, collectStorageMetrics checks cache before API call, cache hit/miss events recorded in spans. Updated nbu_disk_bytes HELP string to document caching behavior with TTL. Added GetStorageCache method for external cache management. Comprehensive tests for cache (7 tests) and integration tests (2 tests). All test fixtures updated with CacheTTL field. Three atomic commits: (1) StorageCache implementation, (2) CacheTTL config, (3) NbuCollector integration. All tests pass with race detector. Duration: 10 minutes.
 
@@ -218,4 +227,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after Phase 6 Plan 1 complete_
+_Last updated: 2026-01-23 after Phase 6 Plan 2 complete_
