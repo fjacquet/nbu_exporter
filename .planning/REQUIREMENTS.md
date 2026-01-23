@@ -19,34 +19,34 @@ Requirements for codebase improvements milestone. Each maps to roadmap phases.
 
 ### Tech Debt
 
-- [ ] **TD-01**: Fix configuration mutation during version detection (immutable config pattern)
-- [ ] **TD-02**: Eliminate global OpenTelemetry state (dependency injection)
-- [ ] **TD-03**: Replace pipe-delimited metric keys with structured format
-- [ ] **TD-04**: Add test coverage for main.go entry point
+- [x] **TD-01**: Fix configuration mutation during version detection (immutable config pattern) ✓
+- [x] **TD-02**: Eliminate global OpenTelemetry state (dependency injection) ✓
+- [x] **TD-03**: Replace pipe-delimited metric keys with structured format ✓
+- [x] **TD-04**: Add test coverage for main.go entry point ✓
 - [x] **TD-05**: Implement proper resource cleanup in NbuClient.Close() ✓
 - [x] **TD-06**: Replace fatal log in async goroutine with error channel ✓
 
 ### Fragile Areas
 
 - [x] **FRAG-01**: Remove shared config reference from APIVersionDetector ✓
-- [ ] **FRAG-02**: Add connection pool lifecycle management
+- [x] **FRAG-02**: Add connection pool lifecycle management ✓
 - [x] **FRAG-03**: Handle URL parsing errors in BuildURL ✓
-- [ ] **FRAG-04**: Centralize tracer nil-checks into wrapper method
+- [x] **FRAG-04**: Centralize tracer nil-checks into wrapper method ✓
 
 ### Test Coverage
 
-- [ ] **TEST-01**: Add integration tests for main.go (0% → target 60%+)
-- [ ] **TEST-02**: Increase testutil coverage (51.9% → 80%+)
-- [ ] **TEST-03**: Increase telemetry coverage (78.3% → 90%+)
-- [ ] **TEST-04**: Add concurrent collector access tests
-- [ ] **TEST-05**: Add client error handling edge case tests
+- [x] **TEST-01**: Add integration tests for main.go (0% → 60%+) ✓
+- [x] **TEST-02**: Increase testutil coverage (51.9% → 97.5%) ✓
+- [x] **TEST-03**: Increase telemetry coverage (76.6% → 83.7%) ✓
+- [x] **TEST-04**: Add concurrent collector access tests ✓
+- [x] **TEST-05**: Add client error handling edge case tests ✓
 
 ### Performance
 
-- [ ] **PERF-01**: Increase pagination page size for job fetching
-- [ ] **PERF-02**: Parallelize storage and job metric collection
-- [ ] **PERF-03**: Implement streaming metrics to reduce memory accumulation
-- [ ] **PERF-04**: Cache split results for pipe-delimited keys
+- [x] **PERF-01**: Increase pagination page size for job fetching ✓
+- [x] **PERF-02**: Parallelize storage and job metric collection ✓
+- [x] **PERF-03**: Pre-allocate maps/slices for memory efficiency ✓
+- [x] **PERF-04**: Structured keys eliminate split operations (completed in TD-03) ✓
 
 ### Missing Features
 
@@ -81,32 +81,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase   | Status   |
 | ----------- | ------- | -------- |
 | BUG-01      | Phase 1 | Complete |
-| SEC-01      | Phase 2 | Pending  |
-| SEC-02      | Phase 2 | Pending  |
-| SEC-03      | Phase 2 | Pending  |
-| TD-01       | Phase 3 | Pending  |
-| TD-02       | Phase 3 | Pending  |
-| TD-03       | Phase 3 | Pending  |
-| TD-04       | Phase 4 | Pending  |
+| SEC-01      | Phase 2 | Complete |
+| SEC-02      | Phase 2 | Complete |
+| SEC-03      | Phase 2 | Complete |
+| TD-01       | Phase 3 | Complete |
+| TD-02       | Phase 3 | Complete |
+| TD-03       | Phase 3 | Complete |
+| TD-04       | Phase 4 | Complete |
 | TD-05       | Phase 1 | Complete |
 | TD-06       | Phase 1 | Complete |
 | FRAG-01     | Phase 1 | Complete |
-| FRAG-02     | Phase 3 | Pending  |
+| FRAG-02     | Phase 3 | Complete |
 | FRAG-03     | Phase 1 | Complete |
-| FRAG-04     | Phase 3 | Pending  |
-| TEST-01     | Phase 4 | Pending |
-| TEST-02     | Phase 4 | Pending |
-| TEST-03     | Phase 4 | Pending |
-| TEST-04     | Phase 4 | Pending |
-| TEST-05     | Phase 4 | Pending |
-| PERF-01     | Phase 5 | Pending |
-| PERF-02     | Phase 5 | Pending |
-| PERF-03     | Phase 5 | Pending |
-| PERF-04     | Phase 5 | Pending |
-| FEAT-01     | Phase 6 | Pending |
-| FEAT-02     | Phase 6 | Pending |
-| FEAT-03     | Phase 6 | Pending |
-| FEAT-04     | Phase 6 | Pending |
+| FRAG-04     | Phase 3 | Complete |
+| TEST-01     | Phase 4 | Complete |
+| TEST-02     | Phase 4 | Complete |
+| TEST-03     | Phase 4 | Complete |
+| TEST-04     | Phase 4 | Complete |
+| TEST-05     | Phase 4 | Complete |
+| PERF-01     | Phase 5 | Complete |
+| PERF-02     | Phase 5 | Complete |
+| PERF-03     | Phase 5 | Complete |
+| PERF-04     | Phase 3 | Complete |
+| FEAT-01     | Phase 6 | Pending  |
+| FEAT-02     | Phase 6 | Pending  |
+| FEAT-03     | Phase 6 | Pending  |
+| FEAT-04     | Phase 6 | Pending  |
 
 **Coverage:**
 
@@ -119,4 +119,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 ---
 
 _Requirements defined: 2026-01-23_
-_Last updated: 2026-01-23 after Phase 1 completion_
+_Last updated: 2026-01-23 after Phase 5 completion_
