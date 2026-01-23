@@ -316,16 +316,28 @@ func setupLogging(cfg models.Config, debugMode bool) error {
 	return nil
 }
 
-// waitForShutdownSignal blocks until a shutdown signal (SIGINT or SIGTERM) is received.
-// This enables graceful shutdown when the application is terminated.
+// waitForShutdown blocks until either a shutdown signal is received
+// or a server error occurs through the error channel.
 //
 // Signals handled:
 //   - SIGINT (Ctrl+C)
 //   - SIGTERM (kill command)
-func waitForShutdownSignal() {
+//
+// Returns an error if the server encountered a fatal error, nil for normal signal shutdown.
+func waitForShutdown(serverErr <-chan error) error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-	<-stop
+
+	select {
+	case sig := <-stop:
+		log.Infof("Received signal %v, initiating graceful shutdown...", sig)
+		return nil
+	case err := <-serverErr:
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 func main() {
@@ -358,8 +370,11 @@ func main() {
 				return err
 			}
 
-			// Wait for shutdown signal
-			waitForShutdownSignal()
+			// Wait for shutdown signal or server error
+			if err := waitForShutdown(server.ErrorChan()); err != nil {
+				log.Errorf("Server error: %v", err)
+				// Continue to graceful shutdown
+			}
 
 			// Graceful shutdown
 			return server.Shutdown()
