@@ -1,9 +1,9 @@
 # Invalid test configuration for main_test.go
-# Missing required nbuserver section and has invalid port
+# Missing required nbuserver section - triggers validation error
 
 server:
   host: "localhost"
-  port: "-1"
+  port: "8080"
   uri: "/metrics"
   logName: "/dev/null"
   scrapingInterval: "5m"

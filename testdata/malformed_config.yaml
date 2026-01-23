@@ -1,0 +1,10 @@
+# Malformed YAML for testing parse errors
+# Contains invalid YAML syntax
+
+server:
+  host: "localhost"
+  port: "8080"
+    # Invalid indentation
+  uri: "/metrics"
+  logName: [invalid array
+  scrapingInterval: "5m"

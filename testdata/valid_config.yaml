@@ -2,8 +2,8 @@
 # Uses minimal valid values for testing server lifecycle
 
 server:
-  host: "localhost"
-  port: "0"  # Use random port for tests
+  host: "127.0.0.1"
+  port: "8080"  # Valid port for config validation tests
   uri: "/metrics"
   logName: "/dev/null"  # No log file for tests
   scrapingInterval: "5m"
@@ -16,3 +16,7 @@ nbuserver:
   apiKey: "test-api-key-12345678"
   apiVersion: "13.0"
   insecureSkipVerify: true
+
+# OpenTelemetry disabled for basic tests
+opentelemetry:
+  enabled: false
