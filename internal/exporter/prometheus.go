@@ -14,6 +14,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
 )
 
 const collectionTimeout = 2 * time.Minute // Maximum time allowed for metric collection
@@ -220,19 +221,49 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 		len(storageMetrics), len(jobsSize), len(jobsCount), len(jobsStatusCount))
 }
 
-// collectAllMetrics fetches storage and job metrics from NetBackup API.
+// collectAllMetrics fetches storage and job metrics from NetBackup API in parallel.
 // Returns the collected typed metric slices and any errors encountered.
+//
+// Parallel Execution:
+// Storage and job metrics are fetched concurrently using errgroup, reducing total
+// scrape time from (storage_time + jobs_time) to max(storage_time, jobs_time).
+//
+// Graceful Degradation:
+// Each goroutine returns nil to errgroup regardless of fetch errors. This ensures:
+//   - Storage failure does not cancel job fetching
+//   - Job failure does not cancel storage fetching
+//   - Errors are tracked in storageErr/jobsErr for the caller to handle
+//   - Partial metrics are still collected when one source fails
 func (c *NbuCollector) collectAllMetrics(ctx context.Context, span trace.Span) (
 	storageMetrics []StorageMetricValue,
 	jobsSize, jobsCount []JobMetricValue,
 	jobsStatusCount []JobStatusMetricValue,
 	storageErr, jobsErr error,
 ) {
-	// Collect storage metrics
-	storageMetrics, storageErr = c.collectStorageMetrics(ctx, span)
+	// Create errgroup with context for coordinated cancellation
+	// Note: We don't use the error from g.Wait() because we always return nil
+	// from goroutines to maintain graceful degradation behavior.
+	g, gCtx := errgroup.WithContext(ctx)
 
-	// Collect job metrics (continue even if storage fails)
-	jobsSize, jobsCount, jobsStatusCount, jobsErr = c.collectJobMetrics(ctx, span)
+	// Collect storage metrics in parallel
+	g.Go(func() error {
+		storageMetrics, storageErr = c.collectStorageMetrics(gCtx, span)
+		// Return nil to continue even if storage fails
+		// This maintains graceful degradation: job collection continues
+		return nil
+	})
+
+	// Collect job metrics in parallel
+	g.Go(func() error {
+		jobsSize, jobsCount, jobsStatusCount, jobsErr = c.collectJobMetrics(gCtx, span)
+		// Return nil to continue even if jobs fail
+		// This maintains graceful degradation: storage collection continues
+		return nil
+	})
+
+	// Wait for both goroutines to complete
+	// Since we always return nil, g.Wait() only returns nil or context error
+	_ = g.Wait()
 
 	return
 }
