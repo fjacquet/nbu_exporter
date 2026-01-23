@@ -301,10 +301,35 @@ func (s *Server) extractTraceContextMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// healthHandler provides a simple health check endpoint that returns HTTP 200 OK.
-// This endpoint can be used by load balancers and monitoring systems to verify
-// the application is running.
+// healthHandler provides health check with NetBackup connectivity verification.
+// Returns 200 OK if NBU API is reachable, 503 Service Unavailable otherwise.
+// Used by load balancers and orchestrators (Kubernetes probes).
+//
+// Behavior:
+//   - If collector not initialized (startup phase): returns 200 "OK (starting)"
+//   - If NBU API is reachable: returns 200 "OK"
+//   - If NBU API is unreachable: returns 503 "UNHEALTHY: NetBackup API unreachable"
+//
+// The connectivity test uses a lightweight API call with 5-second timeout.
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
+	// Fast path: if no collector, just return OK (startup phase)
+	if s.collector == nil {
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprintf(w, "OK (starting)\n")
+		return
+	}
+
+	// Test NetBackup connectivity with timeout from request context
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	if err := s.collector.TestConnectivity(ctx); err != nil {
+		log.Warnf("Health check failed: %v", err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		_, _ = fmt.Fprintf(w, "UNHEALTHY: NetBackup API unreachable\n")
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	_, _ = fmt.Fprintf(w, "OK\n")
 }

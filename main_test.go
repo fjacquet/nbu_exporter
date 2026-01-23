@@ -40,12 +40,14 @@ func createTestConfig() models.Config {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			Host:             "127.0.0.1",
 			Port:             "0", // Let OS assign port
 			URI:              "/metrics",
 			ScrapingInterval: "5m",
 			LogName:          "/dev/null",
+			CacheTTL:         "5m",
 		},
 		NbuServer: struct {
 			Port               string `yaml:"port"`
@@ -189,6 +191,7 @@ func TestSetupLogging_InvalidPath(t *testing.T) {
 }
 
 // TestHealthHandler verifies the /health endpoint returns 200 OK.
+// When collector is nil (before Start()), returns "OK (starting)" to indicate startup phase.
 func TestHealthHandler(t *testing.T) {
 	cfg := createTestConfig()
 	server := NewServer(cfg)
@@ -199,7 +202,8 @@ func TestHealthHandler(t *testing.T) {
 	server.healthHandler(rec, req)
 
 	assert.Equal(t, http.StatusOK, rec.Code, "Health handler should return 200")
-	assert.Equal(t, "OK\n", rec.Body.String(), "Health handler should return 'OK'")
+	// Before Start() is called, collector is nil, so returns "OK (starting)"
+	assert.Equal(t, "OK (starting)\n", rec.Body.String(), "Health handler should return 'OK (starting)' before collector init")
 }
 
 // TestHealthHandler_AllMethods verifies health endpoint accepts various HTTP methods.
