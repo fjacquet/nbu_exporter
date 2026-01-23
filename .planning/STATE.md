@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 1 of 6 (Critical Fixes & Stability)
-Plan: Ready to execute (4 plans in Wave 1)
-Status: Phase planning complete
-Last activity: 2026-01-23 — Phase 1 planned with 4 parallel plans
+Plan: 1 of 4 complete (Wave 1 - parallel execution)
+Status: Phase 1 execution in progress
+Last activity: 2026-01-23 — Completed 01-04-PLAN.md (Error Channel Pattern)
 
 ## Progress
 
@@ -22,7 +22,7 @@ Last activity: 2026-01-23 — Phase 1 planned with 4 parallel plans
 - [x] REQUIREMENTS.md created with 27 requirements
 - [x] Roadmap created with 6 phases (100% requirement coverage)
 - [x] Phase 1 planning complete (4 plans)
-- [ ] Phase 1 execution
+- [~] Phase 1 execution (1 of 4 plans complete)
 - [ ] Phase verification
 
 ## Accumulated Context
@@ -34,6 +34,9 @@ Last activity: 2026-01-23 — Phase 1 planned with 4 parallel plans
 - Require test coverage for all changes
 - Phase structure: Critical Fixes -> Security -> Architecture -> Tests -> Performance -> Features
 - Phase 1 plans are independent (Wave 1) - can execute in parallel
+- (01-04) Use buffered error channel (capacity 1) for async server errors to prevent goroutine leak
+- (01-04) Server errors trigger graceful shutdown via Shutdown() rather than abrupt exit
+- (01-04) Error channel pattern: goroutine errors communicated via buffered channel instead of log.Fatalf
 
 **Phase 1 Plans:**
 
@@ -47,6 +50,8 @@ Last activity: 2026-01-23 — Phase 1 planned with 4 parallel plans
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 01-04 Execution):** Completed plan 01-04 (Error Channel Pattern). Replaced log.Fatalf in HTTP server goroutine with buffered error channel. Main function now uses select to handle both shutdown signals and server errors gracefully. No deviations from plan. Duration: 4 minutes.
 
 **2026-01-23 (Phase 1 Planning):** Created 4 plans for Phase 1:
 - 01-01: Refactor version detection to return detected version without mutating config
@@ -66,4 +71,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after Phase 1 planning_
+_Last updated: 2026-01-23 after completing plan 01-04_
