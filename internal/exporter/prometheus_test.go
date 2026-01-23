@@ -346,6 +346,8 @@ func TestNbuCollectorDescribe(t *testing.T) {
 		"nbu_jobs_count",
 		"nbu_status_count",
 		"nbu_api_version",
+		"nbu_up",
+		"nbu_last_scrape_timestamp_seconds",
 	}
 
 	descriptorNames := make(map[string]bool)
@@ -570,6 +572,16 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 			"nbu_api_version",
 			"The NetBackup API version currently in use",
 			[]string{"version"}, nil,
+		),
+		nbuUp: prometheus.NewDesc(
+			"nbu_up",
+			"1 if NetBackup API is reachable, 0 if all collections failed",
+			nil, nil,
+		),
+		nbuLastScrapeTime: prometheus.NewDesc(
+			"nbu_last_scrape_timestamp_seconds",
+			"Unix timestamp of the last successful metric collection",
+			[]string{"source"}, nil,
 		),
 	}
 

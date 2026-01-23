@@ -6,6 +6,7 @@ package exporter
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
@@ -66,6 +67,13 @@ type NbuCollector struct {
 	nbuJobsCount       *prometheus.Desc
 	nbuJobsStatusCount *prometheus.Desc
 	nbuAPIVersion      *prometheus.Desc
+	nbuUp              *prometheus.Desc // 1 if NetBackup API is reachable, 0 if all collections failed
+	nbuLastScrapeTime  *prometheus.Desc // Unix timestamp of last successful collection
+
+	// Scrape time tracking
+	scrapeMu              sync.RWMutex // Protects lastStorageScrapeTime and lastJobsScrapeTime
+	lastStorageScrapeTime time.Time    // Last successful storage metric collection
+	lastJobsScrapeTime    time.Time    // Last successful jobs metric collection
 }
 
 // NewNbuCollector creates a new NetBackup collector with the provided configuration.
@@ -152,6 +160,16 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 			"The NetBackup API version currently in use",
 			[]string{"version"}, nil,
 		),
+		nbuUp: prometheus.NewDesc(
+			"nbu_up",
+			"1 if NetBackup API is reachable, 0 if all collections failed",
+			nil, nil,
+		),
+		nbuLastScrapeTime: prometheus.NewDesc(
+			"nbu_last_scrape_timestamp_seconds",
+			"Unix timestamp of the last successful metric collection",
+			[]string{"source"}, nil, // source: "storage" or "jobs"
+		),
 	}, nil
 }
 
@@ -165,6 +183,8 @@ func (c *NbuCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.nbuJobsCount
 	ch <- c.nbuJobsStatusCount
 	ch <- c.nbuAPIVersion
+	ch <- c.nbuUp
+	ch <- c.nbuLastScrapeTime
 }
 
 // createScrapeSpan creates a root span for the Prometheus scrape cycle.
@@ -223,8 +243,8 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 	// Update span with scrape results
 	c.updateScrapeSpan(span, scrapeStart, storageMetrics, jobsSize, storageErr, jobsErr)
 
-	// Expose all collected metrics
-	c.exposeMetrics(ch, storageMetrics, jobsSize, jobsCount, jobsStatusCount)
+	// Expose all collected metrics (pass errors for nbu_up calculation)
+	c.exposeMetrics(ch, storageMetrics, jobsSize, jobsCount, jobsStatusCount, storageErr, jobsErr)
 
 	log.Debugf("Collected %d storage, %d job size, %d job count, %d status metrics",
 		len(storageMetrics), len(jobsSize), len(jobsCount), len(jobsStatusCount))
@@ -280,6 +300,7 @@ func (c *NbuCollector) collectAllMetrics(ctx context.Context, span trace.Span) (
 // collectStorageMetrics fetches storage metrics with caching.
 // Returns cached metrics if available (cache hit), otherwise fetches from API.
 // Records cache hit/miss events in the span for observability.
+// On success, updates lastStorageScrapeTime for staleness tracking.
 func (c *NbuCollector) collectStorageMetrics(ctx context.Context, span trace.Span) ([]StorageMetricValue, error) {
 	// Check cache first
 	if metrics, found := c.storageCache.Get(); found {
@@ -287,6 +308,10 @@ func (c *NbuCollector) collectStorageMetrics(ctx context.Context, span trace.Spa
 		span.AddEvent("cache_hit", trace.WithAttributes(
 			attribute.String("cache_type", "storage"),
 		))
+		// Cache hit counts as success for staleness tracking
+		c.scrapeMu.Lock()
+		c.lastStorageScrapeTime = time.Now()
+		c.scrapeMu.Unlock()
 		return metrics, nil
 	}
 
@@ -303,12 +328,16 @@ func (c *NbuCollector) collectStorageMetrics(ctx context.Context, span trace.Spa
 		return nil, err
 	}
 
-	// Store in cache
+	// Store in cache and update last scrape time
 	c.storageCache.Set(metrics)
+	c.scrapeMu.Lock()
+	c.lastStorageScrapeTime = time.Now()
+	c.scrapeMu.Unlock()
 	return metrics, nil
 }
 
 // collectJobMetrics fetches job metrics and records errors in span.
+// On success, updates lastJobsScrapeTime for staleness tracking.
 func (c *NbuCollector) collectJobMetrics(ctx context.Context, span trace.Span) (
 	jobsSize, jobsCount []JobMetricValue,
 	jobsStatusCount []JobStatusMetricValue,
@@ -320,6 +349,11 @@ func (c *NbuCollector) collectJobMetrics(ctx context.Context, span trace.Span) (
 		c.recordFetchError(span, "jobs_fetch_error", err)
 		return nil, nil, nil, err
 	}
+
+	// Update last scrape time on success
+	c.scrapeMu.Lock()
+	c.lastJobsScrapeTime = time.Now()
+	c.scrapeMu.Unlock()
 	return jobsSize, jobsCount, jobsStatusCount, nil
 }
 
@@ -369,7 +403,38 @@ func (c *NbuCollector) recordScrapeAttributes(span trace.Span, scrapeStart time.
 }
 
 // exposeMetrics sends all collected metrics to the Prometheus channel.
-func (c *NbuCollector) exposeMetrics(ch chan<- prometheus.Metric, storageMetrics []StorageMetricValue, jobsSize, jobsCount []JobMetricValue, jobsStatusCount []JobStatusMetricValue) {
+// It calculates nbu_up based on collection errors: 1 if any collection succeeded, 0 if all failed.
+// It also exposes nbu_last_scrape_timestamp_seconds for staleness detection.
+func (c *NbuCollector) exposeMetrics(ch chan<- prometheus.Metric, storageMetrics []StorageMetricValue, jobsSize, jobsCount []JobMetricValue, jobsStatusCount []JobStatusMetricValue, storageErr, jobsErr error) {
+	// Expose nbu_up metric first (Prometheus convention)
+	// up=1 if ANY collection succeeded, up=0 if ALL failed
+	upValue := 0.0
+	if storageErr == nil || jobsErr == nil {
+		upValue = 1.0
+	}
+	ch <- prometheus.MustNewConstMetric(c.nbuUp, prometheus.GaugeValue, upValue)
+
+	// Expose last scrape timestamps for staleness detection
+	c.scrapeMu.RLock()
+	if !c.lastStorageScrapeTime.IsZero() {
+		ch <- prometheus.MustNewConstMetric(
+			c.nbuLastScrapeTime,
+			prometheus.GaugeValue,
+			float64(c.lastStorageScrapeTime.Unix()),
+			"storage",
+		)
+	}
+	if !c.lastJobsScrapeTime.IsZero() {
+		ch <- prometheus.MustNewConstMetric(
+			c.nbuLastScrapeTime,
+			prometheus.GaugeValue,
+			float64(c.lastJobsScrapeTime.Unix()),
+			"jobs",
+		)
+	}
+	c.scrapeMu.RUnlock()
+
+	// Expose existing metrics
 	c.exposeStorageMetrics(ch, storageMetrics)
 	c.exposeJobSizeMetrics(ch, jobsSize)
 	c.exposeJobCountMetrics(ch, jobsCount)
