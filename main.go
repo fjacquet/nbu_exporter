@@ -25,11 +25,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/fjacquet/nbu_exporter/internal/config"
 	"github.com/fjacquet/nbu_exporter/internal/exporter"
 	"github.com/fjacquet/nbu_exporter/internal/logging"
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/fjacquet/nbu_exporter/internal/telemetry"
 	"github.com/fjacquet/nbu_exporter/internal/utils"
+	"github.com/fsnotify/fsnotify"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
@@ -54,6 +56,10 @@ var (
 // It manages the lifecycle of the HTTP server, Prometheus registry, NetBackup collector,
 // and OpenTelemetry telemetry manager.
 //
+// Configuration Reload:
+// The server supports dynamic configuration reload via SIGHUP signal or file watching.
+// Use SafeConfig for thread-safe access to configuration during operation.
+//
 // Error Handling:
 // Server errors (such as port binding failures) are communicated through the ErrorChan()
 // channel rather than calling log.Fatal. This allows the caller to perform graceful
@@ -61,7 +67,8 @@ var (
 //
 // Usage:
 //
-//	server := NewServer(cfg)
+//	safeCfg := models.NewSafeConfig(cfg)
+//	server := NewServer(safeCfg, configPath)
 //	if err := server.Start(); err != nil {
 //	    return err
 //	}
@@ -75,27 +82,34 @@ var (
 //
 //	server.Shutdown()
 type Server struct {
-	cfg              models.Config            // Application configuration
+	cfg              *models.SafeConfig       // Thread-safe config wrapper
+	configPath       string                   // Path to config file (for reload)
 	httpSrv          *http.Server             // HTTP server instance
 	registry         *prometheus.Registry     // Prometheus metrics registry
 	telemetryManager *telemetry.Manager       // OpenTelemetry telemetry manager (nil if disabled)
 	collector        *exporter.NbuCollector   // NetBackup collector (for cleanup)
+	configWatcher    *fsnotify.Watcher        // File watcher for config reload (for cleanup)
 	// serverErrChan receives HTTP server errors. It is buffered (capacity 1)
 	// to ensure the goroutine can send an error even if the main select
 	// hasn't started listening yet (race between Start() return and select).
 	serverErrChan chan error
 }
 
-// NewServer creates a new server instance with the provided configuration.
+// NewServer creates a new server instance with the provided SafeConfig.
 // It initializes a new Prometheus registry for metric collection and creates
 // a telemetry manager if OpenTelemetry is enabled in the configuration.
 //
+// The server uses SafeConfig for thread-safe configuration access, enabling
+// dynamic configuration reload without restart.
+//
 // Example:
 //
-//	cfg := models.Config{...}
-//	server := NewServer(cfg)
+//	cfg := &models.Config{...}
+//	safeCfg := models.NewSafeConfig(cfg)
+//	server := NewServer(safeCfg, "/path/to/config.yaml")
 //	server.Start()
-func NewServer(cfg models.Config) *Server {
+func NewServer(safeCfg *models.SafeConfig, configPath string) *Server {
+	cfg := safeCfg.Get()
 	var telemetryMgr *telemetry.Manager
 
 	// Create telemetry manager if OpenTelemetry is enabled
@@ -112,7 +126,8 @@ func NewServer(cfg models.Config) *Server {
 	}
 
 	return &Server{
-		cfg:              cfg,
+		cfg:              safeCfg,
+		configPath:       configPath,
 		registry:         prometheus.NewRegistry(),
 		telemetryManager: telemetryMgr,
 		serverErrChan:    make(chan error, 1), // Buffered to prevent goroutine leak
@@ -130,6 +145,8 @@ func NewServer(cfg models.Config) *Server {
 // Returns an error if collector creation or registration fails. The HTTP server runs
 // asynchronously and logs fatal errors if startup fails.
 func (s *Server) Start() error {
+	cfg := s.cfg.Get()
+
 	// Initialize OpenTelemetry if enabled
 	var tracerProvider trace.TracerProvider
 	if s.telemetryManager != nil {
@@ -160,7 +177,7 @@ func (s *Server) Start() error {
 		collectorOpts = append(collectorOpts, exporter.WithCollectorTracerProvider(tracerProvider))
 	}
 
-	collector, err := exporter.NewNbuCollector(s.cfg, collectorOpts...)
+	collector, err := exporter.NewNbuCollector(*cfg, collectorOpts...)
 	if err != nil {
 		return fmt.Errorf("failed to create collector: %w", err)
 	}
@@ -182,19 +199,19 @@ func (s *Server) Start() error {
 		prometheusHandler = s.extractTraceContextMiddleware(prometheusHandler)
 	}
 
-	mux.Handle(s.cfg.Server.URI, prometheusHandler)
+	mux.Handle(cfg.Server.URI, prometheusHandler)
 	mux.HandleFunc("/health", s.healthHandler)
 
 	// Create HTTP server
 	s.httpSrv = &http.Server{
-		Addr:              s.cfg.GetServerAddress(),
+		Addr:              cfg.GetServerAddress(),
 		Handler:           mux,
 		ReadHeaderTimeout: readHeaderTimeout,
 	}
 
 	// Start server in goroutine
 	go func() {
-		log.Infof("Starting %s on %s%s", programName, s.cfg.GetServerAddress(), s.cfg.Server.URI)
+		log.Infof("Starting %s on %s%s", programName, cfg.GetServerAddress(), cfg.Server.URI)
 		if err := s.httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			// Send error through channel instead of log.Fatalf
 			s.serverErrChan <- fmt.Errorf("HTTP server error: %w", err)
@@ -210,6 +227,42 @@ func (s *Server) ErrorChan() <-chan error {
 	return s.serverErrChan
 }
 
+// ReloadConfig reloads configuration from the config file.
+// It validates the new configuration before applying and flushes the storage
+// cache if the NBU server address changed.
+//
+// This method is called by:
+//   - SIGHUP signal handler (manual reload trigger)
+//   - File watcher (automatic reload on config change)
+//
+// Thread-safety:
+// Uses SafeConfig's fail-fast validation pattern - invalid configurations
+// are rejected without affecting the running exporter.
+//
+// Returns an error if the configuration file cannot be read or validation fails.
+func (s *Server) ReloadConfig(configPath string) error {
+	serverChanged, err := s.cfg.ReloadConfig(configPath)
+	if err != nil {
+		return err
+	}
+
+	// Flush cache if NBU server address changed
+	if serverChanged && s.collector != nil {
+		if cache := s.collector.GetStorageCache(); cache != nil {
+			cache.Flush()
+			log.Info("Storage cache flushed due to server address change")
+		}
+	}
+
+	return nil
+}
+
+// SetConfigWatcher stores the config file watcher reference for cleanup.
+// Called by main() after setting up the file watcher.
+func (s *Server) SetConfigWatcher(w *fsnotify.Watcher) {
+	s.configWatcher = w
+}
+
 // Shutdown gracefully shuts down the HTTP server and OpenTelemetry with a timeout.
 // It waits for active connections to complete and flushes pending telemetry data
 // before shutting down.
@@ -223,9 +276,10 @@ func (s *Server) ErrorChan() <-chan error {
 // Shutdown gracefully shuts down the server components in the correct order.
 //
 // Shutdown Order:
-//  1. Stop HTTP server (no new scrapes accepted)
-//  2. Shutdown OpenTelemetry (flush pending spans)
-//  3. Close collector (drains API connections)
+//  1. Close config watcher (stop watching for config changes)
+//  2. Stop HTTP server (no new scrapes accepted)
+//  3. Shutdown OpenTelemetry (flush pending spans)
+//  4. Close collector (drains API connections)
 //
 // Note: Telemetry is shutdown BEFORE client to ensure traces from
 // in-flight requests are flushed before connections close.
@@ -233,6 +287,15 @@ func (s *Server) ErrorChan() <-chan error {
 // Returns an error if shutdown fails or times out.
 func (s *Server) Shutdown() error {
 	var errs []error
+
+	// Step 0: Close config watcher (stop watching for changes)
+	if s.configWatcher != nil {
+		log.Info("Closing config file watcher...")
+		if err := s.configWatcher.Close(); err != nil {
+			log.Warnf("Config watcher close warning: %v", err)
+			// Non-fatal, continue shutdown
+		}
+	}
 
 	// Step 1: Shutdown HTTP server first (stops accepting new scrapes)
 	if s.httpSrv != nil {
@@ -416,22 +479,35 @@ func main() {
 				return err
 			}
 
+			// Wrap in SafeConfig for thread-safe access
+			safeCfg := models.NewSafeConfig(cfg)
+
 			// Setup logging
-			if err := setupLogging(*cfg, debug); err != nil {
+			if err := setupLogging(*safeCfg.Get(), debug); err != nil {
 				return err
 			}
 
 			log.Infof("Starting %s...", programName)
-			log.Infof("NBU server: %s", cfg.GetNBUBaseURL())
-			log.Infof("Scraping interval: %s", cfg.Server.ScrapingInterval)
+			log.Infof("NBU server: %s", safeCfg.Get().GetNBUBaseURL())
+			log.Infof("Scraping interval: %s", safeCfg.Get().Server.ScrapingInterval)
 			if debug {
-				log.Infof("API Key: %s", cfg.MaskAPIKey())
+				log.Infof("API Key: %s", safeCfg.Get().MaskAPIKey())
 			}
 
 			// Create and start server
-			server := NewServer(*cfg)
+			server := NewServer(safeCfg, configFile)
 			if err := server.Start(); err != nil {
 				return err
+			}
+
+			// Setup config reload handlers
+			config.SetupSIGHUPHandler(configFile, server.ReloadConfig)
+
+			watcher, err := config.WatchConfigFile(configFile, server.ReloadConfig)
+			if err != nil {
+				log.Warnf("File watcher setup failed: %v. SIGHUP reload still available.", err)
+			} else {
+				server.SetConfigWatcher(watcher)
 			}
 
 			// Wait for shutdown signal or server error

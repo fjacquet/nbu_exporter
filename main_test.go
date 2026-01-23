@@ -72,10 +72,16 @@ func createTestConfig() models.Config {
 	}
 }
 
+// createTestSafeConfig creates a SafeConfig wrapper around a test Config.
+func createTestSafeConfig() (*models.SafeConfig, string) {
+	cfg := createTestConfig()
+	return models.NewSafeConfig(&cfg), ""
+}
+
 // TestNewServer verifies Server struct initialization.
 func TestNewServer(t *testing.T) {
-	cfg := createTestConfig()
-	server := NewServer(cfg)
+	safeCfg, configPath := createTestSafeConfig()
+	server := NewServer(safeCfg, configPath)
 
 	assert.NotNil(t, server, "NewServer should return non-nil server")
 	assert.NotNil(t, server.registry, "Server should have initialized Prometheus registry")
@@ -91,7 +97,8 @@ func TestNewServerWithOTel(t *testing.T) {
 	cfg.OpenTelemetry.Endpoint = "localhost:4317"
 	cfg.OpenTelemetry.SamplingRate = 1.0
 
-	server := NewServer(cfg)
+	safeCfg := models.NewSafeConfig(&cfg)
+	server := NewServer(safeCfg, "")
 
 	assert.NotNil(t, server, "NewServer should return non-nil server")
 	assert.NotNil(t, server.telemetryManager, "Telemetry manager should be initialized when OTel enabled")
@@ -193,8 +200,8 @@ func TestSetupLogging_InvalidPath(t *testing.T) {
 // TestHealthHandler verifies the /health endpoint returns 200 OK.
 // When collector is nil (before Start()), returns "OK (starting)" to indicate startup phase.
 func TestHealthHandler(t *testing.T) {
-	cfg := createTestConfig()
-	server := NewServer(cfg)
+	safeCfg, configPath := createTestSafeConfig()
+	server := NewServer(safeCfg, configPath)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
@@ -208,8 +215,8 @@ func TestHealthHandler(t *testing.T) {
 
 // TestHealthHandler_AllMethods verifies health endpoint accepts various HTTP methods.
 func TestHealthHandler_AllMethods(t *testing.T) {
-	cfg := createTestConfig()
-	server := NewServer(cfg)
+	safeCfg, configPath := createTestSafeConfig()
+	server := NewServer(safeCfg, configPath)
 
 	methods := []string{http.MethodGet, http.MethodHead, http.MethodPost}
 	for _, method := range methods {
@@ -226,8 +233,8 @@ func TestHealthHandler_AllMethods(t *testing.T) {
 
 // TestServerErrorChan verifies the error channel is accessible.
 func TestServerErrorChan(t *testing.T) {
-	cfg := createTestConfig()
-	server := NewServer(cfg)
+	safeCfg, configPath := createTestSafeConfig()
+	server := NewServer(safeCfg, configPath)
 
 	errChan := server.ErrorChan()
 	assert.NotNil(t, errChan, "ErrorChan should return non-nil channel")
@@ -238,8 +245,8 @@ func TestServerErrorChan(t *testing.T) {
 
 // TestServerShutdown_NoStart verifies Shutdown is safe when Start wasn't called.
 func TestServerShutdown_NoStart(t *testing.T) {
-	cfg := createTestConfig()
-	server := NewServer(cfg)
+	safeCfg, configPath := createTestSafeConfig()
+	server := NewServer(safeCfg, configPath)
 
 	// Shutdown without Start should not panic
 	err := server.Shutdown()
@@ -362,8 +369,9 @@ func TestServerStartShutdown_Integration(t *testing.T) {
 	cfg.NbuServer.Scheme = "https"
 	cfg.NbuServer.InsecureSkipVerify = true
 
-	// Create server
-	server := NewServer(cfg)
+	// Create server with SafeConfig
+	safeCfg := models.NewSafeConfig(&cfg)
+	server := NewServer(safeCfg, "")
 	require.NotNil(t, server)
 
 	// Start server
@@ -380,9 +388,10 @@ func TestServerStartShutdown_Integration(t *testing.T) {
 
 // TestServerPrometheusRegistry verifies custom registry isolation.
 func TestServerPrometheusRegistry(t *testing.T) {
-	cfg := createTestConfig()
-	server1 := NewServer(cfg)
-	server2 := NewServer(cfg)
+	safeCfg1, configPath1 := createTestSafeConfig()
+	safeCfg2, configPath2 := createTestSafeConfig()
+	server1 := NewServer(safeCfg1, configPath1)
+	server2 := NewServer(safeCfg2, configPath2)
 
 	// Each server should have its own registry
 	assert.NotSame(t, server1.registry, server2.registry, "Servers should have separate registries")
@@ -398,7 +407,8 @@ func TestExtractTraceContextMiddleware(t *testing.T) {
 	cfg.OpenTelemetry.Endpoint = "localhost:4317"
 	cfg.OpenTelemetry.SamplingRate = 1.0
 
-	server := NewServer(cfg)
+	safeCfg := models.NewSafeConfig(&cfg)
+	server := NewServer(safeCfg, "")
 
 	// Create a test handler to wrap
 	handlerCalled := false
@@ -429,7 +439,8 @@ func TestExtractTraceContextMiddleware_WithTraceHeader(t *testing.T) {
 	cfg.OpenTelemetry.Endpoint = "localhost:4317"
 	cfg.OpenTelemetry.SamplingRate = 1.0
 
-	server := NewServer(cfg)
+	safeCfg := models.NewSafeConfig(&cfg)
+	server := NewServer(safeCfg, "")
 
 	var capturedContext context.Context
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -457,7 +468,8 @@ func TestExtractTraceContextMiddleware_NoTraceHeader(t *testing.T) {
 	cfg.OpenTelemetry.Endpoint = "localhost:4317"
 	cfg.OpenTelemetry.SamplingRate = 1.0
 
-	server := NewServer(cfg)
+	safeCfg := models.NewSafeConfig(&cfg)
+	server := NewServer(safeCfg, "")
 
 	var capturedContext context.Context
 	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -508,7 +520,8 @@ func TestServerErrorPropagation(t *testing.T) {
 	cfg.NbuServer.Scheme = "https"
 	cfg.NbuServer.InsecureSkipVerify = true
 
-	server := NewServer(cfg)
+	safeCfg := models.NewSafeConfig(&cfg)
+	server := NewServer(safeCfg, "")
 
 	// Start should succeed (starts async)
 	err = server.Start()
@@ -549,17 +562,19 @@ func TestConfigGetNBUBaseURL(t *testing.T) {
 // BenchmarkNewServer measures server creation performance.
 func BenchmarkNewServer(b *testing.B) {
 	cfg := createTestConfig()
+	safeCfg := models.NewSafeConfig(&cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = NewServer(cfg)
+		_ = NewServer(safeCfg, "")
 	}
 }
 
 // BenchmarkHealthHandler measures health endpoint performance.
 func BenchmarkHealthHandler(b *testing.B) {
 	cfg := createTestConfig()
-	server := NewServer(cfg)
+	safeCfg := models.NewSafeConfig(&cfg)
+	server := NewServer(safeCfg, "")
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 
