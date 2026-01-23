@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -1117,4 +1118,166 @@ func TestIsExplicitVersionConfigured(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestNbuClientCloseIdempotent tests that Close() can only be called once
+func TestNbuClientCloseIdempotent(t *testing.T) {
+	cfg := createBasicTestConfig("13.0", "test-key")
+	client := NewNbuClient(cfg)
+
+	// First close should succeed
+	err := client.Close()
+	if err != nil {
+		t.Errorf("First Close() unexpected error: %v", err)
+	}
+
+	// Second close should return error
+	err = client.Close()
+	if err == nil {
+		t.Error("Second Close() expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "already closed") {
+		t.Errorf("Close() error = %v, want 'already closed'", err)
+	}
+}
+
+// TestNbuClientCloseWaitsForActiveRequests tests that Close() waits for active requests to complete
+func TestNbuClientCloseWaitsForActiveRequests(t *testing.T) {
+	// Create a slow server
+	requestStarted := make(chan struct{})
+	requestComplete := make(chan struct{})
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(requestStarted)
+		<-requestComplete // Wait for test to signal completion
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(mockAPIResponse{})
+	}))
+	defer server.Close()
+
+	cfg := createBasicTestConfig("13.0", "test-key")
+	client := NewNbuClient(cfg)
+
+	// Start a request in background
+	var fetchErr error
+	fetchDone := make(chan struct{})
+	go func() {
+		var result mockAPIResponse
+		fetchErr = client.FetchData(context.Background(), server.URL, &result)
+		close(fetchDone)
+	}()
+
+	// Wait for request to start
+	<-requestStarted
+
+	// Close should block waiting for request
+	closeDone := make(chan struct{})
+	go func() {
+		client.Close()
+		close(closeDone)
+	}()
+
+	// Give Close a moment to start waiting
+	time.Sleep(50 * time.Millisecond)
+
+	// Verify Close is still blocking
+	select {
+	case <-closeDone:
+		t.Error("Close() returned before request completed")
+	default:
+		// Expected - Close is waiting
+	}
+
+	// Allow request to complete
+	close(requestComplete)
+
+	// Now Close should complete
+	select {
+	case <-closeDone:
+		// Expected
+	case <-time.After(5 * time.Second):
+		t.Error("Close() did not complete after request finished")
+	}
+
+	// Verify request completed successfully
+	<-fetchDone
+	if fetchErr != nil {
+		t.Errorf("FetchData() error: %v", fetchErr)
+	}
+}
+
+// TestNbuClientFetchDataRejectsAfterClose tests that FetchData rejects requests after Close()
+func TestNbuClientFetchDataRejectsAfterClose(t *testing.T) {
+	cfg := createBasicTestConfig("13.0", "test-key")
+	client := NewNbuClient(cfg)
+
+	// Close the client
+	client.Close()
+
+	// Attempt to fetch - should fail
+	var result mockAPIResponse
+	err := client.FetchData(context.Background(), "http://example.com", &result)
+	if err == nil {
+		t.Error("FetchData() after Close() expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "closed") {
+		t.Errorf("FetchData() error = %v, want error containing 'closed'", err)
+	}
+}
+
+// TestNbuClientCloseTimeout tests that CloseWithContext respects timeout
+func TestNbuClientCloseTimeout(t *testing.T) {
+	// Create a server that responds slowly
+	requestReceived := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(requestReceived)
+		// Block for a long time to simulate a slow request
+		time.Sleep(5 * time.Second)
+		w.Header().Set(contentTypeHeader, contentTypeJSON)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(mockAPIResponse{})
+	}))
+	defer server.Close()
+
+	cfg := createBasicTestConfig("13.0", "test-key")
+	client := NewNbuClient(cfg)
+
+	// Start a request that will take a long time
+	requestCtx, requestCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer requestCancel()
+
+	go func() {
+		var result mockAPIResponse
+		client.FetchData(requestCtx, server.URL, &result)
+	}()
+
+	// Wait for request to start
+	select {
+	case <-requestReceived:
+		// Request started
+	case <-time.After(1 * time.Second):
+		t.Fatal("Request did not start in time")
+	}
+
+	// Close with short timeout should return quickly
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	start := time.Now()
+	err := client.CloseWithContext(ctx)
+	elapsed := time.Since(start)
+
+	// Should complete around timeout time, not hang
+	if elapsed > 500*time.Millisecond {
+		t.Errorf("CloseWithContext took %v, expected ~100ms timeout", elapsed)
+	}
+
+	// Should return context deadline exceeded error
+	if err != nil && err != context.DeadlineExceeded {
+		t.Logf("CloseWithContext returned error: %v", err)
+	}
+
+	// Cancel the request to clean up
+	requestCancel()
 }
