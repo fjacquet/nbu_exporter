@@ -84,6 +84,7 @@ func (c *Config) SetDefaults() {
 //   - URL schemes (http/https only)
 //   - API version format (X.Y pattern)
 //   - API version is in the supported versions list
+//   - NBU base URL format (validates URL can be parsed)
 //
 // This method calls SetDefaults() before validation to ensure optional fields
 // have appropriate default values.
@@ -98,6 +99,11 @@ func (c *Config) Validate() error {
 	}
 
 	if err := c.validateNBUServerConfig(); err != nil {
+		return err
+	}
+
+	// Validate the composed URL is valid
+	if err := c.validateNBUBaseURL(); err != nil {
 		return err
 	}
 
@@ -152,6 +158,26 @@ func (c *Config) validateNBUServerConfig() error {
 	if c.NbuServer.APIKey == "" {
 		return errors.New("NBU server API key is required")
 	}
+	return nil
+}
+
+// validateNBUBaseURL validates that the NBU server configuration produces a valid URL.
+// This catches malformed host, scheme, or port values early during startup.
+func (c *Config) validateNBUBaseURL() error {
+	baseURL := c.GetNBUBaseURL()
+	parsedURL, err := url.Parse(baseURL)
+	if err != nil {
+		return fmt.Errorf("invalid NBU server URL '%s': %w", baseURL, err)
+	}
+
+	// Verify the URL has required components
+	if parsedURL.Scheme == "" {
+		return fmt.Errorf("NBU server URL missing scheme: %s", baseURL)
+	}
+	if parsedURL.Host == "" {
+		return fmt.Errorf("NBU server URL missing host: %s", baseURL)
+	}
+
 	return nil
 }
 
@@ -316,6 +342,10 @@ func (c *Config) MaskAPIKey() string {
 
 // BuildURL constructs a complete URL from the base URL, path, and query parameters.
 // It properly encodes query parameters and handles URL construction.
+//
+// IMPORTANT: This method assumes the configuration has been validated via Config.Validate()
+// prior to use. Validation ensures the base URL is well-formed and parseable. If called
+// on an unvalidated config, URL parsing errors will be silently ignored.
 //
 // Parameters:
 //   - path: API endpoint path (e.g., "/admin/jobs")

@@ -318,15 +318,15 @@ func TestConfigBackwardCompatibility(t *testing.T) {
 server:
   host: "localhost"
   port: "2112"
-  uri: testPathMetrics
+  uri: "/metrics"
   scrapingInterval: "5m"
-  logName: testLogName
+  logName: "test.log"
 nbuserver:
-  host: testServerNBUMaster
+  host: "nbu-master"
   port: "1556"
   scheme: "https"
-  uri: testPathNetBackup
-  apiKey: testKeyName
+  uri: "/netbackup"
+  apiKey: "test-key"
   contentType: "application/json"
 `,
 			expectedAPIVer: "13.0",
@@ -338,14 +338,14 @@ nbuserver:
 server:
   host: "localhost"
   port: "2112"
-  uri: testPathMetrics
+  uri: "/metrics"
   scrapingInterval: "1h"
   logName: "nbu.log"
 nbuserver:
   host: "master.example.com"
   port: "1556"
   scheme: "https"
-  uri: testPathNetBackup
+  uri: "/netbackup"
   domain: "example.com"
   domainType: "NT"
   apiKey: "legacy-api-key"
