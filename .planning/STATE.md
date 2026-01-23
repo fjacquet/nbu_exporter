@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 1 of 6 (Critical Fixes & Stability)
-Plan: 2 of 4 complete (Wave 1 - parallel execution)
-Status: Phase 1 execution in progress
-Last activity: 2026-01-23 — Completed 01-01-PLAN.md (Version Detection Immutability)
+Plan: 4 of 4 complete (Wave 1 - parallel execution)
+Status: Phase 1 complete - ready for verification
+Last activity: 2026-01-23 — Completed 01-03-PLAN.md (Resource Cleanup)
 
 ## Progress
 
@@ -22,8 +22,8 @@ Last activity: 2026-01-23 — Completed 01-01-PLAN.md (Version Detection Immutab
 - [x] REQUIREMENTS.md created with 27 requirements
 - [x] Roadmap created with 6 phases (100% requirement coverage)
 - [x] Phase 1 planning complete (4 plans)
-- [~] Phase 1 execution (2 of 4 plans complete: 01-01, 01-04)
-- [ ] Phase verification
+- [x] Phase 1 execution (4 of 4 plans complete: 01-01, 01-02, 01-03, 01-04)
+- [ ] Phase 1 verification
 
 ## Accumulated Context
 
@@ -38,6 +38,9 @@ Last activity: 2026-01-23 — Completed 01-01-PLAN.md (Version Detection Immutab
 - (01-01) Version detection builds headers inline with test version instead of relying on client.getHeaders()
 - (01-01) Config mutation happens only in performVersionDetectionIfNeeded after successful detection
 - (01-01) Detectors return results without side effects - caller applies changes
+- (01-02) Keep BuildURL() signature unchanged for backward compatibility
+- (01-02) Validate URL during Config.Validate() instead of at BuildURL() time
+- (01-02) Document BuildURL() assumption of validated config
 - (01-04) Use buffered error channel (capacity 1) for async server errors to prevent goroutine leak
 - (01-04) Server errors trigger graceful shutdown via Shutdown() rather than abrupt exit
 - (01-04) Error channel pattern: goroutine errors communicated via buffered channel instead of log.Fatalf
@@ -54,6 +57,8 @@ Last activity: 2026-01-23 — Completed 01-01-PLAN.md (Version Detection Immutab
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 01-02 Execution):** Completed plan 01-02 (URL Validation). Added validateNBUBaseURL() method to validate NBU server URL format during config initialization. Invalid URLs now caught at startup with clear error messages instead of silently failing in BuildURL(). BuildURL() signature unchanged for backward compatibility. Added comprehensive tests for URL validation scenarios. One auto-fix: corrected broken test YAML using literal strings instead of actual values. Fixes FRAG-03 (URL parsing errors silently ignored). Duration: 10 minutes.
 
 **2026-01-23 (Plan 01-01 Execution):** Completed plan 01-01 (Version Detection Immutability). Refactored APIVersionDetector to be immutable - removed config reference, added immutable baseURL and apiKey fields. Eliminated setTemporaryVersion() and restoreOriginalVersion() methods that caused BUG-01. Config mutation now happens only in performVersionDetectionIfNeeded() after successful detection. Added comprehensive tests verifying config immutability during detection success, failure, and context cancellation. Fixes BUG-01 (state restoration on context cancellation) and FRAG-01 (shared config reference). No deviations from plan. Duration: 9 minutes.
 
@@ -77,4 +82,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after completing plan 01-01_
+_Last updated: 2026-01-23 after completing plan 01-02_
