@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 
 ## Current Position
 
-Phase: 2 of 6 (Security Hardening)
-Plan: 2 of 2 complete
-Status: Phase 2 complete ✓
-Last activity: 2026-01-23 — Completed Phase 2 (Security Hardening)
+Phase: 3 of 6 (Architecture Improvements)
+Plan: 1 of 5 complete
+Status: In progress
+Last activity: 2026-01-23 — Completed plan 03-01 (TracerWrapper with noop default)
 
 ## Progress
 
@@ -27,6 +27,9 @@ Last activity: 2026-01-23 — Completed Phase 2 (Security Hardening)
 - [x] Phase 2 research complete (02-RESEARCH.md)
 - [x] Phase 2 planning complete (2 plans: 02-01, 02-02)
 - [x] Phase 2 execution complete (2 of 2 plans: 02-01, 02-02)
+- [x] Phase 3 research complete (03-RESEARCH.md)
+- [x] Phase 3 planning complete (5 plans: 03-01, 03-02, 03-03, 03-04, 03-05)
+- [ ] Phase 3 execution (1 of 5 plans complete: 03-01)
 
 ## Accumulated Context
 
@@ -55,6 +58,9 @@ Last activity: 2026-01-23 — Completed Phase 2 (Security Hardening)
 - (02-01) TLS 1.2 is minimum supported version (industry standard, blocks older protocols)
 - (02-01) Security warnings log at Error level (not Warn) for better visibility
 - (02-01) API key protection verified via comprehensive audit - no code changes needed
+- (03-01) Use noop.NewTracerProvider() as default instead of nil tracer for zero-overhead disabled tracing
+- (03-01) TracerWrapper guarantees valid span return (never nil) to eliminate nil-checks
+- (03-01) Keep deprecated createSpan for backward compatibility during migration
 
 **Phase 1 Plans:**
 
@@ -72,9 +78,21 @@ Last activity: 2026-01-23 — Completed Phase 2 (Security Hardening)
 | 02-01 | TLS Enforcement & API Key Security | SEC-01, SEC-02 | Config.go, Config_test.go, client.go, client_test.go |
 | 02-02 | Rate Limiting & Retry with Backoff | SEC-03         | client.go, client_test.go                            |
 
+**Phase 3 Plans:**
+
+| Plan  | Focus                          | Requirements | Files Modified                       |
+| ----- | ------------------------------ | ------------ | ------------------------------------ |
+| 03-01 | TracerWrapper with Noop Default | FRAG-04      | tracing.go, tracing_test.go          |
+| 03-02 | Migrate to TracerWrapper        | FRAG-04      | netbackup.go, prometheus.go          |
+| 03-03 | ImmutableConfig Type            | TD-01        | Config.go, Config_test.go            |
+| 03-04 | Migrate to ImmutableConfig      | TD-01        | Multiple files                       |
+| 03-05 | Collector Responsibility Split  | TD-02, TD-03 | prometheus.go, collector.go          |
+
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 03-01 Execution):** Completed plan 03-01 (TracerWrapper with Noop Default). Created TracerWrapper type that uses noop.NewTracerProvider() as default, ensuring all span operations are always safe without nil-checks. NewTracerWrapper constructor guarantees valid tracer regardless of input. Added comprehensive tests verifying nil-safety with noop tracer. Deprecated existing createSpan function for backward compatibility during migration. Two atomic commits: (1) TracerWrapper implementation, (2) comprehensive tests. All tests pass with race detector. Fixes FRAG-04 (tracer nil-checks scattered). No deviations from plan. Duration: 3 minutes.
 
 **2026-01-23 (Plan 02-02 Execution):** Completed plan 02-02 (Rate Limiting & Retry with Backoff). Implemented exponential backoff retry logic in HTTP client with configurable parameters: 3 max retries, 5s initial delay, 60s max delay, 2.0 backoff factor. Connection pool tuned with MaxIdleConns=100, MaxIdleConnsPerHost=20, IdleConnTimeout=90s. Fixed test suite performance issue by disabling retries in unit tests with SetRetryCount(0). Tests reduced from 247s to ~35s. Fixes SEC-03 (rate limiting and backoff).
 
@@ -112,4 +130,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after Phase 2 completion_
+_Last updated: 2026-01-23 after completing plan 03-01_
