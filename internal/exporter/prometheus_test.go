@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -371,6 +372,7 @@ func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			Port:             "2112",
 			Host:             "localhost",
@@ -432,6 +434,7 @@ func TestNbuCollectorCreateScrapeSpanWithTracer(t *testing.T) {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			Port:             "2112",
 			Host:             "localhost",
@@ -499,6 +502,7 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			Port:             "2112",
 			Host:             "localhost",
@@ -530,11 +534,13 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 	// Disable retries for faster test execution
 	client.client.SetRetryCount(0)
 	tracing := NewTracerWrapper(nil, "test-collector") // noop tracer
+	storageCache := NewStorageCache(cfg.GetCacheTTL())
 
 	collector := &NbuCollector{
-		cfg:     cfg,
-		client:  client,
-		tracing: tracing,
+		cfg:          cfg,
+		client:       client,
+		tracing:      tracing,
+		storageCache: storageCache,
 		nbuDiskSize: prometheus.NewDesc(
 			"nbu_disk_bytes",
 			"The quantity of storage bytes",
@@ -603,6 +609,7 @@ func TestNbuCollectorTracingDisabled(t *testing.T) {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			Port:             "2112",
 			Host:             "localhost",
@@ -655,4 +662,155 @@ func TestNbuCollectorTracingDisabled(t *testing.T) {
 
 	// Should not panic
 	span.End()
+}
+
+// TestNbuCollector_StorageCacheIntegration tests cache integration with collector
+func TestNbuCollectorStorageCacheIntegration(t *testing.T) {
+	// Create a test server that returns storage data
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.netbackup+json;version=13.0")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"data": []}`))
+	}))
+	defer server.Close()
+
+	// Parse the server URL to get host and port
+	serverHost, serverPort, _ := net.SplitHostPort(server.Listener.Addr().String())
+
+	cfg := models.Config{
+		Server: struct {
+			Port             string `yaml:"port"`
+			Host             string `yaml:"host"`
+			URI              string `yaml:"uri"`
+			ScrapingInterval string `yaml:"scrapingInterval"`
+			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
+		}{
+			Port:             "2112",
+			Host:             "localhost",
+			URI:              testPathMetrics,
+			ScrapingInterval: "5m",
+			CacheTTL:         "1m", // 1 minute cache for testing
+		},
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			Host:               serverHost,
+			Port:               serverPort,
+			Scheme:             "https",
+			URI:                "",
+			APIKey:             testKeyName,
+			APIVersion:         "13.0",
+			InsecureSkipVerify: true,
+		},
+	}
+
+	collector, err := NewNbuCollector(cfg)
+	if err != nil {
+		t.Fatalf("NewNbuCollector() error = %v", err)
+	}
+	defer func() {
+		_ = collector.Close()
+	}()
+
+	// Verify cache was initialized
+	cache := collector.GetStorageCache()
+	if cache == nil {
+		t.Fatal("GetStorageCache() should return non-nil cache")
+	}
+
+	// Verify TTL is configured correctly
+	expectedTTL := time.Minute
+	if cache.TTL() != expectedTTL {
+		t.Errorf("Cache TTL = %v, want %v", cache.TTL(), expectedTTL)
+	}
+}
+
+// TestNbuCollector_HelpStringIncludesTTL verifies metric HELP string documents caching
+func TestNbuCollectorHelpStringIncludesTTL(t *testing.T) {
+	// Create a test server that returns storage data
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.netbackup+json;version=13.0")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"data": []}`))
+	}))
+	defer server.Close()
+
+	// Parse the server URL to get host and port
+	serverHost, serverPort, _ := net.SplitHostPort(server.Listener.Addr().String())
+
+	cfg := models.Config{
+		Server: struct {
+			Port             string `yaml:"port"`
+			Host             string `yaml:"host"`
+			URI              string `yaml:"uri"`
+			ScrapingInterval string `yaml:"scrapingInterval"`
+			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
+		}{
+			Port:             "2112",
+			Host:             "localhost",
+			URI:              testPathMetrics,
+			ScrapingInterval: "5m",
+			CacheTTL:         "2m",
+		},
+		NbuServer: struct {
+			Port               string `yaml:"port"`
+			Scheme             string `yaml:"scheme"`
+			URI                string `yaml:"uri"`
+			Domain             string `yaml:"domain"`
+			DomainType         string `yaml:"domainType"`
+			Host               string `yaml:"host"`
+			APIKey             string `yaml:"apiKey"`
+			APIVersion         string `yaml:"apiVersion"`
+			ContentType        string `yaml:"contentType"`
+			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		}{
+			Host:               serverHost,
+			Port:               serverPort,
+			Scheme:             "https",
+			URI:                "",
+			APIKey:             testKeyName,
+			APIVersion:         "13.0",
+			InsecureSkipVerify: true,
+		},
+	}
+
+	collector, err := NewNbuCollector(cfg)
+	if err != nil {
+		t.Fatalf("NewNbuCollector() error = %v", err)
+	}
+	defer func() {
+		_ = collector.Close()
+	}()
+
+	// Get descriptors
+	descCh := make(chan *prometheus.Desc, 10)
+	collector.Describe(descCh)
+	close(descCh)
+
+	// Find nbu_disk_bytes descriptor and verify HELP string
+	foundDiskBytes := false
+	for desc := range descCh {
+		descStr := desc.String()
+		if !foundDiskBytes && strings.Contains(descStr, "nbu_disk_bytes") {
+			foundDiskBytes = true
+			// Verify the HELP string contains the caching information
+			assert.Contains(t, descStr, "cached", "HELP string should mention caching")
+			assert.Contains(t, descStr, "2m0s", "HELP string should include TTL duration")
+		}
+	}
+
+	if !foundDiskBytes {
+		t.Error("nbu_disk_bytes descriptor not found")
+	}
 }

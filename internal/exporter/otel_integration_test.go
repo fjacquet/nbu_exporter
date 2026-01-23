@@ -55,6 +55,7 @@ func TestIntegrationEndToEndTracing(t *testing.T) {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			ScrapingInterval: "5m",
 		},
@@ -114,6 +115,7 @@ func TestIntegrationBackwardCompatibility(t *testing.T) {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			Port:             "2112",
 			Host:             "localhost",
@@ -208,6 +210,7 @@ func TestIntegrationGracefulDegradation(t *testing.T) {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			ScrapingInterval: "5m",
 		},

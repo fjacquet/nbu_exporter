@@ -5,6 +5,7 @@ package exporter
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
@@ -51,10 +52,14 @@ func WithCollectorTracerProvider(tp trace.TracerProvider) CollectorOption {
 //   - API version information
 //
 // Metrics are collected on-demand when Prometheus scrapes the /metrics endpoint.
+//
+// Storage metrics are cached to reduce NetBackup API load. The cache TTL is
+// configurable via Config.Server.CacheTTL (default 5m).
 type NbuCollector struct {
 	cfg                models.Config
 	client             *NbuClient
 	tracing            *TracerWrapper
+	storageCache       *StorageCache // TTL cache for storage metrics
 	nbuDiskSize        *prometheus.Desc
 	nbuResponseTime    *prometheus.Desc
 	nbuJobsSize        *prometheus.Desc
@@ -109,10 +114,14 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 	// Create TracerWrapper for collector
 	tracing := NewTracerWrapper(options.tracerProvider, "nbu-exporter/collector")
 
+	// Create storage cache with configured TTL
+	storageCache := NewStorageCache(cfg.GetCacheTTL())
+
 	return &NbuCollector{
-		cfg:     cfg,
-		client:  client,
-		tracing: tracing,
+		cfg:          cfg,
+		client:       client,
+		tracing:      tracing,
+		storageCache: storageCache,
 		nbuResponseTime: prometheus.NewDesc(
 			"nbu_response_time_ms",
 			"The server response time in milliseconds",
@@ -120,7 +129,7 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 		),
 		nbuDiskSize: prometheus.NewDesc(
 			"nbu_disk_bytes",
-			"The quantity of storage bytes",
+			fmt.Sprintf("The quantity of storage bytes (cached: %s TTL)", cfg.GetCacheTTL()),
 			[]string{"name", "type", "size"}, nil,
 		),
 		nbuJobsSize: prometheus.NewDesc(
@@ -268,14 +277,34 @@ func (c *NbuCollector) collectAllMetrics(ctx context.Context, span trace.Span) (
 	return
 }
 
-// collectStorageMetrics fetches storage metrics and records errors in span.
+// collectStorageMetrics fetches storage metrics with caching.
+// Returns cached metrics if available (cache hit), otherwise fetches from API.
+// Records cache hit/miss events in the span for observability.
 func (c *NbuCollector) collectStorageMetrics(ctx context.Context, span trace.Span) ([]StorageMetricValue, error) {
+	// Check cache first
+	if metrics, found := c.storageCache.Get(); found {
+		log.Debug("Cache hit for storage metrics")
+		span.AddEvent("cache_hit", trace.WithAttributes(
+			attribute.String("cache_type", "storage"),
+		))
+		return metrics, nil
+	}
+
+	// Cache miss - fetch from API
+	log.Debug("Cache miss for storage metrics, fetching from API")
+	span.AddEvent("cache_miss", trace.WithAttributes(
+		attribute.String("cache_type", "storage"),
+	))
+
 	metrics, err := FetchStorage(ctx, c.client)
 	if err != nil {
 		log.Errorf("Failed to fetch storage metrics: %v", err)
 		c.recordFetchError(span, "storage_fetch_error", err)
 		return nil, err
 	}
+
+	// Store in cache
+	c.storageCache.Set(metrics)
 	return metrics, nil
 }
 
@@ -442,4 +471,10 @@ func (c *NbuCollector) CloseWithContext(ctx context.Context) error {
 		return c.client.CloseWithContext(ctx)
 	}
 	return nil
+}
+
+// GetStorageCache returns the storage cache for management (e.g., flush on config reload).
+// This allows external code to clear the cache when the NBU server configuration changes.
+func (c *NbuCollector) GetStorageCache() *StorageCache {
+	return c.storageCache
 }
