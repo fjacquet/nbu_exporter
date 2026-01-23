@@ -522,6 +522,7 @@ func (c *NbuClient) Close() error {
 	activeCount := atomic.LoadInt32(&c.activeReqs)
 	if activeCount > 0 {
 		c.closeChan = make(chan struct{})
+		ch := c.closeChan // Store local reference to avoid race
 		c.mu.Unlock()
 
 		// Wait for active requests with timeout
@@ -529,7 +530,7 @@ func (c *NbuClient) Close() error {
 		defer cancel()
 
 		select {
-		case <-c.closeChan:
+		case <-ch:
 			log.Debug("All active requests completed during shutdown")
 		case <-ctx.Done():
 			log.Warnf("Timeout waiting for %d active requests during shutdown", activeCount)
@@ -567,10 +568,11 @@ func (c *NbuClient) CloseWithContext(ctx context.Context) error {
 	activeCount := atomic.LoadInt32(&c.activeReqs)
 	if activeCount > 0 {
 		c.closeChan = make(chan struct{})
+		ch := c.closeChan // Store local reference to avoid race
 		c.mu.Unlock()
 
 		select {
-		case <-c.closeChan:
+		case <-ch:
 			log.Debug("All active requests completed during shutdown")
 		case <-ctx.Done():
 			log.Warnf("Context cancelled while waiting for %d active requests", activeCount)
