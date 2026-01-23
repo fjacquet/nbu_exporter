@@ -32,11 +32,13 @@ queryParams := map[string]string{
 ```
 
 **Impact analysis:**
+
 - If 1000 jobs exist in time window: 1000 sequential API calls
 - Each call has network latency (50-200ms)
 - Total time: 50-200 seconds just for job metrics
 
 **NetBackup API limits (verified from API docs):**
+
 - Minimum page limit: 1
 - Maximum page limit: 100
 - Default page limit: 10
@@ -112,6 +114,7 @@ func (c *NbuCollector) exposeStorageMetrics(ch chan<- prometheus.Metric, metrics
 **When to use:** When API supports batch fetching (NetBackup max = 100)
 
 **Current pattern (inefficient):**
+
 ```go
 queryParams := map[string]string{
     QueryParamLimit:  "1",  // One item per request
@@ -120,6 +123,7 @@ queryParams := map[string]string{
 ```
 
 **Recommended pattern:**
+
 ```go
 const jobPageLimit = "100"  // Maximum allowed by NetBackup API
 
@@ -130,6 +134,7 @@ queryParams := map[string]string{
 ```
 
 **Impact:** For 1000 jobs:
+
 - Before: 1000 API calls
 - After: 10 API calls
 - Improvement: 100x fewer network round trips
@@ -181,6 +186,7 @@ func (c *NbuCollector) collectAllMetrics(ctx context.Context, span trace.Span) (
 ```
 
 **Impact:**
+
 - Before: scrape_time = storage_time + jobs_time
 - After: scrape_time = max(storage_time, jobs_time)
 - Typical improvement: 30-50% faster scrapes
@@ -493,6 +499,7 @@ func FetchAllJobs(
 | One-item pagination | Batch pagination | API supports 100 | 100x fewer API calls |
 
 **Deprecated/outdated:**
+
 - `page[limit]=1` approach: Was likely a simplification that became a bottleneck
 
 ## Dependencies & Wave Structure
@@ -606,6 +613,7 @@ PERF-04 (String Split) -- DONE in Phase 3
 ## Metadata
 
 **Confidence breakdown:**
+
 - PERF-01 (Batch pagination): HIGH - API limits verified, pattern straightforward
 - PERF-02 (Parallel collection): HIGH - Standard Go pattern, well-documented
 - PERF-03 (Memory optimization): MEDIUM - May not be needed, profile first

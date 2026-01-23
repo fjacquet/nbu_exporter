@@ -160,6 +160,7 @@ None - no external service configuration required.
 To reach 90%+ coverage, consider:
 
 1. **Add interface for SpanExporter creation**:
+
    ```go
    type ExporterFactory interface {
        CreateExporter(ctx context.Context, endpoint string, insecure bool) (sdktrace.SpanExporter, error)
@@ -167,6 +168,7 @@ To reach 90%+ coverage, consider:
    ```
 
 2. **Add interface for Resource creation**:
+
    ```go
    type ResourceFactory interface {
        CreateResource(serviceName, serviceVersion, netBackupServer string) (*resource.Resource, error)
