@@ -33,11 +33,15 @@ Decimal phases appear between their surrounding integers in numeric order.
 2. Exporter can be stopped and restarted multiple times without connection leaks
 3. Exporter continues running even if metric collection errors occur (no fatal exits from goroutines)
 4. Invalid URLs in configuration are caught during startup with clear error messages
-   **Plans**: TBD
+
+**Plans:** 4 plans (all Wave 1 - parallel)
 
 Plans:
 
-- [ ] 01-01: [TBD during phase planning]
+- [ ] 01-01-PLAN.md - Version Detection Immutability (BUG-01 + FRAG-01)
+- [ ] 01-02-PLAN.md - URL Validation (FRAG-03)
+- [ ] 01-03-PLAN.md - Resource Cleanup (TD-05)
+- [ ] 01-04-PLAN.md - Error Channel Pattern (TD-06)
 
 ### Phase 2: Security Hardening
 
@@ -130,11 +134,11 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase                         | Plans Complete | Status      | Completed |
 | ----------------------------- | -------------- | ----------- | --------- |
-| 1. Critical Fixes & Stability | 0/TBD          | Not started | -         |
+| 1. Critical Fixes & Stability | 0/4            | Planned     | -         |
 | 2. Security Hardening         | 0/TBD          | Not started | -         |
 | 3. Architecture Improvements  | 0/TBD          | Not started | -         |
 | 4. Test Coverage              | 0/TBD          | Not started | -         |
