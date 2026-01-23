@@ -12,13 +12,33 @@ import (
 	"github.com/fjacquet/nbu_exporter/internal/telemetry"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
 const collectionTimeout = 2 * time.Minute // Maximum time allowed for metric collection
+
+// CollectorOption configures optional NbuCollector settings.
+type CollectorOption func(*collectorOptions)
+
+type collectorOptions struct {
+	tracerProvider trace.TracerProvider
+}
+
+func defaultCollectorOptions() collectorOptions {
+	return collectorOptions{
+		tracerProvider: nil, // Will use noop via TracerWrapper
+	}
+}
+
+// WithCollectorTracerProvider sets the TracerProvider for the collector.
+// If not provided, tracing operations use a noop provider (no overhead).
+func WithCollectorTracerProvider(tp trace.TracerProvider) CollectorOption {
+	return func(o *collectorOptions) {
+		o.tracerProvider = tp
+	}
+}
 
 // NbuCollector implements the Prometheus Collector interface for NetBackup metrics.
 // It collects storage capacity and job statistics from the NetBackup API and exposes
@@ -34,7 +54,7 @@ const collectionTimeout = 2 * time.Minute // Maximum time allowed for metric col
 type NbuCollector struct {
 	cfg                models.Config
 	client             *NbuClient
-	tracer             trace.Tracer
+	tracing            *TracerWrapper
 	nbuDiskSize        *prometheus.Desc
 	nbuResponseTime    *prometheus.Desc
 	nbuJobsSize        *prometheus.Desc
@@ -63,14 +83,20 @@ type NbuCollector struct {
 // Example:
 //
 //	cfg := models.Config{...}
-//	collector, err := NewNbuCollector(cfg)
+//	collector, err := NewNbuCollector(cfg, WithCollectorTracerProvider(tp))
 //	if err != nil {
 //	    log.Fatalf("Failed to create collector: %v", err)
 //	}
 //	prometheus.MustRegister(collector)
-func NewNbuCollector(cfg models.Config) (*NbuCollector, error) {
-	// Create base client
-	client := NewNbuClient(cfg)
+func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector, error) {
+	// Apply options
+	options := defaultCollectorOptions()
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	// Create base client with same TracerProvider
+	client := NewNbuClient(cfg, WithTracerProvider(options.tracerProvider))
 
 	// Perform version detection if needed (reuses shared logic)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -80,13 +106,13 @@ func NewNbuCollector(cfg models.Config) (*NbuCollector, error) {
 		return nil, err
 	}
 
-	// Initialize tracer from global provider if OpenTelemetry is enabled
-	tracer := otel.Tracer("nbu-exporter")
+	// Create TracerWrapper for collector
+	tracing := NewTracerWrapper(options.tracerProvider, "nbu-exporter/collector")
 
 	return &NbuCollector{
-		cfg:    cfg,
-		client: client,
-		tracer: tracer,
+		cfg:     cfg,
+		client:  client,
+		tracing: tracing,
 		nbuResponseTime: prometheus.NewDesc(
 			"nbu_response_time_ms",
 			"The server response time in milliseconds",
@@ -134,28 +160,17 @@ func (c *NbuCollector) Describe(ch chan<- *prometheus.Desc) {
 
 // createScrapeSpan creates a root span for the Prometheus scrape cycle.
 // It returns a context with the span and the span itself for lifecycle management.
-// If the tracer is not initialized (OpenTelemetry disabled), it returns the original
-// context and a nil span, allowing the collector to operate without tracing overhead.
+// TracerWrapper ensures this is always safe (uses noop if tracing disabled).
 //
 // The span is configured with:
 //   - Operation name: "prometheus.scrape"
 //   - Span kind: SpanKindServer (representing the scrape as a server operation)
 //
 // Returns:
-//   - context.Context: Context with span attached (or original context if tracing disabled)
-//   - trace.Span: The created span (or nil if tracing disabled)
+//   - context.Context: Context with span attached
+//   - trace.Span: The created span (always valid, noop if tracing disabled)
 func (c *NbuCollector) createScrapeSpan(ctx context.Context) (context.Context, trace.Span) {
-	// Nil-safe check: if tracer is not initialized, return original context
-	if c.tracer == nil {
-		return ctx, nil
-	}
-
-	// Create root span for scrape cycle
-	ctx, span := c.tracer.Start(ctx, "prometheus.scrape",
-		trace.WithSpanKind(trace.SpanKindServer),
-	)
-
-	return ctx, span
+	return c.tracing.StartSpan(ctx, "prometheus.scrape", trace.SpanKindServer)
 }
 
 // Collect fetches metrics from NetBackup and sends them to the provided channel.
@@ -191,9 +206,7 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 
 	scrapeStart := time.Now()
 	ctx, span := c.createScrapeSpan(ctx)
-	if span != nil {
-		defer span.End()
-	}
+	defer span.End()
 
 	// Collect all metrics
 	storageMetrics, jobsSize, jobsCount, jobsStatusCount, storageErr, jobsErr := c.collectAllMetrics(ctx, span)
@@ -249,20 +262,16 @@ func (c *NbuCollector) collectJobMetrics(ctx context.Context, span trace.Span, j
 }
 
 // recordFetchError records a fetch error as a span event.
+// TracerWrapper ensures span is always valid (noop if tracing disabled).
 func (c *NbuCollector) recordFetchError(span trace.Span, eventName string, err error) {
-	if span != nil {
-		span.AddEvent(eventName, trace.WithAttributes(
-			attribute.String(telemetry.AttrError, err.Error()),
-		))
-	}
+	span.AddEvent(eventName, trace.WithAttributes(
+		attribute.String(telemetry.AttrError, err.Error()),
+	))
 }
 
 // updateScrapeSpan updates the span with scrape results and status.
+// TracerWrapper ensures span is always valid (noop if tracing disabled).
 func (c *NbuCollector) updateScrapeSpan(span trace.Span, scrapeStart time.Time, storageMetrics, jobsSize map[string]float64, storageErr, jobsErr error) {
-	if span == nil {
-		return
-	}
-
 	scrapeStatus := c.determineScrapeStatus(storageErr, jobsErr)
 	c.setSpanStatus(span, scrapeStatus)
 	c.recordScrapeAttributes(span, scrapeStart, storageMetrics, jobsSize, scrapeStatus)
