@@ -178,15 +178,17 @@ func verifyJobMetricsCollected(t *testing.T, jobsSizeSlice []JobMetricValue, job
 	}
 }
 
-// TestPaginationHandling tests that pagination works correctly
+// TestPaginationHandling tests that batch pagination works correctly
+// With batch pagination (100 jobs per page), we test returning multiple jobs per page
 func TestPaginationHandling(t *testing.T) {
 	callCount := 0
-	expectedPages := 3
+	totalJobs := 3 // Total jobs to return across all pages
+	expectedCalls := 1 // With batch pagination, all 3 jobs fit in 1 page
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
 
-		// Create a minimal jobs response
+		// Create a jobs response with multiple jobs (batch)
 		response := &models.Jobs{}
 		response.Data = make([]struct {
 			Links struct {
@@ -270,27 +272,23 @@ func TestPaginationHandling(t *testing.T) {
 				ElapsedTime                string    `json:"elapsedTime"`
 				OffHostType                string    `json:"offHostType"`
 			} `json:"attributes"`
-		}, 1)
+		}, totalJobs)
 
-		response.Data[0].Type = "job"
-		response.Data[0].ID = fmt.Sprintf("job-%d", callCount)
-		response.Data[0].Attributes.JobID = 12345 + callCount
-		response.Data[0].Attributes.JobType = "BACKUP"
-		response.Data[0].Attributes.PolicyType = "STANDARD"
-		response.Data[0].Attributes.Status = 0
-		response.Data[0].Attributes.KilobytesTransferred = 1024
-
-		// Set pagination based on call count
-		if callCount < expectedPages {
-			response.Meta.Pagination.Next = callCount
-			response.Meta.Pagination.Offset = callCount - 1
-			response.Meta.Pagination.Last = expectedPages - 1
-		} else {
-			// Last page
-			response.Meta.Pagination.Offset = expectedPages - 1
-			response.Meta.Pagination.Last = expectedPages - 1
-			response.Meta.Pagination.Next = 0
+		// Add all jobs in this batch
+		for i := 0; i < totalJobs; i++ {
+			response.Data[i].Type = "job"
+			response.Data[i].ID = fmt.Sprintf("job-%d", i+1)
+			response.Data[i].Attributes.JobID = 12345 + i
+			response.Data[i].Attributes.JobType = "BACKUP"
+			response.Data[i].Attributes.PolicyType = "STANDARD"
+			response.Data[i].Attributes.Status = 0
+			response.Data[i].Attributes.KilobytesTransferred = 1024
 		}
+
+		// All jobs fit in one page, so this is the last page
+		response.Meta.Pagination.Offset = totalJobs - 1
+		response.Meta.Pagination.Last = totalJobs - 1
+		response.Meta.Pagination.Count = totalJobs
 
 		w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, "12.0"))
 		w.WriteHeader(http.StatusOK)
@@ -306,19 +304,19 @@ func TestPaginationHandling(t *testing.T) {
 		t.Fatalf(testErrorFetchAllJobsFailed, err)
 	}
 
-	// Verify all pages were fetched
-	if callCount != expectedPages {
-		t.Errorf("Expected %d API calls for pagination, got %d", expectedPages, callCount)
+	// With batch pagination, all jobs should be fetched in fewer API calls
+	if callCount != expectedCalls {
+		t.Errorf("Expected %d API call(s) for batch pagination, got %d", expectedCalls, callCount)
 	}
 
-	// Verify we collected metrics from all pages
-	totalJobs := 0
+	// Verify we collected metrics from all jobs in the batch
+	totalCollected := 0
 	for _, m := range jobsCountSlice {
-		totalJobs += int(m.Value)
+		totalCollected += int(m.Value)
 	}
 
-	if totalJobs != expectedPages {
-		t.Errorf("Expected %d total jobs, got %d", expectedPages, totalJobs)
+	if totalCollected != totalJobs {
+		t.Errorf("Expected %d total jobs, got %d", totalJobs, totalCollected)
 	}
 }
 

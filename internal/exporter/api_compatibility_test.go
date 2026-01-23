@@ -532,7 +532,7 @@ func validateAPIVersionHeader(r *http.Request, version string) bool {
 
 // isPaginatedJobsRequest checks if the request is for paginated jobs data
 func isPaginatedJobsRequest(r *http.Request) bool {
-	return strings.Contains(r.URL.Path, "/admin/jobs") && r.URL.Query().Get("page[limit]") == "1"
+	return strings.Contains(r.URL.Path, "/admin/jobs") && r.URL.Query().Get("page[limit]") != ""
 }
 
 // handlePaginatedJobsRequest handles paginated jobs API requests
@@ -567,7 +567,7 @@ func parseOffsetFromRequest(r *http.Request) int {
 	return offset
 }
 
-// createPaginatedJobsResponse creates a paginated response with a single job
+// createPaginatedJobsResponse creates a paginated response with a batch of jobs (up to page limit)
 func createPaginatedJobsResponse(fullJobs models.Jobs, offset int) *models.Jobs {
 	response := &models.Jobs{}
 	response.Data = make([]struct {
@@ -654,25 +654,32 @@ func createPaginatedJobsResponse(fullJobs models.Jobs, offset int) *models.Jobs 
 		} `json:"attributes"`
 	}, 0)
 
-	if offset < len(fullJobs.Data) {
-		response.Data = append(response.Data, fullJobs.Data[offset])
-		setPaginationMetadata(response, offset, len(fullJobs.Data))
+	totalJobs := len(fullJobs.Data)
+	if offset < totalJobs {
+		// Return all remaining jobs (since test data is small, this returns the batch)
+		for i := offset; i < totalJobs; i++ {
+			response.Data = append(response.Data, fullJobs.Data[i])
+		}
+		setBatchPaginationMetadata(response, offset, len(response.Data), totalJobs)
 	} else {
-		setEmptyPaginationMetadata(response, len(fullJobs.Data))
+		setEmptyPaginationMetadata(response, totalJobs)
 	}
 
 	return response
 }
 
-// setPaginationMetadata sets pagination metadata for a valid page
-func setPaginationMetadata(response *models.Jobs, offset int, totalJobs int) {
+// setBatchPaginationMetadata sets pagination metadata for a batch response
+func setBatchPaginationMetadata(response *models.Jobs, offset int, batchSize int, totalJobs int) {
 	response.Meta.Pagination.Offset = offset
 	response.Meta.Pagination.Last = totalJobs - 1
+	response.Meta.Pagination.Count = batchSize
 
-	if offset < totalJobs-1 {
-		response.Meta.Pagination.Next = offset + 1
+	nextOffset := offset + batchSize
+	if nextOffset < totalJobs {
+		response.Meta.Pagination.Next = nextOffset
 	} else {
-		response.Meta.Pagination.Next = 0
+		// No more pages - set offset equal to last to signal end
+		response.Meta.Pagination.Offset = response.Meta.Pagination.Last
 	}
 }
 

@@ -19,6 +19,7 @@ import (
 
 const (
 	pageLimit        = "100"                    // Default page size for API pagination
+	jobPageLimit     = "100"                    // Maximum allowed by NetBackup API for jobs endpoint
 	storageTypeTape  = "Tape"                   // Storage type identifier for tape units (excluded from metrics)
 	storagePath      = "/storage/storage-units" // API endpoint for storage unit data
 	jobsPath         = "/admin/jobs"            // API endpoint for job data
@@ -88,12 +89,10 @@ func FetchStorage(ctx context.Context, client *NbuClient) ([]StorageMetricValue,
 	return metrics, nil
 }
 
-// FetchJobDetails retrieves a single job record at the specified pagination offset and
-// updates the provided metrics maps with job statistics. This function is designed to be
-// called repeatedly during pagination to process all jobs within a time window.
-//
-// The function fetches one job at a time (limit=1) to enable efficient pagination and
-// filters jobs by endTime to only include jobs completed after startTime.
+// FetchJobDetails retrieves a page of job records (up to 100) at the specified
+// pagination offset and updates the provided metrics maps with job statistics.
+// This function processes all jobs in the API response and uses the API's
+// pagination metadata to determine the next offset.
 //
 // Parameters:
 //   - ctx: Context for request cancellation and timeout
@@ -101,7 +100,7 @@ func FetchStorage(ctx context.Context, client *NbuClient) ([]StorageMetricValue,
 //   - jobsSize: Typed map to accumulate bytes transferred per job type/status
 //   - jobsCount: Typed map to accumulate job counts per job type/status
 //   - jobsStatusCount: Typed map to accumulate job counts per action/status
-//   - offset: Pagination offset for the current request
+//   - offset: Pagination offset (starts at 0, use Meta.Pagination.Next for subsequent calls)
 //   - startTime: Filter to only include jobs completed after this time
 //
 // Returns:
@@ -122,7 +121,7 @@ func FetchJobDetails(
 	var jobs models.Jobs
 
 	queryParams := map[string]string{
-		QueryParamLimit:  "1",
+		QueryParamLimit:  jobPageLimit, // Fetch up to 100 jobs per page for efficiency
 		QueryParamOffset: strconv.Itoa(offset),
 		QueryParamSort:   "jobId",
 		QueryParamFilter: fmt.Sprintf("endTime%%20gt%%20%s", utils.ConvertTimeToNBUDate(startTime)),
@@ -139,6 +138,7 @@ func FetchJobDetails(
 	// No more jobs to process
 	if len(jobs.Data) == 0 {
 		attrs := []attribute.KeyValue{
+			attribute.Int(telemetry.AttrNetBackupPageOffset, offset),
 			attribute.Int(telemetry.AttrNetBackupJobsInPage, 0),
 		}
 		span.SetAttributes(attrs...)
@@ -146,30 +146,29 @@ func FetchJobDetails(
 		return -1, nil
 	}
 
-	job := jobs.Data[0]
+	// Process ALL jobs in the batch response
+	for _, job := range jobs.Data {
+		// Create structured metric keys
+		jobKey := JobMetricKey{
+			Action:     job.Attributes.JobType,
+			PolicyType: job.Attributes.PolicyType,
+			Status:     strconv.Itoa(job.Attributes.Status),
+		}
 
-	// Create structured metric keys
-	jobKey := JobMetricKey{
-		Action:     job.Attributes.JobType,
-		PolicyType: job.Attributes.PolicyType,
-		Status:     strconv.Itoa(job.Attributes.Status),
+		statusKey := JobStatusKey{
+			Action: job.Attributes.JobType,
+			Status: strconv.Itoa(job.Attributes.Status),
+		}
+
+		// Update metrics using typed keys directly
+		jobsCount[jobKey]++
+		jobsStatusCount[statusKey]++
+		jobsSize[jobKey] += float64(job.Attributes.KilobytesTransferred * bytesPerKilobyte)
 	}
-
-	statusKey := JobStatusKey{
-		Action: job.Attributes.JobType,
-		Status: strconv.Itoa(job.Attributes.Status),
-	}
-
-	// Update metrics using typed keys directly
-	jobsCount[jobKey]++
-	jobsStatusCount[statusKey]++
-	jobsSize[jobKey] += float64(job.Attributes.KilobytesTransferred * bytesPerKilobyte)
 
 	// Batch span attributes for job page
-	pageNumber := offset + 1
 	attrs := []attribute.KeyValue{
 		attribute.Int(telemetry.AttrNetBackupPageOffset, offset),
-		attribute.Int(telemetry.AttrNetBackupPageNumber, pageNumber),
 		attribute.Int(telemetry.AttrNetBackupJobsInPage, len(jobs.Data)),
 	}
 	span.SetAttributes(attrs...)
@@ -223,12 +222,12 @@ func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, o
 	return nil
 }
 
-// FetchAllJobs aggregates job statistics by iterating over all paginated job data within
-// the configured time window. It calculates the start time based on the scraping interval
-// and fetches all jobs that completed after that time.
+// FetchAllJobs aggregates job statistics by iterating over paginated job data.
+// Uses batch pagination (100 jobs per request) to minimize API calls.
 //
-// The function uses pagination to efficiently process large job datasets and returns
-// three typed slices with aggregated statistics:
+// It calculates the start time based on the scraping interval and fetches all jobs
+// that completed after that time. The function returns three typed slices with
+// aggregated statistics:
 //   - jobsSize: Total bytes transferred per job type/policy/status
 //   - jobsCount: Number of jobs per job type/policy/status
 //   - statusCount: Number of jobs per action/status (simplified aggregation)
