@@ -75,6 +75,7 @@ func createConfigWithAPIVersion(apiVersion string) *Config {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			Port:             "2112",
 			Host:             "localhost",
@@ -488,6 +489,7 @@ func TestConfigGetServerAddress(t *testing.T) {
 					URI              string `yaml:"uri"`
 					ScrapingInterval string `yaml:"scrapingInterval"`
 					LogName          string `yaml:"logName"`
+					CacheTTL         string `yaml:"cacheTTL"`
 				}{
 					Host: "0.0.0.0",
 					Port: "2112",
@@ -504,6 +506,7 @@ func TestConfigGetServerAddress(t *testing.T) {
 					URI              string `yaml:"uri"`
 					ScrapingInterval string `yaml:"scrapingInterval"`
 					LogName          string `yaml:"logName"`
+					CacheTTL         string `yaml:"cacheTTL"`
 				}{
 					Host: "localhost",
 					Port: "9090",
@@ -532,6 +535,7 @@ func createConfigWithInterval(interval string) Config {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			ScrapingInterval: interval,
 		},
@@ -763,6 +767,7 @@ func TestConfigValidateServerFields(t *testing.T) {
 				URI              string `yaml:"uri"`
 				ScrapingInterval string `yaml:"scrapingInterval"`
 				LogName          string `yaml:"logName"`
+				CacheTTL         string `yaml:"cacheTTL"`
 			}{
 				Port:             "2112",
 				Host:             "localhost",
@@ -995,6 +1000,7 @@ func createBaseTestConfig() Config {
 			URI              string `yaml:"uri"`
 			ScrapingInterval string `yaml:"scrapingInterval"`
 			LogName          string `yaml:"logName"`
+			CacheTTL         string `yaml:"cacheTTL"`
 		}{
 			Port:             "2112",
 			Host:             "localhost",
@@ -1235,6 +1241,7 @@ func TestConfigValidateOTelEndpoint(t *testing.T) {
 				URI              string `yaml:"uri"`
 				ScrapingInterval string `yaml:"scrapingInterval"`
 				LogName          string `yaml:"logName"`
+				CacheTTL         string `yaml:"cacheTTL"`
 			}{
 				Port:             "2112",
 				Host:             "localhost",
@@ -1675,5 +1682,120 @@ func TestValidate_SecureByDefault(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("Validate() should succeed with secure TLS by default, got error: %v", err)
+	}
+}
+
+func TestGetCacheTTL(t *testing.T) {
+	tests := []struct {
+		name     string
+		cacheTTL string
+		expected time.Duration
+	}{
+		{
+			name:     "valid 5 minute TTL",
+			cacheTTL: "5m",
+			expected: 5 * time.Minute,
+		},
+		{
+			name:     "valid 1 hour TTL",
+			cacheTTL: "1h",
+			expected: 1 * time.Hour,
+		},
+		{
+			name:     "valid 30 second TTL",
+			cacheTTL: "30s",
+			expected: 30 * time.Second,
+		},
+		{
+			name:     "empty returns default",
+			cacheTTL: "",
+			expected: 5 * time.Minute,
+		},
+		{
+			name:     "invalid returns default",
+			cacheTTL: "invalid",
+			expected: 5 * time.Minute,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &Config{}
+			cfg.Server.CacheTTL = tt.cacheTTL
+
+			result := cfg.GetCacheTTL()
+
+			if result != tt.expected {
+				t.Errorf("GetCacheTTL() = %v, want %v", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestValidate_CacheTTLValidation(t *testing.T) {
+	tests := []struct {
+		name      string
+		cacheTTL  string
+		wantError bool
+		errMsg    string
+	}{
+		{
+			name:      "valid 5m TTL",
+			cacheTTL:  "5m",
+			wantError: false,
+		},
+		{
+			name:      "valid 1h TTL",
+			cacheTTL:  "1h",
+			wantError: false,
+		},
+		{
+			name:      "invalid TTL format",
+			cacheTTL:  "invalid",
+			wantError: true,
+			errMsg:    "invalid cache TTL format",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := createBaseTestConfig()
+			cfg.Server.CacheTTL = tt.cacheTTL
+
+			err := cfg.Validate()
+
+			if tt.wantError {
+				if err == nil {
+					t.Error(testErrorExpectedError)
+				} else if tt.errMsg != "" && !strings.Contains(err.Error(), tt.errMsg) {
+					t.Errorf(testErrorExpectedErrorContaining, tt.errMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf(testErrorUnexpected, err)
+				}
+			}
+		})
+	}
+}
+
+func TestSetDefaults_CacheTTL(t *testing.T) {
+	cfg := &Config{}
+
+	cfg.SetDefaults()
+
+	if cfg.Server.CacheTTL != "5m" {
+		t.Errorf("SetDefaults() CacheTTL = %v, want '5m'", cfg.Server.CacheTTL)
+	}
+}
+
+func TestSetDefaults_CacheTTL_Preserves(t *testing.T) {
+	cfg := &Config{}
+	cfg.Server.CacheTTL = "1h"
+
+	cfg.SetDefaults()
+
+	if cfg.Server.CacheTTL != "1h" {
+		t.Errorf("SetDefaults() should preserve existing CacheTTL, got %v, want '1h'", cfg.Server.CacheTTL)
 	}
 }

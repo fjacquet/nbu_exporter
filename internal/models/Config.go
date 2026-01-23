@@ -35,6 +35,7 @@ type Config struct {
 		URI              string `yaml:"uri"`
 		ScrapingInterval string `yaml:"scrapingInterval"`
 		LogName          string `yaml:"logName"`
+		CacheTTL         string `yaml:"cacheTTL"` // TTL for storage metrics cache (e.g., "5m")
 	} `yaml:"server"`
 
 	NbuServer struct {
@@ -62,6 +63,7 @@ type Config struct {
 // Currently sets:
 //   - Default API version to "13.0" (NetBackup 11.0) if not specified
 //   - Default NBU server URI to "/netbackup" if not specified
+//   - Default storage cache TTL to "5m" if not specified
 //
 // This method is called automatically by Validate() before validation checks.
 func (c *Config) SetDefaults() {
@@ -73,6 +75,11 @@ func (c *Config) SetDefaults() {
 	// Set default NBU server URI
 	if c.NbuServer.URI == "" {
 		c.NbuServer.URI = "/netbackup"
+	}
+
+	// Set default storage cache TTL (5 minutes)
+	if c.Server.CacheTTL == "" {
+		c.Server.CacheTTL = "5m"
 	}
 }
 
@@ -141,6 +148,12 @@ func (c *Config) validateServerConfig() error {
 	}
 	if _, err := time.ParseDuration(c.Server.ScrapingInterval); err != nil {
 		return fmt.Errorf("invalid scraping interval format '%s': %w (expected format: 5m, 1h, 30s)", c.Server.ScrapingInterval, err)
+	}
+	// Validate cache TTL if provided
+	if c.Server.CacheTTL != "" {
+		if _, err := time.ParseDuration(c.Server.CacheTTL); err != nil {
+			return fmt.Errorf("invalid cache TTL format '%s': %w (expected format: 5m, 1h, 30s)", c.Server.CacheTTL, err)
+		}
 	}
 	return nil
 }
@@ -338,6 +351,24 @@ func (c *Config) GetServerAddress() string {
 // Returns an error if the interval string cannot be parsed.
 func (c *Config) GetScrapingDuration() (time.Duration, error) {
 	return time.ParseDuration(c.Server.ScrapingInterval)
+}
+
+// GetCacheTTL parses and returns the cache TTL as time.Duration.
+// Returns 5 minutes default if parsing fails or not configured.
+//
+// The cache TTL determines how long storage metrics are cached before
+// requiring a fresh API call to NetBackup.
+//
+// Example: "5m" -> 5 * time.Minute
+func (c *Config) GetCacheTTL() time.Duration {
+	if c.Server.CacheTTL == "" {
+		return 5 * time.Minute
+	}
+	duration, err := time.ParseDuration(c.Server.CacheTTL)
+	if err != nil {
+		return 5 * time.Minute
+	}
+	return duration
 }
 
 // MaskAPIKey returns a masked version of the API key for safe logging.
