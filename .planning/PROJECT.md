@@ -1,5 +1,16 @@
 # NBU Exporter Codebase Improvement
 
+## Current Milestone: v1.1 Codebase Improvements
+
+**Goal:** Address technical debt, bugs, security concerns, and test coverage gaps identified in codebase analysis.
+
+**Target features:**
+- Fix known bugs and fragile code patterns
+- Improve security posture (API key handling, TLS enforcement, rate limiting)
+- Reduce technical debt (config mutation, global state, resource cleanup)
+- Increase test coverage (main.go from 0% to 60%+)
+- Add missing operational features (health checks, caching, config reload)
+
 ## What This Is
 
 A project to address technical debt, bugs, security concerns, and test coverage gaps in the NetBackup Prometheus exporter codebase. This is a brownfield improvement initiative focused on code quality, reliability, and maintainability.
