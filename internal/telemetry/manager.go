@@ -221,5 +221,11 @@ func (m *Manager) IsEnabled() bool {
 //
 // Returns the TracerProvider instance, or nil if not available.
 func (m *Manager) TracerProvider() trace.TracerProvider {
+	// Explicit nil check required: returning a nil pointer through an interface
+	// type in Go creates a non-nil interface with a nil underlying value.
+	// This ensures callers can properly check for nil TracerProvider.
+	if m.tracerProvider == nil {
+		return nil
+	}
 	return m.tracerProvider
 }

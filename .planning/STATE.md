@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 4 of 6 (Test Coverage)
-Plan: 1 of 4 complete
+Plan: 2 of 4 complete
 Status: In progress
-Last activity: 2026-01-23 — Completed plan 04-01 (Main Package Integration Tests)
+Last activity: 2026-01-23 — Completed plan 04-04 (Concurrent Tests & Client Edge Cases)
 
 ## Progress
 
@@ -30,7 +30,7 @@ Last activity: 2026-01-23 — Completed plan 04-01 (Main Package Integration Tes
 - [x] Phase 3 research complete (03-RESEARCH.md)
 - [x] Phase 3 planning complete (5 plans: 03-01, 03-02, 03-03, 03-04, 03-05)
 - [x] Phase 3 execution (5 of 5 plans complete: 03-01, 03-02, 03-03, 03-04, 03-05)
-- [ ] Phase 4 execution (1 of 4 plans complete: 04-01)
+- [ ] Phase 4 execution (2 of 4 plans complete: 04-01, 04-04)
 
 ## Accumulated Context
 
@@ -79,6 +79,9 @@ Last activity: 2026-01-23 — Completed plan 04-01 (Main Package Integration Tes
 - (03-05) NbuCollector.Close() delegates to NbuClient.Close() for connection draining
 - (04-01) Use httptest.NewTLSServer for mocking NBU API in integration tests
 - (04-01) Use port 0 for test servers to let OS assign random available port
+- (04-04) 10-goroutine concurrency level for collector tests provides good race condition coverage
+- (04-04) 100ms context timeout for network timeout tests balances test speed vs reliability
+- (04-04) Table-driven tests for HTTP error codes (400, 401, 403, 404, 500, 502, 503) ensures comprehensive coverage
 
 **Phase 1 Plans:**
 
@@ -108,16 +111,18 @@ Last activity: 2026-01-23 — Completed plan 04-01 (Main Package Integration Tes
 
 **Phase 4 Plans:**
 
-| Plan  | Focus                          | Requirements | Files Modified                          |
-| ----- | ------------------------------ | ------------ | --------------------------------------- |
-| 04-01 | Main Package Integration Tests | TEST-01, TD-04 | main_test.go, testdata/*.yaml         |
-| 04-02 | Exporter Package Tests         | TEST-02      | *_test.go files in internal/exporter   |
-| 04-03 | Models Package Tests           | TEST-03      | *_test.go files in internal/models     |
-| 04-04 | Utils Package Tests            | TEST-04      | *_test.go files in internal/utils      |
+| Plan  | Focus                              | Requirements     | Files Modified                              |
+| ----- | ---------------------------------- | ---------------- | ------------------------------------------- |
+| 04-01 | Main Package Integration Tests     | TEST-01, TD-04   | main_test.go, testdata/*.yaml               |
+| 04-02 | MockServerBuilder Tests            | TEST-02          | testutil/mock_server_test.go                |
+| 04-03 | Models Package Tests               | TEST-03          | internal/models/*_test.go                   |
+| 04-04 | Concurrent Tests & Client Edge Cases | TEST-04, TEST-05 | concurrent_test.go, client_test.go        |
 
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 04-04 Execution):** Completed plan 04-04 (Concurrent Tests & Client Edge Cases). Created concurrent_test.go with 6 tests: TestCollectorConcurrentCollect (10 parallel goroutines), TestCollectorConcurrentDescribe, TestCollectorCollectDuringClose, TestCollectorConcurrentCollectAndDescribe, TestCollectorMultipleCloseAttempts (idempotent Close), TestCollectorCloseWithActiveCollect. Added 6 client edge case tests to client_test.go: TestClientNetworkTimeout (100ms timeout), TestClientConnectionRefused (unreachable server), TestClientHTTPErrorsComprehensive (400/401/403/404/500/502/503), TestClientPartialResponse (truncated JSON), TestClientEmptyResponseBody, TestClientServerClosesDuringTransfer. Three consecutive race detector runs: all PASS (~27s each). Coverage increased from 88.1% to 90.2%. Two atomic commits: (1) concurrent collector tests, (2) client edge case tests. Fixes TEST-04 and TEST-05 requirements. No deviations from plan. Duration: 5 minutes.
 
 **2026-01-23 (Plan 04-01 Execution):** Completed plan 04-01 (Main Package Integration Tests). Created main_test.go with 25 tests covering: NewServer initialization, validateConfig (success/file-not-found/invalid/malformed), setupLogging (success/debug/invalid-path), healthHandler (returns 200 OK), waitForShutdown (signal/error/nil-error), Server lifecycle (start/shutdown integration), error channel propagation, extractTraceContextMiddleware (3 variants), and config helper methods. Test fixtures updated/created in testdata/ (valid_config.yaml, invalid_config.yaml, malformed_config.yaml). Coverage: main package reaches 60.0% (target met). One auto-fix: removed unused fmt import from internal/testutil/helpers_test.go (pre-existing build error). Three atomic commits: (1) test fixtures, (2) main_test.go, (3) testutil fix. All tests pass with race detector. Duration: 3 minutes.
 
