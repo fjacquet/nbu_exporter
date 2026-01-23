@@ -52,11 +52,36 @@ var (
 // Server encapsulates the HTTP server and its dependencies for serving Prometheus metrics.
 // It manages the lifecycle of the HTTP server, Prometheus registry, NetBackup collector,
 // and OpenTelemetry telemetry manager.
+//
+// Error Handling:
+// Server errors (such as port binding failures) are communicated through the ErrorChan()
+// channel rather than calling log.Fatal. This allows the caller to perform graceful
+// shutdown even when the server encounters errors.
+//
+// Usage:
+//
+//	server := NewServer(cfg)
+//	if err := server.Start(); err != nil {
+//	    return err
+//	}
+//
+//	select {
+//	case <-shutdownSignal:
+//	    // Normal shutdown
+//	case err := <-server.ErrorChan():
+//	    log.Errorf("Server error: %v", err)
+//	}
+//
+//	server.Shutdown()
 type Server struct {
 	cfg              models.Config        // Application configuration
 	httpSrv          *http.Server         // HTTP server instance
 	registry         *prometheus.Registry // Prometheus metrics registry
 	telemetryManager *telemetry.Manager   // OpenTelemetry telemetry manager (nil if disabled)
+	// serverErrChan receives HTTP server errors. It is buffered (capacity 1)
+	// to ensure the goroutine can send an error even if the main select
+	// hasn't started listening yet (race between Start() return and select).
+	serverErrChan chan error
 }
 
 // NewServer creates a new server instance with the provided configuration.
@@ -88,6 +113,7 @@ func NewServer(cfg models.Config) *Server {
 		cfg:              cfg,
 		registry:         prometheus.NewRegistry(),
 		telemetryManager: telemetryMgr,
+		serverErrChan:    make(chan error, 1), // Buffered to prevent goroutine leak
 	}
 }
 
@@ -156,11 +182,18 @@ func (s *Server) Start() error {
 	go func() {
 		log.Infof("Starting %s on %s%s", programName, s.cfg.GetServerAddress(), s.cfg.Server.URI)
 		if err := s.httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("HTTP server error: %v", err)
+			// Send error through channel instead of log.Fatalf
+			s.serverErrChan <- fmt.Errorf("HTTP server error: %w", err)
 		}
 	}()
 
 	return nil
+}
+
+// ErrorChan returns the channel for receiving server errors.
+// The main function should select on this channel to handle errors gracefully.
+func (s *Server) ErrorChan() <-chan error {
+	return s.serverErrChan
 }
 
 // Shutdown gracefully shuts down the HTTP server and OpenTelemetry with a timeout.
@@ -198,6 +231,9 @@ func (s *Server) Shutdown() error {
 	if err := s.httpSrv.Shutdown(ctx); err != nil {
 		return fmt.Errorf("server shutdown failed: %w", err)
 	}
+
+	// Close error channel to signal no more errors will be sent
+	close(s.serverErrChan)
 
 	log.Info("Server stopped gracefully")
 	return nil
