@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-23)
 ## Current Position
 
 Phase: 6 of 6 (Operational Features)
-Plan: 2 of TBD
-Status: In progress
-Last activity: 2026-01-23 — Completed 06-02-PLAN.md (Health Check & Up Metric)
+Plan: 3 of 3 (Phase 6 complete)
+Status: Phase 6 complete
+Last activity: 2026-01-23 — Completed 06-03-PLAN.md (Dynamic Configuration Reload)
 
 ## Progress
 
@@ -36,6 +36,7 @@ Last activity: 2026-01-23 — Completed 06-02-PLAN.md (Health Check & Up Metric)
 - [x] Phase 6 research complete (06-RESEARCH.md)
 - [x] Phase 6 Plan 1 complete (06-01 Storage Metrics Caching)
 - [x] Phase 6 Plan 2 complete (06-02 Health Check & Up Metric)
+- [x] Phase 6 Plan 3 complete (06-03 Dynamic Configuration Reload)
 
 ## Accumulated Context
 
@@ -108,6 +109,11 @@ Last activity: 2026-01-23 — Completed 06-02-PLAN.md (Health Check & Up Metric)
 - (06-02) Health endpoint returns 503 on NBU unreachable with lightweight version endpoint test
 - (06-02) Startup phase returns 200 'OK (starting)' before collector initialization
 - (06-02) 5-second default timeout for health check connectivity test
+- (06-03) SafeConfig provides thread-safe config access via RWMutex (concurrent reads, serialized writes)
+- (06-03) Watch directory (not file) with fsnotify to handle atomic saves from vim/emacs correctly
+- (06-03) Fail-fast validation: validate config BEFORE acquiring write lock to avoid lock contention
+- (06-03) ReloadConfig returns serverChanged flag to trigger cache flush on NBU server address change
+- (06-03) Inline file reading in SafeConfig to avoid import cycle with utils package
 
 **Phase 1 Plans:**
 
@@ -154,14 +160,17 @@ Last activity: 2026-01-23 — Completed 06-02-PLAN.md (Health Check & Up Metric)
 
 **Phase 6 Plans:**
 
-| Plan  | Focus                  | Requirements | Files Modified                                |
-| ----- | ---------------------- | ------------ | --------------------------------------------- |
-| 06-01 | Storage Metrics Cache  | FEAT-01      | cache.go, Config.go, prometheus.go            |
-| 06-02 | Health Check & Up Metric | FEAT-02    | health.go, prometheus.go, main.go             |
+| Plan  | Focus                    | Requirements | Files Modified                                         |
+| ----- | ------------------------ | ------------ | ------------------------------------------------------ |
+| 06-01 | Storage Metrics Cache    | FEAT-01      | cache.go, Config.go, prometheus.go                     |
+| 06-02 | Health Check & Up Metric | FEAT-02      | health.go, prometheus.go, main.go                      |
+| 06-03 | Dynamic Config Reload    | FEAT-03      | safe_config.go, watcher.go, main.go, main_test.go      |
 
 **Blockers:** None
 
 ## Session Notes
+
+**2026-01-23 (Plan 06-03 Execution):** Completed plan 06-03 (Dynamic Configuration Reload). Created SafeConfig wrapper in internal/models/safe_config.go with RWMutex for thread-safe config access (concurrent reads, serialized writes). Added SIGHUP signal handler and fsnotify file watcher in internal/config/watcher.go. Key design: watch directory (not file) to handle atomic saves from vim/emacs. Fail-fast validation: validate config BEFORE acquiring write lock to avoid lock contention. ReloadConfig returns serverChanged flag to trigger cache flush on NBU server address change. Updated main.go with SafeConfig integration, ReloadConfig method, and file watcher lifecycle. Updated all main_test.go tests for new NewServer(safeCfg, configPath) signature. One auto-fix: resolved import cycle between models and utils packages by inlining file reading with os/yaml instead of importing utils. Added github.com/fsnotify/fsnotify@v1.9.0 dependency. Three atomic commits: (1) SafeConfig wrapper, (2) file watcher and SIGHUP handler, (3) main.go integration. All tests pass with race detector. Fixes FEAT-03. Duration: 9 minutes. Phase 6 complete.
 
 **2026-01-23 (Plan 06-02 Execution):** Completed plan 06-02 (Health Check & Up Metric). Added nbu_up metric (1 if any collection succeeds, 0 if all fail) and nbu_last_scrape_timestamp_seconds with source label (storage/jobs). Created health.go with TestConnectivity() method using lightweight version detection endpoint (5s timeout). Added IsHealthy() method for quick check without API call. Enhanced /health endpoint to verify NBU connectivity: returns 200 OK when reachable, 503 when unreachable, 200 "OK (starting)" during startup phase. Updated prometheus.go with timestamp tracking fields and mutex protection. Added comprehensive health tests (7 tests). Three auto-fixes: (1) updated test descriptor counts from 6 to 8, (2) added CacheTTL to main_test.go config, (3) updated TestHealthHandler for startup phase response. Two atomic commits: (1) nbu_up and timestamp metrics, (2) TestConnectivity and health endpoint. All tests pass with race detector. Duration: 11 minutes.
 
@@ -227,4 +236,4 @@ All 4 plans are Wave 1 (independent, can run in parallel). Each plan includes:
 
 ---
 
-_Last updated: 2026-01-23 after Phase 6 Plan 2 complete_
+_Last updated: 2026-01-23 after Phase 6 Plan 3 complete (Phase 6 complete)_
