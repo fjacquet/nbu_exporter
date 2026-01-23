@@ -69,3 +69,24 @@ func (k JobMetricKey) Labels() []string {
 func (k JobStatusKey) Labels() []string {
 	return []string{k.Action, k.Status}
 }
+
+// StorageMetricValue pairs a StorageMetricKey with its metric value.
+// Used for type-safe metric collection without string parsing.
+type StorageMetricValue struct {
+	Key   StorageMetricKey
+	Value float64
+}
+
+// JobMetricValue pairs a JobMetricKey with its metric value.
+// Used for type-safe metric collection without string parsing.
+type JobMetricValue struct {
+	Key   JobMetricKey
+	Value float64
+}
+
+// JobStatusMetricValue pairs a JobStatusKey with its metric value.
+// Used for type-safe metric collection without string parsing.
+type JobStatusMetricValue struct {
+	Key   JobStatusKey
+	Value float64
+}
