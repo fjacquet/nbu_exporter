@@ -387,3 +387,88 @@ func TestAPIVersionDetectorExponentialBackoff(t *testing.T) {
 		}
 	}
 }
+
+func TestAPIVersionDetectorConfigImmutability(t *testing.T) {
+	tests := []struct {
+		name           string
+		initialVersion string
+		serverResponds bool
+		description    string
+	}{
+		{
+			name:           "config unchanged when detection succeeds",
+			initialVersion: "original-version",
+			serverResponds: true,
+			description:    "Original config value preserved during detection",
+		},
+		{
+			name:           "config unchanged when detection fails",
+			initialVersion: "original-version",
+			serverResponds: false,
+			description:    "Original config value preserved on failure",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create server that may or may not respond successfully
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if tt.serverResponds {
+					w.Header().Set(contentTypeHeader, contentTypeJSON)
+					w.WriteHeader(http.StatusOK)
+					_ = json.NewEncoder(w).Encode(mockJobsResponse{})
+				} else {
+					w.WriteHeader(http.StatusNotAcceptable)
+				}
+			}))
+			defer server.Close()
+
+			// Create config with initial version
+			cfg := createTestConfig(server.URL, tt.initialVersion)
+			cfg.NbuServer.APIVersion = tt.initialVersion
+			originalVersion := cfg.NbuServer.APIVersion
+
+			// Create detector - should not mutate config
+			client := NewNbuClient(cfg)
+			detector := NewAPIVersionDetector(client, cfg.GetNBUBaseURL(), cfg.NbuServer.APIKey)
+
+			// Run detection
+			_, _ = detector.DetectVersion(context.Background())
+
+			// Verify config was NOT mutated by detector
+			if cfg.NbuServer.APIVersion != originalVersion {
+				t.Errorf("Config was mutated during detection: got %v, want %v",
+					cfg.NbuServer.APIVersion, originalVersion)
+			}
+		})
+	}
+}
+
+func TestAPIVersionDetectorContextCancellationNoConfigMutation(t *testing.T) {
+	// Create a slow server
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(500 * time.Millisecond)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	cfg := createTestConfig(server.URL, "13.0")
+	originalVersion := "should-not-change"
+	cfg.NbuServer.APIVersion = originalVersion
+
+	client := NewNbuClient(cfg)
+	detector := NewAPIVersionDetector(client, cfg.GetNBUBaseURL(), cfg.NbuServer.APIKey)
+
+	// Cancel context immediately
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	// Run detection with cancelled context
+	_, _ = detector.DetectVersion(ctx)
+
+	// Verify config was NOT mutated
+	if cfg.NbuServer.APIVersion != originalVersion {
+		t.Errorf("Config mutated on context cancellation: got %v, want %v",
+			cfg.NbuServer.APIVersion, originalVersion)
+	}
+}
