@@ -386,7 +386,6 @@ func TestValidateConfig(t *testing.T) {
 Things that couldn't be fully resolved:
 
 1. **Main package test file location**
-
    - What we know: main_test.go can exist alongside main.go
    - What's unclear: Whether to use build constraints to exclude from production
    - Recommendation: Place main_test.go in root; no build constraints needed since test files are excluded automatically

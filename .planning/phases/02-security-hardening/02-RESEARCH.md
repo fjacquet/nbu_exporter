@@ -418,19 +418,16 @@ func configureTLSWithPooling(insecureSkipVerify bool) *tls.Config {
 Things that couldn't be fully resolved:
 
 1. **Memory zeroing in Go for API keys**
-
    - What we know: Go's GC makes true zeroing impractical; memguard provides encryption-at-rest in memory
    - What's unclear: Whether the complexity of memguard is worth it for this use case
    - Recommendation: Accept Go's limitations. Focus on preventing leaks (no logging, constant-time comparison). Memguard is overkill for Prometheus exporter.
 
 2. **Rate limiting values for NetBackup API**
-
    - What we know: Resty supports rate limiting and backoff; NetBackup API may have limits
    - What's unclear: NetBackup API's actual rate limits (vendor-specific)
    - Recommendation: Start conservative (10 req/sec), monitor for 429 responses, tune based on actual behavior. Make rate limit configurable.
 
 3. **Secrets manager integration**
-
    - What we know: Production should use secrets managers, not env vars
    - What's unclear: Which secrets manager(s) to support (Vault, AWS, GCP, Azure)
    - Recommendation: Document env var limitations, suggest secrets managers in README. Don't implement integration (out of scope, adds significant complexity).

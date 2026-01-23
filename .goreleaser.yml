@@ -10,7 +10,7 @@ before:
 builds:
   - # Définit la compilation principale
     main: ./main.go
-    binary: '{{ .ProjectName }}'
+    binary: "{{ .ProjectName }}"
     goos:
       - linux
       - windows
@@ -24,7 +24,7 @@ builds:
 archives:
   - # Archives pour les différentes plateformes
     # Windows utilise automatiquement .zip, les autres .tar.gz
-    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - LICENSE
       - README.md
@@ -49,16 +49,16 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - '^chore:'
-      - 'README'
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "README"
   groups:
     - title: Features
-      regexp: '^feat:'
+      regexp: "^feat:"
       order: 0
     - title: Bug Fixes
-      regexp: '^fix:'
+      regexp: "^fix:"
       order: 1
     - title: Others
       order: 999

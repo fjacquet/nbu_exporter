@@ -70,6 +70,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ReadHeaderTimeout` to HTTP server for security
 - Comprehensive error context with `fmt.Errorf` wrapping
 - Collection timeout (2 minutes) to prevent hanging scrapes
+- **Linting Configuration**: Added `.markdownlint.json` and `.prettierrc` for consistent code formatting
+  - Markdown line length relaxed to 120 characters
+  - Tables excluded from line length checks
+  - Prettier configured with 120 character width and LF line endings
 
 ### Changed
 
@@ -145,6 +149,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Context-aware operations allow early cancellation
 - Reduced allocations from client reuse
 - Better resource cleanup with proper context handling
+- **Batched Job Pagination**: Jobs fetched in batches of 100 per API call (~100x fewer requests for large job sets)
+- **Parallel Metric Collection**: Storage and job metrics collected concurrently with `errgroup`, reducing scrape time to `max(storage_time, jobs_time)` instead of sum
+- **Pre-allocation Capacity Hints**: Maps and slices pre-allocated with expected sizes (100 job metrics, 50 status metrics) to reduce GC pressure
 
 ## Migration Notes
 
@@ -158,10 +165,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ```yaml
 opentelemetry:
-    enabled: true
-    endpoint: "localhost:4317"  # Your OTLP collector endpoint
-    insecure: true              # Use false for production with TLS
-    samplingRate: 0.1           # Sample 10% of scrapes
+  enabled: true
+  endpoint: "localhost:4317" # Your OTLP collector endpoint
+  insecure: true # Use false for production with TLS
+  samplingRate: 0.1 # Sample 10% of scrapes
 ```
 
 2. Deploy OpenTelemetry Collector (see `docker-compose-otel.yaml` for example)

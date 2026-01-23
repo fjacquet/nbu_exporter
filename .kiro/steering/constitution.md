@@ -99,7 +99,7 @@ This prioritizes performance, privacy, and cost control. Use `github.com/gocarin
 ### Documentation
 
 - All exported types, functions, and methods require godoc comments
-- Explain *why* something is done, not just *what*
+- Explain _why_ something is done, not just _what_
 - Document non-obvious behavior, edge cases, and assumptions
 - Keep comments up-to-date with code changes
 

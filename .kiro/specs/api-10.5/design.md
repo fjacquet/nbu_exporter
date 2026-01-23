@@ -107,7 +107,7 @@ Update request headers to include API version:
 ```go
 func (c *NbuClient) FetchData(ctx context.Context, url string, result interface{}) error {
     contentType := fmt.Sprintf("application/vnd.netbackup+json;version=%s", c.cfg.NbuServer.APIVersion)
-    
+
     resp, err := c.client.R().
         SetContext(ctx).
         SetHeader("Accept", contentType).
@@ -215,7 +215,7 @@ nbuserver:
   port: "1556"
   scheme: "https"
   uri: "/netbackup"
-  apiVersion: "12.0"  # NEW: API version for NetBackup 10.5
+  apiVersion: "12.0" # NEW: API version for NetBackup 10.5
   apiKey: "your-api-key-here"
   contentType: "application/json"
   insecureSkipVerify: false
@@ -339,13 +339,13 @@ Create sample response files:
 
 ### Code Changes Summary
 
-| File | Change Type | Description |
-|------|-------------|-------------|
-| `internal/models/Config.go` | Addition | Add APIVersion field and validation |
+| File                          | Change Type  | Description                           |
+| ----------------------------- | ------------ | ------------------------------------- |
+| `internal/models/Config.go`   | Addition     | Add APIVersion field and validation   |
 | `internal/exporter/client.go` | Modification | Update Accept header with API version |
-| `config.yaml` | Addition | Add apiVersion configuration |
-| `README.md` | Update | Document NetBackup 10.5 requirement |
-| `testdata/` | Addition | Add 10.5 API response samples |
+| `config.yaml`                 | Addition     | Add apiVersion configuration          |
+| `README.md`                   | Update       | Document NetBackup 10.5 requirement   |
+| `testdata/`                   | Addition     | Add 10.5 API response samples         |
 
 ### Deployment Impact
 
@@ -409,9 +409,9 @@ If issues occur:
 ## Version Compatibility Matrix
 
 | NBU Exporter Version | NetBackup API Version | NetBackup Version |
-|----------------------|----------------------|-------------------|
-| 1.x.x (current)      | 10.x                 | 10.0 - 10.4       |
-| 2.0.0 (new)          | 12.0                 | 10.5+             |
+| -------------------- | --------------------- | ----------------- |
+| 1.x.x (current)      | 10.x                  | 10.0 - 10.4       |
+| 2.0.0 (new)          | 12.0                  | 10.5+             |
 
 ## Security Considerations
 

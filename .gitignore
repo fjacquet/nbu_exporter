@@ -1,19 +1,48 @@
-vendor
-old
+# Go build artifacts
+vendor/
 *.o
 *.a
 *.so
+bin/
+dist/
+node_modules/
+
+# Binaries
 nbu-exporter
-nbu-exporter.log
 nbu_exporter
+
+# Logs
+*.log
+nbu-exporter.log
 nbu_exporter.log
-.vscode/launch.json
-.dccache
-.scannerwork/sonar-go-to-slang-linux-amd64
-.scannerwork/class-mapping.csv
-.scannerwork/report-task.txt
-.scannerwork/.sonar_lock
-samples
-.codegpt
-.DS_Store
+
+# Test coverage
 coverage.out
+*.coverprofile
+
+# Node.js (prettier/tooling)
+node_modules/
+
+# IDE and editor files
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build and analysis tools
+.dccache
+.scannerwork/
+
+# Temporary and sample files
+samples/
+old/
+tmp/
+*.tmp
+
+# AI/code assistant artifacts
+.codegpt

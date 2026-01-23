@@ -119,9 +119,9 @@ err := client.FetchData(ctx, testURL, &result)
 
 ## Commits
 
-| Hash | Description |
-|------|-------------|
-| f3332af | test(04-04): add concurrent collector access tests |
+| Hash    | Description                                            |
+| ------- | ------------------------------------------------------ |
+| f3332af | test(04-04): add concurrent collector access tests     |
 | 93e4e5e | test(04-04): add client error handling edge case tests |
 
 ## Deviations from Plan

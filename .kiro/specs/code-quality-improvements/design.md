@@ -154,19 +154,19 @@ func (c *Config) validateOTelEndpoint() error {
  if c.OpenTelemetry.Endpoint == "" {
   return errors.New("OpenTelemetry endpoint is required when enabled")
  }
- 
+
  // Validate endpoint format (host:port)
  parts := strings.Split(c.OpenTelemetry.Endpoint, ":")
  if len(parts) != 2 {
   return fmt.Errorf("invalid OpenTelemetry endpoint format: %s (expected host:port)", c.OpenTelemetry.Endpoint)
  }
- 
+
  // Validate port
  port, err := strconv.Atoi(parts[1])
  if err != nil || port < 1 || port > 65535 {
   return fmt.Errorf("invalid OpenTelemetry endpoint port: %s", parts[1])
  }
- 
+
  return nil
 }
 ```
@@ -637,14 +637,14 @@ func TestSomething(t *testing.T) {
         WithServerURL(server.URL).
         WithAPIKey("test-key").
         Build()
-    
+
     // Build mock server with fluent interface
     server := testutil.NewMockServer().
         WithJobsEndpoint("13.0", jobsResponse).
         WithStorageEndpoint("13.0", storageResponse).
         Build()
     defer server.Close()
-    
+
     // Load test data
     data := testutil.LoadTestData(t, "testdata/jobs.json")
 }
@@ -722,15 +722,15 @@ func TestNewNbuCollectorAutomaticDetection(t *testing.T) {
     }{
         // test cases
     }
-    
+
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
             server := createVersionMockServer(t, tt.serverResponses)
             defer server.Close()
-            
+
             cfg := createTestConfigWithServer(server)
             collector, err := NewNbuCollector(cfg)
-            
+
             assertCollectorResult(t, collector, err, tt)
         })
     }
@@ -760,7 +760,7 @@ if err := json.Unmarshal(resp.Body(), target); err != nil {
 
 ```go
 if err := json.Unmarshal(resp.Body(), target); err != nil {
-    return fmt.Errorf("failed to unmarshal JSON response from %s (status: %d, content-type: %s): %w", 
+    return fmt.Errorf("failed to unmarshal JSON response from %s (status: %d, content-type: %s): %w",
         url, resp.StatusCode(), resp.Header().Get("Content-Type"), err)
 }
 ```

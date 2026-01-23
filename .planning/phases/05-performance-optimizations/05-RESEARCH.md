@@ -85,24 +85,24 @@ func (c *NbuCollector) exposeStorageMetrics(ch chan<- prometheus.Metric, metrics
 
 ### Core
 
-| Library | Version | Purpose | Why Standard |
-|---------|---------|---------|--------------|
+| Library                      | Version  | Purpose                       | Why Standard                                                  |
+| ---------------------------- | -------- | ----------------------------- | ------------------------------------------------------------- |
 | `golang.org/x/sync/errgroup` | v0.11.0+ | Parallel goroutine management | Official Go sub-repo, handles errors and context cancellation |
-| `sync` (stdlib) | Go 1.25 | WaitGroup, Pool primitives | Standard library, no external dependency |
+| `sync` (stdlib)              | Go 1.25  | WaitGroup, Pool primitives    | Standard library, no external dependency                      |
 
 ### Supporting
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| `sync.Pool` | stdlib | Slice reuse for memory pressure | Only if profiling shows GC pressure |
+| Library     | Version | Purpose                         | When to Use                         |
+| ----------- | ------- | ------------------------------- | ----------------------------------- |
+| `sync.Pool` | stdlib  | Slice reuse for memory pressure | Only if profiling shows GC pressure |
 
 ### Alternatives Considered
 
-| Instead of | Could Use | Tradeoff |
-|------------|-----------|----------|
-| errgroup | sync.WaitGroup + channels | errgroup handles errors and context cancellation automatically |
-| sync.Pool | Pre-allocation | sync.Pool adds complexity, pre-allocation is simpler and often sufficient |
-| Channel streaming | Slice accumulation | Streaming adds complexity, slice accumulation with pre-allocation is usually sufficient |
+| Instead of        | Could Use                 | Tradeoff                                                                                |
+| ----------------- | ------------------------- | --------------------------------------------------------------------------------------- |
+| errgroup          | sync.WaitGroup + channels | errgroup handles errors and context cancellation automatically                          |
+| sync.Pool         | Pre-allocation            | sync.Pool adds complexity, pre-allocation is simpler and often sufficient               |
+| Channel streaming | Slice accumulation        | Streaming adds complexity, slice accumulation with pre-allocation is usually sufficient |
 
 **No new dependencies required** - errgroup is likely already in go.mod via other dependencies.
 
@@ -279,11 +279,11 @@ func FetchJobDetails(
 
 ## Don't Hand-Roll
 
-| Problem | Don't Build | Use Instead | Why |
-|---------|-------------|-------------|-----|
-| Parallel error handling | Manual goroutine + channel | `errgroup.WithContext()` | Handles cancellation, errors, synchronization |
-| Slice reuse pools | Custom pool with size tracking | `sync.Pool` or pre-allocation | Standard solution, well-tested |
-| Metric key parsing | `strings.Split()` + reconstruction | `Labels()` method (already done) | Phase 3 solved this |
+| Problem                 | Don't Build                        | Use Instead                      | Why                                           |
+| ----------------------- | ---------------------------------- | -------------------------------- | --------------------------------------------- |
+| Parallel error handling | Manual goroutine + channel         | `errgroup.WithContext()`         | Handles cancellation, errors, synchronization |
+| Slice reuse pools       | Custom pool with size tracking     | `sync.Pool` or pre-allocation    | Standard solution, well-tested                |
+| Metric key parsing      | `strings.Split()` + reconstruction | `Labels()` method (already done) | Phase 3 solved this                           |
 
 **Key insight:** The biggest wins are from reducing API calls (100x) and parallelizing fetches, not from complex memory optimizations.
 
@@ -492,11 +492,11 @@ func FetchAllJobs(
 
 ## State of the Art
 
-| Old Approach | Current Approach | When Changed | Impact |
-|--------------|------------------|--------------|--------|
-| String-keyed maps + Split | Typed structs + Labels() | Phase 3 (03-03) | PERF-04 complete |
-| Sequential collection | Parallel with errgroup | Common since Go 1.7 | 30-50% faster scrapes |
-| One-item pagination | Batch pagination | API supports 100 | 100x fewer API calls |
+| Old Approach              | Current Approach         | When Changed        | Impact                |
+| ------------------------- | ------------------------ | ------------------- | --------------------- |
+| String-keyed maps + Split | Typed structs + Labels() | Phase 3 (03-03)     | PERF-04 complete      |
+| Sequential collection     | Parallel with errgroup   | Common since Go 1.7 | 30-50% faster scrapes |
+| One-item pagination       | Batch pagination         | API supports 100    | 100x fewer API calls  |
 
 **Deprecated/outdated:**
 

@@ -1,7 +1,7 @@
 ---
 title: Python Best Practices
 inclusion: fileMatch
-fileMatchPattern: '*.py'
+fileMatchPattern: "*.py"
 ---
 
 # Python Best Practices

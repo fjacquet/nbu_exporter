@@ -1,6 +1,6 @@
 ---
 inclusion: fileMatch
-fileMatchPattern: '*.go'
+fileMatchPattern: "*.go"
 ---
 
 # Go Best Practices for camt-csv

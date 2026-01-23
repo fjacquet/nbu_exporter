@@ -7,12 +7,12 @@ name: 🚀 Release Go Exporter
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
 
 # Permissions requises par le job
 permissions:
-  contents: write   # Pour créer la Release GitHub
-  packages: write   # Pour pousser l'image sur GHCR
+  contents: write # Pour créer la Release GitHub
+  packages: write # Pour pousser l'image sur GHCR
 
 jobs:
   goreleaser:
@@ -27,7 +27,7 @@ jobs:
       - name: 🏗️ Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25'
+          go-version: "1.25"
 
       # Requis pour la construction d'images multi-arch
       # - name: 🐋 Set up QEMU
@@ -47,7 +47,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           # Version 2.x+ supporte la configuration version: 2
-          version: '~> v2'
+          version: "~> v2"
           # '--clean' supprime le dossier 'dist' avant de commencer
           args: release --clean
         env:

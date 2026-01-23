@@ -52,6 +52,7 @@ Added pre-allocation capacity hints to `FetchAllJobs` to reduce GC pressure duri
    - Documented rationale based on typical NetBackup environments
 
 2. **Pre-allocated aggregation maps** (lines 274-276):
+
    ```go
    sizeMap := make(map[JobMetricKey]float64, expectedJobMetricKeys)
    countMap := make(map[JobMetricKey]float64, expectedJobMetricKeys)
@@ -59,6 +60,7 @@ Added pre-allocation capacity hints to `FetchAllJobs` to reduce GC pressure duri
    ```
 
 3. **Pre-allocated result slices** (lines 311-313):
+
    ```go
    jobsSize = make([]JobMetricValue, 0, len(sizeMap))
    jobsCount = make([]JobMetricValue, 0, len(countMap))
@@ -67,14 +69,14 @@ Added pre-allocation capacity hints to `FetchAllJobs` to reduce GC pressure duri
 
 ## Files Changed
 
-| File | Change | Lines |
-|------|--------|-------|
+| File                           | Change                             | Lines  |
+| ------------------------------ | ---------------------------------- | ------ |
 | internal/exporter/netbackup.go | Added constants and pre-allocation | +21/-5 |
 
 ## Commits
 
-| Hash | Message |
-|------|---------|
+| Hash    | Message                                                        |
+| ------- | -------------------------------------------------------------- |
 | 9206d66 | perf(05-03): add pre-allocation capacity hints for job metrics |
 
 ## Verification Results
@@ -95,6 +97,7 @@ Added pre-allocation capacity hints to `FetchAllJobs` to reduce GC pressure duri
 **Answer:** 100 for job metric keys, 50 for status metric keys.
 
 **Rationale:** Based on typical NetBackup environments:
+
 - Job types: ~5-10 (BACKUP, RESTORE, VERIFY, etc.)
 - Policy types: ~5-20 per environment
 - Status codes: ~10-20 common values
@@ -117,6 +120,7 @@ None - plan executed exactly as written.
 ## Performance Impact
 
 This optimization reduces memory allocations during job fetching:
+
 - **Map pre-allocation:** Avoids ~2-4 reallocations per map (depending on growth pattern)
 - **Slice pre-allocation:** Avoids all reallocations during map-to-slice conversion
 - **Expected improvement:** 5-10% reduction in GC pressure for typical workloads
@@ -126,11 +130,13 @@ Note: The actual performance benefit depends on environment size. Small environm
 ## Phase 5 Completion
 
 With this plan complete, Phase 5 (Performance Optimizations) is fully executed:
+
 - [x] 05-01: Batched Job Pagination (100 items/page)
 - [x] 05-02: Parallel Collection with errgroup
 - [x] 05-03: Pre-allocation Capacity Hints
 
 All three performance requirements addressed:
+
 - PERF-01: Batched pagination reduces API calls by ~100x
 - PERF-02: Parallel collection reduces scrape time to max(storage, jobs)
 - PERF-03: Pre-allocation reduces memory allocations

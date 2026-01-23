@@ -97,11 +97,11 @@ func (c *NbuClient) Close() error {
     if c.client == nil {
         return fmt.Errorf("client already closed")
     }
-    
+
     // Close idle connections in the underlying HTTP client
     c.client.GetClient().CloseIdleConnections()
     c.client = nil
-    
+
     return nil
 }
 ```

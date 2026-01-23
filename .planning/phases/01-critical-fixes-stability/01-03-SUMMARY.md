@@ -127,5 +127,6 @@ None - no external service configuration required.
 **Note for Phase 02 (Security):** If implementing connection limits or rate limiting, consider adding maxActiveReqs field to NbuClient to reject new requests when at capacity.
 
 ---
-*Phase: 01-critical-fixes-stability*
-*Completed: 2026-01-23*
+
+_Phase: 01-critical-fixes-stability_
+_Completed: 2026-01-23_

@@ -45,18 +45,18 @@ metrics:
 
 Created `main_test.go` with 25 tests covering:
 
-| Test Category | Tests | Coverage |
-|---------------|-------|----------|
-| Server Initialization | TestNewServer, TestNewServerWithOTel | NewServer function |
-| Config Validation | TestValidateConfig_Success, FileNotFound, InvalidConfig, MalformedYAML | validateConfig function |
-| Logging Setup | TestSetupLogging_Success, DebugMode, InvalidPath | setupLogging function |
-| Health Endpoint | TestHealthHandler, AllMethods | healthHandler method |
-| Signal Handling | TestWaitForShutdown_Signal, Error, NilError | waitForShutdown function |
-| Server Lifecycle | TestServerStartShutdown_Integration | Start/Shutdown sequence |
-| Error Channel | TestServerErrorChan, TestServerErrorPropagation | Error channel pattern |
-| Middleware | TestExtractTraceContextMiddleware (3 variants) | Trace context extraction |
-| Config Helpers | TestConfigGetServerAddress, GetNBUBaseURL | Config methods |
-| Benchmarks | BenchmarkNewServer, HealthHandler, ValidateConfig | Performance baselines |
+| Test Category         | Tests                                                                  | Coverage                 |
+| --------------------- | ---------------------------------------------------------------------- | ------------------------ |
+| Server Initialization | TestNewServer, TestNewServerWithOTel                                   | NewServer function       |
+| Config Validation     | TestValidateConfig_Success, FileNotFound, InvalidConfig, MalformedYAML | validateConfig function  |
+| Logging Setup         | TestSetupLogging_Success, DebugMode, InvalidPath                       | setupLogging function    |
+| Health Endpoint       | TestHealthHandler, AllMethods                                          | healthHandler method     |
+| Signal Handling       | TestWaitForShutdown_Signal, Error, NilError                            | waitForShutdown function |
+| Server Lifecycle      | TestServerStartShutdown_Integration                                    | Start/Shutdown sequence  |
+| Error Channel         | TestServerErrorChan, TestServerErrorPropagation                        | Error channel pattern    |
+| Middleware            | TestExtractTraceContextMiddleware (3 variants)                         | Trace context extraction |
+| Config Helpers        | TestConfigGetServerAddress, GetNBUBaseURL                              | Config methods           |
+| Benchmarks            | BenchmarkNewServer, HealthHandler, ValidateConfig                      | Performance baselines    |
 
 ### Test Fixtures
 
@@ -81,11 +81,11 @@ Target: 60%+ achieved exactly at 60.0%
 
 ## Commits
 
-| Hash | Type | Description |
-|------|------|-------------|
-| 1fdb367 | test | Add configuration test fixtures |
-| a33f943 | test | Add main package integration tests |
-| a754832 | fix | Remove unused fmt import in testutil |
+| Hash    | Type | Description                          |
+| ------- | ---- | ------------------------------------ |
+| 1fdb367 | test | Add configuration test fixtures      |
+| a33f943 | test | Add main package integration tests   |
+| a754832 | fix  | Remove unused fmt import in testutil |
 
 ## Deviations from Plan
 

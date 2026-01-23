@@ -4,9 +4,9 @@
   "useTabs": false,
   "semi": true,
   "singleQuote": false,
-  "trailingComma": "es5",
+  "trailingComma": "all",
   "bracketSpacing": true,
-  "proseWrap": "preserve",
+  "proseWrap": "always",
   "endOfLine": "lf",
   "overrides": [
     {

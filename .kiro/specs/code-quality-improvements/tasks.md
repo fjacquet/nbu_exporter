@@ -93,7 +93,6 @@
   - _Requirements: 1.1, 6.1, 6.2_
 
 - [x] 13. Reduce cognitive complexity
-
   - [x] 13.1 Reduce cognitive complexityin prometheus_test.go
     - Refactor `TestNewNbuCollectorAutomaticDetection` (line 76) to reduce complexity from 24 to below 15
     - Extract `createVersionMockServer` helper to handle mock server creation

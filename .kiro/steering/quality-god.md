@@ -48,7 +48,7 @@ inclusion: always
 Before marking any feature complete:
 
 1. All tests pass with race detection enabled
-2. Security scan shows no critical vulnerabilities  
+2. Security scan shows no critical vulnerabilities
 3. Code coverage meets minimum thresholds
 4. Linting passes without warnings
 5. Documentation is updated for any public APIs

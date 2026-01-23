@@ -49,6 +49,7 @@ type Collector interface {
 ```
 
 **Key Components:**
+
 1. `NbuCollector` in `internal/exporter/prometheus.go` - Implements collector interface
 2. `fetchStorage()` - Retrieves storage unit metrics
 3. `fetchAllJobs()` - Aggregates job statistics with pagination handling
@@ -110,20 +111,22 @@ type Collector interface {
 ## Import Organization
 
 Standard Go import order:
+
 1. Standard library
 2. External dependencies
 3. Internal packages
 
 Example:
+
 ```go
 import (
     "crypto/tls"
     "encoding/json"
     "fmt"
-    
+
     "github.com/go-resty/resty/v2"
     "github.com/prometheus/client_golang/prometheus"
-    
+
     "github.com/fjacquet/nbu_exporter/internal/logging"
     "github.com/fjacquet/nbu_exporter/internal/models"
 )

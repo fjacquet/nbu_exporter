@@ -205,7 +205,7 @@ func (d *APIVersionDetector) tryVersion(ctx context.Context, version string) boo
 
 ```go
 func (c *NbuClient) getHeaders() map[string]string {
-    acceptHeader := fmt.Sprintf("application/vnd.netbackup+json;version=%s", 
+    acceptHeader := fmt.Sprintf("application/vnd.netbackup+json;version=%s",
         c.cfg.NbuServer.APIVersion)
     return map[string]string{
         HeaderAccept:        acceptHeader,
@@ -247,7 +247,7 @@ var DefaultRetryConfig = RetryConfig{
 ```go
 func NewNbuCollector(cfg models.Config) (*NbuCollector, error) {
     client := NewNbuClient(cfg)
-    
+
     // Perform version detection if not explicitly configured
     if cfg.NbuServer.APIVersion == "" {
         detector := NewAPIVersionDetector(client, &cfg)
@@ -260,7 +260,7 @@ func NewNbuCollector(cfg models.Config) (*NbuCollector, error) {
     } else {
         log.Infof("Using configured NetBackup API version: %s", cfg.NbuServer.APIVersion)
     }
-    
+
     return &NbuCollector{
         client: client,
         cfg:    cfg,
@@ -288,11 +288,11 @@ All three API versions (3.0, 12.0, 13.0) use the same JSON:API response structur
 
 ### Version Mapping
 
-| NetBackup Version | API Version | Release Date | Status |
-|-------------------|-------------|--------------|--------|
+| NetBackup Version | API Version | Release Date | Status         |
+| ----------------- | ----------- | ------------ | -------------- |
 | 10.0 - 10.4       | 3.0         | 2021-2023    | Legacy Support |
-| 10.5              | 12.0        | 2024         | Current |
-| 11.0              | 13.0        | 2025         | Latest |
+| 10.5              | 12.0        | 2024         | Current        |
+| 11.0              | 13.0        | 2025         | Latest         |
 
 ## Error Handling
 
@@ -407,7 +407,7 @@ Or remove the apiVersion field to enable automatic detection.
 ```yaml
 # Current config.yaml
 nbuserver:
-    apiVersion: "12.0"  # Explicitly set
+  apiVersion: "12.0" # Explicitly set
 ```
 
 **Action**: No changes required. Exporter will use configured version.
@@ -417,7 +417,7 @@ nbuserver:
 ```yaml
 # Current config.yaml
 nbuserver:
-    # apiVersion not specified
+  # apiVersion not specified
 ```
 
 **Action**: No changes required. Exporter will detect version 12.0 automatically.

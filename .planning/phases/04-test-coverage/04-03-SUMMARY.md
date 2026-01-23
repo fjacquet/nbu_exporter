@@ -84,16 +84,16 @@ Each task was committed atomically:
 
 ## Coverage Analysis
 
-| Function       | Coverage | Notes                                        |
-|---------------|----------|----------------------------------------------|
-| NewManager    | 100%     | Fully covered                                |
-| Initialize    | 66.7%    | Error paths for createExporter/createResource uncovered |
-| createExporter| 85.7%    | Error return path requires library failure   |
-| createResource| 85.7%    | os.Hostname error path never triggers        |
-| createSampler | 100%     | Fully covered                                |
-| Shutdown      | 100%     | Fully covered                                |
-| IsEnabled     | 100%     | Fully covered                                |
-| TracerProvider| 100%     | Fully covered                                |
+| Function       | Coverage | Notes                                                   |
+| -------------- | -------- | ------------------------------------------------------- |
+| NewManager     | 100%     | Fully covered                                           |
+| Initialize     | 66.7%    | Error paths for createExporter/createResource uncovered |
+| createExporter | 85.7%    | Error return path requires library failure              |
+| createResource | 85.7%    | os.Hostname error path never triggers                   |
+| createSampler  | 100%     | Fully covered                                           |
+| Shutdown       | 100%     | Fully covered                                           |
+| IsEnabled      | 100%     | Fully covered                                           |
+| TracerProvider | 100%     | Fully covered                                           |
 
 **Total: 83.7%**
 
@@ -182,5 +182,6 @@ To reach 90%+ coverage, consider:
 This would allow testing the error handling paths in Initialize.
 
 ---
-*Phase: 04-test-coverage*
-*Completed: 2026-01-23*
+
+_Phase: 04-test-coverage_
+_Completed: 2026-01-23_

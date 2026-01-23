@@ -581,9 +581,9 @@ nbuserver:
 # Optional: OpenTelemetry configuration
 opentelemetry:
   enabled: true
-  endpoint: "localhost:4317"  # OTLP gRPC endpoint
-  insecure: true              # Use insecure connection (for development)
-  samplingRate: 0.1           # Sample 10% of scrapes
+  endpoint: "localhost:4317" # OTLP gRPC endpoint
+  insecure: true # Use insecure connection (for development)
+  samplingRate: 0.1 # Sample 10% of scrapes
 ```
 
 ## Deployment Considerations
@@ -591,7 +591,7 @@ opentelemetry:
 ### Docker Compose Example
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   nbu-exporter:
@@ -607,8 +607,8 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector:latest
     ports:
-      - "4317:4317"  # OTLP gRPC
-      - "4318:4318"  # OTLP HTTP
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     command: ["--config=/etc/otel-collector-config.yaml"]
@@ -616,8 +616,8 @@ services:
   jaeger:
     image: jaegertracing/all-in-one:latest
     ports:
-      - "16686:16686"  # Jaeger UI
-      - "14250:14250"  # gRPC
+      - "16686:16686" # Jaeger UI
+      - "14250:14250" # gRPC
     environment:
       - COLLECTOR_OTLP_ENABLED=true
 ```

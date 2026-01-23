@@ -1,7 +1,7 @@
 ---
 title: Docker Best Practices
 inclusion: fileMatch
-fileMatchPattern: 'Dockerfile*,docker-compose*,*.dockerfile'
+fileMatchPattern: "Dockerfile*,docker-compose*,*.dockerfile"
 ---
 
 # Docker Best Practices

@@ -7,5 +7,8 @@
     "projectKey": "fjacquet_nbu_exporter"
   },
   "snyk.advanced.organization": "91d9aa20-1422-4cf4-93f0-db9796974dc1",
-  "snyk.advanced.autoSelectOrganization": true
+  "snyk.advanced.autoSelectOrganization": true,
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }

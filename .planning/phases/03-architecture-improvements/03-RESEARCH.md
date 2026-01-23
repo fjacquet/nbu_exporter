@@ -224,6 +224,7 @@ func WithTracerProvider(tp trace.TracerProvider) ClientOption {
 **Key discovery: SpanFromContext never returns nil**
 
 From official docs:
+
 > If no Span is currently set in ctx, an implementation of a Span that performs no operations is returned.
 
 **This means:**
@@ -366,16 +367,16 @@ Shutdown Order:
 
 ### Core
 
-| Library | Version | Purpose | Why Standard |
-|---------|---------|---------|--------------|
-| `go.opentelemetry.io/otel/trace/noop` | 1.39.0+ | Nil-safe tracing | Official OTel package for disabled tracing |
-| `go.opentelemetry.io/otel/trace` | 1.39.0+ | Tracing interfaces | Standard OTel Go API |
+| Library                               | Version | Purpose            | Why Standard                               |
+| ------------------------------------- | ------- | ------------------ | ------------------------------------------ |
+| `go.opentelemetry.io/otel/trace/noop` | 1.39.0+ | Nil-safe tracing   | Official OTel package for disabled tracing |
+| `go.opentelemetry.io/otel/trace`      | 1.39.0+ | Tracing interfaces | Standard OTel Go API                       |
 
 ### Supporting
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| (existing) | - | No new dependencies needed | - |
+| Library    | Version | Purpose                    | When to Use |
+| ---------- | ------- | -------------------------- | ----------- |
+| (existing) | -       | No new dependencies needed | -           |
 
 **Installation:** No new dependencies required - `noop` is part of existing `go.opentelemetry.io/otel/trace` import.
 
@@ -427,12 +428,12 @@ exporter.NewNbuClient(cfg, WithTracerProvider(tp))
 
 ## Don't Hand-Roll
 
-| Problem | Don't Build | Use Instead | Why |
-|---------|-------------|-------------|-----|
-| Nil-safe tracing | Manual `if span != nil` checks | `noop.TracerProvider` | Official, tested, zero overhead |
-| Tracer lifecycle | Custom nil-aware tracer wrapper | Inject `trace.TracerProvider` | OTel standard pattern |
-| Map key escaping | Custom escape functions | Struct slices with `Labels()` | Already exists in codebase |
-| Config immutability | Freeze/clone methods | Separate immutable type | Simpler, clearer intent |
+| Problem             | Don't Build                     | Use Instead                   | Why                             |
+| ------------------- | ------------------------------- | ----------------------------- | ------------------------------- |
+| Nil-safe tracing    | Manual `if span != nil` checks  | `noop.TracerProvider`         | Official, tested, zero overhead |
+| Tracer lifecycle    | Custom nil-aware tracer wrapper | Inject `trace.TracerProvider` | OTel standard pattern           |
+| Map key escaping    | Custom escape functions         | Struct slices with `Labels()` | Already exists in codebase      |
+| Config immutability | Freeze/clone methods            | Separate immutable type       | Simpler, clearer intent         |
 
 **Key insight:** The codebase already has the right abstractions (`Labels()`, `telemetry.Manager`). The issue is inconsistent usage, not missing features.
 
@@ -453,7 +454,7 @@ exporter.NewNbuClient(cfg, WithTracerProvider(tp))
 
 - Complete version detection BEFORE creating components
 - Use pointer to shared immutable config after finalization
-**Warning signs:** Different components report different API versions
+  **Warning signs:** Different components report different API versions
 
 ### Pitfall 3: Metric Key Collision
 
@@ -468,11 +469,11 @@ exporter.NewNbuClient(cfg, WithTracerProvider(tp))
 **Why it happens:** Shutdown order matters - flush traces before closing connections
 **How to avoid:** Document and enforce shutdown order:
 
-  1. Stop accepting requests
-  2. Wait for active requests
-  3. Flush telemetry
-  4. Close connections
-**Warning signs:** Missing traces at end of runs, resource leaks in tests
+1. Stop accepting requests
+2. Wait for active requests
+3. Flush telemetry
+4. Close connections
+   **Warning signs:** Missing traces at end of runs, resource leaks in tests
 
 ## Code Examples
 
@@ -614,11 +615,11 @@ func NewImmutableConfig(cfg *models.Config) (ImmutableConfig, error) {
 
 ## State of the Art
 
-| Old Approach | Current Approach | When Changed | Impact |
-|--------------|------------------|--------------|--------|
-| `if span != nil` checks | noop.TracerProvider | Always available | Cleaner code, no nil panics |
-| Global `otel.GetTracerProvider()` | Inject TracerProvider | OTel best practice | Testable, explicit dependencies |
-| Manual nil span handling | SpanFromContext safety | Always true | Never returns nil span |
+| Old Approach                      | Current Approach       | When Changed       | Impact                          |
+| --------------------------------- | ---------------------- | ------------------ | ------------------------------- |
+| `if span != nil` checks           | noop.TracerProvider    | Always available   | Cleaner code, no nil panics     |
+| Global `otel.GetTracerProvider()` | Inject TracerProvider  | OTel best practice | Testable, explicit dependencies |
+| Manual nil span handling          | SpanFromContext safety | Always true        | Never returns nil span          |
 
 **Deprecated/outdated:**
 

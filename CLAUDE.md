@@ -36,12 +36,14 @@ make clean
 ## Architecture
 
 ### Entry Point
+
 - `main.go` - Cobra CLI, HTTP server with `/metrics` and `/health` endpoints, Prometheus registry, OpenTelemetry initialization
 - `Server` struct manages lifecycle: HTTP server, Prometheus registry, telemetry manager
 
 ### Internal Packages (`internal/`)
 
 **exporter/** - Core Prometheus collector
+
 - `prometheus.go` - `NbuCollector` implementing `prometheus.Collector`. Metrics: `nbu_disk_bytes`, `nbu_jobs_bytes`, `nbu_jobs_count`, `nbu_status_count`, `nbu_api_version`
 - `netbackup.go` - `FetchStorage()` and `FetchAllJobs()` for NBU API calls with pagination via `handlePagination()`
 - `client.go` - Reusable HTTP client with connection pooling, TLS config, 2-minute timeout
@@ -49,21 +51,26 @@ make clean
 - `tracing.go` - OpenTelemetry span creation helpers
 
 **telemetry/** - OpenTelemetry integration
+
 - `manager.go` - TracerProvider lifecycle, OTLP gRPC exporter, sampling configuration
 - `attributes.go` - Span attribute constants
 
 **models/** - Data structures
+
 - `Config.go` - YAML config with `Validate()` method, `BuildURL()` helper
 - `Jobs.go`, `Storage.go`, `Storages.go` - NBU API response structs
 
 **testutil/** - Shared test helpers and constants
 
 ### Metrics Labels Pattern
+
 Metrics use pipe-delimited keys split into labels:
+
 - Storage: `name|type|size` (e.g., "pool1|AdvancedDisk|free")
 - Jobs: `action|policy_type|status` (e.g., "BACKUP|Standard|0")
 
 ### Configuration
+
 Requires `config.yaml` with sections: `server`, `nbuserver`, optional `opentelemetry`. API key obtained from NetBackup UI.
 
 ## Key Patterns
@@ -74,6 +81,7 @@ Requires `config.yaml` with sections: `server`, `nbuserver`, optional `opentelem
 - **Span hierarchy**: `prometheus.scrape` → `netbackup.fetch_storage` / `netbackup.fetch_jobs` → `netbackup.fetch_job_page`
 
 ## Key Dependencies
+
 - `github.com/prometheus/client_golang` - Prometheus client
 - `github.com/go-resty/resty/v2` - HTTP client
 - `github.com/spf13/cobra` - CLI framework

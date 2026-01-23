@@ -117,5 +117,6 @@ TracerWrapper ready for use in migration tasks:
 No blockers. FRAG-04 (tracer nil-checks scattered) centralized and ready for cleanup.
 
 ---
-*Phase: 03-architecture-improvements*
-*Completed: 2026-01-23*
+
+_Phase: 03-architecture-improvements_
+_Completed: 2026-01-23_

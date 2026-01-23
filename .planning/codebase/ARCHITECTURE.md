@@ -153,23 +153,19 @@
 **Patterns:**
 
 - **Collector-Level Graceful Degradation**: If storage fetch fails, continue with job metrics. If job fetch fails, continue with storage metrics. Errors logged but don't prevent exposition.
-
   - Example: `FetchStorage()` error recorded in span but `Collect()` continues to `FetchJobDetails()`
 
 - **Timeout Protection**:
-
   - Collection timeout: 2 minutes per `Collect()` call
   - Version detection: 30 seconds
   - Context-based cancellation propagated to all API calls
 
 - **Span Error Recording** (when OTEL enabled):
-
   - `span.RecordError(err)` captures error details
   - `span.SetStatus(codes.Error, msg)` marks span as failed
   - Errors visible in trace UI for debugging
 
 - **Telemetry Initialization Failure**:
-
   - If OpenTelemetry initialization fails, manager disables tracing and logs warning
   - Application continues normally without tracing (no startup failure)
 

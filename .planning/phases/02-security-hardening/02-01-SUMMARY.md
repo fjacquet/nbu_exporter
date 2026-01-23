@@ -144,5 +144,6 @@ Without this environment variable, the exporter will refuse to start if `insecur
 **No blockers identified.**
 
 ---
-*Phase: 02-security-hardening*
-*Completed: 2026-01-23*
+
+_Phase: 02-security-hardening_
+_Completed: 2026-01-23_

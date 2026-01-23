@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   nbu_exporter:
@@ -23,10 +23,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
         reservations:
-          cpus: '0.25'
+          cpus: "0.25"
           memory: 128M
     # Optional: Environment variables
     # environment:

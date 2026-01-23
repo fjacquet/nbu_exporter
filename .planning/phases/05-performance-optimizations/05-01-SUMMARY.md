@@ -76,11 +76,11 @@ Implemented batch job pagination to dramatically reduce API calls during Prometh
 
 ## Performance Impact
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| API calls for 1000 jobs | 1000 | ~10 | 100x reduction |
-| API calls for 100 jobs | 100 | 1 | 100x reduction |
-| API calls for 50 jobs | 50 | 1 | 50x reduction |
+| Metric                  | Before | After | Improvement    |
+| ----------------------- | ------ | ----- | -------------- |
+| API calls for 1000 jobs | 1000   | ~10   | 100x reduction |
+| API calls for 100 jobs  | 100    | 1     | 100x reduction |
+| API calls for 50 jobs   | 50     | 1     | 50x reduction  |
 
 ## Key Code Changes
 
@@ -104,10 +104,10 @@ for _, job := range jobs.Data {
 
 ## Commits
 
-| Hash | Type | Description |
-|------|------|-------------|
+| Hash    | Type | Description                                        |
+| ------- | ---- | -------------------------------------------------- |
 | d0ca24d | feat | Implement batch job pagination (100 jobs per page) |
-| a4d96da | test | Add batch processing tests for FetchJobDetails |
+| a4d96da | test | Add batch processing tests for FetchJobDetails     |
 
 ## Verification Results
 
@@ -131,12 +131,12 @@ for _, job := range jobs.Data {
 
 ## Files Changed
 
-| File | Changes |
-|------|---------|
-| internal/exporter/netbackup.go | Added jobPageLimit constant, batch processing loop, updated comments |
-| internal/exporter/netbackup_test.go | Created with 4 batch processing tests |
-| internal/exporter/api_compatibility_test.go | Fixed pagination helpers for batch responses |
-| internal/exporter/integration_test.go | Updated TestPaginationHandling for batch behavior |
+| File                                        | Changes                                                              |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| internal/exporter/netbackup.go              | Added jobPageLimit constant, batch processing loop, updated comments |
+| internal/exporter/netbackup_test.go         | Created with 4 batch processing tests                                |
+| internal/exporter/api_compatibility_test.go | Fixed pagination helpers for batch responses                         |
+| internal/exporter/integration_test.go       | Updated TestPaginationHandling for batch behavior                    |
 
 ## Next Phase Readiness
 
