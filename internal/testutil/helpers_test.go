@@ -1,8 +1,10 @@
 package testutil_test
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/fjacquet/nbu_exporter/internal/testutil"
@@ -28,6 +30,22 @@ func TestMockServerBuilder(t *testing.T) {
 
 	t.Run("WithErrorResponse", func(t *testing.T) {
 		testErrorResponse(t)
+	})
+
+	t.Run("WithStorageEndpoint", func(t *testing.T) {
+		testStorageEndpoint(t)
+	})
+
+	t.Run("WithCustomEndpoint", func(t *testing.T) {
+		testCustomEndpoint(t)
+	})
+
+	t.Run("DefaultHandler404", func(t *testing.T) {
+		testDefaultHandler404(t)
+	})
+
+	t.Run("VersionDetectionNoMatch", func(t *testing.T) {
+		testVersionDetectionNoMatch(t)
 	})
 }
 
@@ -137,6 +155,163 @@ func testErrorResponse(t *testing.T) {
 
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Errorf("Expected status 401, got %d", resp.StatusCode)
+	}
+}
+
+// testStorageEndpoint tests the WithStorageEndpoint builder method
+func testStorageEndpoint(t *testing.T) {
+	t.Helper()
+
+	storageResponse := map[string]interface{}{
+		"data": []map[string]interface{}{
+			{"name": "disk-pool-1", "type": "AdvancedDisk"},
+		},
+	}
+
+	server := testutil.NewMockServer().
+		WithStorageEndpoint("13.0", storageResponse).
+		Build()
+	defer server.Close()
+
+	// Test with correct version - should return 200 OK
+	req, err := http.NewRequest("GET", server.URL+testutil.TestPathStorageUnits, nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set(testutil.AcceptHeader, "application/vnd.netbackup+json;version=13.0")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	defer closeResponseBody(t, resp)
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200 for correct version, got %d", resp.StatusCode)
+	}
+
+	// Test with wrong version - should return 406 Not Acceptable
+	reqWrong, err := http.NewRequest("GET", server.URL+testutil.TestPathStorageUnits, nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	reqWrong.Header.Set(testutil.AcceptHeader, "application/vnd.netbackup+json;version=12.0")
+
+	respWrong, err := http.DefaultClient.Do(reqWrong)
+	if err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	defer closeResponseBody(t, respWrong)
+
+	if respWrong.StatusCode != http.StatusNotAcceptable {
+		t.Errorf("Expected status 406 for wrong version, got %d", respWrong.StatusCode)
+	}
+}
+
+// testCustomEndpoint tests the WithCustomEndpoint builder method
+func testCustomEndpoint(t *testing.T) {
+	t.Helper()
+
+	customPath := "/custom/path"
+	customResponse := "custom response body"
+
+	customHandler := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(customResponse))
+	}
+
+	server := testutil.NewMockServer().
+		WithCustomEndpoint(customPath, customHandler).
+		Build()
+	defer server.Close()
+
+	req, err := http.NewRequest("GET", server.URL+customPath, nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	defer closeResponseBody(t, resp)
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", resp.StatusCode)
+	}
+
+	// Read and verify response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read response body: %v", err)
+	}
+	if string(body) != customResponse {
+		t.Errorf("Expected body %q, got %q", customResponse, string(body))
+	}
+}
+
+// testDefaultHandler404 tests the default 404 handler for unregistered paths
+func testDefaultHandler404(t *testing.T) {
+	t.Helper()
+
+	// Create server with only jobs endpoint
+	server := testutil.NewMockServer().
+		WithJobsEndpoint("13.0", map[string]interface{}{"data": []interface{}{}}).
+		Build()
+	defer server.Close()
+
+	// Request to nonexistent path should return 404
+	req, err := http.NewRequest("GET", server.URL+"/nonexistent/path", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	defer closeResponseBody(t, resp)
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("Expected status 404, got %d", resp.StatusCode)
+	}
+
+	// Verify response body contains "Endpoint not found"
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Failed to read response body: %v", err)
+	}
+	if !strings.Contains(string(body), "Endpoint not found") {
+		t.Errorf("Expected body to contain 'Endpoint not found', got %q", string(body))
+	}
+}
+
+// testVersionDetectionNoMatch tests version detection when no version matches
+func testVersionDetectionNoMatch(t *testing.T) {
+	t.Helper()
+
+	server := testutil.NewMockServer().
+		WithVersionDetection(map[string]bool{
+			"13.0": true,
+		}).
+		Build()
+	defer server.Close()
+
+	// Request with unregistered version (3.0) should return 406
+	req, err := http.NewRequest("GET", server.URL+testutil.TestPathAdminJobs, nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set(testutil.AcceptHeader, "application/vnd.netbackup+json;version=3.0")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("Request failed: %v", err)
+	}
+	defer closeResponseBody(t, resp)
+
+	if resp.StatusCode != http.StatusNotAcceptable {
+		t.Errorf("Expected status 406 for unregistered version, got %d", resp.StatusCode)
 	}
 }
 
