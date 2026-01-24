@@ -5,14 +5,13 @@
 See: .planning/PROJECT.md (updated 2026-01-23)
 
 **Core value:** Improve code reliability and maintainability by fixing identified concerns
-**Current focus:** Milestone v1.1 — Codebase Improvements
+**Current focus:** Planning v1.2 — Next milestone
 
 ## Current Position
 
-Phase: 6 of 6 (Operational Features)
-Plan: 3 of 3 (Phase 6 complete)
-Status: Milestone v1.1 COMPLETE
-Last activity: 2026-01-23 — Phase 6 verified (4/4 must-haves, 100%)
+Status: Milestone v1.1 ARCHIVED ✅
+Phases: 6/6 complete, all plans executed and verified
+Last activity: 2026-01-23 — v1.1 milestone complete and archived, ready for next milestone
 
 ## Progress
 
