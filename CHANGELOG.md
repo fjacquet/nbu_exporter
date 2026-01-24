@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+(No unreleased changes yet)
+
+## [2.2.0] - 2026-01-24
+
+### Added
+
 - **OpenTelemetry Distributed Tracing**: Optional distributed tracing for NetBackup API calls and Prometheus scrape cycles
   - OTLP gRPC exporter for sending traces to OpenTelemetry Collector, Jaeger, or Tempo
   - Configurable sampling rates (0.0 to 1.0) for controlling trace collection overhead
@@ -296,6 +302,30 @@ This release includes comprehensive test coverage:
 - Performance validation tests
 - Metrics consistency tests across all versions
 
-## [Previous Versions]
+## [2.1.0] - 2025-11-09
 
-No previous changelog entries available. This is the first documented release.
+Code quality improvements and refactoring for maintainability and SonarCloud compliance.
+
+## [2.0.0] - 2025-11-09
+
+OpenTelemetry integration and distributed tracing support.
+
+## [1.2.2] - 2025-11-08
+
+Patch release.
+
+## [1.2.1] - 2025-11-08
+
+GitHub Actions workflow for GitHub Pages deployment.
+
+## [1.2.0] - 2025-11-08
+
+API 11.0 integration support.
+
+## [1.1.0] - 2025-11-08
+
+Support for API 10.5 of NetBackup.
+
+## [1.0.0] - 2025-11-08
+
+Initial build with test server support.
