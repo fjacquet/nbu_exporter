@@ -133,7 +133,7 @@ func FetchJobDetails(
 		QueryParamLimit:  jobPageLimit, // Fetch up to 100 jobs per page for efficiency
 		QueryParamOffset: strconv.Itoa(offset),
 		QueryParamSort:   "jobId",
-		QueryParamFilter: fmt.Sprintf("endTime%%20gt%%20%s", utils.ConvertTimeToNBUDate(startTime)),
+		QueryParamFilter: fmt.Sprintf("endTime gt %s", utils.ConvertTimeToNBUDate(startTime)),
 	}
 
 	url := client.cfg.BuildURL(jobsPath, queryParams)
