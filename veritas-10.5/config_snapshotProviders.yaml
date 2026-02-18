@@ -1,0 +1,4705 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Snapshot Provider Configuration API
+  version: '12.0'
+  description: |
+    API set for configuration of NetBackup snapshot providers.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+paths:
+  /config/snapshotproviders/supportedplugins:
+    get:
+      description: |
+        Returns the list of all supported plug-in types.
+
+        **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |category|any|The category of the plug-in to filter on. Example:
+            category/any(t:t eq 'Cloud')|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully returned the list of supported plug-in types.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_18
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_0
+                      type: object
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                          required:
+                            - self
+                        id:
+                          type: string
+                          description: >
+                            The unique identifier (name) of the plug-in type.
+                            For example, the unique identifier for Amazon AWS is
+                            "aws".
+                        type:
+                          type: string
+                          description: 'The type of resource. For example, "plugin".'
+                          enum:
+                            - plugin
+                        attributes: &ref_26
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: >
+                                The valid name of the plug-in type. For example,
+                                for Amazon AWS the name value is "aws".
+                            version:
+                              type: string
+                              description: The version of the plug-in.
+                            displayName:
+                              type: string
+                              description: >
+                                The external (displayed on the interface) name
+                                of the plug-in. For example, "Amazon AWS".
+                            multipleConfigs:
+                              type: boolean
+                              description: >
+                                Indicates if multiple configuration instances
+                                for a plug-in are supported.
+                            onHost:
+                              type: boolean
+                              description: >
+                                Indicates if the snapshot management agent must
+                                reside on the host.  For application-consistent
+                                snapshots, the agent must reside on the host.
+                                For crash-consistent snapshots, the agent need
+                                not be on the host (off-host).
+                            category:
+                              type: array
+                              description: >
+                                The list of categories of plugin. For example,
+                                "Cloud" for a cloud provider.
+                              items:
+                                type: string
+                            storageTypes:
+                              type: array
+                              description: >
+                                The list of network storage types supported by
+                                the plugin.
+                              items:
+                                type: string
+                            configTemplates:
+                              type: array
+                              description: >
+                                List of the configuration templates for the
+                                plug-in type. There is a separate configuration
+                                template for each configuration schema version. 
+                                The capabilities and attributes differ for
+                                different schema versions.
+                              items: &ref_27
+                                type: object
+                                properties:
+                                  configSchemaversion:
+                                    type: integer
+                                    description: >-
+                                      Indicates the configuration schema version
+                                      supported by the plug-in.
+                                  configTemplate:
+                                    type: array
+                                    description: >
+                                      Indicates the configuration template used
+                                      by the plug-in for the configuration
+                                      schema version.
+                                    items: &ref_28
+                                      type: object
+                                      properties:
+                                        configType:
+                                          type: string
+                                          description: >
+                                            Indicates the authentication type the
+                                            plug-in supports. For example, the
+                                            authentication type can be "iamrole" or
+                                            "keypair".
+                                        configDetails:
+                                          type: array
+                                          description: >
+                                            List of the configuration instance
+                                            attributes for the plug-in. The list of
+                                            attributes is different for each
+                                            authentication type.
+                                          items: &ref_29
+                                            type: object
+                                            properties:
+                                              name:
+                                                type: string
+                                                description: >
+                                                  Indicates the internal name for a
+                                                  corresponding "displayName" of the
+                                                  attribute. For example, if "Access Key"
+                                                  is the displayName of the attribute,
+                                                  "accesskey" can be the internal name.
+                                              isAttributeList:
+                                                type: boolean
+                                                description: >-
+                                                  Indicates if this attribute supports
+                                                  list operations.
+                                              displayName:
+                                                type: string
+                                                description: >
+                                                  The external (displayed on the
+                                                  interface) name of the attribute. For
+                                                  example, "Access Key" or "Secret Key".
+                                              isAttributeRequired:
+                                                type: boolean
+                                                description: >-
+                                                  Indicates if this attribute is
+                                                  mandatory.
+                                              sensitive:
+                                                type: boolean
+                                                description: >
+                                                  Indicates if this attribute value is
+                                                  text-based or masked. For example, in
+                                                  case of password, the value is masked.
+                                              hidden:
+                                                type: boolean
+                                                description: >-
+                                                  Indicates if this attribute must be
+                                                  displayed on the interface.
+                                              helpText:
+                                                type: string
+                                                description: >
+                                                  Indicates if this attribute has help
+                                                  text to be displayed on the interface.
+                                              default:
+                                                type: string
+                                                description: >-
+                                                  Indicates the default value for the
+                                                  configuration instance attribute.
+                                              attributeType:
+                                                type: string
+                                                description: >
+                                                  Indicates the attribute type. For
+                                                  example, "string", or "condition".
+                                                  "condition" attribute type must be used
+                                                  to configure multiple options (values).
+                                                  The values of the condition are
+                                                  displayed as radio buttons on the
+                                                  interface. Only if attributeType is
+                                                  "condition", "values" attributes are
+                                                  populated.
+                                              attributeValue:
+                                                type: array
+                                                description: >
+                                                  The list of possible values for the
+                                                  attribute. For example, valid names of
+                                                  the supported regions for a cloud
+                                                  provider.
+                                                items:
+                                                  type: string
+                                              infoDisplayText:
+                                                type: string
+                                                description: >
+                                                  Indicates the information text to be
+                                                  displayed on webui for certificate
+                                                  verification. 
+                                              values:
+                                                type: array
+                                                description: >-
+                                                  The list of values or options in case
+                                                  attributeType is "condition".
+                                                items: &ref_30
+                                                  type: object
+                                                  properties:
+                                                    name:
+                                                      type: string
+                                                      description: >
+                                                        Indicates the internal name for a
+                                                        corresponding "displayName" of the
+                                                        attribute. For example, if "Source
+                                                        Account" is the displayName of the
+                                                        attribute, "source" can be the internal
+                                                        name.
+                                                    displayName:
+                                                      type: string
+                                                      description: >
+                                                        The external (displayed on the
+                                                        interface) name of the attribute. For
+                                                        example, "Source Account" or "Cross
+                                                        Account".
+                                                    valueDetails:
+                                                      type: array
+                                                      description: >
+                                                        List of the configuration instance
+                                                        attributes for the value of the
+                                                        condition. The list of attributes is
+                                                        different for each value of the
+                                                        condition.
+                                                      items: &ref_31
+                                                        type: object
+                                                        properties:
+                                                          name:
+                                                            type: string
+                                                            description: >
+                                                              Indicates the internal name for a
+                                                              corresponding "displayName" of the
+                                                              attribute. For example, if "Access Key"
+                                                              is the displayName of the attribute,
+                                                              "accesskey" can be the internal name.
+                                                          isAttributeList:
+                                                            type: boolean
+                                                            description: >-
+                                                              Indicates if this attribute supports
+                                                              list operations.
+                                                          displayName:
+                                                            type: string
+                                                            description: >
+                                                              The external (displayed on the
+                                                              interface) name of the attribute. For
+                                                              example, "Access Key" or "Secret Key".
+                                                          isAttributeRequired:
+                                                            type: boolean
+                                                            description: >-
+                                                              Indicates if this attribute is
+                                                              mandatory.
+                                                          sensitive:
+                                                            type: boolean
+                                                            description: >
+                                                              Indicates if this attribute value is
+                                                              text-based or masked. For example, in
+                                                              case of password, the value is masked.
+                                                          hidden:
+                                                            type: boolean
+                                                            description: >-
+                                                              Indicates if this attribute must be
+                                                              displayed on the interface.
+                                                          helpText:
+                                                            type: string
+                                                            description: >
+                                                              Indicates if this attribute has help
+                                                              text to be displayed on the interface.
+                                                          default:
+                                                            type: string
+                                                            description: >-
+                                                              Indicates the default value for the
+                                                              configuration instance attribute.
+                                                          attributeType:
+                                                            type: string
+                                                            description: The type of attribute.
+                                                  required:
+                                                    - name
+                                                    - displayName
+                                                    - valueDetails
+                                            required:
+                                              - name
+                                              - displayName
+                                              - attributeType
+                                              - default
+                                      required:
+                                        - configType
+                                        - configDetails
+                                required:
+                                  - configSchemaversion
+                                  - configTemplate
+                          required:
+                            - name
+                            - version
+                            - displayName
+                            - multipleConfigs
+                            - onHost
+                      required:
+                        - id
+                        - links
+                        - attributes
+                required:
+                  - data
+        '401': &ref_2
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_1
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+  '/config/snapshotproviders/supportedplugins/{pluginType}':
+    get:
+      description: |
+        Returns the configuration attributes of the specified plug-in type.
+
+         **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|{pluginType}|`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - &ref_3
+          name: pluginType
+          in: path
+          description: >
+            The type of plug-in. This value can be retrieved from `GET
+            /config/snapshotproviders/supportedplugins` API. For example, "aws"
+            or "azure".
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Successfully returned the configuration attributes of the specified
+            plug-in type.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_19
+                type: object
+                properties:
+                  data: *ref_0
+                required:
+                  - data
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified plug-in type is not supported for the cloud vendor.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '405':
+          description: Method not allowed. The specified HTTP operation is invalid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  /config/snapshotproviders/configuredplugins:
+    get:
+      description: |
+        Returns the list of configured plug-in types.
+
+        **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes.
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |category|eq ne|The category of the configured plugin. For example,
+            "Cloud" for a cloud provider.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully returned the list of configured plug-in types.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_38
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_39
+                      type: object
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                          required:
+                            - self
+                        id:
+                          type: string
+                          description: >
+                            The unique identifier (name) of the plug-in type.
+                            For example, the unique identifier for Amazon AWS is
+                            "aws".
+                        type:
+                          type: string
+                          description: 'The type of resource. For example, "plugin".'
+                          enum:
+                            - plugin
+                        attributes: &ref_40
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: >
+                                The valid name of the plug-in type. For example,
+                                for Amazon AWS the name value is "aws".
+                            pluginInstanceCount:
+                              type: integer
+                              description: The configured instances count of the plug-in.
+                            category:
+                              type: string
+                              description: >-
+                                The category of plugin. For example, "Cloud" for
+                                a cloud provider.
+                            pluginInstanceDetails:
+                              type: array
+                              items: &ref_41
+                                type: object
+                                properties:
+                                  pluginId:
+                                    type: string
+                                    description: The plugin name given by the user.
+                                  cloudpointHostname:
+                                    type: string
+                                    description: Name of Snapshot Manager.
+                          required:
+                            - name
+                            - pluginInstanceCount
+                            - category
+                            - pluginInstanceDetails
+                      required:
+                        - id
+                        - links
+                required:
+                  - data
+        '401': *ref_2
+        '405':
+          description: Method not allowed. The specified HTTP operation is invalid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/config/snapshotproviders/configuredplugins/{pluginType}/instances':
+    parameters:
+      - *ref_3
+    post:
+      description: |
+        Adds a new configuration instance for the plug-in for Integrated
+        Snapshot Management.
+
+        **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|{pluginType}|`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: baasFlag
+          in: header
+          description: |
+            This optional header indicates if the request is from BaaS UI.
+          required: false
+          schema:
+            type: boolean
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_7
+              type: object
+              required:
+                - data
+              properties:
+                data: &ref_32
+                  type: object
+                  required:
+                    - attributes
+                    - id
+                    - type
+                  properties:
+                    id:
+                      type: string
+                      description: >
+                        The unique name that is specified by the NetBackup user
+                        for the configuration instance.
+                    type:
+                      type: string
+                      description: 'The type of resource. For example, "plugininstance".'
+                      enum:
+                        - plugininstance
+                    attributes: &ref_33
+                      type: object
+                      required:
+                        - configurationAttributes
+                      properties:
+                        cloudpointHostname:
+                          type: string
+                          description: >-
+                            The Snapshot Manager server name used for the
+                            configuration instance.
+                        configurationAttributes:
+                          type: array
+                          items: &ref_4
+                            type: object
+                            required:
+                              - name
+                            properties:
+                              name:
+                                type: string
+                                description: >
+                                  The name of the key for the key-value pair.
+                                  For example, an access key or a list of
+                                  regions. The value of this key can be either
+                                  singlevalue or multivalue.
+                              singlevalue:
+                                type: string
+                                description: >
+                                  The value of the key. For example, the user
+                                  name for an access key or the password for a
+                                  Secret Access Key.
+                              multivalue:
+                                type: array
+                                items:
+                                  type: string
+                                  description: >
+                                    The list of values for the key. For a list
+                                    of regions, for example, the values would
+                                    include regions like us-east-1, eu-west-2,
+                                    or ap-south-1.
+        description: The details of the configuration instance for the plug-in.
+        required: true
+      responses:
+        '201':
+          description: Successfully added the configuration instance.
+          headers:
+            Location:
+              description: A link to the configuration instance of the plug-in.
+              schema:
+                type: string
+                format: url
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_6
+                type: object
+                required:
+                  - data
+                properties:
+                  data: &ref_5
+                    type: object
+                    required:
+                      - attributes
+                      - id
+                      - type
+                      - links
+                    properties:
+                      links:
+                        type: object
+                        properties:
+                          self:
+                            type: object
+                            properties:
+                              href:
+                                type: string
+                        required:
+                          - self
+                      id:
+                        type: string
+                        description: >
+                          The unique name that is specified by the NetBackup
+                          user for the configuration instance.
+                      type:
+                        type: string
+                        description: 'The type of resource. For example, "plugininstance".'
+                        enum:
+                          - plugininstance
+                      attributes: &ref_36
+                        type: object
+                        properties:
+                          errMsg:
+                            type: string
+                            description: >
+                              The error message to display if the configuration
+                              instance of the plug-in fails.
+                          status:
+                            type: string
+                            description: >-
+                              The status of the configured instance of the
+                              plug-in.
+                          isDisable:
+                            type: boolean
+                            description: >
+                              Indicates whether asset discovery for this
+                              configuration instance is enabled.
+                          configID:
+                            type: string
+                            description: The unique configuration instance identifier.
+                          cloudpointHostname:
+                            type: string
+                            description: >-
+                              The Snapshot Manager name used for the
+                              configuration instance.
+                          configSchemaVersion:
+                            type: integer
+                            description: Schema version used for parsing response.
+                          deploymentLocation:
+                            type: string
+                            description: >
+                              The deployment environment or location of the
+                              snapshot management server. For example, location
+                              would be "AWS", if the snapshot management server
+                              is deployed on the EC2 instance in Amazon cloud.
+                          configurationAttributes:
+                            type: array
+                            items: *ref_4
+        '400':
+          description: Bad request. The body of the request is not valid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified plug-in type is not supported for the cloud vendor.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '405':
+          description: Method not allowed. The specified HTTP operation is invalid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '409':
+          description: >-
+            A configuration instance with the same configuration details already
+            exists.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+    get:
+      description: >
+        Returns the details of the configuration instances added to the
+        specified plug-in type.
+
+
+        **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|{pluginType}|`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: X-NetBackup-Skip-Plugin-Details
+          in: header
+          description: >
+            This optional header instructs NetBackup to skip fetching the plugin
+            details. If set to `true` NetBackup does not fetch the cloud plugin
+            details from Snapshot Manager, and the cloud plugin instance names
+            already stored on NetBackup are listed. The default setting is
+            `false`, and the plugin details are fetched from Snapshot Manager.
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: >
+            Successfully returned the details of the configuration instances
+            added to the specified plug-in type.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_42
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: *ref_5
+                required:
+                  - data
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified plug-in type is not supported for the cloud vendor.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '405':
+          description: Method not allowed. The specified HTTP operation is invalid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/config/snapshotproviders/configuredplugins/{pluginType}/instances/{instanceName}':
+    parameters:
+      - *ref_3
+      - &ref_25
+        name: instanceName
+        in: path
+        description: >
+          The unique name that is specified by the NetBackup user for the
+          configuration instance.
+        required: true
+        schema:
+          type: string
+    get:
+      description: |
+        Returns the details of the specified configuration instance.
+
+        **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|{pluginType}|`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Providers
+      responses:
+        '200':
+          description: >-
+            Successfully returned the details of the specified configuration
+            instance.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_6
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified plug-in type or configuration instance not found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '405':
+          description: Method not allowed. The specified HTTP operation is invalid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+    put:
+      description: |
+        Updates the existing configuration instance of the plug-in.
+
+        **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|{pluginType}|`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Snapshot Providers
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: *ref_7
+        description: The details of configuration instance for the plug-in.
+        required: true
+      responses:
+        '200':
+          description: >-
+            Successfully updated the existing configuration instance of the
+            plug-in.
+          headers:
+            Location:
+              description: A link to the configuration instance of the plug-in.
+              schema:
+                type: string
+                format: url
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_6
+        '400':
+          description: Bad request. The body of the request is not valid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified plug-in type or configuration instance not found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '405':
+          description: Method not allowed. The specified HTTP operation is invalid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '409':
+          description: >-
+            A configuration instance with the same configuration details already
+            exists.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+    patch:
+      description: |
+        Updates few attributes of specified configuration instance.
+
+        **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|{pluginType}|`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Snapshot Providers
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_34
+              type: object
+              required:
+                - data
+              properties:
+                data: &ref_35
+                  type: object
+                  required:
+                    - attributes
+                    - id
+                    - type
+                  properties:
+                    id:
+                      type: string
+                      description: >
+                        The unique name that is specified by the NetBackup user
+                        for the configuration instance.
+                    type:
+                      type: string
+                      description: 'The type of resource. For example, "plugininstance".'
+                      enum:
+                        - plugininstance
+                    attributes: &ref_37
+                      type: object
+                      required:
+                        - isDisable
+                      properties:
+                        isDisable:
+                          type: boolean
+                          description: >
+                            Indicates whether asset discovery for this
+                            configuration instance is enabled.
+        description: The details of configuration instance for the plug-in.
+        required: true
+      responses:
+        '200':
+          description: >-
+            Successfully updated the existing configuration instance of the
+            plug-in.
+          headers:
+            Location:
+              description: A link to the configuration instance of the plug-in.
+              schema:
+                type: string
+                format: url
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_6
+        '400':
+          description: Bad request. The body of the request is not valid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified plug-in type or configuration instance not found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '405':
+          description: Method not allowed. The specified HTTP operation is invalid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+    delete:
+      description: >
+        Delete the configuration instance that was added to the specified
+        plug-in type.
+
+
+        **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|{pluginType}|`\
+          Requires Operation: `|OPERATIONS|DELETE|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: X-NetBackup-Force-Plugin-Delete
+          in: header
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Specify `true` to attempt plugin delete forcefully.
+      responses:
+        '204':
+          description: >
+            Successfully deleted configuration instances that was added to the
+            specified plug-in type.
+        '400': &ref_8
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: >
+            The specified Snapshot Manager or configuration instance does not
+            exist or the specified plug-in type is not supported for the cloud
+            vendor.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': &ref_9
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/config/snapshotproviders/configuredplugins/{pluginType}/instances/{instanceName}/configureddomains':
+    get:
+      description: |
+        Get the configured domains and its details.
+        Supported cloud providers: Azure, Azure Stack and AWS
+
+        **Access Control**\
+          Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+          Namespace: `|ASSETS|CLOUD|PROVIDER|<provider>|SERVICEDOMAIN|<identifier>`\
+            where `<provider>`/`<identifier>` can be one of the following: \
+            `azure`/`AZURE_SUBSCRIPTION_ID`\
+            `azurestack`/`AZURE_STACK_SUBSCRIPTION_ID`\
+            `aws`/`AWS_ACCOUNT_ID`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: pluginType
+          in: path
+          required: true
+          description: >-
+            The type of plug-in. The supported values are "azure, "azurestack"
+            and "aws".
+          schema:
+            type: string
+        - name: instanceName
+          in: path
+          description: The name of the configuration instance.
+          required: true
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |id|eq ne ge gt le lt contains startswith endswith|The domain ID of
+            the configured cloud provider.|string|
+
+            |subscriptionId|eq|The subscription ID belonging to the Azure tenant
+            ID.|string|
+
+            |accountId|eq|The account ID for AWS cloud provider.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - &ref_10
+          in: query
+          name: 'page[offset]'
+          description: The number of records to skip before starting the page.
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - &ref_11
+          in: query
+          name: 'page[limit]'
+          description: The number of records to include in the page.
+          schema:
+            type: integer
+            default: 10
+            minimum: 0
+            maximum: 100
+      responses:
+        '200':
+          description: >
+            Successfully returned the list of configured domains for the
+            specified cloud plugin instance.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_43
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_44
+                      type: object
+                      required:
+                        - attributes
+                        - id
+                        - type
+                        - links
+                      properties:
+                        links:
+                          type: object
+                          description: >-
+                            The links to the URLs for the details on each
+                            configured domain.
+                          properties:
+                            self: &ref_14
+                              type: object
+                              description: Link to the resource.
+                              properties:
+                                href:
+                                  type: string
+                          required:
+                            - self
+                        id:
+                          type: string
+                          description: >
+                            The identifier of the cloud provider configured
+                            domain. For example, tenant ID of the Azure cloud
+                            provider account or account ID for AWS cloud
+                            provider.
+                        type:
+                          type: string
+                          description: >-
+                            The type of resource. Must be set to
+                            "configuredDomain".
+                          enum:
+                            - configuredDomain
+                        attributes: &ref_45
+                          type: object
+                          description: >
+                            The details that are returned reflects the property
+                            of the specific configured domain. The schema
+                            corresponds to the type of configured domain.
+                          oneOf:
+                            - type: object
+                              properties:
+                                domainAzureCloud:
+                                  type: object
+                                  properties:
+                                    subscriptionId:
+                                      type: string
+                                      description: Identifier of the azure subscription.
+                                    subscriptionName:
+                                      type: string
+                                      description: >-
+                                        The display name of cloud provider
+                                        domain.
+                                    type:
+                                      type: string
+                                      description: >-
+                                        The type of cloud provider domain. For
+                                        example, `azurecloud`.
+                                  additionalProperties: false
+                                  required:
+                                    - subscriptionId
+                                    - subscriptionName
+                                    - type
+                                domainAWSCloud:
+                                  type: object
+                                  properties:
+                                    accountId:
+                                      type: string
+                                      description: Account ID of AWS cloud provider
+                                    configType:
+                                      type: string
+                                      description: >-
+                                        Type of configuration. Valid values:
+                                        keypair and iamrole
+                                    roleName:
+                                      type: string
+                                      description: Role name configured for account access
+                                    type:
+                                      type: string
+                                      description: >-
+                                        The type of cloud provider domain. For
+                                        example, `awscloud`.
+                                  additionalProperties: false
+                                  required:
+                                    - accountId
+                                    - roleName
+                                    - type
+                  links: &ref_12
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        description: Link to the current page.
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        description: Link to the first page.
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        description: Link to the last page.
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        description: Link to the next page.
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        description: Link to the previous page.
+                        properties:
+                          href:
+                            type: string
+                  meta:
+                    type: object
+                    properties:
+                      pagination: &ref_13
+                        type: object
+                        properties:
+                          count:
+                            type: integer
+                            description: Total number of records.
+                          pages:
+                            type: integer
+                            description: Total number of pages.
+                          page:
+                            type: integer
+                            description: The current page number.
+                          offset:
+                            type: integer
+                            description: The offset value for the current page.
+                          limit:
+                            type: integer
+                            description: The number of records per page.
+                          first:
+                            type: integer
+                            description: The offset value for the first page.
+                          last:
+                            type: integer
+                            description: The offset value for the last page.
+                          next:
+                            type: integer
+                            description: The offset value for the next page.
+                          prev:
+                            type: integer
+                            description: The offset value for the previous page.
+                required:
+                  - data
+        '400': *ref_8
+        '401': *ref_2
+        '404':
+          description: The specified plug-in type is not supported for the cloud provider.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/snapshotproviders/configuredplugins/{pluginType}/instances/{instanceName}/configureddomains/{subscriptionId}/resourcegroups':
+    get:
+      description: >
+        Retrieves the list of resource groups and their location, belonging to
+        the specified Azure or Azure Stack subscription ID.
+
+        This API supports only Azure and Azure Stack cloud providers.
+
+
+        **Access Control**\
+          Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+          Namespace: `|ASSETS|CLOUD|PROVIDER|<provider>|SERVICEDOMAIN|<identifier>`\
+            where `<provider>`/`<identifier>` can be one of the following: \
+            `azure`/`AZURE_SUBSCRIPTION_ID`\
+            `azurestack`/`AZURE_STACK_SUBSCRIPTION_ID`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: pluginType
+          in: path
+          required: true
+          description: >-
+            The type is plug-in. The supported value is "azure" and
+            "azurestack".
+          schema:
+            type: string
+        - name: instanceName
+          in: path
+          description: The name of the configuration instance.
+          required: true
+          schema:
+            type: string
+        - name: subscriptionId
+          in: path
+          description: The identifier of the subscription.
+          required: true
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            based on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |id|contains startswith endswith|The resource group ID belonging to
+            the Azure subscription ID.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sort
+          description: >
+            The value of this parameter must be a comma-separated list of sort
+            fields, arranged in the required sort order.
+
+            Sorting is supported on the following attributes:
+
+            |Name|
+
+            |---|
+
+            |id|
+
+            |region|
+          in: query
+          required: false
+          schema:
+            type: string
+        - *ref_10
+        - *ref_11
+      responses:
+        '200':
+          description: >
+            Successfully returned the list of resource groups for the specified
+            Azure subscription ID.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_46
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_47
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          description: The type of object.
+                          enum:
+                            - resourcegroup
+                        id:
+                          type: string
+                          description: >-
+                            The identifier of the resource group belonging to
+                            the subscription.
+                        attributes: &ref_48
+                          type: object
+                          properties:
+                            region:
+                              type: string
+                              description: >-
+                                This attribute describes the location of the
+                                resource group.
+                          required:
+                            - region
+                      required:
+                        - id
+                        - type
+                        - attributes
+                  links: *ref_12
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_13
+                required:
+                  - data
+        '400': *ref_8
+        '401': *ref_2
+        '404':
+          description: The specified plug-in type is not supported for the cloud provider.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/snapshotproviders/configuredplugins/{pluginType}/instances/{instanceName}/configureddomains/{serviceDomain}/regions/{region}/networksecuritygroups':
+    get:
+      description: >
+        Retrieves the complete list of security groups in the region. Following
+        filters are mandatory to list the network security groups: 
+            Subscription ID for Azure and Azure Stack.
+            Subnet ID for GCP and AWS.
+
+        **Access Control**\
+          Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+          Namespace: `|ASSETS|CLOUD|PROVIDER|<provider>|SERVICEDOMAIN|<identifier>`\
+            where `<provider>`/`<identifier>` can be one of the following: \
+            `aws`/`AWS_ACCOUNT_ID`\
+            `azure`/`AZURE_SUBSCRIPTION_ID`\
+            `azurestack`/`AZURE_STACK_SUBSCRIPTION_ID`\
+            `gcp`/`GCP_PROJECT_ID`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: pluginType
+          in: path
+          required: true
+          description: >-
+            Specifies plug-in type. The supported values are "aws", "azure",
+            "azurestack" and "gcp".
+          schema:
+            type: string
+        - name: instanceName
+          in: path
+          description: The name of the configuration instance.
+          required: true
+          schema:
+            type: string
+        - name: serviceDomain
+          in: path
+          description: Specifies the service domain of cloud provider.
+          required: true
+          schema:
+            type: string
+        - name: region
+          in: path
+          description: Specifies the location of the security group.
+          required: true
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            based on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |subnet|eq|The subnet ID belonging to the AWS and GCP.|string|
+
+            |subscriptionId|eq|The subscription ID belonging to the Azure and
+            Azure stack tenant ID.|string|
+          in: query
+          required: true
+          schema:
+            type: string
+        - *ref_10
+        - *ref_11
+      responses:
+        '200':
+          description: |
+            Successfully returned the list of security groups.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_49
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_50
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          description: Specifies object type.
+                          enum:
+                            - securitygroup
+                        id:
+                          type: string
+                          description: The identifier of the security group.
+                        attributes: &ref_51
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: Specifies the name of the security group.
+                            path:
+                              type: string
+                              description: Specifies the path of the security group.
+                            displayName:
+                              type: string
+                              description: >-
+                                Specifies the display name of the security
+                                group.
+                          required:
+                            - name
+                            - path
+                            - displayName
+                      required:
+                        - id
+                        - type
+                        - attributes
+                  links: *ref_12
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_13
+                required:
+                  - data
+        '400': *ref_8
+        '401': *ref_2
+        '500': *ref_9
+  /config/snapshotproviders/supported-replication-destinations:
+    get:
+      description: >
+        Retrieve all the supported replication destinations applicable for
+        on-premise storage array snapshot replication.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |defaultReplicationDestinations/provider|eq tolower toupper|The
+            array provider to filter on. Example:
+            defaultReplicationDestinations/any(t:t/provider eq 'NetApp').
+            |string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved all the supported replication destinations.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_55
+                type: object
+                properties:
+                  data: &ref_56
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        description: The resource type.
+                        enum:
+                          - supportedReplicationDestinations
+                      id:
+                        type: string
+                        description: The ID of the snapshot replication destination.
+                      attributes: &ref_57
+                        type: object
+                        properties:
+                          defaultReplicationDestinations:
+                            type: array
+                            items: &ref_58
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                  description: >-
+                                    The name of the snapshot replication
+                                    destination.
+                                description:
+                                  type: string
+                                provider:
+                                  type: string
+                                  description: The name of the array vendor.
+                              required:
+                                - name
+                                - description
+                      links:
+                        type: object
+                        properties:
+                          self:
+                            type: object
+                            properties:
+                              href:
+                                type: string
+                        required:
+                          - self
+        '401': *ref_2
+        '500': *ref_9
+  '/config/snapshotproviders/configuredplugins/{pluginType}/instances/{instanceName}/configureddomains/{serviceDomain}/regions/{region}/encryptionkeys':
+    get:
+      description: >
+        Retrieves the complete list of encryption keys in the region. The
+        encryption key is not supported for the azurestack provider. 
+
+
+        **Access Control**\
+          Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+          Namespace: `|ASSETS|CLOUD|PROVIDER|<provider>|SERVICEDOMAIN|<identifier>`\
+            where `<provider>`/`<identifier>` can be one of the following: \
+            `aws`/`AWS_ACCOUNT_ID`\
+            `azure`/`AZURE_SUBSCRIPTION_ID`\
+            `gcp`/`GCP_PROJECT_ID`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: pluginType
+          in: path
+          required: true
+          description: >-
+            Specifies plug-in type. The supported values are "aws", "azure" and
+            "gcp".
+          schema:
+            type: string
+        - name: instanceName
+          in: path
+          description: The name of the configuration instance.
+          required: true
+          schema:
+            type: string
+        - name: serviceDomain
+          in: path
+          description: Specifies the service domain of cloud provider.
+          required: true
+          schema:
+            type: string
+        - name: region
+          in: path
+          description: Specifies the location of the encryption key.
+          required: true
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards.Filtering is
+            based on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |keyName|contains tolower|The name of the encryption key.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - *ref_10
+        - *ref_11
+      responses:
+        '200':
+          description: |
+            Successfully returned the list of encryption keys.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_52
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_53
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          description: Specifies object type.
+                          enum:
+                            - encryptionKey
+                        id:
+                          type: string
+                          description: The identifier of the encryption key.
+                        attributes: &ref_54
+                          type: object
+                          properties:
+                            keyName:
+                              type: string
+                              description: Specifies the name of the encryption key.
+                            keyId:
+                              type: string
+                              description: Id of the encryption key.
+                            type:
+                              type: string
+                              enum:
+                                - PMK
+                                - CMK
+                                - PMK_CMK
+                                - NONE
+                              description: >
+                                Type of encryption being used. - PMK refers to
+                                platform managed key encryption - CMK refers to
+                                customer managed key encryption - PMK_CMK refers
+                                to double encryption with platform and customer
+                                managed key encryption - NONE refers to not
+                                having any encryption
+                          required:
+                            - keyName
+                            - keyId
+                            - type
+                      required:
+                        - id
+                        - type
+                        - attributes
+                  links: *ref_12
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_13
+                required:
+                  - data
+        '400': *ref_8
+        '401': *ref_2
+        '500': *ref_9
+  '/config/snapshot-mgmt-servers-cacerts/{snapshotMgmtServer}/ports/{port}':
+    get:
+      description: >
+        Gets the certificate authority (CA) fingerprint for the Snapshot
+        Manager.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER|`\
+
+        OR
+
+        Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: port
+          in: path
+          required: true
+          description: The port number of the Snapshot Manager.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: >-
+            Successfully returned the certificate authority (CA) fingerprint for
+            the Snapshot Manager.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_59
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        description: The resource type.
+                        enum:
+                          - snapshotMgmtServerCACertResponse
+                      id:
+                        type: string
+                        description: >-
+                          The Certificate Authority (CA) fingerprint of the
+                          Snapshot Manager.
+                      attributes: &ref_60
+                        type: object
+                        properties:
+                          fingerprint:
+                            type: string
+                            description: >-
+                              The Certificate Authority (CA) fingerprint of the
+                              Snapshot Manager.
+                          sha-256Fingerprint:
+                            type: string
+                            description: >-
+                              The Certificate Authority (CA) SHA-256 fingerprint
+                              of the Snapshot Manager.
+                          subjectName:
+                            type: string
+                            description: Complete subject name available in CA certificate.
+                          isSelfSigned:
+                            type: boolean
+                            description: >-
+                              Indicates whether certificate is self signed or
+                              trusted CA signed.
+                          links:
+                            type: object
+                            properties:
+                              self: *ref_14
+                        required:
+                          - fingerprint
+        '400':
+          description: Failed to parse the JSON body.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: No entity found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  /config/servers/snapshot-mgmt-servers:
+    get:
+      description: >
+        Returns the list of configured Snapshot Managers.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER|`\
+
+        OR
+
+        Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |id|eq ne ge gt le lt contains startswith endswith|The name of the
+            Snapshot Manager.|string|
+
+            |status|eq ne ge gt le lt contains startswith endswith|The status of
+            the Snapshot Manager.|string|
+
+            |deploymentLocation|eq ne ge gt le lt contains startswith
+            endswith|The deployment location of the Snapshot Manager.|string|
+
+            |manageWorkload|eq ne|The workload managed by the Snapshot
+            Manager.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: The offset of Snapshot Manager records.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: 'page[limit]'
+          description: The number of Snapshot Manager records on one page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: sort
+          description: >
+            The value of this parameter must be a comma-separated list of sort
+            fields in the order they are to be sorted.
+
+            Sorting is supported on the following attributes:
+
+            |Name|
+
+            |---|
+
+            |id|
+
+            |status|
+
+            |deploymentLocation|
+
+            |numberOfProviders|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully returned the list of configured Snapshot Managers.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_68
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_15
+                      type: object
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                          required:
+                            - self
+                        id:
+                          type: string
+                          description: Snapshot Manager hostname.
+                        type:
+                          type: string
+                          description: The resource type.
+                          enum:
+                            - snapshotMgmtServer
+                        attributes: &ref_69
+                          type: object
+                          properties:
+                            deploymentLocation:
+                              type: string
+                              description: >
+                                The deployment environment or location of the
+                                snapshot management server. For example,
+                                location would be "AWS", if the snapshot
+                                management server is deployed on the EC2
+                                instance in Amazon cloud.
+                            accountId:
+                              type: string
+                              description: >
+                                The cloud provider account used for deploying
+                                the snapshot management server.
+                            configSchemaAttributesArray:
+                              description: >-
+                                The configuration schema to be used by the
+                                plugins.
+                              type: array
+                              items: &ref_93
+                                type: object
+                                properties:
+                                  pluginType:
+                                    type: string
+                                    description: >-
+                                      The name of the pluginType. For example,
+                                      "aws".
+                                  configSchemaVersion:
+                                    type: integer
+                                    description: >
+                                      The configuration schema version used by
+                                      the plugin. This version is used to parse
+                                      the response of the `GET
+                                      /config/snapshotproviders/supportedplugins`
+                                      and \`GET
+                                      /config/snapshotproviders/configuredplugins/{pluginType}/instances`
+                                      API.
+                            status:
+                              type: string
+                              description: The status of the Snapshot Manager.
+                              enum:
+                                - DISABLED
+                                - ACTIVE
+                                - INACTIVE
+                                - ERROR
+                            version:
+                              type: string
+                              description: The version of the Snapshot Manager.
+                            numberOfProviders:
+                              type: integer
+                              description: >-
+                                The number of snapshot providers that are
+                                configured for the Snapshot Manager.
+                            apiVersions:
+                              type: string
+                              description: >-
+                                The list of api versions supported by Snapshot
+                                Manager.
+                            port:
+                              type: integer
+                              description: The port number of the Snapshot Manager.
+                            manageWorkload:
+                              type: string
+                              default: CLOUD
+                              description: The workload managed by the Snapshot Manager.
+                              enum:
+                                - CLOUD
+                                - ON_PREM
+                          required:
+                            - deploymentLocation
+                            - accountId
+                            - configSchemaAttributesArray
+                            - status
+                            - version
+                            - numberOfProviders
+                            - port
+                        relationships:
+                          description: >-
+                            The details of the media servers that are associated
+                            with the Snapshot Manager.
+                          type: object
+                          properties:
+                            mediaServers:
+                              type: object
+                              required:
+                                - links
+                                - data
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    self: *ref_14
+                                    related:
+                                      type: object
+                                      properties:
+                                        href:
+                                          type: string
+                                          description: The link to the media server.
+                                      required:
+                                        - href
+                                data:
+                                  description: The details for the media server.
+                                  type: object
+                                  required:
+                                    - id
+                                    - type
+                                  properties:
+                                    type:
+                                      type: string
+                                      description: The resource type.
+                                      enum:
+                                        - mediaServer
+                                    id:
+                                      type: string
+                                      description: The host name of the media server.
+                      required:
+                        - id
+                        - links
+                  links: *ref_12
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_13
+                required:
+                  - data
+        '400':
+          description: Failed to parse the JSON body.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '500': *ref_9
+    post:
+      description: >
+        Registers the Snapshot Manager with NetBackup. The attributes of the
+        credentials are no longer supported as
+
+        TLS certificate-based authentication has been enabled between NetBackup
+        and Snapshot Manager.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER|`\
+
+        OR
+
+        Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Snapshot Managers
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_61
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      description: The resource type.
+                      enum:
+                        - snapshotMgmtServer
+                    id:
+                      type: string
+                      description: The identifier for the Snapshot Manager.
+                    attributes: &ref_62
+                      type: object
+                      properties:
+                        hostname:
+                          type: string
+                          description: The hostname of the Snapshot Manager.
+                        port:
+                          type: integer
+                          description: The port number of the Snapshot Manager.
+                          default: 443
+                        manageWorkload:
+                          type: string
+                          description: The workload managed by the Snapshot Manager.
+                          default: CLOUD
+                          enum:
+                            - CLOUD
+                            - ON_PREM
+                      required:
+                        - hostname
+              required:
+                - data
+        description: Snapshot Manager details.
+        required: true
+      responses:
+        '201':
+          description: Successfully registered the Snapshot Manager with NetBackup.
+          headers:
+            Location:
+              description: A link to the configured Snapshot Manager.
+              schema:
+                type: string
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_16
+                type: object
+                properties:
+                  data: *ref_15
+                required:
+                  - data
+        '400':
+          description: Bad request. Failed to parse the JSON body.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '409':
+          description: The Snapshot Manager details already exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshotMgmtServer}':
+    get:
+      description: >
+        Returns the Snapshot Manager details registered with NetBackup.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER|`\
+
+        OR
+
+        Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Successfully returned the Snpshot Manager details registered with
+            NetBackup.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_16
+        '401': *ref_2
+        '404':
+          description: The specified Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+    patch:
+      description: >
+        Updates the specified parameters of the registered Snapshot Manager.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER|`\
+
+        OR
+
+        Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_63
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      description: The resource type.
+                      enum:
+                        - snapshotMgmtServer
+                    id:
+                      type: string
+                      description: The identifier for the Snapshot Manager.
+                    attributes: &ref_64
+                      oneOf:
+                        - &ref_65
+                          type: object
+                          properties:
+                            port:
+                              type: integer
+                              description: The port number of the Snapshot Manager.
+                              default: 443
+                        - &ref_66
+                          type: object
+                          properties:
+                            status:
+                              type: string
+                              description: The status of the Snapshot Manager.
+                              enum:
+                                - DISABLED
+                                - ACTIVE
+                                - INACTIVE
+                          required:
+                            - status
+                        - &ref_67
+                          type: object
+                          properties:
+                            manageWorkload:
+                              type: string
+                              description: The workload managed by the Snapshot Manager.
+                              enum:
+                                - CLOUD
+                                - ON_PREM
+                          required:
+                            - manageWorkload
+                      discriminator:
+                        propertyName: snapshotMgmtServerPatchRequestPayload
+                        mapping:
+                          SNAPSHOT_MGMT_SERVER_UPDATE_DETAILS: '#/components/schemas/snapshotMgmtServerUpdateDetails'
+                          SNAPSHOT_MGMT_SERVER_UPDATE_STATUS: '#/components/schemas/snapshotMgmtServerUpdateStatus'
+                          SNAPSHOT_MGMT_SERVER_UPDATE_MANAGE_WORKLOAD: >-
+                            #/components/schemas/snapshotMgmtServerUpdateManageWorkload
+                      type: object
+                      properties:
+                        hostname:
+                          type: string
+                          description: The identifier for the Snapshot Manager.
+                  required:
+                    - attributes
+                    - type
+              required:
+                - data
+        description: The updates to make to the Snapshot Manager.
+        required: true
+      responses:
+        '204':
+          description: Successfully updated the Snapshot Manager.
+        '400':
+          description: Bad request. Failed to parse the JSON body.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshot-mgmt-server}/arrays/{array}/array-heads':
+    get:
+      description: |
+        Returns the list of NAS array heads.
+
+        **Access Control**\
+         Enforcement Type: `None`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshot-mgmt-server
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: array
+          description: The name of the array.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Successfully returned the list of NAS array head names associated
+            with the array.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_78
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_79
+                      type: object
+                      required:
+                        - attributes
+                        - id
+                        - type
+                        - links
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                          required:
+                            - self
+                        id:
+                          type: string
+                          description: |
+                            The unique identifier of the array head.
+                        type:
+                          type: string
+                          description: >-
+                            The type of the resource. For example,
+                            "nasArrayHead".
+                          enum:
+                            - nasArrayHead
+                        attributes: &ref_80
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: Name of the array head.
+                          required:
+                            - name
+                required:
+                  - data
+        '401': *ref_2
+        '404':
+          description: The specified Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshot-mgmt-server}/arrays/{array}/array-heads/{array-head-id}/volumes':
+    get:
+      description: |
+        Returns the list of NAS volumes.
+
+        **Access Control**\
+         Enforcement Type: `None`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshot-mgmt-server
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: array
+          description: The name of the array.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: array-head-id
+          description: The ID of the array head.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Successfully returned the list of NAS volumes associated with the
+            array head.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_81
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_17
+                      type: object
+                      required:
+                        - attributes
+                        - id
+                        - type
+                        - links
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                          required:
+                            - self
+                        id:
+                          type: string
+                          description: |
+                            The unique identifier of the volume.
+                        type:
+                          type: string
+                          description: 'The type of the resource. For example, "nasVolume".'
+                          enum:
+                            - nasVolume
+                        attributes: &ref_83
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: Name of the volume.
+                            exportProtocol:
+                              type: array
+                              items:
+                                type: string
+                                description: >-
+                                  The list of the export protocols associated
+                                  with the volume.
+                            snapMethods:
+                              type: array
+                              items:
+                                type: string
+                                description: The list of the snapshot methods.
+                            shares:
+                              type: array
+                              items:
+                                type: string
+                                description: >-
+                                  The list of the shares associated with the
+                                  volume.
+                            size:
+                              type: integer
+                              description: The used size of the volume in GB.
+                          required:
+                            - name
+                            - exportProtocol
+                            - snapMethods
+                            - shares
+                            - size
+                required:
+                  - data
+        '401': *ref_2
+        '404':
+          description: The specified Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshot-mgmt-server}/arrays/{array}/array-heads/{array-head-id}/volumes/{volume}':
+    get:
+      description: |
+        Returns the details of specified NAS volume.
+
+        **Access Control**\
+         Enforcement Type: `None`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshot-mgmt-server
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: array
+          description: The name of the array.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: array-head-id
+          description: The ID of the array head.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: volume
+          description: The name of the NAS volume.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Successfully returned the details of specified NAS volume associated
+            with the array head.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_82
+                type: object
+                properties:
+                  data: *ref_17
+                required:
+                  - data
+        '401': *ref_2
+        '404':
+          description: >-
+            The specified Snapshot Manager, array, array-head-id or volume does
+            not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshotMgmtServer}/relationships/media-servers':
+    get:
+      description: >
+        Returns a list of media servers that are associated with Snapshot
+        Manager.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|SNAPSHOT-MGMT-SERVER|VIEW_ASSOCIATE_MEDIA_SERVERS|`\
+
+        OR\
+
+        Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|VIEW-ASSOCIATE-MEDIA-SERVERS|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: The offset of associated media server records.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: 'page[limit]'
+          description: The number of associated media server records on one page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: >-
+            Successfully returned the details of the media servers associated
+            with the Snapshot Manager.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_84
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items: &ref_85
+                      type: object
+                      required:
+                        - id
+                        - attributes
+                        - type
+                        - links
+                      properties:
+                        id:
+                          type: string
+                          description: >-
+                            NetBackup MediaServer ID; used as unique ID to
+                            identify Media Servers.
+                        type:
+                          type: string
+                          description: Type of the object.
+                          enum:
+                            - mediaServer
+                        attributes:
+                          type: object
+                          description: The media server configuration details.
+                          required:
+                            - osVersion
+                            - osReleaseVersion
+                            - osType
+                            - hostName
+                            - nbuVersion
+                            - dteMode
+                          properties:
+                            osVersion:
+                              type: string
+                              description: The operating system of the host.
+                            osReleaseVersion:
+                              type: string
+                              description: >-
+                                The release version of the operating system of
+                                the host.
+                            osType:
+                              type: string
+                              description: Operating system type of the media server.
+                            hostName:
+                              type: string
+                              description: >-
+                                The machine name associated with the media
+                                server.
+                            nbuVersion:
+                              type: string
+                              description: NetBackup version installed on the media server.
+                            dteMode:
+                              type: string
+                              description: >-
+                                Data-in-transit mode configured on the media
+                                server.
+                              enum:
+                                - 'ON'
+                                - 'OFF'
+                            isMachineUp:
+                              type: boolean
+                              description: >
+                                The isMachineUp parameter is set to true if the
+                                machine is active. The isMachineUp parameter is
+                                set to false if the machine is not active, or in
+                                is an administrative pause state, or the machine
+                                can't connect to the NetBackup master server.
+                            supportedStoragesInfo:
+                              type: array
+                              description: Information about all the supported storages.
+                              items:
+                                type: object
+                                description: Supported Storage details.
+                                properties:
+                                  storageProviderId:
+                                    type: string
+                                    description: >-
+                                      storage provider's ID, example 'amazon',
+                                      'azure', 'DataDomain'.
+                                  storageCategory:
+                                    type: string
+                                    description: The category of the storage.
+                                    enum:
+                                      - ADVANCED_DISK
+                                      - CLOUD
+                                      - CLOUD_CATALYST
+                                      - MSDP
+                                      - OPEN_STORAGE
+                            uuid:
+                              type: string
+                              description: The unique ID of the host.
+                            ndmpHosts:
+                              type: array
+                              description: >-
+                                The list of the NDMP control hosts in the
+                                environment.
+                              items:
+                                type: string
+                            clusterName:
+                              type: string
+                              description: The cluster name.
+                            activeNode:
+                              type: string
+                              description: The active cluster node.
+                            fiberTransportEnabled:
+                              type: boolean
+                              description: >-
+                                Whether the FT service is enabled on the media
+                                server.
+                            fiberTransportState:
+                              type: string
+                              description: >-
+                                The state of the FT services on the media
+                                server.
+                              enum:
+                                - UNKNOWN
+                                - ONLINE
+                                - OFFLINE
+                                - DISABLED
+                                - DISCOVERY_IN_PROGRESS
+                            fiberTransportConnectionLimit:
+                              type: integer
+                              description: >-
+                                The maximum number of FT connections to the
+                                media server.
+                            status:
+                              type: object
+                              description: The current host status for this server.
+                              properties:
+                                name:
+                                  type: string
+                                  description: The programmatic status.
+                                  enum:
+                                    - VIRTUAL_NODE
+                                    - DEACTIVATED
+                                    - ACTIVE_FOR_TAPE_AND_DISK
+                                    - ACTIVE_FOR_TAPE
+                                    - ACTIVE_FOR_DISK
+                                    - OFFLINE
+                                resourceBundleKey:
+                                  type: string
+                                  description: The resource bundle key.
+                              required:
+                                - name
+                                - resourceBundleKey
+                        links: *ref_14
+                  links: *ref_12
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_13
+        '401': *ref_2
+        '404':
+          description: >-
+            The specified Snapshot Manager does not exist or no media servers
+            are associated with this server.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+    patch:
+      description: >
+        Adds a list of media servers to associate with the specified Snapshot
+        Manager.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|SNAPSHOT-MGMT-SERVER|UPDATE_ASSOCIATE_MEDIA_SERVERS|`\
+
+        OR\
+
+        Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|UPDATE-ASSOCIATE-MEDIA-SERVERS|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_86
+              type: object
+              properties:
+                data:
+                  type: array
+                  items: &ref_87
+                    type: object
+                    required:
+                      - id
+                      - type
+                    properties:
+                      id:
+                        type: string
+                        description: >-
+                          The NetBackup media server IDs that identify the media
+                          servers.
+                      type:
+                        type: string
+                        description: The resource type.
+                        enum:
+                          - mediaServer
+              required:
+                - data
+        description: >
+          The media server or servers to associate with the specified Snapshot
+          Manager.
+
+          To remove all associated media servers from Snapshot Manager, specify
+          an empty request body.
+        required: true
+      responses:
+        '204':
+          description: >-
+            Successfully associated the media servers with the specified
+            Snapshot Manager.
+        '400':
+          description: Bad request. Failed to parse the JSON body.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '404':
+          description: >-
+            Unable to find the specified Snapshot Manager. The server doesn't
+            exist. Or, the specified media servers are not present or are at
+            NetBackup version 8.2 or earlier.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshotMgmtServer}/configuredPlugins/{pluginType}/instances':
+    get:
+      description: >
+        Returns the details of the configuration instances that were added to
+        the specified plug-in type.
+
+         **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|{pluginType}|`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: pluginType
+          in: path
+          required: true
+          description: >-
+            The type of plug-in. This value can be retrieved from `GET
+            /config/snapshotproviders/supportedplugins` API for category
+            "cloud". For example, "aws" or "azure".
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |configId|eq ne ge gt le lt contains startswith endswith|The name of
+            the plugin configuration.|string|
+
+            |status|eq ne ge gt le lt contains startswith endswith|The status of
+            the configured instance of the plug-in.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: The offset of configured plugin records.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: 'page[limit]'
+          description: The number of configured plugin records on one page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: >
+            Successfully returned the details of the configuration instances
+            that were added to the specified plug-in type.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_88
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: *ref_5
+                  links: *ref_12
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_13
+                required:
+                  - data
+        '400':
+          description: >-
+            Bad request. Invalid filter criteria or the request contains an
+            invalid parameter.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: >-
+            The specified Snapshot Manager does not exist or the specified
+            plug-in type is not supported for the cloud vendor.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshotMgmtServer}/supportedPlugins':
+    get:
+      description: >
+        Returns the list of all supported plug-in types for the given snapshot
+        manager.
+
+         **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |category|any|The category of the plug-in to filter on. Example:
+            category/any(t:t eq 'Array')|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: |
+            Successfully returned the list of supported plug-in types.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_18
+        '400':
+          description: >-
+            Bad request. Invalid filter criteria or the request contains an
+            invalid parameter.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshotMgmtServer}/supportedPlugins/{pluginType}':
+    get:
+      description: >
+        Returns the configuration attributes of the specified plug-in type for
+        given snapshot manager.
+
+         **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER-PLUGINS|{pluginType}`\
+          OR
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: pluginType
+          in: path
+          required: true
+          description: >-
+            The type of plug-in.This value can be retrieved from GET
+            /config/servers/snapshot-mgmt-servers/{snapshotMgmtServer}/supportedPlugins
+            API. For example, "netapp" or "isilon".
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >
+            Successfully returned the configuration attributes of the specified
+            plug-in type for given snapshot manager.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_19
+        '400':
+          description: Bad request. Request contains an invalid parameter.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified Snapshot Manager or plugin type does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshotMgmtServer}/tokens':
+    get:
+      description: >
+        Returns the token for Snapshot Manager.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER|`\
+
+        Requires Operations:
+         - TokenType: agent\
+              Requires Operation: `|OPERATIONS|VIEW|`
+
+         - TokenType: extension\
+              Requires Operation: `|OPERATIONS|MANAGE|SNAPSHOT-MGMT-SERVER|MANAGE_EXTENSIONS|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          description: The host name of the Snapshot Manager.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. If no filter is
+            specified for tokenType, it returns
+
+            the agent token. Filtering is supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |tokenType|eq|The type of Snapshot Manager token|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: On success returns token for Snapshot Manager.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_89
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - type
+                        - id
+                        - attributes
+                      properties:
+                        type:
+                          type: string
+                          description: The resource type.
+                          enum:
+                            - snapshotMgmtServerToken
+                        id:
+                          type: string
+                          description: Snapshot Manager token.
+                        attributes:
+                          type: object
+                          required:
+                            - tokenCreationTime
+                            - tokenType
+                          properties:
+                            tokenCreationTime:
+                              type: string
+                              format: date-time
+                              description: >-
+                                The ISO 8601 formatted time when the token was
+                                created.
+                            tokenType:
+                              type: string
+                              description: The type of Snapshot Manager token.
+                required:
+                  - data
+        '400':
+          description: Bad request. The filter is not valid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshotMgmtServer}/extensions':
+    get:
+      description: >
+        Returns the list of Snapshot Manager extensions registered with the
+        Snapshot Manager.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|SNAPSHOT-MGMT-SERVER|VIEW_EXTENSIONS|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          description: The host name of the Snapshot Manager.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: 'page[offset]'
+          description: The offset of Snapshot Manager extension records.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: 'page[limit]'
+          description: The number of Snapshot Manager extension records on one page.
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: On success returns the list of Snapshot Manager extensions.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_90
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - type
+                        - id
+                        - attributes
+                      properties:
+                        type:
+                          type: string
+                          description: The resource type.
+                          enum:
+                            - snapshotMgmtServerExtensions
+                        id:
+                          type: string
+                          description: The extension identifier.
+                        attributes:
+                          type: object
+                          required:
+                            - accountId
+                            - name
+                            - region
+                            - status
+                            - type
+                            - version
+                          properties:
+                            accountId:
+                              type: string
+                              description: >-
+                                Cloud vendor or account ID where the extension
+                                resides.
+                            name:
+                              type: string
+                              description: The Snapshot Manager extension name.
+                            region:
+                              type: string
+                              description: The region where extension is deployed.
+                            status:
+                              type: string
+                              description: The status of Snapshot Manager extension.
+                              enum:
+                                - DISABLED
+                                - ENABLED
+                            type:
+                              type: string
+                              description: >-
+                                Whether the extension is deployed on Virtual
+                                Machine or Managed Kubernetes cluster.
+                              enum:
+                                - CLUSTER
+                                - VM
+                            version:
+                              type: string
+                              description: The version of the Snapshot Manager extension.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+    patch:
+      description: >
+        Updates the extensions associated with Snapshot Manager.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|SNAPSHOT-MGMT-SERVER|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|SNAPSHOT-MGMT-SERVER|MANAGE_EXTENSIONS|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshotMgmtServer
+          description: The host name of the Snapshot Manager.
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_91
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - id
+                      - attributes
+                    properties:
+                      type:
+                        type: string
+                        description: The resource type.
+                        enum:
+                          - snapshotMgmtServerExtensions
+                      id:
+                        type: string
+                        description: Id of extension.
+                      attributes:
+                        type: object
+                        required:
+                          - extensionStatus
+                        properties:
+                          extensionStatus:
+                            type: string
+                            description: >-
+                              Status of Snapshot Manager extension to be
+                              updated.
+                            enum:
+                              - DISABLE
+                              - ENABLE
+              required:
+                - data
+        description: Updates extensions associated with the Snapshot Manager.
+        required: true
+      responses:
+        '200':
+          description: >-
+            Status of extensionId's updated successfully. In the response list
+            of extensionId and their status returned.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_92
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - type
+                        - id
+                        - attributes
+                      properties:
+                        type:
+                          type: string
+                          description: The resource type.
+                          enum:
+                            - snapshotMgmtServerExtensions
+                        id:
+                          type: string
+                          description: Id of extension.
+                        attributes:
+                          type: object
+                          required:
+                            - status
+                          properties:
+                            status:
+                              type: string
+                              description: >-
+                                Current state of extension after update
+                                operation completed.
+                              enum:
+                                - DISABLED
+                                - ENABLED
+                required:
+                  - data
+        '401': *ref_2
+        '404':
+          description: The specified Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshot-mgmt-server}/arrays/{array}/domain-cred-mappings':
+    get:
+      description: |
+        Returns the details of the credential associated with nas array heads.
+
+         **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshot-mgmt-server
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: array
+          description: The name of the array.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |arrayHeadName|eq|The name of the plugin's array head.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: include
+          description: |
+            Appends the included section in the response payload with details
+            about the relationships that are specified in the include query.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - credential
+      responses:
+        '200':
+          description: >
+            Successfully returned the details of the credential associated with
+            nas array heads of the given array.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_70
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_20
+                      type: object
+                      required:
+                        - attributes
+                        - id
+                        - type
+                        - links
+                        - relationships
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                          required:
+                            - self
+                        id:
+                          type: string
+                          description: >-
+                            The unique identifier of the array head and domain
+                            credential mapping.
+                        type:
+                          type: string
+                          description: The type of the resource.
+                          enum:
+                            - domainCredMapping
+                        attributes:
+                          type: object
+                          properties:
+                            arrayHeadName:
+                              type: string
+                              description: Name of the array head.
+                          required:
+                            - arrayHeadName
+                        relationships:
+                          type: object
+                          required:
+                            - credential
+                          properties:
+                            credential: &ref_71
+                              type: object
+                              required:
+                                - data
+                                - links
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    related:
+                                      type: object
+                                      properties:
+                                        href:
+                                          type: string
+                                  required:
+                                    - related
+                                data:
+                                  type: object
+                                  required:
+                                    - type
+                                    - id
+                                  properties:
+                                    type:
+                                      type: string
+                                      description: The type of resource.
+                                      enum:
+                                        - credential
+                                    id:
+                                      type: string
+                                      description: The unique identifier of credential.
+                  included:
+                    type: array
+                    items: &ref_21
+                      type: object
+                      required:
+                        - links
+                        - id
+                        - type
+                        - attributes
+                      properties:
+                        meta:
+                          type: object
+                          properties:
+                            accessControlId:
+                              type: string
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                        id:
+                          type: string
+                          description: The ID of the named credential.
+                        type:
+                          type: string
+                          enum:
+                            - credential
+                        attributes:
+                          type: object
+                          required:
+                            - name
+                            - createdDateTime
+                            - lastUpdatedDateTime
+                          properties:
+                            name:
+                              type: string
+                              description: The name of the credential.
+                            description:
+                              type: string
+                              description: The description of the credential.
+                            tag:
+                              type: string
+                              description: The name of the credential tag.
+                            createdDateTime:
+                              type: string
+                              format: date-time
+                              description: >-
+                                The time the credential was created, in ISO 8601
+                                format.
+                            lastUpdatedDateTime:
+                              type: string
+                              format: date-time
+                              description: >-
+                                The time the credential was last updated, in ISO
+                                8601 format.
+                            systemDefined:
+                              description: >-
+                                Indicates if the credential was system-generated
+                                or user-defined.
+                              type: boolean
+                              default: false
+                            providerType:
+                              type: string
+                              description: The type of the credential management provider.
+                              enum:
+                                - CMS
+                                - CYBERARK
+                            lastFetchedDateTime:
+                              type: string
+                              format: date-time
+                              description: >-
+                                The time that the credential was last retrieved
+                                from the External Credential Management System
+                                (ECMS) server, in ISO 8601 format.
+                            category:
+                              type: string
+                              description: >-
+                                The workload type of the credential, in UTF-8
+                                encoding. Valid values for this attribute are
+                                the values of 'displayName', extracted from the
+                                API '/config/credential-schemas'.
+                required:
+                  - data
+        '400':
+          description: >-
+            Bad request. Invalid filter criteria or the request contains an
+            invalid parameter.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified array or Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+    post:
+      description: |
+        Register the details of the credential associated with nas array heads.
+
+         **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|CREATE|`
+      tags:
+        - Snapshot Managers
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_72
+              type: object
+              properties:
+                data: &ref_73
+                  type: object
+                  required:
+                    - attributes
+                    - type
+                    - relationships
+                  properties:
+                    type:
+                      type: string
+                      description: The type of the resource.
+                      enum:
+                        - domainCredMapping
+                    attributes:
+                      type: object
+                      properties:
+                        arrayHeadName:
+                          type: string
+                          description: Name of the array head.
+                      required:
+                        - arrayHeadName
+                    relationships:
+                      type: object
+                      required:
+                        - credential
+                      properties:
+                        credential: &ref_22
+                          type: object
+                          required:
+                            - data
+                          properties:
+                            data:
+                              type: object
+                              required:
+                                - type
+                                - id
+                              properties:
+                                type:
+                                  type: string
+                                  description: The type of resource.
+                                  enum:
+                                    - credential
+                                id:
+                                  type: string
+                                  description: The unique identifier of credential.
+              required:
+                - data
+        description: Credential array head mapping details.
+        required: true
+      parameters:
+        - name: snapshot-mgmt-server
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: array
+          description: The name of the array.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Successfully registered the credential with array head.
+          headers:
+            Location:
+              description: A link to the created array head credential mapping entry.
+              schema:
+                type: string
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_76
+                type: object
+                properties:
+                  data: *ref_20
+                required:
+                  - data
+        '400':
+          description: Bad request. Failed to parse the JSON body.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified array or Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '409':
+          description: The array head credential mapping already exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshot-mgmt-server}/arrays/{array}/domain-cred-mappings/{uuid}':
+    get:
+      description: >
+        Returns the details of the credential associated with nas array head by
+        uuid.
+
+         **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshot-mgmt-server
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: array
+          description: The name of the array.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          description: The uuid of the array head domain credential mapping.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: include
+          description: |
+            Appends the included section in the response payload with details
+            about the relationships that are specified in the include query.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - credential
+      responses:
+        '200':
+          description: >
+            Successfully returned the details of the credential associated with
+            nas array head of the given array by specified uuid.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_77
+                type: object
+                properties:
+                  data: *ref_20
+                  included:
+                    type: array
+                    items: *ref_21
+                required:
+                  - data
+        '401': *ref_2
+        '404':
+          description: 'The specified uuid, array or Snapshot Manager does not exist.'
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+    delete:
+      description: >
+        Deletes the details of the credential associated with nas array head by
+        uuid.
+
+
+        **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|DELETE|`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshot-mgmt-server
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: array
+          description: The name of the array.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          description: The uuid of the array head domain credential mapping.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successfully removed credential mapping details of the array head.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: 'The specified uuid, array or Snapshot Manager does not exist.'
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+    patch:
+      description: |
+        Updates the credential associated with nas array head by uuid.
+
+        **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|MANAGE|ON-PREMISES-SNAPSHOT-MGMT-SERVERS|PROVIDERS|`\
+          Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Snapshot Managers
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_74
+              type: object
+              properties:
+                data: &ref_75
+                  type: object
+                  required:
+                    - type
+                    - relationships
+                  properties:
+                    type:
+                      type: string
+                      description: The type of the resource.
+                      enum:
+                        - domainCredMapping
+                    relationships:
+                      type: object
+                      required:
+                        - credential
+                      properties:
+                        credential: *ref_22
+              required:
+                - data
+        description: Credential details.
+        required: true
+      parameters:
+        - name: snapshot-mgmt-server
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: array
+          description: The name of the array.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: uuid
+          description: The uuid of the array head domain credential mapping.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successfully updated credential mapping details of the array head.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: 'The specified uuid, array or Snapshot Manager does not exist.'
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/snapshotproviders/connected-virtual-machines/{virtualMachineId}':
+    get:
+      description: >
+        Returns the configuration details of connected virtual machine that
+        hosts data to be protected.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: `|ASSETS|CLOUD|HOST|{HOST_ID}|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|UPDATE_CONFIGURATION|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: virtualMachineId
+          in: path
+          required: true
+          description: AssetID of the virtual machine.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Successfully returned the configuration details of specified virtual
+            machine. machine.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_96
+                type: object
+                properties:
+                  data: &ref_97
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: Asset id of a virtual machine.
+                      type:
+                        type: string
+                        description: >-
+                          Configuration details of the connected virtual
+                          machine.
+                        enum:
+                          - virtualMachineConfigurationDetails
+                      attributes: &ref_98
+                        type: object
+                        properties:
+                          vmConnectionProtocol:
+                            type: string
+                            description: >-
+                              Protocol which is used to connect to virtual
+                              machine.
+                            enum:
+                              - SSH
+                          userName:
+                            type: string
+                            description: >-
+                              Username which is used to login in to virtual
+                              machine.
+                        required:
+                          - vmConnectionProtocol
+                          - userName
+                    required:
+                      - id
+                      - type
+                      - attributes
+                required:
+                  - data
+        '401': *ref_2
+        '404':
+          description: The specified asset does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+    put:
+      description: >
+        Updates configuration details of connected virtual machine that hosts
+        data to be protected.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: `|ASSETS|CLOUD|HOST|{HOST_ID}|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|UPDATE_CONFIGURATION|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: virtualMachineId
+          in: path
+          required: true
+          description: AssetID of the virtual machine.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_23
+              type: object
+              required:
+                - data
+              properties:
+                data: &ref_99
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      description: Specify vmconnect as the operation type.
+                      enum:
+                        - vmconnect
+                    attributes: &ref_100
+                      type: object
+                      required:
+                        - vmConnectionProtocol
+                        - vmConnectionAttributesList
+                      properties:
+                        vmConnectionProtocol:
+                          type: string
+                          description: >-
+                            Specify the connection protocol to be used to
+                            connect to the virtual machine.
+                        vmConnectionAttributesList:
+                          type: array
+                          description: >
+                            The list of connection attributes used for
+                            establishing connection with the virtual machine.
+                          items: &ref_24
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: >
+                                  The name of the key in the key-value pair. The
+                                  value of this key can be either a single value
+                                  or a multiple values. For example, an username
+                                  or a list of asset IDs of virtual machines.
+                              singlevalue:
+                                type: string
+                                description: >
+                                  The value in the key-value pair. For example,
+                                  private key for passkey or the actual user
+                                  name.
+                              multivalue:
+                                type: array
+                                items:
+                                  type: string
+                                  description: The list of values for the key.
+                            required:
+                              - name
+        description: >-
+          Updated configuration details of the virtual machine that hosts the
+          data to be protected.
+        required: true
+      responses:
+        '204':
+          description: Successfully updated the configuration details of virtual machine.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified asset does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/config/snapshotproviders/virtualmachines/{assetId}/connect':
+    post:
+      description: >
+        Adds configuration details of virtual machine that hosts data to be
+        protected.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: `|ASSETS|CLOUD|HOST|{HOST_ID}|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|UPDATE_CONFIGURATION|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: AssetID of the virtual machine.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: *ref_23
+        description: >-
+          Configuration details of the virtual machine that hosts the data to be
+          protected.
+        required: true
+      responses:
+        '204':
+          description: Successfully added configuration details to the virtual machine.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified asset does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '409':
+          description: The specified virtual machine is already in 'connected' state.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/config/snapshotproviders/virtualmachines/{assetId}/disconnect':
+    delete:
+      description: >
+        Removes configuration details of virtual machine that hosts data to be
+        protected.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: `|ASSETS|CLOUD|HOST|{HOST_ID}|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|UPDATE_CONFIGURATION|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: AssetID of the virtual machine.
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Successfully removed configuration details of the virtual machine.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified asset does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/config/snapshotproviders/virtualmachines/{assetId}/configureapps/{hostedAppType}':
+    post:
+      description: >
+        Adds configuration details for the specified application to be
+        protected.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: `|ASSETS|CLOUD|HOST|{HOST_ID}|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|UPDATE_CONFIGURATION|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: AssetID of the virtual machine.
+          schema:
+            type: string
+        - name: hostedAppType
+          in: path
+          required: true
+          description: Supported application type.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_103
+              type: object
+              required:
+                - data
+              properties:
+                data: &ref_104
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      description: Specify 'appconfigure' as the operation type.
+                      enum:
+                        - appconfigure
+                    attributes: &ref_105
+                      type: object
+                      properties:
+                        appConfigurationAttributeList:
+                          type: array
+                          description: >
+                            The list of configuration attributes used for
+                            establishing connection with the hosted application.
+                          items: *ref_24
+        description: Configuration details for the application to be protected.
+        required: true
+      responses:
+        '204':
+          description: >-
+            Successfully configured the application on the specified virtual
+            machine.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified asset does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+  '/config/snapshotproviders/configured-applications/{applicationAssetId}':
+    get:
+      description: >
+        Returns the configuration details of configured hosted application to be
+        protected.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: `|ASSETS|CLOUD|APPLICATION|{APPLICATION_ID}|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|UPDATE_CONFIGURATION|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: applicationAssetId
+          in: path
+          required: true
+          description: AssetId of an application.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Successfully returned the configuration details of configured hosted
+            application.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_109
+                type: object
+                properties:
+                  data: &ref_110
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: Asset id of an application.
+                      type:
+                        type: string
+                        description: Configuration details of the hosted application.
+                        enum:
+                          - hostedAppConfigurationDetails
+                      attributes: &ref_111
+                        properties:
+                          appconfigurationdetails:
+                            type: array
+                            items: *ref_24
+                    required:
+                      - id
+                      - type
+                      - attributes
+                required:
+                  - data
+        '401': *ref_2
+        '404':
+          description: The specified asset does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+    put:
+      description: >
+        Updates configuration details for the specified application to be
+        protected.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: `|ASSETS|CLOUD|APPLICATION|{APPLICATION_ID}|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|UPDATE_CONFIGURATION|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: applicationAssetId
+          in: path
+          required: true
+          description: AssetID of an application.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: &ref_106
+              type: object
+              required:
+                - data
+              properties:
+                data: &ref_107
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      description: Specify 'appconfigure' as the operation type.
+                      enum:
+                        - appconfigure
+                    attributes: &ref_108
+                      type: object
+                      required:
+                        - applicationAssetId
+                      properties:
+                        applicationAssetId:
+                          type: string
+                          description: >-
+                            AssetID of the application of which credentials are
+                            to be updated.
+                        appConfigurationAttributeList:
+                          type: array
+                          description: >
+                            The list of configuration attributes required to
+                            configure the hosted application.
+                          items: *ref_24
+        description: Updated configuration details for the application to be protected.
+        required: true
+      responses:
+        '204':
+          description: >-
+            Successfully updated configuration details for the specified
+            application.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified asset does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+    delete:
+      description: >
+        Deletes configuration details for the specified application to be
+        protected.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: `|ASSETS|CLOUD|APPLICATION|{APPLICATION_ID}|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|UPDATE_CONFIGURATION|`
+      tags:
+        - Snapshot Providers
+      parameters:
+        - name: applicationAssetId
+          in: path
+          required: true
+          description: AssetID of an application.
+          schema:
+            type: string
+      responses:
+        '204':
+          description: >-
+            Successfully deleted configuration details for the specified
+            application.
+        '401': *ref_2
+        '404':
+          description: The specified asset does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+  '/config/servers/snapshot-mgmt-servers/{snapshot-mgmt-server}/arrays':
+    get:
+      description: |
+        Returns the list of NAS arrays associated with snapshot manager.
+
+        **Access Control**\
+         Enforcement Type: `None`
+      tags:
+        - Snapshot Managers
+      parameters:
+        - name: snapshot-mgmt-server
+          in: path
+          required: true
+          description: The host name of the Snapshot Manager.
+          schema:
+            type: string
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |pluginType|eq ne|The plugin type of nas array.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Successfully returned the list of NAS arrays associated with
+            snapshot manager.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_112
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_113
+                      type: object
+                      required:
+                        - attributes
+                        - id
+                        - type
+                        - links
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                          required:
+                            - self
+                        id:
+                          type: string
+                          description: |
+                            The unique identifier of the nas array.
+                        type:
+                          type: string
+                          description: The type of the resource.
+                          enum:
+                            - nasArray
+                        attributes: &ref_114
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: Name of the nas array.
+                            pluginType:
+                              type: string
+                              description: Plugin type associated with nas array.
+                          required:
+                            - name
+                            - pluginType
+                required:
+                  - data
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '401': *ref_2
+        '404':
+          description: The specified Snapshot Manager does not exist.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_1
+        '500': *ref_9
+components:
+  parameters:
+    pluginType: *ref_3
+    instanceName: *ref_25
+  schemas:
+    supportedPluginResponseArray: *ref_18
+    supportedPluginResponse: *ref_19
+    supportPluginConfigMetadata: *ref_0
+    pluginInfoAttribute: *ref_26
+    configTemplateArray: *ref_27
+    configTemplateDetails: *ref_28
+    configinstanceAttributes: *ref_29
+    configinstanceValuesArray: *ref_30
+    configinstanceAttributeDetails: *ref_31
+    configurationRequest: *ref_7
+    configurationRequestData: *ref_32
+    configAttributes: *ref_33
+    configurationPatchRequest: *ref_34
+    configurationPatchRequestData: *ref_35
+    configurationResponse: *ref_6
+    configurationResponseData: *ref_5
+    instanceResponse: *ref_36
+    configAttributeList: *ref_4
+    configPatchAttribute: *ref_37
+    pluginTypeResponseArray: *ref_38
+    configuredPluginType: *ref_39
+    configuredPluginMetadata: *ref_40
+    pluginInstanceData: *ref_41
+    configurationResponseArray: *ref_42
+    domainResponseArray: *ref_43
+    domainResponseData: *ref_44
+    domainGetAttributes: *ref_45
+    resourceGroupArray: *ref_46
+    resourceGroupResponseMetaData: *ref_47
+    resourceGroupDetails: *ref_48
+    securityGroupArray: *ref_49
+    securityGroupResponseMetaData: *ref_50
+    securityGroupDetails: *ref_51
+    encryptionKeyArray: *ref_52
+    encryptionKeyResponseMetaData: *ref_53
+    encryptionKeyDetails: *ref_54
+    snapReplicationDestinations: *ref_55
+    snapReplicationDestinationItem: *ref_56
+    snapReplicationDestinationObjectInfo: *ref_57
+    snapReplicationDestinationObjectInfoDetails: *ref_58
+    snapshotMgmtServerCacertResponse: *ref_59
+    snapshotMgmtServerFingerprint: *ref_60
+    snapshotMgmtServerRequestParameters: *ref_61
+    snapshotMgmtServerParameters: *ref_62
+    snapshotMgmtServerPatchRequest: *ref_63
+    snapshotMgmtServerPatchRequestPayload: *ref_64
+    snapshotMgmtServerUpdateDetails: *ref_65
+    snapshotMgmtServerUpdateStatus: *ref_66
+    snapshotMgmtServerUpdateManageWorkload: *ref_67
+    snapshotMgmtServerResponseArray: *ref_68
+    snapshotMgmtServerResponse: *ref_16
+    snapshotMgmtServerMetaData: *ref_15
+    snapshotMgmtServerDetails: *ref_69
+    domainCredMappingsArray: *ref_70
+    domainCredMappingResponseData: *ref_20
+    domainCredResponseData: *ref_71
+    domainCredPayloadData: *ref_72
+    domainCredPayload: *ref_73
+    domainCredUpdatePayloadData: *ref_74
+    domainCredUpdatePayload: *ref_75
+    domainCredPostMappingData: *ref_76
+    domainCredMappingData: *ref_77
+    domainCredData: *ref_22
+    arrayHeadResponseArray: *ref_78
+    arrayHeadResponseData: *ref_79
+    arrayHeadResponse: *ref_80
+    volumeResponseArray: *ref_81
+    volumeDetailResponse: *ref_82
+    volumeResponseData: *ref_17
+    volumeResponse: *ref_83
+    mediaServerResponseArray: *ref_84
+    getSingleMediaServerResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data: *ref_85
+    mediaServerResponseData: *ref_85
+    associatedMediaServerArray: *ref_86
+    associatedMediaServerData: *ref_87
+    configuredPluginsArray: *ref_88
+    snapshotMgmtServerGetTokenResponse: *ref_89
+    snapshotMgmtServerGetExtensionsResponse: *ref_90
+    snapshotMgmtServerUpdateExtensionRequest: *ref_91
+    snapshotMgmtServerUpdateExtensionResponse: *ref_92
+    configSchemaDetails: *ref_93
+    validateSnapReplicationDestinations:
+      type: object
+      properties:
+        data: &ref_94
+          type: object
+          properties:
+            type:
+              type: string
+              description: The resource type.
+              enum:
+                - validateSupportedReplicationDestinations
+            attributes: &ref_95
+              type: object
+              properties:
+                isReplicationDestinationValid:
+                  type: boolean
+                  description: >-
+                    Indicates if the specified snapshot replication destination
+                    is valid or not.
+                isNetBackupManagedReplicationTarget:
+                  type: boolean
+                  description: >-
+                    Indicates if the specified replication target is a managed
+                    snapshot replication target.
+              required:
+                - isReplicationDestinationValid
+                - isNetBackupManagedReplicationTarget
+    validateSnapReplicationObjectDetails: *ref_94
+    validateSnapReplicationDestinationItem: *ref_95
+    getVirtualMachineDetails: *ref_96
+    virtualMachineDetailsData: *ref_97
+    virtualMachineDetailsDataAttribute: *ref_98
+    vmConfiguration: *ref_23
+    vmConfigurationRequestData: *ref_99
+    vmConfigurationAttributes: *ref_100
+    assetConfigurationAttributeList: *ref_24
+    vmUpdateRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data: &ref_101
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              description: Specify virtualmachine as the operation type.
+              enum:
+                - virtualmachine
+            attributes: &ref_102
+              type: object
+              required:
+                - powerState
+              properties:
+                powerState:
+                  type: string
+                  description: |
+                    POWER_ON - powered on the vm.
+                    POWER_OFF - powered off the vm.
+                  enum:
+                    - POWER_ON
+                    - POWER_OFF
+    vmUpdateRequestData: *ref_101
+    vmUpdateRequestAttributes: *ref_102
+    appConfigurationRequest: *ref_103
+    appConfigurationRequestData: *ref_104
+    appConfigurationAttributes: *ref_105
+    appConfigurationUpdateRequest: *ref_106
+    appConfigurationUpdateRequestData: *ref_107
+    appConfigurationUpdateAttributes: *ref_108
+    getApplicationDetails: *ref_109
+    applicationDetailsData: *ref_110
+    appConfigurationDetailsAttributes: *ref_111
+    nasArrayResponseArray: *ref_112
+    nasArrayResponseData: *ref_113
+    nasArrayResponse: *ref_114

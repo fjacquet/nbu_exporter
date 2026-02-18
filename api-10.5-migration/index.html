@@ -1,0 +1,3033 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Prometheus exporter for Veritas NetBackup">
+      
+      
+      
+        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/api-10.5-migration/">
+      
+      
+        <link rel="prev" href="../netbackup-11-migration/">
+      
+      
+        <link rel="next" href="../deployment-verification/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>API 10.5 - NBU Exporter</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#netbackup-api-105-migration-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            NBU Exporter
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              API 10.5
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/fjacquet/nbu_exporter" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fjacquet/nbu_exporter
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    NBU Exporter
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/fjacquet/nbu_exporter" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fjacquet/nbu_exporter
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenTelemetry Integration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    OpenTelemetry Integration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../opentelemetry-example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trace-analysis-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trace Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Migration Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../netbackup-11-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NetBackup 11.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API 10.5
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API 10.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checking-your-netbackup-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking Your NetBackup Version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-compatibility-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version Compatibility Matrix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's Changed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What&#39;s Changed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-request-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Request Headers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade Steps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrade Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-backup-current-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Backup Current Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-stop-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Stop the Exporter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-update-the-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Update the Binary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 3: Update the Binary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-download-pre-built-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A: Download Pre-built Binary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-build-from-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B: Build from Source
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-update-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Update Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-validate-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Validate Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-start-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Start the Exporter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-verify-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Verify Operation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#complete-example-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Example Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-check-health-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Check Health Endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-check-metrics-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Check Metrics Endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-check-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Check Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-verify-in-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Verify in Prometheus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-check-grafana-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Check Grafana Dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rollback-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rollback Procedure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rollback Procedure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-stop-the-new-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Stop the New Version
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-restore-previous-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Restore Previous Binary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-restore-previous-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Restore Previous Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-restart-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Restart Service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-verify-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Verify Rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-report-issue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Report Issue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-406-not-acceptable-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: "406 Not Acceptable" Error
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-invalid-api-version-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: "Invalid API Version Format"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-metrics-not-updating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: Metrics Not Updating
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-tls-certificate-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: TLS Certificate Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-authentication-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: Authentication Failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-high-memory-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: High Memory Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-slow-metric-collection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: Slow Metric Collection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-missing-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: Missing Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FAQ
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#q-do-i-need-to-upgrade-if-im-using-netbackup-104-or-earlier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Do I need to upgrade if I'm using NetBackup 10.4 or earlier?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-will-my-existing-prometheus-queries-and-grafana-dashboards-still-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Will my existing Prometheus queries and Grafana dashboards still work?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-what-happens-if-i-dont-add-the-apiversion-field-to-my-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: What happens if I don't add the apiVersion field to my config?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-can-i-use-different-api-versions-for-different-netbackup-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Can I use different API versions for different NetBackup servers?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-are-there-any-new-metrics-available-with-api-105" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Are there any new metrics available with API 10.5?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-how-do-i-know-which-api-version-my-netbackup-server-supports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: How do I know which API version my NetBackup server supports?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-will-this-upgrade-affect-my-historical-metrics-in-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Will this upgrade affect my historical metrics in Prometheus?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-do-i-need-to-restart-prometheus-after-upgrading-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Do I need to restart Prometheus after upgrading the exporter?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-can-i-test-the-upgrade-without-affecting-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Can I test the upgrade without affecting production?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-whats-the-performance-impact-of-this-upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: What's the performance impact of this upgrade?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-how-often-should-i-update-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: How often should I update the exporter?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automated-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changelog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changelog
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-quick-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#breaking-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Breaking Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Prerequisites">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checking-your-netbackup-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checking Your NetBackup Version
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-compatibility-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version Compatibility Matrix
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#whats-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's Changed
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What&#39;s Changed">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#api-request-headers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Request Headers
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Schema
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrade-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade Steps
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Upgrade Steps">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-backup-current-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Backup Current Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-stop-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Stop the Exporter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-update-the-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Update the Binary
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 3: Update the Binary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-a-download-pre-built-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option A: Download Pre-built Binary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-b-build-from-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option B: Build from Source
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-update-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Update Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-validate-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Validate Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-start-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Start the Exporter
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-7-verify-operation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Verify Operation
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration Changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration Changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#required-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Required Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommended-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recommended Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optional-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Optional Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#complete-example-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Example Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-check-health-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Check Health Endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-check-metrics-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Check Metrics Endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-check-logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Check Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-verify-in-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Verify in Prometheus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-check-grafana-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Check Grafana Dashboard
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rollback-procedure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rollback Procedure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rollback Procedure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-stop-the-new-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Stop the New Version
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-restore-previous-binary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Restore Previous Binary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-restore-previous-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Restore Previous Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-restart-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Restart Service
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-5-verify-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Verify Rollback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-6-report-issue" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Report Issue
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-406-not-acceptable-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: "406 Not Acceptable" Error
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-invalid-api-version-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: "Invalid API Version Format"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-metrics-not-updating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: Metrics Not Updating
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-tls-certificate-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: TLS Certificate Errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-authentication-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: Authentication Failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-high-memory-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: High Memory Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-slow-metric-collection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: Slow Metric Collection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-missing-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: Missing Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FAQ
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#q-do-i-need-to-upgrade-if-im-using-netbackup-104-or-earlier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Do I need to upgrade if I'm using NetBackup 10.4 or earlier?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-will-my-existing-prometheus-queries-and-grafana-dashboards-still-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Will my existing Prometheus queries and Grafana dashboards still work?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-what-happens-if-i-dont-add-the-apiversion-field-to-my-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: What happens if I don't add the apiVersion field to my config?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-can-i-use-different-api-versions-for-different-netbackup-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Can I use different API versions for different NetBackup servers?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-are-there-any-new-metrics-available-with-api-105" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Are there any new metrics available with API 10.5?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-how-do-i-know-which-api-version-my-netbackup-server-supports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: How do I know which API version my NetBackup server supports?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-will-this-upgrade-affect-my-historical-metrics-in-prometheus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Will this upgrade affect my historical metrics in Prometheus?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-do-i-need-to-restart-prometheus-after-upgrading-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Do I need to restart Prometheus after upgrading the exporter?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-can-i-test-the-upgrade-without-affecting-production" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Can I test the upgrade without affecting production?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-whats-the-performance-impact-of-this-upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: What's the performance impact of this upgrade?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-how-often-should-i-update-the-exporter" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: How often should I update the exporter?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automated-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Automated Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Additional Resources
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changelog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changelog
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="netbackup-api-105-migration-guide">NetBackup API 10.5 Migration Guide</h1>
+<p>This guide provides detailed instructions for upgrading the NBU Exporter to support Veritas NetBackup API version 10.5 (API version 12.0).</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#version-compatibility-matrix">Version Compatibility Matrix</a></li>
+<li><a href="#whats-changed">What's Changed</a></li>
+<li><a href="#upgrade-steps">Upgrade Steps</a></li>
+<li><a href="#configuration-changes">Configuration Changes</a></li>
+<li><a href="#verification">Verification</a></li>
+<li><a href="#rollback-procedure">Rollback Procedure</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#faq">FAQ</a></li>
+</ul>
+<h2 id="overview">Overview</h2>
+<p>The NBU Exporter has been updated to support NetBackup 10.5, which introduces API version 12.0. This upgrade maintains full backward compatibility with existing Prometheus metrics while adapting to the new API version requirements.</p>
+<h3 id="key-changes">Key Changes</h3>
+<ul>
+<li><strong>API Version Header</strong>: All API requests now include version information in the Accept header</li>
+<li><strong>Configuration Field</strong>: New <code>apiVersion</code> field in configuration (defaults to "12.0")</li>
+<li><strong>Data Model Updates</strong>: Support for new optional fields in storage and job responses</li>
+<li><strong>Enhanced Error Handling</strong>: Better error messages for version-related issues</li>
+</ul>
+<h3 id="breaking-changes">Breaking Changes</h3>
+<p><strong>None</strong> - This is a backward-compatible upgrade. Existing configurations will work with default values.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>Before upgrading, ensure you have:</p>
+<ol>
+<li><strong>NetBackup Server</strong>: Version 10.5 or later</li>
+<li><strong>API Access</strong>: Valid API key with appropriate permissions</li>
+<li><strong>Current Exporter</strong>: Backup your current configuration and binary</li>
+<li><strong>Go Environment</strong> (if building from source): Go 1.23.4 or later</li>
+</ol>
+<h3 id="checking-your-netbackup-version">Checking Your NetBackup Version</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># SSH to your NetBackup master server</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>bpgetconfig<span class="w"> </span>-g<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>VERSION
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Or check via API (if accessible)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>curl<span class="w"> </span>-k<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;Authorization: YOUR_API_KEY&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>https://netbackup-master:1556/netbackup/config/servers/master
+</code></pre></div>
+<h2 id="version-compatibility-matrix">Version Compatibility Matrix</h2>
+<table>
+<thead>
+<tr>
+<th>NBU Exporter Version</th>
+<th>NetBackup API Version</th>
+<th>NetBackup Version</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.x.x (legacy)</td>
+<td>10.x</td>
+<td>10.0 - 10.4</td>
+<td>Deprecated</td>
+</tr>
+<tr>
+<td>2.0.0+</td>
+<td>12.0</td>
+<td>10.5+</td>
+<td>Current</td>
+</tr>
+<tr>
+<td>2.0.0+</td>
+<td>10.x (fallback)</td>
+<td>10.0 - 10.4</td>
+<td>Limited Support*</td>
+</tr>
+</tbody>
+</table>
+<p>*Limited Support: The exporter may work with older NetBackup versions if the API endpoints remain compatible, but this is not officially tested or supported.</p>
+<h2 id="whats-changed">What's Changed</h2>
+<h3 id="api-request-headers">API Request Headers</h3>
+<p><strong>Before (API 10.x):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="err">GET /netbackup/storage/storage-units</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="err">Accept: application/json</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="err">Authorization: YOUR_API_KEY</span>
+</code></pre></div></p>
+<p><strong>After (API 12.0):</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="err">GET /netbackup/storage/storage-units</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="err">Accept: application/vnd.netbackup+json;version=12.0</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="err">Authorization: YOUR_API_KEY</span>
+</code></pre></div></p>
+<h3 id="configuration-schema">Configuration Schema</h3>
+<p><strong>New Field Added:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="c1"># ... existing fields ...</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12.0&quot;</span><span class="w">  </span><span class="c1"># NEW: API version for NetBackup 10.5+</span>
+</code></pre></div></p>
+<h3 id="data-models">Data Models</h3>
+<p><strong>Storage Model</strong> - New optional fields available (automatically handled):
+- <code>storageCategory</code> - Storage categorization
+- <code>replicationCapable</code>, <code>replicationSourceCapable</code>, <code>replicationTargetCapable</code> - Replication capabilities
+- <code>snapshot</code>, <code>mirror</code>, <code>independent</code>, <code>primary</code> - Snapshot-related flags
+- <code>scaleOutEnabled</code>, <code>wormCapable</code>, <code>useWorm</code> - Advanced storage features</p>
+<p><strong>Jobs Model</strong> - New optional field available:
+- <code>kilobytesDataTransferred</code> - Actual data transferred (vs. estimated <code>kilobytesTransferred</code>)</p>
+<p><strong>Note</strong>: These new fields are optional and do not affect existing metric collection. They are parsed if present but not currently exposed as Prometheus metrics.</p>
+<h2 id="upgrade-steps">Upgrade Steps</h2>
+<h3 id="step-1-backup-current-setup">Step 1: Backup Current Setup</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Backup configuration</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>cp<span class="w"> </span>config.yaml<span class="w"> </span>config.yaml.backup
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Backup binary (if applicable)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>cp<span class="w"> </span>bin/nbu_exporter<span class="w"> </span>bin/nbu_exporter.backup
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Note current version</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>./bin/nbu_exporter<span class="w"> </span>--version<span class="w">  </span><span class="c1"># If version flag exists</span>
+</code></pre></div>
+<h3 id="step-2-stop-the-exporter">Step 2: Stop the Exporter</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># If running as systemd service</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>stop<span class="w"> </span>nbu_exporter
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># If running in Docker</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>docker<span class="w"> </span>stop<span class="w"> </span>nbu_exporter
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># If running manually</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># Use Ctrl+C or send SIGTERM to the process</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nb">kill</span><span class="w"> </span>-TERM<span class="w"> </span><span class="k">$(</span>pgrep<span class="w"> </span>nbu_exporter<span class="k">)</span>
+</code></pre></div>
+<h3 id="step-3-update-the-binary">Step 3: Update the Binary</h3>
+<h4 id="option-a-download-pre-built-binary">Option A: Download Pre-built Binary</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Download latest release</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>wget<span class="w"> </span>https://github.com/fjacquet/nbu_exporter/releases/download/v2.0.0/nbu_exporter-linux-amd64
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Make executable</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>chmod<span class="w"> </span>+x<span class="w"> </span>nbu_exporter-linux-amd64
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="c1"># Replace existing binary</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>mv<span class="w"> </span>nbu_exporter-linux-amd64<span class="w"> </span>bin/nbu_exporter
+</code></pre></div>
+<h4 id="option-b-build-from-source">Option B: Build from Source</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Pull latest code</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>main
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Or clone fresh</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/fjacquet/nbu_exporter.git
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="nb">cd</span><span class="w"> </span>nbu_exporter
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="c1"># Build</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>make<span class="w"> </span>cli
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="c1"># Binary will be in bin/nbu_exporter</span>
+</code></pre></div>
+<h3 id="step-4-update-configuration">Step 4: Update Configuration</h3>
+<p>Edit your <code>config.yaml</code> to add the API version:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https&quot;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/netbackup&quot;</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">    </span><span class="nt">domain</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;my.domain&quot;</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">    </span><span class="nt">domainType</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;NT&quot;</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;master.my.domain&quot;</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1556&quot;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12.0&quot;</span><span class="w">  </span><span class="c1"># ADD THIS LINE</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">    </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;your-api-key-here&quot;</span>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">    </span><span class="nt">contentType</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;application/vnd.netbackup+json;</span><span class="nv"> </span><span class="s">version=3.0&quot;</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">    </span><span class="nt">insecureSkipVerify</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<p><strong>Note</strong>: If you omit <code>apiVersion</code>, it will default to "12.0", but explicitly setting it is recommended for clarity.</p>
+<h3 id="step-5-validate-configuration">Step 5: Validate Configuration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Test configuration with debug mode</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>./bin/nbu_exporter<span class="w"> </span>--config<span class="w"> </span>config.yaml<span class="w"> </span>--debug
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Look for log messages like:</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="c1"># INFO[0000] Using NetBackup API version: 12.0</span>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="c1"># INFO[0001] Successfully connected to NetBackup API</span>
+</code></pre></div>
+<p>Press Ctrl+C after verifying the startup logs.</p>
+<h3 id="step-6-start-the-exporter">Step 6: Start the Exporter</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="c1"># If running as systemd service</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>nbu_exporter
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>status<span class="w"> </span>nbu_exporter
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="c1"># If running in Docker</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>docker<span class="w"> </span>start<span class="w"> </span>nbu_exporter
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="c1"># If running manually</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>./bin/nbu_exporter<span class="w"> </span>--config<span class="w"> </span>config.yaml<span class="w"> </span><span class="p">&amp;</span>
+</code></pre></div>
+<h3 id="step-7-verify-operation">Step 7: Verify Operation</h3>
+<p>See <a href="#verification">Verification</a> section below.</p>
+<h2 id="configuration-changes">Configuration Changes</h2>
+<h3 id="required-changes">Required Changes</h3>
+<p><strong>None</strong> - The exporter will work with existing configurations using default values.</p>
+<h3 id="recommended-changes">Recommended Changes</h3>
+<p>Add the <code>apiVersion</code> field for explicit version control:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12.0&quot;</span>
+</code></pre></div>
+<h3 id="optional-changes">Optional Changes</h3>
+<p>If you want to prepare for future API versions:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12.0&quot;</span><span class="w">  </span><span class="c1"># Can be updated when newer versions are available</span>
+</code></pre></div>
+<h3 id="complete-example-configuration">Complete Example Configuration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nn">---</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nt">server</span><span class="p">:</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;localhost&quot;</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2112&quot;</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="w">    </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/metrics&quot;</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="w">    </span><span class="nt">scrapingInterval</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1h&quot;</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="w">    </span><span class="nt">logName</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;log/nbu-exporter.log&quot;</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a><span class="w">    </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https&quot;</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="w">    </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/netbackup&quot;</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="w">    </span><span class="nt">domain</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;production&quot;</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">    </span><span class="nt">domainType</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;NT&quot;</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;netbackup-master.example.com&quot;</span>
+<a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1556&quot;</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12.0&quot;</span><span class="w">  </span><span class="c1"># NetBackup 10.5 API version</span>
+<a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="w">    </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;your-api-key-here&quot;</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="w">    </span><span class="nt">contentType</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;application/vnd.netbackup+json;</span><span class="nv"> </span><span class="s">version=3.0&quot;</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="w">    </span><span class="nt">insecureSkipVerify</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<h2 id="verification">Verification</h2>
+<h3 id="1-check-health-endpoint">1. Check Health Endpoint</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>curl<span class="w"> </span>http://localhost:2112/health
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="c1"># Expected output:</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># {&quot;status&quot;:&quot;healthy&quot;}</span>
+</code></pre></div>
+<h3 id="2-check-metrics-endpoint">2. Check Metrics Endpoint</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>curl<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nbu_
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="c1"># Expected output should include:</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># nbu_storage_bytes{name=&quot;...&quot;,type=&quot;...&quot;,size=&quot;free&quot;} ...</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="c1"># nbu_storage_bytes{name=&quot;...&quot;,type=&quot;...&quot;,size=&quot;used&quot;} ...</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># nbu_jobs_count{action=&quot;...&quot;,policy_type=&quot;...&quot;,status=&quot;...&quot;} ...</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># nbu_jobs_size_bytes{action=&quot;...&quot;,policy_type=&quot;...&quot;,status=&quot;...&quot;} ...</span>
+</code></pre></div>
+<h3 id="3-check-logs">3. Check Logs</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># View recent logs</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>log/nbu-exporter.log
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># Look for successful API calls:</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="c1"># INFO[...] Successfully fetched storage data</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="c1"># INFO[...] Successfully fetched job data</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="c1"># INFO[...] Collected X storage units</span>
+<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="c1"># INFO[...] Collected Y jobs</span>
+</code></pre></div>
+<h3 id="4-verify-in-prometheus">4. Verify in Prometheus</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="c1"># Query Prometheus to ensure metrics are being scraped</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>curl<span class="w"> </span><span class="s1">&#39;http://prometheus:9090/api/v1/query?query=up{job=&quot;netbackup&quot;}&#39;</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># Expected: &quot;value&quot;: [timestamp, &quot;1&quot;]</span>
+</code></pre></div>
+<h3 id="5-check-grafana-dashboard">5. Check Grafana Dashboard</h3>
+<ol>
+<li>Open your Grafana dashboard for NetBackup</li>
+<li>Verify that panels are displaying data</li>
+<li>Check that data is current (within scraping interval)</li>
+</ol>
+<h2 id="rollback-procedure">Rollback Procedure</h2>
+<p>If you encounter issues after upgrading, follow these steps to rollback:</p>
+<h3 id="step-1-stop-the-new-version">Step 1: Stop the New Version</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Stop the service</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>stop<span class="w"> </span>nbu_exporter
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="c1"># Or</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>docker<span class="w"> </span>stop<span class="w"> </span>nbu_exporter
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="c1"># Or</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="nb">kill</span><span class="w"> </span>-TERM<span class="w"> </span><span class="k">$(</span>pgrep<span class="w"> </span>nbu_exporter<span class="k">)</span>
+</code></pre></div>
+<h3 id="step-2-restore-previous-binary">Step 2: Restore Previous Binary</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Restore from backup</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>cp<span class="w"> </span>bin/nbu_exporter.backup<span class="w"> </span>bin/nbu_exporter
+</code></pre></div>
+<h3 id="step-3-restore-previous-configuration">Step 3: Restore Previous Configuration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Restore configuration</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>cp<span class="w"> </span>config.yaml.backup<span class="w"> </span>config.yaml
+</code></pre></div>
+<h3 id="step-4-restart-service">Step 4: Restart Service</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># Start the service</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>nbu_exporter
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>status<span class="w"> </span>nbu_exporter
+</code></pre></div>
+<h3 id="step-5-verify-rollback">Step 5: Verify Rollback</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="c1"># Check health</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>curl<span class="w"> </span>http://localhost:2112/health
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="c1"># Check metrics</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>curl<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nbu_
+</code></pre></div>
+<h3 id="step-6-report-issue">Step 6: Report Issue</h3>
+<p>If rollback was necessary, please report the issue:</p>
+<ol>
+<li>Collect logs: <code>cat log/nbu-exporter.log &gt; issue-logs.txt</code></li>
+<li>Note your environment details (NetBackup version, OS, etc.)</li>
+<li>Create an issue: https://github.com/fjacquet/nbu_exporter/issues</li>
+</ol>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-406-not-acceptable-error">Issue: "406 Not Acceptable" Error</h3>
+<p><strong>Symptom:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>ERROR Failed to fetch storage data: HTTP 406 Not Acceptable
+</code></pre></div></p>
+<p><strong>Cause:</strong> NetBackup server doesn't support API version 12.0</p>
+<p><strong>Solution:</strong>
+1. Verify NetBackup version: Must be 10.5 or later
+2. If using older NetBackup, try setting <code>apiVersion: "10.0"</code> (unsupported)
+3. Consider upgrading NetBackup to 10.5+</p>
+<h3 id="issue-invalid-api-version-format">Issue: "Invalid API Version Format"</h3>
+<p><strong>Symptom:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>ERROR Invalid configuration: apiVersion must be in format X.Y
+</code></pre></div></p>
+<p><strong>Cause:</strong> API version format is incorrect</p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Correct format:</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12.0&quot;</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Incorrect formats:</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12&quot;</span><span class="w">      </span><span class="c1"># Missing minor version</span>
+<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;v12.0&quot;</span><span class="w">   </span><span class="c1"># Don&#39;t include &#39;v&#39; prefix</span>
+<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">12.0</span><span class="w">      </span><span class="c1"># Must be a string, not a number</span>
+</code></pre></div></p>
+<h3 id="issue-metrics-not-updating">Issue: Metrics Not Updating</h3>
+<p><strong>Symptom:</strong> Prometheus shows stale data or no data</p>
+<p><strong>Diagnosis:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="c1"># Check exporter logs</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>tail<span class="w"> </span>-f<span class="w"> </span>log/nbu-exporter.log
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Check if exporter is running</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nbu_exporter
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a><span class="c1"># Check if port is accessible</span>
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>curl<span class="w"> </span>http://localhost:2112/health
+</code></pre></div></p>
+<p><strong>Solutions:</strong>
+1. Verify exporter is running
+2. Check firewall rules allow access to port 2112
+3. Verify NetBackup API is accessible
+4. Check API key is valid and not expired</p>
+<h3 id="issue-tls-certificate-errors">Issue: TLS Certificate Errors</h3>
+<p><strong>Symptom:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>ERROR x509: certificate signed by unknown authority
+</code></pre></div></p>
+<p><strong>Solutions:</strong></p>
+<p><strong>Option 1: Install CA Certificate (Recommended)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="c1"># Copy NetBackup CA cert to system trust store</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>sudo<span class="w"> </span>cp<span class="w"> </span>netbackup-ca.crt<span class="w"> </span>/usr/local/share/ca-certificates/
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>sudo<span class="w"> </span>update-ca-certificates
+</code></pre></div></p>
+<p><strong>Option 2: Disable Verification (Testing Only)</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">    </span><span class="nt">insecureSkipVerify</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">  </span><span class="c1"># NOT recommended for production</span>
+</code></pre></div></p>
+<h3 id="issue-authentication-failures">Issue: Authentication Failures</h3>
+<p><strong>Symptom:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>ERROR Failed to fetch data: HTTP 401 Unauthorized
+</code></pre></div></p>
+<p><strong>Solutions:</strong>
+1. Verify API key is correct
+2. Check API key hasn't expired
+3. Verify API key has required permissions:
+   - Read access to <code>/storage/storage-units</code>
+   - Read access to <code>/admin/jobs</code>
+4. Generate new API key if necessary</p>
+<h3 id="issue-high-memory-usage">Issue: High Memory Usage</h3>
+<p><strong>Symptom:</strong> Exporter consuming excessive memory</p>
+<p><strong>Diagnosis:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="c1"># Check memory usage</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nbu_exporter
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="c1"># Check job count</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>curl<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nbu_jobs_count
+</code></pre></div></p>
+<p><strong>Solutions:</strong>
+1. Reduce <code>scrapingInterval</code> to collect fewer jobs:
+   <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="nt">server</span><span class="p">:</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">    </span><span class="nt">scrapingInterval</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;30m&quot;</span><span class="w">  </span><span class="c1"># Instead of &quot;1h&quot;</span>
+</code></pre></div>
+2. Verify pagination is working correctly in logs
+3. Check for memory leaks (report if found)</p>
+<h3 id="issue-slow-metric-collection">Issue: Slow Metric Collection</h3>
+<p><strong>Symptom:</strong> Scrapes taking longer than expected</p>
+<p><strong>Diagnosis:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="c1"># Enable debug mode to see timing</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>./bin/nbu_exporter<span class="w"> </span>--config<span class="w"> </span>config.yaml<span class="w"> </span>--debug
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="c1"># Look for timing information in logs</span>
+</code></pre></div></p>
+<p><strong>Solutions:</strong>
+1. Check network latency to NetBackup server
+2. Reduce <code>scrapingInterval</code> to fetch fewer jobs
+3. Verify NetBackup API performance
+4. Check if pagination is working (should see multiple API calls for large datasets)</p>
+<h3 id="issue-missing-metrics">Issue: Missing Metrics</h3>
+<p><strong>Symptom:</strong> Some expected metrics are not present</p>
+<p><strong>Diagnosis:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="c1"># Check what metrics are available</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>curl<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nbu_
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="c1"># Check logs for errors</span>
+<a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a>grep<span class="w"> </span>ERROR<span class="w"> </span>log/nbu-exporter.log
+</code></pre></div></p>
+<p><strong>Solutions:</strong>
+1. Verify NetBackup has data to export (storage units, jobs)
+2. Check time range - jobs older than <code>scrapingInterval</code> won't be collected
+3. Verify API permissions allow access to required endpoints
+4. Check if tape storage is being filtered (expected behavior)</p>
+<h2 id="faq">FAQ</h2>
+<h3 id="q-do-i-need-to-upgrade-if-im-using-netbackup-104-or-earlier">Q: Do I need to upgrade if I'm using NetBackup 10.4 or earlier?</h3>
+<p><strong>A:</strong> No, but it's recommended. The new exporter version defaults to API version 12.0, which requires NetBackup 10.5+. If you must use an older NetBackup version, you can try setting <code>apiVersion: "10.0"</code>, but this is not officially supported.</p>
+<h3 id="q-will-my-existing-prometheus-queries-and-grafana-dashboards-still-work">Q: Will my existing Prometheus queries and Grafana dashboards still work?</h3>
+<p><strong>A:</strong> Yes, all metric names and labels remain unchanged. Your existing queries and dashboards will continue to work without modification.</p>
+<h3 id="q-what-happens-if-i-dont-add-the-apiversion-field-to-my-config">Q: What happens if I don't add the <code>apiVersion</code> field to my config?</h3>
+<p><strong>A:</strong> The exporter will use the default value of "12.0", which is correct for NetBackup 10.5+. However, explicitly setting it is recommended for clarity.</p>
+<h3 id="q-can-i-use-different-api-versions-for-different-netbackup-servers">Q: Can I use different API versions for different NetBackup servers?</h3>
+<p><strong>A:</strong> Currently, the exporter supports one API version per instance. If you need to monitor multiple NetBackup servers with different versions, run separate exporter instances with different configurations.</p>
+<h3 id="q-are-there-any-new-metrics-available-with-api-105">Q: Are there any new metrics available with API 10.5?</h3>
+<p><strong>A:</strong> The API 10.5 response includes new optional fields (storage categories, replication capabilities, etc.), but these are not currently exposed as Prometheus metrics. They may be added in future versions based on user feedback.</p>
+<h3 id="q-how-do-i-know-which-api-version-my-netbackup-server-supports">Q: How do I know which API version my NetBackup server supports?</h3>
+<p><strong>A:</strong> NetBackup 10.5 and later support API version 12.0. You can also check the NetBackup API documentation or contact your NetBackup administrator.</p>
+<h3 id="q-will-this-upgrade-affect-my-historical-metrics-in-prometheus">Q: Will this upgrade affect my historical metrics in Prometheus?</h3>
+<p><strong>A:</strong> No, historical metrics are preserved. The upgrade only affects how new metrics are collected going forward.</p>
+<h3 id="q-do-i-need-to-restart-prometheus-after-upgrading-the-exporter">Q: Do I need to restart Prometheus after upgrading the exporter?</h3>
+<p><strong>A:</strong> No, Prometheus will automatically detect the updated exporter on the next scrape. However, you may want to reload Prometheus configuration if you changed any scrape settings.</p>
+<h3 id="q-can-i-test-the-upgrade-without-affecting-production">Q: Can I test the upgrade without affecting production?</h3>
+<p><strong>A:</strong> Yes, recommended approach:
+1. Deploy the new exporter to a test environment
+2. Point it at your production NetBackup server (read-only operations)
+3. Verify metrics collection works correctly
+4. Then upgrade production exporter</p>
+<h3 id="q-whats-the-performance-impact-of-this-upgrade">Q: What's the performance impact of this upgrade?</h3>
+<p><strong>A:</strong> Minimal to none. The only change is the Accept header in API requests, which adds negligible overhead.</p>
+<h3 id="q-how-often-should-i-update-the-exporter">Q: How often should I update the exporter?</h3>
+<p><strong>A:</strong> Follow these guidelines:
+- <strong>Security updates</strong>: Apply immediately
+- <strong>Bug fixes</strong>: Apply within 1-2 weeks
+- <strong>Feature updates</strong>: Apply during planned maintenance windows
+- <strong>Major versions</strong>: Test thoroughly before production deployment</p>
+<h2 id="automated-verification">Automated Verification</h2>
+<p>A verification script is available to test deployment procedures:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="c1"># Run deployment verification tests</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>./scripts/verify-deployment.sh
+</code></pre></div>
+<p>This script verifies:
+- Binary and configuration files
+- Backward compatibility with configs missing API version
+- Default API version behavior
+- Unit tests for configuration validation</p>
+<h2 id="additional-resources">Additional Resources</h2>
+<ul>
+<li><a href="../deployment-verification/">Deployment Verification Guide</a> - Comprehensive deployment and rollback procedures</li>
+<li><a href="https://sort.veritas.com/public/documents/nbu/10.5/">NetBackup 10.5 API Documentation</a></li>
+<li><a href="https://github.com/fjacquet/nbu_exporter">NBU Exporter GitHub Repository</a></li>
+<li><a href="https://prometheus.io/docs/">Prometheus Documentation</a></li>
+<li><a href="https://grafana.com/docs/">Grafana Documentation</a></li>
+</ul>
+<h2 id="support">Support</h2>
+<p>If you encounter issues not covered in this guide:</p>
+<ol>
+<li><strong>Check Logs</strong>: Enable debug mode for detailed information</li>
+<li><strong>Search Issues</strong>: Check existing GitHub issues for similar problems</li>
+<li><strong>Create Issue</strong>: Report new issues with logs and environment details</li>
+<li><strong>Community</strong>: Ask questions in GitHub Discussions</li>
+</ol>
+<p><strong>GitHub Issues</strong>: https://github.com/fjacquet/nbu_exporter/issues</p>
+<h2 id="changelog">Changelog</h2>
+<p>See <a href="../CHANGELOG.md">CHANGELOG.md</a> for detailed version history and all changes.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

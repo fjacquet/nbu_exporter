@@ -1,0 +1,939 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Deployment API
+  version: '12.0'
+  description: >
+    The NetBackup Deployment API provides access to deployment resources,
+    configuration, and tasks.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    osList:
+      type: string
+      enum:
+        - aix_rs6000
+        - debian_x64
+        - hpux_ia64
+        - redhat_x64
+        - redhat_ppc64le
+        - redhat_zseries
+        - solaris_sparc
+        - solaris_x64
+        - suse_x64
+        - suse_ppc64le
+        - suse_zseries
+        - windows_x64
+    packageTypeList:
+      type: string
+      enum:
+        - nb
+        - nbinstallagent
+        - nbclient
+        - nbeeb
+        - nbhotfix
+        - nbplugin
+        - nbprechecker
+        - nbserver
+        - nbrt
+        - mongotc
+    versionList:
+      type: string
+      enum:
+        - '7.7'
+        - 7.7.1
+        - 7.7.2
+        - 7.7.3
+        - '8.0'
+        - '8.1'
+        - 8.1.1
+        - 8.1.2
+        - 8.1.2.1
+        - '8.2'
+        - '8.3'
+        - 8.3.0.1
+        - '9.0'
+        - 9.0.0.1
+        - '9.1'
+        - '10.0'
+        - 10.0.0.1
+        - 10.0.0.2
+        - 10.0.0.3
+        - '10.1'
+        - 10.1.1
+        - '10.2'
+        - '10.3'
+        - '10.4'
+    packageInfo: &ref_1
+      type: object
+      description: >
+        Response payload for a GET operation against one or more VxUpdate
+        packages.
+
+        Includes package identifiers, attributes and links.
+      properties:
+        links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+        type:
+          type: string
+          enum:
+            - package
+        id:
+          type: string
+          description: Unique identifier of the package.
+        attributes: &ref_0
+          type: object
+          description: The full set of attributes for a VxUpdate package.
+          properties:
+            packageName:
+              type: string
+              description: The name of the package.
+            packageFileName:
+              type: string
+              description: |
+                The file name of the package, not including the file path.
+                In many cases, this is identical to packageName.
+            packageItemFilePaths:
+              type: array
+              description: >
+                Fully-qualified paths to the package's files as they exist in
+                the repository
+
+                on the primary server.
+              items:
+                type: string
+            clientAndServer:
+              type: boolean
+              description: Whether the package contains both a client and server component.
+            packageType:
+              type: string
+              description: The component associated with the package.
+              enum:
+                - nb
+                - nbinstallagent
+                - nbclient
+                - nbeeb
+                - nbhotfix
+                - nbplugin
+                - nbprechecker
+                - nbserver
+                - nbrt
+                - mongotc
+            installables:
+              type: array
+              description: >
+                Identifiers for the components within this package to be used in
+                VxUpdate
+
+                operations. The identifiers consist of component name (nbclient,
+                nbserver, etc)
+
+                and version. The identifiers do not include operating system or
+                platform.
+              items:
+                type: object
+                properties:
+                  formalName:
+                    type: string
+                    description: The formal name of the installable.
+                    example: 'NetBackup 9.0 Client, NetBackup 9.1 EEB 1234567.1'
+                  installable:
+                    type: string
+                    description: >
+                      The name of the installable. This includes component name
+                      and version,
+
+                      but not operating system.
+                    example: 'nbclient_9.0, nbeeb_1234567.1_9.1'
+            version:
+              type: string
+              description: >
+                The release version of the package. For client and server
+                packages,
+
+                this is the version of NetBackup that target hosts will be
+                upgraded to.
+
+                For EEBs, this is the version of NetBackup that must be present
+                on
+
+                target hosts.
+              enum:
+                - '7.7'
+                - 7.7.1
+                - 7.7.2
+                - 7.7.3
+                - '8.0'
+                - '8.1'
+                - 8.1.1
+                - 8.1.2
+                - 8.1.2.1
+                - '8.2'
+                - '8.3'
+                - 8.3.0.1
+                - '9.0'
+                - 9.0.0.1
+                - '9.1'
+                - '10.0'
+                - 10.0.0.1
+                - 10.0.0.2
+                - 10.0.0.3
+                - '10.1'
+                - 10.1.1
+                - '10.2'
+                - '10.3'
+                - '10.4'
+            os:
+              type: string
+              description: The operating system and platform that the package applies to.
+              enum:
+                - aix_rs6000
+                - debian_x64
+                - hpux_ia64
+                - redhat_x64
+                - redhat_ppc64le
+                - redhat_zseries
+                - solaris_sparc
+                - solaris_x64
+                - suse_x64
+                - suse_ppc64le
+                - suse_zseries
+                - windows_x64
+            size:
+              type: integer
+              description: 'The package size, in bytes.'
+            createdDateTimedUTC:
+              type: string
+              format: date-time
+              description: >
+                The date and time that the package was created, in the format
+                <YYYY-MM-DD>T<HH:MM:SS.SSS>Z.  Example:
+                2018-01-05T10:00:00.000Z.
+            lastModifiedDateTimeUTC:
+              type: string
+              format: date-time
+              description: >
+                The date and time that the package was last modified, in the
+                format <YYYY-MM-DD>T<HH:MM:SS.SSS>Z.  Example:
+                2018-01-05T10:00:00.000Z.
+            lastValidatedUTC:
+              type: string
+              format: date-time
+              description: >
+                The date and time that the package was last validated, in the
+                format <YYYY-MM-DD>T<HH:MM:SS.SSS>Z.  Example:
+                2018-01-05T10:00:00.000Z.
+      required:
+        - links
+        - type
+        - id
+    packageAttributes: *ref_0
+    repoDetails: &ref_2
+      type: object
+      description: >-
+        High-level information about the VxUpdate repository on the primary
+        server.
+      properties:
+        packagesTotal:
+          type: integer
+          description: |
+            The total number of packages in the VxUpdate repository,
+            spanning all versions and operating systems.
+          format: int64
+        repoSize:
+          type: integer
+          description: >-
+            The combined size of all packages in the VxUpdate repository, in
+            bytes.
+          format: int64
+    singlePackageInfoRequest: &ref_19
+      type: object
+      description: Response payload for a GET request reflecting a single VxUpdate package.
+      properties:
+        data: *ref_1
+      required:
+        - data
+    allPackageInfoRequest: &ref_12
+      type: object
+      description: >-
+        Response payload for a GET request reflecting multiple VxUpdate
+        packages.
+      properties:
+        data:
+          type: array
+          items: *ref_1
+        meta:
+          properties:
+            repoDetails: *ref_2
+      required:
+        - data
+        - meta
+    packageTransferStatus: &ref_4
+      type: object
+      description: >
+        Response payload for GET operations against a VxUpdate package transfer
+        item.
+      properties:
+        links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+        type:
+          type: string
+          enum:
+            - packageTransferStatus
+        id:
+          type: string
+          description: Unique identifier for the package transfer item.
+        attributes: &ref_3
+          type: object
+          description: The full set of attributes for a VxUpdate package transfer item.
+          properties:
+            uuid:
+              type: string
+              description: The UUID of the file transfer item.
+            packageFileName:
+              type: string
+              description: The file name of the package.
+            fileSize:
+              type: integer
+              description: 'The package file size, in bytes.'
+              format: int64
+            transferType:
+              type: string
+              description: The transfer type.
+              enum:
+                - UPLOAD
+                - DOWNLOAD_CENTER
+                - PRIMARY_SERVER
+            transferStatus:
+              type: string
+              description: The transfer status.
+              enum:
+                - QUEUED
+                - IN_PROGRESS_TRANSFER
+                - IN_PROGRESS_REPO_ADD
+                - READY
+                - ERROR
+                - CANCELED
+            tusTransferId:
+              type: string
+              description: >
+                The tus transfer id used for a file upload. This field is only
+                set for transferType UPLOAD, otherwise it is empty.
+            createdDateTimeUTC:
+              type: string
+              format: date-time
+              description: >
+                The ISO 8601 timestamp that indicates the date and time this
+                package transfer item was created.
+            startDateTimeUTC:
+              type: string
+              format: date-time
+              description: >
+                The ISO 8601 timestamp that indicates the date and time the
+                actual transfer of the package file started. The file transfer
+                won't always start at the time the transfer item is created. A
+                transfer request may need to be queued to wait for other in
+                progress transfers to complete before it can start.
+            endDateTimeUTC:
+              type: string
+              format: date-time
+              description: >
+                The ISO 8601 timestamp that indicates the date and time the
+                transfer of the package file ended with success or failure, or
+                was canceled.
+            errorCode:
+              type: integer
+              description: The error code if the package transfer failed.
+          required:
+            - uuid
+            - packageFileName
+            - transferType
+            - transferStatus
+            - createdDateTimeUTC
+      required:
+        - links
+        - type
+        - id
+        - attributes
+    packageTransferStatusAttributes: *ref_3
+    allPackageTransfersStatusMetaData: &ref_5
+      type: object
+      description: >-
+        High-level information about the VxUpdate package transfer items on the
+        primary server.
+      properties:
+        packageTransfersTotal:
+          type: integer
+          description: >
+            The total number of packages transfer items found on the primary
+            server.
+          format: int64
+      required:
+        - packageTransfersTotal
+    packageTransferInitiateUploadMetaData: &ref_6
+      type: object
+      description: >-
+        Meta data returned on a VxUpdate package transfer initiate upload
+        request.
+      properties:
+        transferChunkSize:
+          type: integer
+          description: >
+            The chunk size the client should use when transferring the file to
+            the primary server.
+          format: int64
+      required:
+        - transferChunkSize
+    singlePackageTransferStatusRequest:
+      type: object
+      description: >-
+        Response payload for a GET request reflecting a single VxUpdate package
+        transfer item.
+      properties:
+        data: *ref_4
+      required:
+        - data
+    allPackageTransfersStatusRequest:
+      type: object
+      description: >-
+        Response payload for a GET request reflecting multiple VxUpdate package
+        transfer items.
+      properties:
+        data:
+          type: array
+          items: *ref_4
+        meta: *ref_5
+      required:
+        - data
+        - meta
+    packageTransferInitiateUploadRequest:
+      type: object
+      description: Response payload for VxUpdate package transfer initiate upload.
+      properties:
+        data: *ref_4
+        meta: *ref_6
+      required:
+        - data
+        - meta
+    packageTransferInitiateUploadParameters:
+      type: object
+      description: >-
+        Request body parameters for VxUpdate package transfer initiate upload
+        request.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - packageTransferInitiateUploadParameters
+            attributes:
+              type: object
+              required:
+                - packageFileName
+                - fileSize
+              properties:
+                packageFileName:
+                  type: string
+                  description: >-
+                    The file name of the package to transfer including the file
+                    extension. It must be a .sja file.
+                fileSize:
+                  type: integer
+                  description: 'The package file size, in bytes.'
+                  format: int64
+          required:
+            - type
+            - attributes
+    eebInfo: &ref_8
+      type: object
+      description: |
+        Response payload for a GET operation for one or more installed EEBs.
+      properties:
+        type:
+          type: string
+          enum:
+            - eebResponse
+        id:
+          type: string
+          description: Identifier of list of EEBs.
+        attributes: &ref_7
+          type: object
+          description: A list of EEBs installed in the NetBackup domain.
+          properties:
+            eebList:
+              type: array
+              description: |
+                The unique list of installed EEBs.
+              items:
+                type: string
+      required:
+        - type
+        - id
+    eebList: *ref_7
+    eebDetails: &ref_9
+      type: object
+      description: High-level information about the list of installed EEBs.
+      properties:
+        eebCount:
+          type: integer
+          description: |
+            The total number of unique EEBs found in the enviroment.
+          format: int64
+    allEebInfoRequest: &ref_10
+      type: object
+      description: Response payload for a GET request showing multiple installed EEBs.
+      properties:
+        data: *ref_8
+        meta:
+          properties:
+            eebDetails: *ref_9
+    addPackagesRequest: &ref_15
+      type: object
+      description: >
+        Request body for a bulk package add request. Contains list of one or
+        more
+
+        fully-qualified paths to VxUpdate packages to be added. Paths must be
+
+        accessible to the primary server.
+      required:
+        - data
+      properties:
+        data:
+          properties:
+            type:
+              type: string
+              description: The resource type. Must be set to "bulkAddPackageRequests".
+              enum:
+                - bulkAddPackageRequests
+            attributes:
+              type: object
+              required:
+                - packageFilePaths
+              properties:
+                packageFilePaths:
+                  description: >-
+                    An array of fully-qualified paths to VxUpdate packages
+                    accessible to the primary server.
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  maxItems: 100
+          required:
+            - type
+            - attributes
+    addPackagesResponse: &ref_16
+      type: object
+      description: |
+        Response from a bulk package add request. Reports the status
+        for each package in the request.
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: The resource type. Must be set to "addPackageStatus".
+                enum:
+                  - addPackageStatus
+              attributes:
+                type: object
+                properties:
+                  filePath:
+                    type: string
+                    description: The file path of the package specified in the request.
+                  isAccepted:
+                    type: boolean
+                    description: >
+                      Whether this particular package was accepted. If false,
+                      details
+
+                      of the problem are reported in statusDetails.
+                  statusDetails:
+                    type: string
+                    description: |
+                      Details of why this particular package was accepted
+                      or rejected at the time the request was made.
+              links:
+                type: object
+                description: The links to the URLs for the details of each package.
+                properties:
+                  self:
+                    type: object
+                    properties:
+                      href:
+                        type: string
+                        description: The URI to get details for the package.
+    filePath:
+      type: object
+      properties:
+        path:
+          type: string
+          description: A local file path.
+paths:
+  /deployment/eebs:
+    get:
+      description: >
+        Returns a list of unique values containing all the EEBs installed in the
+        current
+
+        NetBackup enviroment. If no EEBs are installed, an empty list is
+        returned.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|DEPLOYMENTS|PACKAGES|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - EEBs
+      parameters: []
+      responses:
+        '200':
+          description: List of EEBs returned successfully.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_10
+        '401': &ref_13
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: &ref_11
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '500': &ref_14
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_11
+  /deployment/packages:
+    get:
+      description: >
+        Returns full attributes for all VxUpdate packages in the repository that
+        match the specified
+
+        query filter.  If no query filter is specified, information for all
+        packages is returned.
+
+        Information is returned only for packages that are ready to use.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|DEPLOYMENTS|PACKAGES|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Packages
+      parameters:
+        - name: sort
+          in: query
+          description: >
+            Sorts package list by the following criteria, sorting on multiple
+            attributes is not supported:
+
+            |Name|Description|
+
+            |---|---|
+
+            |id|Default sorting mechanism. Packages are sorted by their id value
+            in ascending order|
+
+            |packageType|Packages are sorted by their type in the following
+            order: client, server, EEB|
+
+            |packageVersion|Packages are sorted by their package version in
+            ascending order. Prefix with '-' for descending order|
+          required: false
+          schema:
+            type: string
+        - name: filter
+          in: query
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |packageName|eq ne contains startswith endswith|The name of the
+            VxUpdate package.|string|
+
+            |packageFileName|eq ne contains startswith endswith|The name of the
+            VxUpdate package file.|string|
+
+            |os|eq ne|Operating system the VxUpdate package applies to.|string|
+
+            |packageType|eq ne|The type of VxUpdate package.|string|
+
+            |version|eq ne|Release version for the VxUpdate package.|string|
+          required: false
+          schema:
+            type: string
+          examples:
+            specificEEB:
+              value: 'contains(packageName, ''1234567.1'')'
+            nonEEBsForNonWindowsPlatforms:
+              value: 'not contains(packageName, ''eeb'') and os ne ''windows_x64'''
+            serverEEBsForTargetVersion:
+              value: packageType eq 'nbeeb.server' and version eq '8.1.2'
+      responses:
+        '200':
+          description: List of packages returned successfully.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_12
+        '400': &ref_17
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_11
+        '401': *ref_13
+        '406': &ref_18
+          description: >-
+            Invalid `Accept` type. Make sure your `Accept` header matches what
+            this API produces.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_11
+        '500': *ref_14
+  /deployment/bulk-package-requests:
+    post:
+      description: >
+        Add one or more VxUpdate packages to the repository on the primary
+        server.
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|DEPLOYMENTS|PACKAGES|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Packages
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=12.0:
+            schema: *ref_15
+      responses:
+        '202':
+          description: |
+            Request accepted. Details for individual packages are returned in
+            the response. Valid packages will be processed in an asynchronous
+            manner. Perform a GET operation at /netbackup/deployment/packages
+            to see which packages are ready to use. If one or more packages is
+            not available after a reasonable amount of time, review the
+            nbwebservice logs to check for possible errors.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_16
+        '400': *ref_17
+        '401': *ref_13
+        '404':
+          description: Immediate package validation failed.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_11
+        '406': *ref_18
+        '500': *ref_14
+  '/deployment/packages/{packageIdentifier}':
+    parameters:
+      - name: packageIdentifier
+        in: path
+        required: true
+        description: The unique identifier for the VxUpdate package.
+        schema:
+          type: string
+    get:
+      description: >
+        Returns information for a specific VxUpdate package in the repository.
+        Only supported with
+
+        packages that are ready to use.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|DEPLOYMENTS|PACKAGES|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Packages
+      responses:
+        '200':
+          description: Successfully returned information for the VxUpdate package.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_19
+        '400':
+          description: Invalid package identifier.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_11
+        '401': *ref_13
+        '404':
+          description: |
+            The package was not found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_11
+        '406': *ref_18
+        '500': *ref_14
+    delete:
+      description: >
+        Removes a single VxUpdate package from the repository on the primary
+        server.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|DEPLOYMENTS|PACKAGES|`\
+
+        Requires Operation: `|OPERATIONS|DELETE|`
+      tags:
+        - Packages
+      responses:
+        '204':
+          description: Package successfully removed from the repository.
+        '400':
+          description: Invalid package identifier.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_11
+        '401': *ref_13
+        '404':
+          description: |
+            The package was not found.
+          content:
+            application/vnd.netbackup+json;version=12.0:
+              schema: *ref_11
+        '406': *ref_18
+        '500': *ref_14
+  '/deployment/packages/{packageIdentifier}/file/{fileType}':
+    parameters:
+      - name: packageIdentifier
+        in: path
+        required: true
+        description: The unique identifier for the VxUpdate package.
+        schema:
+          type: string
+      - name: fileType
+        in: path
+        required: true
+        description: The package (item file) type identifier.
+        schema:
+          type: string
+          enum:
+            - nbrt
+  '/deployment/package-transfers/{transferId}':
+    parameters:
+      - name: transferId
+        in: path
+        required: true
+        description: The unique identifier for the VxUpdate package transfer item.
+        schema:
+          type: string
+  '/deployment/package-transfers/{transferId}/finalize-upload':
+    parameters:
+      - name: transferId
+        in: path
+        required: true
+        description: The unique identifier for the VxUpdate package transfer item.
+        schema:
+          type: string
+  '/deployment/package-transfers/{transferId}/cancel':
+    parameters:
+      - name: transferId
+        in: path
+        required: true
+        description: The unique identifier for the VxUpdate package transfer item.
+        schema:
+          type: string
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []

@@ -1,0 +1,501 @@
+openapi: 3.0.0
+info:
+  title: NetBackup IT Analytics API
+  version: '13.0'
+  description: |
+    The NetBackup IT Analytics APIs provide access to On Premise ITA Portal.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+paths:
+  /ita/servers:
+    post:
+      description: >
+        Registers ITA data collector with on Premise ITA Portal.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`
+
+
+        Following permissions are also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|SERVICE-PRINCIPAL|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Veritas IT Analytics
+      requestBody:
+        description: The request body of the server to be created.
+        content:
+          multipart/vnd.netbackup+form-data;version=13.0:
+            schema:
+              type: object
+              required:
+                - itaRegFile
+              properties:
+                itaRegFile:
+                  description: The IT Analytics registration file.
+                  type: string
+                  format: binary
+                proxyEnabled:
+                  type: boolean
+                  description: >-
+                    Specifies that a proxy server is used for communication with
+                    the on Prem ITA Server.
+                proxyId:
+                  type: integer
+                  description: >-
+                    Specifies the id of proxy server if used for communication
+                    with the on Prem ITA Server.
+        required: true
+      responses:
+        '201':
+          description: |
+            Successfully added the on Premise ITA server.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_8
+                type: object
+                required:
+                  - data
+                properties:
+                  data: &ref_9
+                    type: object
+                    required:
+                      - id
+                      - type
+                      - attributes
+                    properties:
+                      id:
+                        type: string
+                        description: The enterprise ID of Veritas IT Analytics Platform.
+                      type:
+                        type: string
+                        description: Represents Veritas IT Analytics Platform object.
+                        enum:
+                          - itaServer
+                      attributes:
+                        type: object
+                        required:
+                          - dataReceiverUrl
+                        properties:
+                          dataCollection:
+                            type: boolean
+                            description: >-
+                              Specifies that data collection is enabled for
+                              Veritas IT Analytics Platform.
+                          proxyEnabled:
+                            type: boolean
+                            description: >-
+                              Specifies that a proxy server is used for
+                              communication with the IT Analytics Server.
+                          dataReceiverUrl:
+                            type: string
+                            description: >-
+                              The Hostname or IP of Veritas IT Analytics
+                              Platform.
+                      relationships: &ref_1
+                        type: object
+                        properties:
+                          proxyServer:
+                            properties:
+                              data: &ref_13
+                                type: object
+                                properties:
+                                  type:
+                                    type: string
+                                    enum:
+                                      - proxyServer
+                                  id:
+                                    type: string
+                                required:
+                                  - type
+                                  - id
+                            required:
+                              - data
+        '400': &ref_5
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_0
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '401': &ref_2
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '404': &ref_4
+          description: No entity found.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '409':
+          description: The Veritas IT Analytics Platform is already added.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415': &ref_6
+          description: >
+            Unsupported Media Type. The media type specified in the
+            `Content-Type` header is not supported by this API.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': &ref_3
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+    get:
+      description: >
+        Retrieve the details of on premise IT Analytics server.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Veritas IT Analytics
+      responses:
+        '200':
+          description: |
+            Successfully retrieved the Veritas IT Analytics server details.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_11
+                type: object
+                required:
+                  - data
+                properties:
+                  data: &ref_12
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - type
+                        - attributes
+                      properties:
+                        id:
+                          type: string
+                          description: The enterprise ID of Veritas IT Analytics Platform.
+                        type:
+                          type: string
+                          description: Represents Veritas IT Analytics Platform object.
+                          enum:
+                            - itaServer
+                        attributes:
+                          type: object
+                          required:
+                            - dataReceiverUrl
+                          properties:
+                            dataReceiverUrl:
+                              type: string
+                              description: The url of Veritas IT Analytics Platform.
+                            proxyEnabled:
+                              type: boolean
+                              description: >-
+                                Specifies that a proxy server is used for
+                                communication with the Alta View Server
+                        relationships: *ref_1
+        '204':
+          description: |
+            ITA DC is not registered with On Prem ITA portal.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_10
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
+                    maxItems: 0
+        '401': *ref_2
+        '500': *ref_3
+    delete:
+      description: >
+        Delete the details of on premise IT Analytics server.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|DELETE|`
+      tags:
+        - Veritas IT Analytics
+      responses:
+        '204':
+          description: |
+            Successfully deregistered the Veritas IT Analytics server.
+        '401': *ref_2
+        '404': *ref_4
+        '500': *ref_3
+  '/ita/servers/{itaServerId}':
+    patch:
+      description: >
+        Update the proxy configuration of On premise Server.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Veritas IT Analytics
+      parameters:
+        - &ref_7
+          name: itaServerId
+          in: path
+          description: The Id of IT Analytics server
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_18
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - id
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      description: The resource type to be created.
+                      enum:
+                        - updateItaServer
+                    attributes: &ref_19
+                      type: object
+                      properties:
+                        proxyEnabled:
+                          type: boolean
+                          description: >-
+                            Specifies that a proxy server is used for
+                            communication with the On Premise ITA Server.
+                        proxyId:
+                          type: string
+                          description: >
+                            Specifies the id of proxy server if used for
+                            communication with the On Premise ITA Server.
+        description: >-
+          Specifies the JSON body that contains the updated proxy details for
+          ITA Server.
+        required: true
+      responses:
+        '204':
+          description: |
+            Successfully updated the Veritas ITA Server details.
+        '400': *ref_5
+        '401': *ref_2
+        '404': *ref_4
+        '500': *ref_3
+  /ita/data-collection-state:
+    post:
+      description: >
+        Saves ita data collection state.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+
+
+        Following permissions are also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|SERVICE-PRINCIPAL|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - Veritas IT Analytics
+      requestBody:
+        description: The request body datacollection status.
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_14
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - itaDcInfo
+                    attributes: &ref_15
+                      type: object
+                      description: State of data collection from NetBackup primary.
+                      properties:
+                        state:
+                          type: string
+                          description: >-
+                            Indicates the state of the host. Possible values are
+                            null, ACTIVATED, DEACTIVATED.
+                          enum:
+                            - ACTIVATED
+                            - DEACTIVATED
+        required: true
+      responses:
+        '204':
+          description: |
+            Successfully saved the ita data collection state.
+        '400': *ref_5
+        '401': *ref_2
+        '415': *ref_6
+        '500': *ref_3
+    get:
+      description: >
+        Retrieves the ita data collection state.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|ALTA-VIEW|DOMAIN|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+
+
+        Following permissions are also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|SERVICE-PRINCIPAL|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Veritas IT Analytics
+      responses:
+        '200':
+          description: Status of data collection from NetBackup primary.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_16
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - itaDcState
+                      id:
+                        type: string
+                      attributes: &ref_17
+                        type: object
+                        description: State of data collection from NetBackup primary.
+                        properties:
+                          state:
+                            type: string
+                            description: >-
+                              Indicates the state of the host. Possible values
+                              are null, ACTIVATED, DEACTIVATED.
+                            enum:
+                              - ACTIVATED
+                              - DEACTIVATED
+        '401': *ref_2
+        '406':
+          description: >-
+            Invalid `Accept` type. Make sure your `Accept` header matches what
+            this API produces.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500': *ref_3
+components:
+  parameters:
+    itaServerId: *ref_7
+  schemas:
+    postItaServerResponse: *ref_8
+    postItaServerResponseDetails: *ref_9
+    getEmptyItaServerResponse: *ref_10
+    getItaServerResponse: *ref_11
+    getItaServerResponseDetails: *ref_12
+    itaServerRelations: *ref_1
+    proxyServerRelationDefinition: *ref_13
+    dataCollectionRequest: *ref_14
+    dataCollectionInfo: *ref_15
+    dataCollectionResponse: *ref_16
+    dataCollectionStatus: *ref_17
+    updateItaServerRequest: *ref_18
+    updateItaServerData: *ref_19

@@ -1,0 +1,77 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Cloudscale Configuration API
+  version: '12.0'
+  description: |
+    API set for configuration of NetBackup cloudscale deployment configuration.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/10.5/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+components:
+  schemas:
+    K8sEnvResourceResponse: &ref_0
+      description: The requested CloudScale environment resource.
+      type: object
+      required:
+        - id
+        - type
+        - attributes
+      properties:
+        id:
+          type: string
+          description: The ID of the resource. Its value is same as the resource name.
+        type:
+          type: string
+          description: The resource type.
+          enum:
+            - k8sEnvironmentResource
+        attributes:
+          type: object
+          description: The attributes of the resource.
+          required:
+            - resourceType
+            - resourceData
+          properties:
+            resourceType:
+              type: string
+              description: The type of kubernetes resource.
+              enum:
+                - CONFIG_MAP
+                - SECRET
+                - STORAGE_CLASS
+                - ENVIRONMENT
+            resourceData:
+              type: string
+              description: The data of the kubernetes resource in string format.
+    K8sEnvResourceListResponse:
+      description: The list of CloudScale environment resources.
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items: *ref_0
+    K8sEnvResourceType:
+      description: The type of K8s environment resource.
+      type: string
+      enum:
+        - CONFIG_MAP
+        - SECRET
+        - STORAGE_CLASS
+        - ENVIRONMENT
+    K8sEnvTelemetry:
+      type: object
+      properties:
+        file:
+          description: >-
+            The telemetry file to be dumped at path
+            <install-path>/var/global/telemetry/tmp/.
+          type: string
+          format: binary
+      required:
+        - file

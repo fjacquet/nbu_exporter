@@ -1,0 +1,2874 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Prometheus exporter for Veritas NetBackup">
+      
+      
+      
+        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/trace-analysis-guide/">
+      
+      
+        <link rel="prev" href="../opentelemetry-example/">
+      
+      
+        <link rel="next" href="../netbackup-11-migration/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Trace Analysis - NBU Exporter</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#trace-analysis-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            NBU Exporter
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Trace Analysis
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/fjacquet/nbu_exporter" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fjacquet/nbu_exporter
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    NBU Exporter
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/fjacquet/nbu_exporter" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fjacquet/nbu_exporter
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenTelemetry Integration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    OpenTelemetry Integration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../opentelemetry-example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trace Analysis
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trace Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#understanding-trace-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Understanding Trace Structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Understanding Trace Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#span-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span Hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span Attributes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Span Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#root-span-prometheusscrape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Root Span (prometheus.scrape)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-fetch-netbackupfetch_storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage Fetch (netbackup.fetch_storage)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-fetch-netbackupfetch_jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job Fetch (netbackup.fetch_jobs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-request-httprequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP Request (http.request)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Queries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Queries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jaeger-ui-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jaeger UI Queries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Jaeger UI Queries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-all-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find All Traces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-slow-scrapes-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Slow Scrapes (&gt; 30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-failed-scrapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Failed Scrapes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-specific-time-range" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Specific Time Range
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-high-pagination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find High Pagination
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#traceql-queries-tempografana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TraceQL Queries (Tempo/Grafana)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TraceQL Queries (Tempo/Grafana)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-slow-api-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Slow API Calls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-failed-http-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Failed HTTP Requests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-scrapes-with-many-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Scrapes with Many Jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-storage-fetch-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Storage Fetch Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aggregate-by-status-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aggregate by Status Code
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#identifying-bottlenecks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identifying Bottlenecks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identifying Bottlenecks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-find-slow-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Find Slow Traces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-analyze-span-timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Analyze Span Timeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-examine-span-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Examine Span Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#baseline-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Baseline Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Targets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting Scenarios
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting Scenarios">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scenario-1-scrapes-timing-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario 1: Scrapes Timing Out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scenario-2-intermittent-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario 2: Intermittent Failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scenario-3-slow-storage-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario 3: Slow Storage Fetch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scenario-4-high-pagination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario 4: High Pagination
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scenario-5-api-version-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario 5: API Version Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Optimization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sampling-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sampling Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alerting-on-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alerting on Traces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regular-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regular Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#comparing-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparing Traces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correlation-with-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correlation with Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-trace-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting Trace Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#span-attributes-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span Attributes Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Span Attributes Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#complete-attribute-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Attribute List
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Further Reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Migration Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../netbackup-11-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NetBackup 11.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-10.5-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API 10.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-quick-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#understanding-trace-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Understanding Trace Structure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Understanding Trace Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#span-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span Hierarchy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#span-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span Attributes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Span Attributes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#root-span-prometheusscrape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Root Span (prometheus.scrape)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#storage-fetch-netbackupfetch_storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Storage Fetch (netbackup.fetch_storage)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#job-fetch-netbackupfetch_jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Job Fetch (netbackup.fetch_jobs)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-request-httprequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP Request (http.request)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Queries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Queries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#jaeger-ui-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Jaeger UI Queries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Jaeger UI Queries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-all-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find All Traces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-slow-scrapes-30-seconds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Slow Scrapes (&gt; 30 seconds)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-failed-scrapes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Failed Scrapes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-specific-time-range" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Specific Time Range
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-high-pagination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find High Pagination
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#traceql-queries-tempografana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TraceQL Queries (Tempo/Grafana)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TraceQL Queries (Tempo/Grafana)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#find-slow-api-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Slow API Calls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-failed-http-requests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Failed HTTP Requests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-scrapes-with-many-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Scrapes with Many Jobs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#find-storage-fetch-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Find Storage Fetch Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#aggregate-by-status-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Aggregate by Status Code
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#identifying-bottlenecks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Identifying Bottlenecks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Identifying Bottlenecks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-find-slow-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Find Slow Traces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-2-analyze-span-timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Analyze Span Timeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-3-examine-span-attributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Examine Span Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#baseline-performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Baseline Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance Targets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting-scenarios" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting Scenarios
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting Scenarios">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scenario-1-scrapes-timing-out" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario 1: Scrapes Timing Out
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scenario-2-intermittent-failures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario 2: Intermittent Failures
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scenario-3-slow-storage-fetch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario 3: Slow Storage Fetch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scenario-4-high-pagination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario 4: High Pagination
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scenario-5-api-version-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scenario 5: API Version Issues
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Query Optimization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sampling-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sampling Strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#alerting-on-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alerting on Traces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#regular-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regular Analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced Analysis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#comparing-traces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparing Traces
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#correlation-with-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correlation with Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#exporting-trace-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exporting Trace Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#span-attributes-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Span Attributes Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Span Attributes Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#complete-attribute-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Complete Attribute List
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#further-reading" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Further Reading
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="trace-analysis-guide">Trace Analysis Guide</h1>
+<p>This guide provides detailed instructions for querying and analyzing traces from the NBU Exporter to diagnose performance issues and optimize your monitoring setup.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ul>
+<li><a href="#understanding-trace-structure">Understanding Trace Structure</a></li>
+<li><a href="#common-queries">Common Queries</a></li>
+<li><a href="#performance-analysis">Performance Analysis</a></li>
+<li><a href="#troubleshooting-scenarios">Troubleshooting Scenarios</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+</ul>
+<h2 id="understanding-trace-structure">Understanding Trace Structure</h2>
+<h3 id="span-hierarchy">Span Hierarchy</h3>
+<p>Each Prometheus scrape creates a trace with the following structure:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>prometheus.scrape (root span)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── netbackup.fetch_storage
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   └── http.request (GET /storage/storage-units)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>└── netbackup.fetch_jobs
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    ├── netbackup.fetch_job_page (offset=0)
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    │   └── http.request (GET /admin/jobs?offset=0)
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    ├── netbackup.fetch_job_page (offset=1)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    │   └── http.request (GET /admin/jobs?offset=1)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    └── netbackup.fetch_job_page (offset=N)
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        └── http.request (GET /admin/jobs?offset=N)
+</code></pre></div>
+<h3 id="span-attributes">Span Attributes</h3>
+<h4 id="root-span-prometheusscrape">Root Span (prometheus.scrape)</h4>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>scrape.duration_ms</code></td>
+<td>int</td>
+<td>Total scrape duration in milliseconds</td>
+<td>45230</td>
+</tr>
+<tr>
+<td><code>scrape.storage_metrics_count</code></td>
+<td>int</td>
+<td>Number of storage metrics collected</td>
+<td>12</td>
+</tr>
+<tr>
+<td><code>scrape.job_metrics_count</code></td>
+<td>int</td>
+<td>Number of job metrics collected</td>
+<td>156</td>
+</tr>
+<tr>
+<td><code>scrape.status</code></td>
+<td>string</td>
+<td>Overall scrape status</td>
+<td>"success", "partial_failure"</td>
+</tr>
+</tbody>
+</table>
+<h4 id="storage-fetch-netbackupfetch_storage">Storage Fetch (netbackup.fetch_storage)</h4>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>netbackup.endpoint</code></td>
+<td>string</td>
+<td>API endpoint path</td>
+<td>"/storage/storage-units"</td>
+</tr>
+<tr>
+<td><code>netbackup.storage_units</code></td>
+<td>int</td>
+<td>Number of storage units retrieved</td>
+<td>6</td>
+</tr>
+<tr>
+<td><code>netbackup.api_version</code></td>
+<td>string</td>
+<td>API version used</td>
+<td>"13.0"</td>
+</tr>
+</tbody>
+</table>
+<h4 id="job-fetch-netbackupfetch_jobs">Job Fetch (netbackup.fetch_jobs)</h4>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>netbackup.endpoint</code></td>
+<td>string</td>
+<td>API endpoint path</td>
+<td>"/admin/jobs"</td>
+</tr>
+<tr>
+<td><code>netbackup.time_window</code></td>
+<td>string</td>
+<td>Scraping interval</td>
+<td>"1h"</td>
+</tr>
+<tr>
+<td><code>netbackup.total_jobs</code></td>
+<td>int</td>
+<td>Total jobs retrieved</td>
+<td>1523</td>
+</tr>
+<tr>
+<td><code>netbackup.total_pages</code></td>
+<td>int</td>
+<td>Number of pages fetched</td>
+<td>16</td>
+</tr>
+</tbody>
+</table>
+<h4 id="http-request-httprequest">HTTP Request (http.request)</h4>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>http.method</code></td>
+<td>string</td>
+<td>HTTP method</td>
+<td>"GET"</td>
+</tr>
+<tr>
+<td><code>http.url</code></td>
+<td>string</td>
+<td>Full request URL</td>
+<td>"<a href="https://nbu:1556/netbackup/admin/jobs">https://nbu:1556/netbackup/admin/jobs</a>"</td>
+</tr>
+<tr>
+<td><code>http.status_code</code></td>
+<td>int</td>
+<td>HTTP response status code</td>
+<td>200</td>
+</tr>
+<tr>
+<td><code>http.duration_ms</code></td>
+<td>int</td>
+<td>Request duration in milliseconds</td>
+<td>2341</td>
+</tr>
+</tbody>
+</table>
+<h2 id="common-queries">Common Queries</h2>
+<h3 id="jaeger-ui-queries">Jaeger UI Queries</h3>
+<h4 id="find-all-traces">Find All Traces</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Service: nbu-exporter
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Operation: prometheus.scrape
+</code></pre></div>
+<h4 id="find-slow-scrapes-30-seconds">Find Slow Scrapes (&gt; 30 seconds)</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>Service: nbu-exporter
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>Operation: prometheus.scrape
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Min Duration: 30s
+</code></pre></div>
+<h4 id="find-failed-scrapes">Find Failed Scrapes</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Service: nbu-exporter
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>Tags: scrape.status=partial_failure
+</code></pre></div>
+<h4 id="find-specific-time-range">Find Specific Time Range</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Service: nbu-exporter
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>Lookback: Custom
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Start: 2024-01-15 10:00
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>End: 2024-01-15 11:00
+</code></pre></div>
+<h4 id="find-high-pagination">Find High Pagination</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Service: nbu-exporter
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>Tags: netbackup.total_pages&gt;10
+</code></pre></div>
+<h3 id="traceql-queries-tempografana">TraceQL Queries (Tempo/Grafana)</h3>
+<h4 id="find-slow-api-calls">Find Slow API Calls</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>{ span.http.duration_ms &gt; 5000 }
+</code></pre></div>
+<h4 id="find-failed-http-requests">Find Failed HTTP Requests</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>{ span.http.status_code &gt;= 400 }
+</code></pre></div>
+<h4 id="find-scrapes-with-many-jobs">Find Scrapes with Many Jobs</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>{ span.netbackup.total_jobs &gt; 1000 }
+</code></pre></div>
+<h4 id="find-storage-fetch-issues">Find Storage Fetch Issues</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>{ name = &quot;netbackup.fetch_storage&quot; &amp;&amp; duration &gt; 10s }
+</code></pre></div>
+<h4 id="aggregate-by-status-code">Aggregate by Status Code</h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>{ span.http.status_code } | count() by (span.http.status_code)
+</code></pre></div>
+<h2 id="performance-analysis">Performance Analysis</h2>
+<h3 id="identifying-bottlenecks">Identifying Bottlenecks</h3>
+<h4 id="step-1-find-slow-traces">Step 1: Find Slow Traces</h4>
+<ol>
+<li>Open Jaeger UI</li>
+<li>Select service: <code>nbu-exporter</code></li>
+<li>Set "Min Duration" to 30s</li>
+<li>Click "Find Traces"</li>
+<li>Sort by duration (longest first)</li>
+</ol>
+<h4 id="step-2-analyze-span-timeline">Step 2: Analyze Span Timeline</h4>
+<p>Click on a slow trace and examine the waterfall view:</p>
+<p><strong>Example 1: Slow Storage Fetch</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>prometheus.scrape: 35.2s
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>├── netbackup.fetch_storage: 30.1s ⚠️ BOTTLENECK
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>│   └── http.request: 30.0s
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>└── netbackup.fetch_jobs: 5.1s
+</code></pre></div>
+<p><strong>Diagnosis</strong>: Storage API is slow
+<strong>Action</strong>: Check NetBackup server performance, verify network latency</p>
+<p><strong>Example 2: High Pagination</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>prometheus.scrape: 48.3s
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>├── netbackup.fetch_storage: 2.1s
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>└── netbackup.fetch_jobs: 46.2s ⚠️ BOTTLENECK
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    ├── netbackup.fetch_job_page: 15.4s
+<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    ├── netbackup.fetch_job_page: 15.3s
+<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    └── netbackup.fetch_job_page: 15.5s
+</code></pre></div>
+<p><strong>Diagnosis</strong>: Too many job pages (high job volume)
+<strong>Action</strong>: Reduce <code>scrapingInterval</code> from 1h to 30m</p>
+<p><strong>Example 3: API Errors</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>prometheus.scrape: 25.2s
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>├── netbackup.fetch_storage: 2.1s
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>└── netbackup.fetch_jobs: 23.1s
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    ├── netbackup.fetch_job_page: 5.2s (http.status_code=500) ⚠️ ERROR
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    ├── netbackup.fetch_job_page: 5.3s (http.status_code=500) ⚠️ ERROR
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    └── netbackup.fetch_job_page: 5.4s (http.status_code=500) ⚠️ ERROR
+</code></pre></div>
+<p><strong>Diagnosis</strong>: NetBackup API errors
+<strong>Action</strong>: Check NetBackup server logs, verify API key permissions</p>
+<h4 id="step-3-examine-span-attributes">Step 3: Examine Span Attributes</h4>
+<p>Click on a span to view its attributes:</p>
+<p><strong>Key metrics to check:</strong></p>
+<ul>
+<li><code>http.duration_ms</code>: Request latency</li>
+<li><code>http.status_code</code>: Success/failure status</li>
+<li><code>netbackup.total_pages</code>: Pagination count</li>
+<li><code>netbackup.total_jobs</code>: Job volume</li>
+</ul>
+<h3 id="performance-metrics">Performance Metrics</h3>
+<h4 id="baseline-performance">Baseline Performance</h4>
+<p><strong>Normal scrape (&lt; 1000 jobs, 6 storage units):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>prometheus.scrape: 8-12s
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>├── netbackup.fetch_storage: 1-2s
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>└── netbackup.fetch_jobs: 6-10s
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    └── 1-2 pages @ 3-5s each
+</code></pre></div>
+<p><strong>High-volume scrape (&gt; 5000 jobs):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>prometheus.scrape: 45-60s
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>├── netbackup.fetch_storage: 1-2s
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>└── netbackup.fetch_jobs: 43-58s
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    └── 10-15 pages @ 3-5s each
+</code></pre></div>
+<h4 id="performance-targets">Performance Targets</h4>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Target</th>
+<th>Warning</th>
+<th>Critical</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total scrape duration</td>
+<td>&lt; 30s</td>
+<td>30-60s</td>
+<td>&gt; 60s</td>
+</tr>
+<tr>
+<td>Storage fetch</td>
+<td>&lt; 5s</td>
+<td>5-10s</td>
+<td>&gt; 10s</td>
+</tr>
+<tr>
+<td>Job page fetch</td>
+<td>&lt; 5s</td>
+<td>5-10s</td>
+<td>&gt; 10s</td>
+</tr>
+<tr>
+<td>HTTP status codes</td>
+<td>200</td>
+<td>4xx</td>
+<td>5xx</td>
+</tr>
+<tr>
+<td>Total pages</td>
+<td>&lt; 5</td>
+<td>5-10</td>
+<td>&gt; 10</td>
+</tr>
+</tbody>
+</table>
+<h2 id="troubleshooting-scenarios">Troubleshooting Scenarios</h2>
+<h3 id="scenario-1-scrapes-timing-out">Scenario 1: Scrapes Timing Out</h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Prometheus scrape timeout errors</li>
+<li>Incomplete metrics</li>
+<li>Traces show &gt; 60s duration</li>
+</ul>
+<p><strong>Analysis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>Query: Min Duration: 60s
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>Look for: High netbackup.total_pages
+</code></pre></div>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Reduce <code>scrapingInterval</code> from 1h to 30m</li>
+<li>Increase Prometheus scrape timeout</li>
+<li>Optimize NetBackup server performance</li>
+</ol>
+<h3 id="scenario-2-intermittent-failures">Scenario 2: Intermittent Failures</h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Some scrapes succeed, others fail</li>
+<li>HTTP 500 errors in traces</li>
+<li><code>scrape.status=partial_failure</code></li>
+</ul>
+<p><strong>Analysis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Query: Tags: scrape.status=partial_failure
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>Look for: http.status_code &gt;= 500
+</code></pre></div>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Check NetBackup server logs for errors</li>
+<li>Verify API key has correct permissions</li>
+<li>Check network connectivity</li>
+<li>Review NetBackup server resource usage</li>
+</ol>
+<h3 id="scenario-3-slow-storage-fetch">Scenario 3: Slow Storage Fetch</h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Storage metrics delayed</li>
+<li><code>netbackup.fetch_storage</code> &gt; 10s</li>
+</ul>
+<p><strong>Analysis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>Query: Operation: netbackup.fetch_storage, Min Duration: 10s
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>Look for: http.duration_ms in child spans
+</code></pre></div>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Check NetBackup storage service status</li>
+<li>Verify network latency to NetBackup server</li>
+<li>Review NetBackup server disk I/O</li>
+<li>Check for storage unit issues</li>
+</ol>
+<h3 id="scenario-4-high-pagination">Scenario 4: High Pagination</h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>Long scrape durations</li>
+<li>Many <code>netbackup.fetch_job_page</code> spans</li>
+<li><code>netbackup.total_pages</code> &gt; 10</li>
+</ul>
+<p><strong>Analysis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>Query: Tags: netbackup.total_pages&gt;10
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>Look for: Pattern of multiple page fetches
+</code></pre></div>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Reduce <code>scrapingInterval</code> to fetch fewer jobs</li>
+<li>Consider filtering jobs by policy or status</li>
+<li>Optimize NetBackup job retention policies</li>
+</ol>
+<h3 id="scenario-5-api-version-issues">Scenario 5: API Version Issues</h3>
+<p><strong>Symptoms:</strong></p>
+<ul>
+<li>HTTP 406 errors</li>
+<li>Version detection failures</li>
+<li>Inconsistent API responses</li>
+</ul>
+<p><strong>Analysis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>Query: Tags: http.status_code=406
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>Look for: netbackup.api_version attribute
+</code></pre></div>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>Verify NetBackup version compatibility</li>
+<li>Check API version configuration</li>
+<li>Enable automatic version detection</li>
+<li>Review NetBackup API logs</li>
+</ol>
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="query-optimization">Query Optimization</h3>
+<p><strong>Use specific time ranges:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>Lookback: Last 1 hour (instead of Last 24 hours)
+</code></pre></div>
+<p><strong>Filter by operation:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>Operation: netbackup.fetch_jobs (instead of all operations)
+</code></pre></div>
+<p><strong>Use tags for precision:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>Tags: netbackup.api_version=13.0
+</code></pre></div>
+<h3 id="sampling-strategy">Sampling Strategy</h3>
+<p><strong>Development:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nt">samplingRate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">  </span><span class="c1"># Trace everything</span>
+</code></pre></div>
+<p><strong>Production (normal load):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="nt">samplingRate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span><span class="w">  </span><span class="c1"># 10% sampling</span>
+</code></pre></div>
+<p><strong>Production (high load):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="nt">samplingRate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.01</span><span class="w">  </span><span class="c1"># 1% sampling</span>
+</code></pre></div>
+<h3 id="alerting-on-traces">Alerting on Traces</h3>
+<p><strong>Create alerts for:</strong></p>
+<ul>
+<li>Scrape duration &gt; 60s</li>
+<li>HTTP status codes &gt;= 500</li>
+<li>High pagination (&gt; 10 pages)</li>
+<li>Partial failures</li>
+</ul>
+<p><strong>Example Prometheus alert:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">alert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">SlowNBUScrape</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">  </span><span class="nt">expr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">histogram_quantile(0.95, rate(scrape_duration_seconds_bucket[5m])) &gt; 60</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">    </span><span class="nt">summary</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;NBU</span><span class="nv"> </span><span class="s">scrapes</span><span class="nv"> </span><span class="s">are</span><span class="nv"> </span><span class="s">slow&quot;</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;95th</span><span class="nv"> </span><span class="s">percentile</span><span class="nv"> </span><span class="s">scrape</span><span class="nv"> </span><span class="s">duration</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">{{</span><span class="nv"> </span><span class="s">$value</span><span class="nv"> </span><span class="s">}}s&quot;</span>
+</code></pre></div>
+<h3 id="regular-analysis">Regular Analysis</h3>
+<p><strong>Daily:</strong></p>
+<ul>
+<li>Check for failed scrapes</li>
+<li>Review slow traces (&gt; 30s)</li>
+<li>Monitor HTTP error rates</li>
+</ul>
+<p><strong>Weekly:</strong></p>
+<ul>
+<li>Analyze pagination trends</li>
+<li>Review API version distribution</li>
+<li>Check sampling effectiveness</li>
+</ul>
+<p><strong>Monthly:</strong></p>
+<ul>
+<li>Optimize scraping intervals</li>
+<li>Review trace retention policies</li>
+<li>Update performance baselines</li>
+</ul>
+<h2 id="advanced-analysis">Advanced Analysis</h2>
+<h3 id="comparing-traces">Comparing Traces</h3>
+<p><strong>Compare before/after optimization:</strong></p>
+<ol>
+<li>Find baseline trace (before changes)</li>
+<li>Note key metrics (duration, pages, etc.)</li>
+<li>Make configuration changes</li>
+<li>Find new trace (after changes)</li>
+<li>Compare metrics side-by-side</li>
+</ol>
+<p><strong>Example comparison:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Before</th>
+<th>After</th>
+<th>Improvement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total duration</td>
+<td>48.3s</td>
+<td>12.1s</td>
+<td>75% faster</td>
+</tr>
+<tr>
+<td>Total pages</td>
+<td>15</td>
+<td>3</td>
+<td>80% reduction</td>
+</tr>
+<tr>
+<td>Job count</td>
+<td>5234</td>
+<td>1156</td>
+<td>Reduced scope</td>
+</tr>
+</tbody>
+</table>
+<h3 id="correlation-with-metrics">Correlation with Metrics</h3>
+<p><strong>Link traces to Prometheus metrics:</strong></p>
+<ol>
+<li>Note trace timestamp</li>
+<li>Query Prometheus for same time range</li>
+<li>Correlate trace spans with metric values</li>
+<li>Identify patterns</li>
+</ol>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>Trace shows: 15 pages fetched
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>Prometheus shows: nbu_jobs_count{} = 5234
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>Calculation: 5234 / 15 ≈ 349 jobs per page
+</code></pre></div>
+<h3 id="exporting-trace-data">Exporting Trace Data</h3>
+<p><strong>Export for analysis:</strong></p>
+<ol>
+<li>In Jaeger UI, click "JSON" on trace view</li>
+<li>Save trace JSON</li>
+<li>Analyze with custom tools</li>
+<li>Generate reports</li>
+</ol>
+<p><strong>Example Python analysis:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;trace.json&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>    <span class="n">trace</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+<a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>
+<a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a><span class="k">for</span> <span class="n">span</span> <span class="ow">in</span> <span class="n">trace</span><span class="p">[</span><span class="s1">&#39;spans&#39;</span><span class="p">]:</span>
+<a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>    <span class="k">if</span> <span class="n">span</span><span class="p">[</span><span class="s1">&#39;operationName&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;http.request&#39;</span><span class="p">:</span>
+<a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a>        <span class="n">duration</span> <span class="o">=</span> <span class="n">span</span><span class="p">[</span><span class="s1">&#39;duration&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">1000</span>  <span class="c1"># Convert to ms</span>
+<a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP request: </span><span class="si">{</span><span class="n">duration</span><span class="si">}</span><span class="s2">ms&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="span-attributes-reference">Span Attributes Reference</h2>
+<h3 id="complete-attribute-list">Complete Attribute List</h3>
+<table>
+<thead>
+<tr>
+<th>Span</th>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>prometheus.scrape</td>
+<td>scrape.duration_ms</td>
+<td>int</td>
+<td>Total scrape duration</td>
+</tr>
+<tr>
+<td>prometheus.scrape</td>
+<td>scrape.storage_metrics_count</td>
+<td>int</td>
+<td>Storage metrics collected</td>
+</tr>
+<tr>
+<td>prometheus.scrape</td>
+<td>scrape.job_metrics_count</td>
+<td>int</td>
+<td>Job metrics collected</td>
+</tr>
+<tr>
+<td>prometheus.scrape</td>
+<td>scrape.status</td>
+<td>string</td>
+<td>Overall status</td>
+</tr>
+<tr>
+<td>netbackup.fetch_storage</td>
+<td>netbackup.endpoint</td>
+<td>string</td>
+<td>API endpoint</td>
+</tr>
+<tr>
+<td>netbackup.fetch_storage</td>
+<td>netbackup.storage_units</td>
+<td>int</td>
+<td>Storage units retrieved</td>
+</tr>
+<tr>
+<td>netbackup.fetch_storage</td>
+<td>netbackup.api_version</td>
+<td>string</td>
+<td>API version</td>
+</tr>
+<tr>
+<td>netbackup.fetch_jobs</td>
+<td>netbackup.endpoint</td>
+<td>string</td>
+<td>API endpoint</td>
+</tr>
+<tr>
+<td>netbackup.fetch_jobs</td>
+<td>netbackup.time_window</td>
+<td>string</td>
+<td>Scraping interval</td>
+</tr>
+<tr>
+<td>netbackup.fetch_jobs</td>
+<td>netbackup.total_jobs</td>
+<td>int</td>
+<td>Total jobs retrieved</td>
+</tr>
+<tr>
+<td>netbackup.fetch_jobs</td>
+<td>netbackup.total_pages</td>
+<td>int</td>
+<td>Pages fetched</td>
+</tr>
+<tr>
+<td>netbackup.fetch_job_page</td>
+<td>netbackup.page_offset</td>
+<td>int</td>
+<td>Page offset</td>
+</tr>
+<tr>
+<td>netbackup.fetch_job_page</td>
+<td>netbackup.jobs_in_page</td>
+<td>int</td>
+<td>Jobs in this page</td>
+</tr>
+<tr>
+<td>http.request</td>
+<td>http.method</td>
+<td>string</td>
+<td>HTTP method</td>
+</tr>
+<tr>
+<td>http.request</td>
+<td>http.url</td>
+<td>string</td>
+<td>Request URL</td>
+</tr>
+<tr>
+<td>http.request</td>
+<td>http.status_code</td>
+<td>int</td>
+<td>Response status</td>
+</tr>
+<tr>
+<td>http.request</td>
+<td>http.duration_ms</td>
+<td>int</td>
+<td>Request duration</td>
+</tr>
+</tbody>
+</table>
+<h2 id="further-reading">Further Reading</h2>
+<ul>
+<li><a href="https://opentelemetry.io/docs/specs/otel/trace/">OpenTelemetry Tracing Specification</a></li>
+<li><a href="https://www.jaegertracing.io/docs/latest/frontend-ui/">Jaeger Query Documentation</a></li>
+<li><a href="https://grafana.com/docs/tempo/latest/traceql/">TraceQL Documentation</a></li>
+<li><a href="https://opentelemetry.io/docs/concepts/observability-primer/#distributed-tracing">Distributed Tracing Best Practices</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

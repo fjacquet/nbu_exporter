@@ -1,0 +1,139 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Self Service API
+  version: '13.0'
+  description: >
+    The NetBackup Self Service API provides access to NSS registered client
+    info.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+paths:
+  /netbackup-self-service/clients:
+    post:
+      description: >
+        Save NSS Client Details.
+
+
+        **Access Control**\
+
+        Enforcement Type: [API
+        Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|HOSTS|NSS|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+      tags:
+        - NSS Clients
+      security:
+        - apiKeyAuth: []
+        - jwtAuth: []
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema: &ref_1
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - nssClientInfo
+                      attributes:
+                        type: object
+                        properties:
+                          clientName:
+                            type: string
+                          serviceProvider:
+                            type: string
+                        required:
+                          - clientName
+        description: NSS Client Information in JSON format.
+      responses:
+        '204':
+          description: Successfully saved NSS clients details
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: &ref_0
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '401':
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '415':
+          description: >
+            Unsupported Media Type. The media type specified in the
+            `Content-Type` header is not supported by this API.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+        '500':
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema: *ref_0
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    NssClientInfo: *ref_1
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []

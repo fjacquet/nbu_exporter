@@ -1,0 +1,1920 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Prometheus exporter for Veritas NetBackup">
+      
+      
+      
+        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/changelog/">
+      
+      
+        <link rel="prev" href="../config-examples/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Changelog - NBU Exporter</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changelog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            NBU Exporter
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/fjacquet/nbu_exporter" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fjacquet/nbu_exporter
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    NBU Exporter
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/fjacquet/nbu_exporter" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    fjacquet/nbu_exporter
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Start
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenTelemetry Integration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    OpenTelemetry Integration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../opentelemetry-example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trace-analysis-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trace Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Migration Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Migration Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../netbackup-11-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NetBackup 11.0
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-10.5-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API 10.5
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-verification/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Verification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment-quick-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docker/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../config-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration Examples
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [Unreleased]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[Unreleased]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#221-2026-02-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.2.1] - 2026-02-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.2.1] - 2026-02-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#220-2026-01-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.2.0] - 2026-01-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.2.0] - 2026-01-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opentelemetry-distributed-tracing-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenTelemetry Distributed Tracing (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-version-api-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Version API Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-file-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration File Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-your-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Your Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#210-2025-11-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.1.0] - 2025-11-09
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#200-2025-11-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.0.0] - 2025-11-09
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#122-2025-11-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.2.2] - 2025-11-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#121-2025-11-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.2.1] - 2025-11-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#120-2025-11-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.2.0] - 2025-11-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110-2025-11-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.1.0] - 2025-11-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#100-2025-11-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.0] - 2025-11-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [Unreleased]
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[Unreleased]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#221-2026-02-18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.2.1] - 2026-02-18
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.2.1] - 2026-02-18">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#220-2026-01-24" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.2.0] - 2026-01-24
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.2.0] - 2026-01-24">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Performance
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Migration Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#opentelemetry-distributed-tracing-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenTelemetry Distributed Tracing (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-version-api-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Version API Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-file-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration File Changes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-your-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Your Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Test Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#210-2025-11-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.1.0] - 2025-11-09
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#200-2025-11-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.0.0] - 2025-11-09
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#122-2025-11-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.2.2] - 2025-11-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#121-2025-11-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.2.1] - 2025-11-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#120-2025-11-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.2.0] - 2025-11-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110-2025-11-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.1.0] - 2025-11-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#100-2025-11-08" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.0] - 2025-11-08
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="changelog">Changelog</h1>
+<p>All notable changes to the NBU Exporter project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
+and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
+<h2 id="unreleased">[Unreleased]</h2>
+<h3 id="added">Added</h3>
+<p>(No unreleased changes yet)</p>
+<h2 id="221-2026-02-18">[2.2.1] - 2026-02-18</h2>
+<h3 id="fixed">Fixed</h3>
+<ul>
+<li><strong>Double URL-encoding of job filter query parameter</strong> (<a href="https://github.com/fjacquet/nbu_exporter/issues/13">#13</a>): The <code>endTime</code> filter for job metrics was pre-encoded with <code>%20</code> for spaces, but <code>BuildURL()</code> applies URL encoding automatically via <code>url.Values.Encode()</code>. This caused double-encoding (<code>%20</code> → <code>%2520</code>), making the NetBackup API return HTTP 400 errors. Job metrics (<code>nbu_jobs_bytes</code>, <code>nbu_jobs_count</code>, <code>nbu_status_count</code>) were not collected as a result. Storage metrics were unaffected.</li>
+</ul>
+<h2 id="220-2026-01-24">[2.2.0] - 2026-01-24</h2>
+<h3 id="added_1">Added</h3>
+<ul>
+<li><strong>OpenTelemetry Distributed Tracing</strong>: Optional distributed tracing for NetBackup API calls and Prometheus scrape cycles</li>
+<li>OTLP gRPC exporter for sending traces to OpenTelemetry Collector, Jaeger, or Tempo</li>
+<li>Configurable sampling rates (0.0 to 1.0) for controlling trace collection overhead</li>
+<li>Automatic trace context propagation using W3C Trace Context standard</li>
+<li>Span hierarchy: <code>prometheus.scrape</code> → <code>netbackup.fetch_storage</code>/<code>netbackup.fetch_jobs</code> → <code>http.request</code></li>
+<li>Rich span attributes following OpenTelemetry semantic conventions</li>
+<li>Resource attributes: service name, version, hostname, NetBackup server</li>
+<li>Graceful degradation: continues operating if tracing initialization fails</li>
+<li>Zero overhead when disabled</li>
+<li>Minimal overhead when enabled: &lt; 2% at 0.1 sampling, &lt; 5% at 1.0 sampling</li>
+<li><code>opentelemetry</code> configuration section with fields: <code>enabled</code>, <code>endpoint</code>, <code>insecure</code>, <code>samplingRate</code></li>
+<li>Telemetry manager (<code>internal/telemetry/manager.go</code>) for OpenTelemetry lifecycle management</li>
+<li>Instrumented HTTP client with automatic span creation for all NetBackup API requests</li>
+<li>Instrumented Prometheus collector with root span for scrape cycles</li>
+<li>Span attributes for storage operations: endpoint, storage unit count, API version</li>
+<li>Span attributes for job operations: endpoint, time window, total jobs, pagination details</li>
+<li>Span attributes for HTTP requests: method, URL, status code, duration, request/response sizes</li>
+<li>Error recording in spans with detailed error messages and span status</li>
+<li>Trace context injection into outgoing NetBackup API requests</li>
+<li>Docker Compose example with OpenTelemetry Collector and Jaeger (<code>docker-compose-otel.yaml</code>)</li>
+<li>OpenTelemetry Collector configuration example (<code>otel-collector-config.yaml</code>)</li>
+<li>Comprehensive OpenTelemetry documentation in README and <code>docs/opentelemetry-example.md</code></li>
+<li>Trace analysis guide at <code>docs/trace-analysis-guide.md</code></li>
+<li>OpenTelemetry integration tests with mock collector</li>
+<li>OpenTelemetry benchmark tests for performance validation</li>
+<li><strong>Multi-Version API Support</strong>: NetBackup 10.0 (API 3.0), 10.5 (API 12.0), and 11.0 (API 13.0)</li>
+<li><strong>Automatic Version Detection</strong>: Intelligent fallback logic (13.0 → 12.0 → 3.0) with retry mechanism</li>
+<li><strong>Content-Type Validation</strong>: Validates server responses are JSON before unmarshaling, preventing cryptic error messages</li>
+<li><code>apiVersion</code> configuration field in <code>nbuserver</code> section (now optional, defaults to auto-detection)</li>
+<li>API version included in Accept header for all NetBackup API requests</li>
+<li>Version detector module (<code>internal/exporter/version_detector.go</code>) with exponential backoff retry logic</li>
+<li><code>nbu_api_version</code> Prometheus metric to expose currently active API version</li>
+<li>Comprehensive test suites:</li>
+<li>Version detection integration tests with mock servers</li>
+<li>Backward compatibility tests for existing configurations</li>
+<li>End-to-end workflow tests for all API versions</li>
+<li>Performance validation tests</li>
+<li>Metrics consistency tests across versions</li>
+<li>API compatibility tests with real response fixtures</li>
+<li>Test fixtures for all API versions in <code>testdata/api-versions/</code>:</li>
+<li><code>jobs-response-v3.json</code>, <code>jobs-response-v12.json</code>, <code>jobs-response-v13.json</code></li>
+<li><code>storage-response-v3.json</code>, <code>storage-response-v12.json</code>, <code>storage-response-v13.json</code></li>
+<li><code>error-406-response.json</code> for version incompatibility testing</li>
+<li>Comprehensive migration guide at <code>docs/netbackup-11-migration.md</code> with multiple deployment scenarios</li>
+<li>Configuration examples for all supported versions in <code>docs/config-examples/</code></li>
+<li>Enhanced error handling for 406 (Not Acceptable) responses with troubleshooting guidance</li>
+<li>Optional fields in storage data model: <code>storageCategory</code>, replication capabilities, snapshot flags, WORM support</li>
+<li>Optional field in jobs data model: <code>kilobytesDataTransferred</code></li>
+<li>Configuration validation with <code>Config.Validate()</code> method</li>
+<li>Helper methods for configuration: <code>GetNBUBaseURL()</code>, <code>GetServerAddress()</code>, <code>GetScrapingDuration()</code>, <code>MaskAPIKey()</code>, <code>BuildURL()</code></li>
+<li><code>NbuClient</code> structure for reusable HTTP client with connection pooling</li>
+<li>Context support throughout for proper cancellation and timeout handling</li>
+<li>Structured metric key types (<code>StorageMetricKey</code>, <code>JobMetricKey</code>, <code>JobStatusKey</code>)</li>
+<li>Health check endpoint at <code>/health</code></li>
+<li><code>Server</code> structure for better application lifecycle management</li>
+<li>Graceful shutdown with configurable timeout (10 seconds)</li>
+<li><code>insecureSkipVerify</code> configuration option for TLS verification</li>
+<li>API key masking in debug logs for security</li>
+<li><code>ReadHeaderTimeout</code> to HTTP server for security</li>
+<li>Comprehensive error context with <code>fmt.Errorf</code> wrapping</li>
+<li>Collection timeout (2 minutes) to prevent hanging scrapes</li>
+<li><strong>Linting Configuration</strong>: Added <code>.markdownlint.json</code> and <code>.prettierrc</code> for consistent code formatting</li>
+<li>Markdown line length relaxed to 120 characters</li>
+<li>Tables excluded from line length checks</li>
+<li>Prettier configured with 120 character width and LF line endings</li>
+<li><strong>Storage Metrics Caching</strong>: TTL-based caching for storage metrics reduces NetBackup API load</li>
+<li>Configurable cache TTL via <code>cacheTTL</code> field in config (default: 5 minutes)</li>
+<li>Uses patrickmn/go-cache for thread-safe caching with automatic expiration</li>
+<li>Cache hit returns instantly without API call, cache miss triggers fetch</li>
+<li>Metric HELP string documents caching behavior per Prometheus best practices</li>
+<li><strong>Health Check with Connectivity Verification</strong>: Enhanced <code>/health</code> endpoint verifies NetBackup API connectivity</li>
+<li>Returns HTTP 200 when NBU API is reachable</li>
+<li>Returns HTTP 503 with "UNHEALTHY" message when NBU API is unreachable</li>
+<li>Uses lightweight version endpoint for connectivity test (5-second timeout)</li>
+<li>Returns "OK (starting)" during startup phase before collector initialization</li>
+<li><strong>Staleness Tracking Metrics</strong>: New metrics for monitoring data freshness</li>
+<li><code>nbu_up</code>: Gauge metric (1 = healthy, 0 = unhealthy) reflecting NBU API connectivity</li>
+<li><code>nbu_last_scrape_timestamp_seconds</code>: Unix timestamp of last successful collection with <code>source</code> label</li>
+<li><strong>Dynamic Configuration Reload</strong>: Configuration changes can be applied without restarting the exporter</li>
+<li>SafeConfig wrapper provides thread-safe config access via RWMutex</li>
+<li>SIGHUP signal handler triggers manual config reload</li>
+<li>fsnotify file watcher detects config file changes (watches directory for vim/emacs atomic saves)</li>
+<li>Storage cache automatically flushed when NBU server address changes</li>
+</ul>
+<h3 id="changed">Changed</h3>
+<ul>
+<li><strong>BREAKING</strong>: Fixed typo <code>scrappingInterval</code> → <code>scrapingInterval</code> in configuration</li>
+<li>Accept header format now includes API version: <code>application/vnd.netbackup+json;version=X.Y</code></li>
+<li>Data models updated to support optional fields across all API versions</li>
+<li>Default API version changed from "12.0" to "13.0" (with automatic fallback)</li>
+<li><code>apiVersion</code> configuration field is now <strong>optional</strong> (previously required)</li>
+<li>Minimum NetBackup version requirement: 10.0+ (supports API versions 3.0, 12.0, and 13.0)</li>
+<li>Refactored <code>main.go</code> with <code>Server</code> structure for better separation of concerns</li>
+<li>Improved error handling - functions now return errors instead of calling <code>os.Exit()</code></li>
+<li>HTTP client now reused across requests for better performance</li>
+<li>TLS verification now configurable (defaults to secure mode)</li>
+<li>Metric collection continues even if one source fails (storage or jobs)</li>
+<li>Improved godoc comments throughout codebase</li>
+<li>Better variable naming following Go conventions</li>
+<li>Centralized URL construction in <code>Config.BuildURL()</code></li>
+<li>Enhanced logging with structured fields and debug mode support</li>
+<li><strong>Code Quality Improvements</strong>: Comprehensive refactoring for maintainability and SonarCloud compliance</li>
+<li>Consolidated duplicate span creation logic into single reusable <code>createSpan</code> helper function</li>
+<li>Centralized all OpenTelemetry span attribute keys as constants in <code>internal/telemetry/attributes.go</code></li>
+<li>Extracted complex error message templates to <code>internal/telemetry/errors.go</code> for easier maintenance</li>
+<li>Batched span attribute recording for improved performance (single <code>SetAttributes</code> call)</li>
+<li>Enhanced OpenTelemetry endpoint validation with format and port range checks</li>
+<li>Extracted complex conditional logic to named helper functions for clarity</li>
+<li>Renamed all test functions to follow Go conventions (removed underscores, e.g., <code>TestNbuClient_GetHeaders</code> → <code>TestNbuClientGetHeaders</code>)</li>
+<li>Eliminated duplicate string literals by extracting to named constants (API versions, content types, test configuration values)</li>
+<li>Reduced cognitive complexity in 8 test functions by extracting helper functions:<ul>
+<li><code>TestNewNbuCollectorAutomaticDetection</code> (complexity 24 → &lt;15)</li>
+<li><code>TestAPIVersionDetectorIntegration</code> (complexity 37 → &lt;15)</li>
+<li><code>TestConfigValidateNbuServer</code> (complexity 23 → &lt;15)</li>
+<li><code>TestConfigValidateOpenTelemetry</code> (complexity 16 → &lt;15)</li>
+<li><code>TestConfigValidateServer</code> (complexity 17 → &lt;15)</li>
+<li><code>TestConfigGetNBUBaseURL</code> (complexity 23 → &lt;15)</li>
+<li><code>TestConfigValidate</code> (complexity 23 → &lt;15)</li>
+<li><code>createMockServerWithFile</code> helper (complexity 22 → &lt;15)</li>
+</ul>
+</li>
+<li>Centralized test helper functions in <code>internal/testutil</code> package with fluent builder interfaces</li>
+<li>Added <code>TestConfigBuilder</code> for consistent test configuration creation</li>
+<li>Added <code>MockServerBuilder</code> for simplified mock HTTP server setup</li>
+<li>Enhanced error messages with additional context (URL, status code, content-type, response preview)</li>
+<li>Added comprehensive package-level documentation with usage examples</li>
+<li>All code now passes SonarCloud "Sonar Way" quality profile checks</li>
+</ul>
+<h3 id="removed">Removed</h3>
+<ul>
+<li><code>cmd.go</code> - Unused <code>ConfigCommand</code> structure</li>
+<li><code>debug.go</code> - File containing only commented-out code</li>
+<li>Unused variables <code>programName</code> and <code>nbuRoot</code> from package level</li>
+<li>Obvious and redundant code comments</li>
+<li>Direct <code>os.Exit()</code> calls from utility functions</li>
+</ul>
+<h3 id="fixed_1">Fixed</h3>
+<ul>
+<li><strong>HTML Response Handling</strong>: Server returning HTML instead of JSON now produces clear error messages instead of cryptic "invalid character '&lt;'" errors</li>
+<li>Error handling in <code>ReadFile()</code> - now returns errors properly</li>
+<li>Missing error checks in metric collection</li>
+<li>Resource leaks from not reusing HTTP clients</li>
+<li>Potential Slowloris attack vector with <code>ReadHeaderTimeout</code></li>
+<li>Configuration validation - ports, schemes, and durations now validated</li>
+<li>Graceful shutdown - now uses proper context with timeout</li>
+<li>JSON unmarshaling errors now include response preview for easier debugging</li>
+</ul>
+<h3 id="security">Security</h3>
+<ul>
+<li>TLS certificate verification now configurable and secure by default</li>
+<li>API keys masked in logs to prevent accidental exposure</li>
+<li>Added <code>ReadHeaderTimeout</code> to prevent slow header attacks</li>
+<li>Proper error context without exposing sensitive information</li>
+</ul>
+<h3 id="performance">Performance</h3>
+<ul>
+<li>HTTP client connection pooling reduces overhead</li>
+<li>Context-aware operations allow early cancellation</li>
+<li>Reduced allocations from client reuse</li>
+<li>Better resource cleanup with proper context handling</li>
+<li><strong>Batched Job Pagination</strong>: Jobs fetched in batches of 100 per API call (~100x fewer requests for large job sets)</li>
+<li><strong>Parallel Metric Collection</strong>: Storage and job metrics collected concurrently with <code>errgroup</code>, reducing scrape time to <code>max(storage_time, jobs_time)</code> instead of sum</li>
+<li><strong>Pre-allocation Capacity Hints</strong>: Maps and slices pre-allocated with expected sizes (100 job metrics, 50 status metrics) to reduce GC pressure</li>
+</ul>
+<h2 id="migration-notes">Migration Notes</h2>
+<h3 id="opentelemetry-distributed-tracing-optional">OpenTelemetry Distributed Tracing (Optional)</h3>
+<p><strong>New Feature</strong>: This version adds optional OpenTelemetry distributed tracing for diagnosing slow scrapes and identifying performance bottlenecks.</p>
+<p><strong>Quick Start:</strong></p>
+<ol>
+<li>Add OpenTelemetry configuration to your <code>config.yaml</code>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">opentelemetry</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;localhost:4317&quot;</span><span class="w"> </span><span class="c1"># Your OTLP collector endpoint</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">insecure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># Use false for production with TLS</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">samplingRate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span><span class="w"> </span><span class="c1"># Sample 10% of scrapes</span>
+</code></pre></div>
+<ol>
+<li>Deploy OpenTelemetry Collector (see <code>docker-compose-otel.yaml</code> for example)</li>
+<li>Restart the exporter</li>
+<li>View traces in Jaeger, Tempo, or your observability backend</li>
+</ol>
+<p><strong>Backward Compatibility</strong>:</p>
+<ul>
+<li>OpenTelemetry is completely optional - existing deployments work without any changes</li>
+<li>When disabled or not configured, zero tracing overhead</li>
+<li>All existing Prometheus metrics remain unchanged</li>
+<li>No impact on scrape performance when disabled</li>
+</ul>
+<p><strong>Use Cases</strong>:</p>
+<ul>
+<li>Diagnose slow NetBackup API calls</li>
+<li>Identify performance bottlenecks in scrape cycles</li>
+<li>Track request flows through the exporter</li>
+<li>Correlate logs with traces for troubleshooting</li>
+<li>Monitor API version detection performance</li>
+</ul>
+<p>See <a href="docs/opentelemetry-example.md">docs/opentelemetry-example.md</a> for complete setup guide and <a href="docs/trace-analysis-guide.md">docs/trace-analysis-guide.md</a> for trace analysis examples.</p>
+<h3 id="multi-version-api-support">Multi-Version API Support</h3>
+<p><strong>Important</strong>: This version adds support for NetBackup 10.0, 10.5, and 11.0 with automatic version detection. See <a href="docs/netbackup-11-migration.md">docs/netbackup-11-migration.md</a> for complete migration guide.</p>
+<p><strong>Quick Start:</strong></p>
+<ol>
+<li>Ensure NetBackup server is version 10.0 or later</li>
+<li><strong>Optional</strong>: Remove or update <code>apiVersion</code> field in config.yaml to enable automatic detection</li>
+<li>Restart the exporter - it will automatically detect the highest supported API version</li>
+<li>Verify detected version in logs: <code>INFO: Detected NetBackup API version: X.Y</code></li>
+<li>Verify metrics collection</li>
+</ol>
+<p><strong>Backward Compatibility</strong>:</p>
+<ul>
+<li>Existing configurations with explicit <code>apiVersion</code> continue to work without changes</li>
+<li>Existing configurations without <code>apiVersion</code> will now auto-detect (previously defaulted to "12.0")</li>
+<li>No breaking changes to Prometheus metrics - all metric names and labels remain consistent</li>
+<li>NetBackup 11.0 maintains backward compatibility with API versions 12.0 and 3.0</li>
+</ul>
+<h3 id="configuration-file-changes">Configuration File Changes</h3>
+<p>Update your <code>config.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Change this:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">server</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">scrappingInterval</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1h&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># To this:</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nt">server</span><span class="p">:</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">scrapingInterval</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1h&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="c1"># API version configuration (all options are valid):</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># Option 1: Automatic detection (recommended)</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">    </span><span class="c1"># apiVersion not specified - will auto-detect</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1"># Option 2: Explicit version for NetBackup 11.0</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;13.0&quot;</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="c1"># Option 3: Explicit version for NetBackup 10.5</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;12.0&quot;</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="c1"># Option 4: Explicit version for NetBackup 10.0-10.4</span>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="w">    </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.0&quot;</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="c1"># Optionally add (defaults to false if omitted):</span>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="w">    </span><span class="nt">insecureSkipVerify</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre></div>
+<h3 id="testing-your-migration">Testing Your Migration</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Validate configuration</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>./bin/nbu_exporter<span class="w"> </span>--config<span class="w"> </span>config.yaml<span class="w"> </span>--debug
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Check health endpoint</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>curl<span class="w"> </span>http://localhost:2112/health
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Check metrics endpoint</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>curl<span class="w"> </span>http://localhost:2112/metrics
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1"># Verify detected API version</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>curl<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nbu_api_version
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="c1"># Check logs for version detection</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>tail<span class="w"> </span>-f<span class="w"> </span>log/nbu-exporter.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;Detected NetBackup API version&quot;</span>
+</code></pre></div>
+<h3 id="test-coverage">Test Coverage</h3>
+<p>This release includes comprehensive test coverage:</p>
+<ul>
+<li>80%+ code coverage for API client and version detection modules</li>
+<li>Unit tests for all three API versions (3.0, 12.0, 13.0)</li>
+<li>Integration tests with mock NetBackup servers</li>
+<li>Backward compatibility tests for existing configurations</li>
+<li>End-to-end workflow tests including fallback scenarios</li>
+<li>Performance validation tests</li>
+<li>Metrics consistency tests across all versions</li>
+</ul>
+<h2 id="210-2025-11-09">[2.1.0] - 2025-11-09</h2>
+<p>Code quality improvements and refactoring for maintainability and SonarCloud compliance.</p>
+<h2 id="200-2025-11-09">[2.0.0] - 2025-11-09</h2>
+<p>OpenTelemetry integration and distributed tracing support.</p>
+<h2 id="122-2025-11-08">[1.2.2] - 2025-11-08</h2>
+<p>Patch release.</p>
+<h2 id="121-2025-11-08">[1.2.1] - 2025-11-08</h2>
+<p>GitHub Actions workflow for GitHub Pages deployment.</p>
+<h2 id="120-2025-11-08">[1.2.0] - 2025-11-08</h2>
+<p>API 11.0 integration support.</p>
+<h2 id="110-2025-11-08">[1.1.0] - 2025-11-08</h2>
+<p>Support for API 10.5 of NetBackup.</p>
+<h2 id="100-2025-11-08">[1.0.0] - 2025-11-08</h2>
+<p>Initial build with test server support.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

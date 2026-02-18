@@ -1,0 +1,3086 @@
+openapi: 3.0.0
+info:
+  version: 3.0.0
+  title: NetBackup for OpenStack API Documentation
+  description: NetBackup for OpenStack API Documentation
+servers:
+  - url: https://{nbosvm_address}:8780/v3/{tenant_id}
+    variables:
+      nbosvm_address:
+        default: nbosvm_address
+        description: IP or FQDN of Netbackup OpenStack VM.
+      tenant_id:
+        default: tenant_id
+        description: ID of the tenant or project.
+paths:
+  /settings:
+    post:
+      summary: Create Setting
+      description: >-
+        Creates e-mail notification settings for NetBackup for OpenStack.
+        <br>Use the following values to create email
+        notifications:<br><table><thead><tr><th>Setting name</th><th>Settings
+        Type</th><th>Value
+        type</th><th>example</th></tr></thead><tbody><tr><td>smtp_default_recipient</td><td>email_settings</td><td>String</td><td>admin@example.net</td></tr><tr><td>smtp_default_sender</td><td>email_settings</td><td>String</td><td>admin@example.net</td></tr><tr><td>smtp_port</td><td>email_settings</td><td>Integer</td><td>587</td></tr><tr><td>smtp_server_name</td><td>email_settings</td><td>String</td><td>Mailserver_A</td></tr><tr><td>smtp_server_username</td><td>email_settings</td><td>String</td><td>admin</td></tr><tr><td>smtp_server_password</td><td>email_settings</td><td>String</td><td>password</td></tr><tr><td>smtp_timeout</td><td>email_settings</td><td>Integer</td><td>10</td></tr><tr><td>smtp_email_enable</td><td>email_settings</td><td>Boolean</td><td>True</td></tr></tbody></table>
+      tags:
+        - E-Mail Notification Settings
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      requestBody:
+        description: Request body to create the e-mail notification settings.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailSettings'
+      responses:
+        '200':
+          description: Successfully created the e-mail notification settings.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"settings":[
+                    {"created_at":"2021-02-04T11:55:43.890855","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","name":"smtp_port","project_id":"4dfe98a43bfa404785a812020066b4d6","user_id":null,"value":"8080","description":null,"category":null,"type":"email_settings","public":false,"hidden":0,"status":"available","is_public":false,"is_hidden":false
+                    }] }
+    put:
+      summary: Modify Setting
+      description: Modifies the settings with the provided information.
+      tags:
+        - E-Mail Notification Settings
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      requestBody:
+        description: Request body to modify the e-mail notification settings.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailSettings'
+      responses:
+        '200':
+          description: Successfully modified the e-mail notification settings.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"settings":[
+                    {"created_at":"2021-02-04T11:55:43.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","name":"smtp_port","project_id":"4dfe98a43bfa404785a812020066b4d6","user_id":null,"value":"8080","description":null,"category":null,"type":"email_settings","public":false,"hidden":0,"status":"available","is_public":false,"is_hidden":false
+                    }] }
+  /settings/{setting_name}:
+    get:
+      summary: Show Setting
+      description: Shows all the details of the specified e-mail notification settings.
+      tags:
+        - E-Mail Notification Settings
+      parameters:
+        - name: setting_name
+          in: path
+          description: Name of the setting to show.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"setting":{ "created_at":"2021-02-04T11:55:43.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008", "name":"smtp_port",
+                    "project_id":"4dfe98a43bfa404785a812020066b4d6",
+                    "user_id":null, "value":"8080", "description":null,
+                    "category":null, "type":"email_settings", "public":false,
+                    "hidden":false, "status":"available", "metadata":[ ]} }
+    delete:
+      summary: Delete Setting
+      description: Deletes the specified e-mail notification setting.
+      tags:
+        - E-Mail Notification Settings
+      parameters:
+        - name: setting_name
+          in: path
+          description: Name of the setting to delete.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+  /trusts:
+    get:
+      description: >-
+        <p>Provides the list of trusts for the specified tenant.</p><p
+        style="color: red;">&#9888; OpenStack Administrators should never have
+        the need to directly work with the trusts created. The cloud-trust is
+        created during the NetBackup for OpenStack configuration and further
+        trusts are created as necessary upon creating or modifying a protection.</p>
+      summary: List Trusts
+      tags:
+        - Managing Trusts
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+        - name: is_cloud_admin
+          in: query
+          description: true/false
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"trust":[
+                    {"created_at":"2020-11-26T13:10:53.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","name":"trust-6e290937-de9b-446a-a406-eb3944e5a034","project_id":"4dfe98a43bfa404785a812020066b4d6","user_id":"cloud_admin","value":"dbe2e160d4c44d7894836a6029644ea0","description":"token
+                    id for user adfa32d7746a4341b27377d6f7c61adb project
+                    4dfe98a43bfa404785a812020066b4d6","category":"identity","type":"trust_id","public":false,"hidden":true,"status":"available","metadata":[
+                    {"created_at":"2020-11-26T13:10:54.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"e9ec386e-79cf-4f6b-8201-093315648afe","settings_name":"trust-6e290937-de9b-446a-a406-eb3944e5a034","settings_project_id":"4dfe98a43bfa404785a812020066b4d6","key":"role_name","value":"admin"
+                    }] }] }
+    post:
+      description: >-
+        Creates a trust in the specified tenant/project with the details
+        provided.
+      summary: Create Trust
+      tags:
+        - Managing Trusts
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Trust'
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"trust":[
+                    {"created_at":"2021-01-21T11:43:36.140407","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","name":"trust-b03daf38-1615-48d6-88f9-a807c728e786","project_id":"4dfe98a43bfa404785a812020066b4d6","user_id":"adfa32d7746a4341b27377d6f7c61adb","value":"1c981a15e7a54242ae54eee6f8d32e6a","description":"token
+                    id for user adfa32d7746a4341b27377d6f7c61adb project
+                    4dfe98a43bfa404785a812020066b4d6","category":"identity","type":"trust_id","public":false,"hidden":1,"status":"available","is_public":false,"is_hidden":true,"metadata":[
+                    ] }] }
+  /trusts/{trust_id}:
+    get:
+      summary: Show Trust
+      description: Shows all the details of a specified trust.
+      tags:
+        - Managing Trusts
+      parameters:
+        - name: trust_id
+          in: path
+          description: ID of the trust.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"trust":{ "created_at":"2020-11-26T13:15:29.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "name":"trust-54e24d8d-6bcf-449e-8021-708b4ebc65e1",
+                    "project_id":"4dfe98a43bfa404785a812020066b4d6",
+                    "user_id":"adfa32d7746a4341b27377d6f7c61adb",
+                    "value":"703dfabb4c5942f7a1960736dd84f4d4",
+                    "description":"token id for user
+                    adfa32d7746a4341b27377d6f7c61adb project
+                    4dfe98a43bfa404785a812020066b4d6", "category":"identity",
+                    "type":"trust_id", "public":false, "hidden":true,
+                    "status":"available", "metadata":[{
+                    "created_at":"2020-11-26T13:15:29.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "id":"86aceea1-9121-43f9-b55c-f862052374ab",
+                    "settings_name":"trust-54e24d8d-6bcf-449e-8021-708b4ebc65e1",
+                    "settings_project_id":"4dfe98a43bfa404785a812020066b4d6",
+                    "key":"role_name", "value":"member"} ]} }
+    delete:
+      summary: Delete Trust
+      description: Deletes the specified trust.
+      tags:
+        - Managing Trusts
+      parameters:
+        - name: trust_id
+          in: path
+          description: ID of the trust to delete.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+  /trusts/validate/{protection_id}:
+    get:
+      description: Validates the scheduler trust for a specified protection.
+      tags:
+        - Schedulers
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy to get the scheduler details.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the scheduler trust status.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"scheduler_enabled":true,"trust":{
+                    "created_at":"2020-10-23T14:35:11.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "name":"trust-002bcbaf-c16b-44e6-a9ef-9c1efbfa2e2c",
+                    "project_id":"c76b3355a164498aa95ddbc960adc238",
+                    "user_id":"ccddc7e7a015487fa02920f4d4979779",
+                    "value":"871ca24f38454b14b867338cb0e9b46c",
+                    "description":"token id for user
+                    ccddc7e7a015487fa02920f4d4979779 project
+                    c76b3355a164498aa95ddbc960adc238", "category":"identity",
+                    "type":"trust_id", "public":false, "hidden":true,
+                    "status":"available", "metadata":[{
+                    "created_at":"2020-10-23T14:35:11.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "id":"a3cc9a01-3d49-4ff8-ad8e-b12a7b3c68b0",
+                    "settings_name":"trust-002bcbaf-c16b-44e6-a9ef-9c1efbfa2e2c",
+                    "settings_project_id":"c76b3355a164498aa95ddbc960adc238",
+                    "key":"role_name", "value":"member"}
+                    ]},"is_valid":true,"scheduler_obj":{
+                    "policy_id":"4bafaa03-f69a-45d5-a6fc-ae0119c77974",
+                    "user_id":"ccddc7e7a015487fa02920f4d4979779",
+                    "project_id":"c76b3355a164498aa95ddbc960adc238",
+                    "user_domain_id":"default",
+                    "user":"ccddc7e7a015487fa02920f4d4979779",
+                    "tenant":"c76b3355a164498aa95ddbc960adc238"} }
+  /restores/detail:
+    get:
+      summary: List Restores
+      description: Lists the restores with the details.
+      tags:
+        - Restores
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+        - name: snapshot_id
+          in: query
+          description: ID of the recovery point/snapshot to fetch the restores from.
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provides details about all the restores.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"restores":[
+                    {"id":"29fdc1f8-1d53-4a10-bb45-e539a64cdbfc","created_at":"2020-11-05T10:17:40.000000","updated_at":"2020-11-05T10:17:40.000000","finished_at":"2020-11-05T10:27:20.000000","user_id":"ccddc7e7a015487fa02920f4d4979779","project_id":"c76b3355a164498aa95ddbc960adc238","status":"available","restore_type":"restore","snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844","links":[
+                    {"rel":"self","href":"http://nbosjm_backend/v2/c76b3355a164498aa95ddbc960adc238/restores/29fdc1f8-1d53-4a10-bb45-e539a64cdbfc"
+                    },
+                    {"rel":"bookmark","href":"http://nbosjm_backend/c76b3355a164498aa95ddbc960adc238/restores/29fdc1f8-1d53-4a10-bb45-e539a64cdbfc"
+                    }],"name":"OneClick
+                    Restore","description":"-","host":"NBOSVM2","size":2147483648,"uploaded_size":2147483648,"progress_percent":100,"progress_msg":"Restore
+                    from snapshot is
+                    complete","warning_msg":null,"error_msg":null,"time_taken":580,"restore_options":{
+                    "name":"OneClick Restore", "oneclickrestore":true,
+                    "restore_type":"oneclick", "openstack":{"instances":[
+                    {"name":"cirros-2","id":"67d6a100-fee6-4aa5-83a1-66b070d2eabe","availability_zone":"nova"
+                    },
+                    {"name":"cirros-1","id":"e33c1eea-c533-4945-864d-0da1fc002070","availability_zone":"nova"
+                    }] }, "type":"openstack", "description":"-"},"metadata":[
+                    {"created_at":"2020-11-05T10:27:20.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"91ab2495-1903-4d75-982b-08a4e480835b","restore_id":"29fdc1f8-1d53-4a10-bb45-e539a64cdbfc","key":"data_transfer_time","value":"0"
+                    },
+                    {"created_at":"2020-11-05T10:27:20.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"e0e01eec-24e0-4abd-9b8c-19993a320e9f","restore_id":"29fdc1f8-1d53-4a10-bb45-e539a64cdbfc","key":"object_store_transfer_time","value":"0"
+                    },
+                    {"created_at":"2020-11-05T10:27:20.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"eb909267-ba9b-41d1-8861-a9ec22d6fd84","restore_id":"29fdc1f8-1d53-4a10-bb45-e539a64cdbfc","key":"restore_user_selected_value","value":"Oneclick
+                    Restore" }] },
+                    {"id":"4673d962-f6a5-4209-8d3e-b9f2e9115f07","created_at":"2020-11-04T14:37:31.000000","updated_at":"2020-11-04T14:37:31.000000","finished_at":"2020-11-04T14:45:27.000000","user_id":"ccddc7e7a015487fa02920f4d4979779","project_id":"c76b3355a164498aa95ddbc960adc238","status":"error","restore_type":"restore","snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844","links":[
+                    {"rel":"self","href":"http://nbosjm_backend/v2/c76b3355a164498aa95ddbc960adc238/restores/4673d962-f6a5-4209-8d3e-b9f2e9115f07"
+                    },
+                    {"rel":"bookmark","href":"http://nbosjm_backend/c76b3355a164498aa95ddbc960adc238/restores/4673d962-f6a5-4209-8d3e-b9f2e9115f07"
+                    }],"name":"OneClick
+                    Restore","description":"-","host":"NBOSVM2","size":2147483648,"uploaded_size":2147483648,"progress_percent":100,"progress_msg":"","warning_msg":null,"error_msg":"Failed
+                    restoring snapshot: Error creating instance
+                    e271bd6e-f53e-4ebc-875a-5787cc4dddf7","time_taken":476,"restore_options":{
+                    "name":"OneClick Restore", "oneclickrestore":true,
+                    "restore_type":"oneclick", "openstack":{"instances":[
+                    {"name":"cirros-2","id":"67d6a100-fee6-4aa5-83a1-66b070d2eabe","availability_zone":"nova"
+                    },
+                    {"name":"cirros-1","id":"e33c1eea-c533-4945-864d-0da1fc002070","availability_zone":"nova"
+                    }] }, "type":"openstack", "description":"-"},"metadata":[
+                    {"created_at":"2020-11-04T14:45:27.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"be6dc7e2-1be2-476b-9338-aed986be3b55","restore_id":"4673d962-f6a5-4209-8d3e-b9f2e9115f07","key":"data_transfer_time","value":"0"
+                    },
+                    {"created_at":"2020-11-04T14:45:27.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"2e4330b7-6389-4e21-b31b-2503b5441c3e","restore_id":"4673d962-f6a5-4209-8d3e-b9f2e9115f07","key":"object_store_transfer_time","value":"0"
+                    },
+                    {"created_at":"2020-11-04T14:45:27.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"561c806b-e38a-496c-a8de-dfe96cb3e956","restore_id":"4673d962-f6a5-4209-8d3e-b9f2e9115f07","key":"restore_user_selected_value","value":"Oneclick
+                    Restore" }] }] }
+  /restores/{restore_id}:
+    get:
+      summary: Get Restore
+      description: Provides all the details about the specified restore.
+      tags:
+        - Restores
+      parameters:
+        - name: restore_id
+          in: path
+          description: ID of the restore to show.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Provides all the details about the restore.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"restore":{ "id":"29fdc1f8-1d53-4a10-bb45-e539a64cdbfc",
+                    "created_at":"2020-11-05T10:17:40.000000",
+                    "updated_at":"2020-11-05T10:17:40.000000",
+                    "finished_at":"2020-11-05T10:27:20.000000",
+                    "user_id":"ccddc7e7a015487fa02920f4d4979779",
+                    "project_id":"c76b3355a164498aa95ddbc960adc238",
+                    "status":"available", "restore_type":"restore",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "snapshot_details":{"created_at":"2020-11-04T13:58:37.000000","updated_at":"2020-11-05T10:27:22.000000","deleted_at":null,"deleted":false,"version":"11.0.1008","id":"2e56d167-bad7-43c7-8ede-a613c3fe7844","user_id":"ccddc7e7a015487fa02920f4d4979779","project_id":"c76b3355a164498aa95ddbc960adc238","policy_id":"18b809de-d7c8-41e2-867d-4a306407fb11","snapshot_type":"full","display_name":"API
+                    taken 2","display_description":"API taken description
+                    2","size":44171264,"restore_size":2147483648,"uploaded_size":44171264,"progress_percent":100,"progress_msg":"Creating
+                    Instance:
+                    cirros-2","warning_msg":null,"error_msg":null,"host":"NBOSVM1","finished_at":"2020-11-04T14:06:03.000000","data_deleted":false,"pinned":false,"time_taken":428,"vault_storage_id":null,"status":"available"
+                    }, "policy_id":"18b809de-d7c8-41e2-867d-4a306407fb11",
+                    "instances":[{ "id":"1fb104bf-7e2b-4cb6-84f6-96aabc8f1dd2",
+                    "name":"cirros-2", "status":"available",
+                    "metadata":{"config_drive":"","instance_id":"67d6a100-fee6-4aa5-83a1-66b070d2eabe","production":"1"
+                    }},{ "id":"b083bb70-e384-4107-b951-8e9e7bbac380",
+                    "name":"cirros-1", "status":"available",
+                    "metadata":{"config_drive":"","instance_id":"e33c1eea-c533-4945-864d-0da1fc002070","production":"1"
+                    }} ], "networks":[ ], "subnets":[ ], "routers":[ ],
+                    "links":[{ "rel":"self",
+                    "href":"http://nbosjm_backend/v2/c76b3355a164498aa95ddbc960adc238/restores/29fdc1f8-1d53-4a10-bb45-e539a64cdbfc"},{
+                    "rel":"bookmark",
+                    "href":"http://nbosjm_backend/c76b3355a164498aa95ddbc960adc238/restores/29fdc1f8-1d53-4a10-bb45-e539a64cdbfc"}
+                    ], "name":"OneClick Restore", "description":"-",
+                    "host":"NBOSVM2", "size":2147483648,
+                    "uploaded_size":2147483648, "progress_percent":100,
+                    "progress_msg":"Restore from snapshot is complete",
+                    "warning_msg":null, "error_msg":null, "time_taken":580,
+                    "restore_options":{"name":"OneClick
+                    Restore","oneclickrestore":true,"restore_type":"oneclick","openstack":{
+                    "instances":[{ "name":"cirros-2",
+                    "id":"67d6a100-fee6-4aa5-83a1-66b070d2eabe",
+                    "availability_zone":"nova"},{ "name":"cirros-1",
+                    "id":"e33c1eea-c533-4945-864d-0da1fc002070",
+                    "availability_zone":"nova"}
+                    ]},"type":"openstack","description":"-" }, "metadata":[ ]} }
+    delete:
+      summary: Delete Restore
+      description: Deletes the specified restore.
+      tags:
+        - Restores
+      parameters:
+        - name: restore_id
+          in: path
+          description: ID of the restore to delete.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Restore delete request is received and will be processed.'
+  /protections/{protection_id}/pause:
+    post:
+      summary: Disable Protection Scheduler
+      description: Disables the scheduler of a specified protection.
+      tags:
+        - Schedulers
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy in which to disable the scheduler.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Protection scheduler is disabled.
+  /protections/{protection_id}/resume:
+    post:
+      summary: Enable Protection Scheduler
+      description: Enables the scheduler of a specified protection.
+      tags:
+        - Schedulers
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy in which to enable the scheduler.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Protection scheduler is enabled.
+  /global_job_scheduler:
+    get:
+      description: Requests the status of the global job scheduler.
+      tags:
+        - Schedulers
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the status of the global job scheduler.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: '{"global_job_scheduler": true}'
+  /global_job_scheduler/disable:
+    post:
+      summary: Disable Global Job Scheduler
+      description: Requests disabling of the global job scheduler.
+      tags:
+        - Schedulers
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Global job scheduler is disabled.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: '{"global_job_scheduler": false}'
+  /global_job_scheduler/enable:
+    post:
+      summary: Enable Global Job Scheduler
+      description: Requests enabling of the global job scheduler.
+      tags:
+        - Schedulers
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Global job scheduler is enabled.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: '{"global_job_scheduler": true}'
+  /recovery_points:
+    get:
+      summary: List recovery points
+      description: Lists all recovery points.
+      tags:
+        - Recovery Points
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+        - name: host
+          in: query
+          description: Host name of the NBOSVM that took the recovery point.
+          required: false
+          schema:
+            type: string
+        - name: policy_id
+          in: query
+          description: ID of the protection/policy to list the recovery point.
+          required: false
+          schema:
+            type: string
+        - name: page_number
+          in: query
+          description: Displays the recovery points from the specified page number.
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          description: Specifies the number of recovery points to be displayed on one page.
+          required: false
+          schema:
+            type: integer
+            default: 10
+        - name: date_from
+          in: query
+          description: "starting date of recovery point to show.  \r\nFormat: YYYY-MM-DDTHH:MM:SS"
+          required: false
+          schema:
+            type: string
+        - name: date_to
+          in: query
+          description: "End date of the recovery point to show.  \r\nFormat: YYYY-MM-DDTHH:MM:SS"
+          required: false
+          schema:
+            type: string
+        - name: all
+          in: query
+          description: >-
+            Administrator role is required to perform this task. True lists all
+            the recovery points of all protections.
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Returns all recovery points.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >- 
+                    {
+                      "snapshots": 
+                      [{
+                        "id": "0649d35e-8141-4715-b26a-015476aaf082",
+                        "created_at": "2025-01-06T20:26:59.000000",
+                        "updated_at": "2025-01-20T21:03:13.000000",
+                        "finished_at": "2025-01-06T20:32:09.000000",
+                        "user_id": "64727eaacdbe4e469413c8ddfeda9",
+                        "status": "available",
+                        "snapshot_type": "full",
+                        "policy_id": "35183ad9-41f3-48e1-be06-e5b01257c1b7",
+                        "name": "backup-27",
+                        "description": "no-description",
+                        "host": "NBOSVM1",
+                        "size": 41287680,
+                        "restore_size": 1073741824,
+                        "uploaded_size": 41287680,
+                        "progress_percent": 100,
+                        "progress_msg": "Backup of protection snapshot is complete",
+                        "warning_msg": "None",
+                        "error_msg": "None",
+                        "time_taken": 54,
+                        "pinned": "False",
+                        "backup_type": "incremental",
+                        "backup_status": "available",
+                        "backup_time_taken": 231,
+                        "recovery_point_info": [
+                      {
+                        "instance": "07772b76-6768-4cd5-b1e2-81a7db7c0566",
+                        "recoveryPointInfo": {
+                          "recoveryPointId": "OPENSTACK_INSTANCE_07772b76-6768-4cd5-b1e2-81a7db7c0566_e4a0f06747e24b8b9304f943eaee29f5_1736195276",
+                          "assetId": "7e7cb9a8-936d-4d94-bbd6-1d1e90e2af11",
+                          "primaryCopy": 2,
+                          "numCopies": 1,
+                          "copies": [
+                            {
+                              "copyNumber": 2,
+                              "copyType": "Backup",
+                              "storageType": "PureDisk",
+                              "storageServer": "storageServer.host.com",
+                              "storagePool": "DiskPool-1",
+                              "storageVolume": "PureDiskVolume",
+                              "backup_status": "available"
+                            }
+                          ],
+                          "new_cloud_copy": 0
+                        }
+                      }
+                    ],
+                    "restores_info": "",
+                    "instances": [
+                      {
+                        "created_at": "2025-01-06T20:27:01.000000",
+                        "updated_at": "2025-01-06T20:32:09.000000",
+                        "deleted_at": "None",
+                        "deleted": "False",
+                        "version": "11.0.1008",
+                        "id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                        "vm_id": "07772b76-6768-4cd5-b1e2-81a7db7c0566",
+                        "vm_name": "test-inst",
+                        "snapshot_id": "0649d35e-8141-4715-b26a-015476aaf082",
+                        "size": 41287680,
+                        "restore_size": 1073741824,
+                        "snapshot_type": "incremental",
+                        "finished_at": "None",
+                        "status": "available",
+                        "metadata": [
+                          {
+                            "created_at": "2025-01-06T20:27:54.000000",
+                            "updated_at": "None",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "e2f67279-0973-4d70-b7cf-ab63905e9dd2",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "availability_zone",
+                            "value": "nova"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:28:18.000000",
+                            "updated_at": "2025-01-06T20:32:49.000000",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "020ab2de-3e92-4185-9d90-c1403b091e02",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "backup_status",
+                            "value": "available"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:28:18.000000",
+                            "updated_at": "None",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "97b924c0-02a2-4453-b998-465a61008a54",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "bfs_job_id",
+                            "value": "6714"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:27:53.000000",
+                            "updated_at": "2025-01-06T20:32:09.000000",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "591e14f0-9575-4e22-93e1-82c61b92d3d4",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "data_transfer_time",
+                            "value": "0"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:27:01.000000",
+                            "updated_at": "None",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "6663bc68-61f5-4008-838c-ce490d47f361",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "nbos_ordered_interfaces",
+                            "value": "172.20.2.52"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:27:56.000000",
+                            "updated_at": "None",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "55c342e3-5686-499d-8933-a32ad0732909",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "NBU_job_id",
+                            "value": "6712"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:27:53.000000",
+                            "updated_at": "2025-01-06T20:32:09.000000",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "300f8871-4d1f-45e8-843c-bfd3ca5007a3",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "object_store_transfer_time",
+                            "value": "0"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:27:01.000000",
+                            "updated_at": "None",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "ed330bab-5d08-4188-a135-0ad7c7c4ee7c",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "policy_id",
+                            "value": "35183ad9-41f3-48e1-be06-e5b01257c1b7"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:27:01.000000",
+                            "updated_at": "2025-01-06T20:27:54.000000",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "8c48f1e2-3e2d-4078-b891-d2f18eb42db9",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "policy_name",
+                            "value": "policy-35183ad9-41f3-48e1-be06-e5b01257c1b7"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:27:54.000000",
+                            "updated_at": "None",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "31751160-2446-4a78-8703-064c9ea091e6",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "root_partition_type",
+                            "value": "Linux"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:27:49.000000",
+                            "updated_at": "None",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "65d04856-1c3a-48f0-923a-2aeb23649f07",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "snapshot_time",
+                            "value": "1736195231"
+                          },
+                          {
+                            "created_at": "2025-01-06T20:27:54.000000",
+                            "updated_at": "None",
+                            "deleted_at": "None",
+                            "deleted": "False",
+                            "version": "11.0.1008",
+                            "id": "c7b6574a-6837-4625-85b5-ae7bcc3754dc",
+                            "snapshot_vm_id": "054d2426-b2c3-4c28-876f-8a173b3bac55",
+                            "key": "vm_metadata",
+                            "value": {
+                              "policy_id": "35183ad9-41f3-48e1-be06-e5b01257c1b7",
+                              "policy_name": "pp-1",
+                              "nbos_ordered_interfaces": "172.20.2.52",
+                              "nbu_policy_name": "qqq+adefc3a5-e253-4755-a234-493b9beac221",
+                              "nbu_subscription_id": "cc31df72-389b-4663-adc9-e50a4f1b15be"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                      }],
+                      "pagination": {
+                        "page_number": 1,
+                        "page_size": 10,
+                        "total_pages": 1,
+                        "total_items": 2
+                      }
+                    }
+  /protections/backupnow/{protection_id}:
+    post:
+      summary: Create Snapshot
+      description: Creates a snapshot of the protection. Based on protection plan assigned, NetBackup will auto trigger the backup from snapshot job.
+      tags:
+        - Protections
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy to take the snapshot.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Snapshot'
+      responses:
+        '202':
+          description: Returns all the details about a snapshot.
+  /recovery_points/{recovery_point_id}:
+    get:
+      summary: Show recovery point details
+      description: Shows the details of a specified recovery point.
+      tags:
+        - Recovery Points
+      parameters:
+        - name: recovery_point_id
+          in: path
+          description: ID of the recovery point/snapshot to show.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+        - name: fetch_recovery_point
+          description: If set, will get copy details of the recovery point.
+          in: query
+          required: false
+          schema:
+            type: boolean
+            
+      responses:
+        '200':
+          description: Returns all the details about a recovery point.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"snapshot":{ "id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "created_at":"2020-11-04T13:58:37.000000",
+                    "updated_at":"2020-11-04T14:06:03.000000",
+                    "finished_at":"2020-11-04T14:06:03.000000",
+                    "user_id":"ccddc7e7a015487fa02920f4d4979779",
+                    "project_id":"c76b3355a164498aa95ddbc960adc238",
+                    "status":"available", "snapshot_type":"full",
+                    "policy_id":"18b809de-d7c8-41e2-867d-4a306407fb11",
+                    "instances":[{ "id":"67d6a100-fee6-4aa5-83a1-66b070d2eabe",
+                    "name":"cirros-2", "status":"available",
+                    "metadata":{"availability_zone":"nova","backup_status": "available","bfs_job_id": "1090","config_drive":"","data_transfer_time":"0","object_store_transfer_time":"0","root_partition_type":"Linux","snapshot_time": "1700806450","nbos_ordered_interfaces":"192.168.100.80","NBU_job_id": "1075","vm_metadata":"{\"policy_name\":
+                    \"Policy_1\", \"policy_id\":
+                    \"18b809de-d7c8-41e2-867d-4a306407fb11\",
+                    \"nbos_ordered_interfaces\": \"192.168.100.80\",
+                    \"nbu_policy_name\": \"snap-back-new-ushare-43+68c3aee9-9b71-48a8-b1a5-9fe5580c1d6b\", \"nbu_subscription_id\": \"e5b36744-90fd-48b4-ab27-22ec720852e7\"}","policy_id":"18b809de-d7c8-41e2-867d-4a306407fb11","policy_name":"Policy_1"
+                    },
+                    "flavor":{"vcpus":"1","ram":"512","disk":"1","ephemeral":"0"
+                    }, "security_group":[{ "name":"default",
+                    "security_group_type":"neutron"} ], "nics":[{
+                    "mac_address":"fa:16:3e:cf:10:91",
+                    "ip_address":"192.168.100.80",
+                    "network":{"id":"5fb7027d-a2ac-4a21-9ee1-438c281d2b26","name":"robert_internal","cidr":null,"network_type":"neutron","subnet":{
+                    "id":"b7b54304-aa82-4d50-91e6-66445ab56db4",
+                    "name":"robert_internal", "cidr":"192.168.100.0/24",
+                    "ip_version":4, "gateway_ip":"192.168.100.1"} }} ],
+                    "vdisks":[{ "label":null,
+                    "resource_id":"fa888089-5715-4228-9e5a-699f8f9d59ba",
+                    "restore_size":1073741824,
+                    "vm_id":"67d6a100-fee6-4aa5-83a1-66b070d2eabe",
+                    "volume_id":"51491d30-9818-4332-b056-1f174e65d3e3",
+                    "volume_name":"51491d30-9818-4332-b056-1f174e65d3e3",
+                    "volume_size":"1", "volume_type":"iscsi",
+                    "volume_mountpoint":"/dev/vda", "availability_zone":"nova",
+                    "metadata":{"readonly":"False","attached_mode":"rw" }} ]},{
+                    "id":"e33c1eea-c533-4945-864d-0da1fc002070",
+                    "name":"cirros-1", "status":"available",
+                    "metadata":{"availability_zone":"nova","config_drive":"","data_transfer_time":"0","object_store_transfer_time":"0","root_partition_type":"Linux","nbos_ordered_interfaces":"192.168.100.176","vm_metadata":"{\"policy_name\":
+                    \"Policy_1\", \"policy_id\":
+                    \"18b809de-d7c8-41e2-867d-4a306407fb11\",
+                    \"nbos_ordered_interfaces\": \"192.168.100.176\",
+                    \"config_drive\":
+                    \"\"}","policy_id":"18b809de-d7c8-41e2-867d-4a306407fb11","policy_name":"Policy_1"
+                    },
+                    "flavor":{"vcpus":"1","ram":"512","disk":"1","ephemeral":"0"
+                    }, "security_group":[{ "name":"default",
+                    "security_group_type":"neutron"} ], "nics":[{
+                    "mac_address":"fa:16:3e:cf:4d:27",
+                    "ip_address":"192.168.100.176",
+                    "network":{"id":"5fb7027d-a2ac-4a21-9ee1-438c281d2b26","name":"robert_internal","cidr":null,"network_type":"neutron","subnet":{
+                    "id":"b7b54304-aa82-4d50-91e6-66445ab56db4",
+                    "name":"robert_internal", "cidr":"192.168.100.0/24",
+                    "ip_version":4, "gateway_ip":"192.168.100.1"} }} ],
+                    "vdisks":[{ "label":null,
+                    "resource_id":"c8293bb0-031a-4d33-92ee-188380211483",
+                    "restore_size":1073741824,
+                    "vm_id":"e33c1eea-c533-4945-864d-0da1fc002070",
+                    "volume_id":"365ad75b-ca76-46cb-8eea-435535fd2e22",
+                    "volume_name":"365ad75b-ca76-46cb-8eea-435535fd2e22",
+                    "volume_size":"1", "volume_type":"iscsi",
+                    "volume_mountpoint":"/dev/vda", "availability_zone":"nova",
+                    "metadata":{"readonly":"False","attached_mode":"rw" }} ]} ],
+                    "name":"API taken 2", "description":"API taken description
+                    2", "host":"NBOSVM1", "size":44171264,
+                    "restore_size":2147483648, "uploaded_size":44171264,
+                    "progress_percent":100, "progress_msg":"Backup of protection snapshot is complete", "warning_msg":null, "error_msg":null,
+                    "time_taken":428, "pinned":false, "metadata":[{
+                    "created_at":"2020-11-04T14:05:57.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "id":"16fc1ce5-81b2-4c07-ac63-6c9232e0418f",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "key":"backup_media_target",
+                    "value":"10.10.2.20:/upstream"},{
+                    "created_at":"2020-11-04T13:58:37.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "id":"5a56bbad-9957-4fb3-9bbc-469ec571b549",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "key":"cancel_requested", "value":"0"},{
+                    "created_at":"2020-11-04T14:05:29.000000",
+                    "updated_at":"2020-11-04T14:05:45.000000",
+                    "deleted_at":null, "deleted":false, "version":"11.0.1008",
+                    "id":"d36abef7-9663-4d88-8f2e-ef914f068fb4",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "key":"data_transfer_time", "value":"0"},
+                    {"created_at": "2023-11-24T06:16:54.000000",
+                    "updated_at": null,"deleted_at": null,"deleted": false,
+                    "version": "11.0.1008","id": "bfe58933-2574-4fdb-8385-5f0509d3d0d6","snapshot_id": "a82dfe6c-d55f-464d-824d-32a6a3feb922","key": "forced_rescan","value": "1"},
+                    {"created_at": "2023-11-24T06:16:54.000000",
+                    "updated_at": null,"deleted_at": null,"deleted": false,
+                    "version": "11.0.1008","id": "81cafd42-0744-4ea9-8246-b17137f569bd","snapshot_id": "a82dfe6c-d55f-464d-824d-32a6a3feb922","key": "full_backup_interval","value": "5"},
+                    {"created_at":"2020-11-04T14:05:57.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "id":"c75f9151-ef87-4a74-acf1-42bd2588ee64",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "key":"hostnames", "value":"[\"cirros-2\"]"},{"created_at": "2023-11-24T06:16:54.000000","updated_at": null,"deleted_at": null,
+                    "deleted": false,"version": "11.0.1008","id": "4712eda5-6a84-406a-83b0-b0831309274c","snapshot_id": "a82dfe6c-d55f-464d-824d-32a6a3feb922","key": "incremental_backups_completed",
+                    "value": "0"},
+                    {"created_at":"2020-11-04T14:05:29.000000",
+                    "updated_at":"2020-11-04T14:05:45.000000",
+                    "deleted_at":null, "deleted":false, "version":"11.0.1008",
+                    "id":"02916cce-79a2-4ad9-a7f6-9d9f59aa8424",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "key":"object_store_transfer_time", "value":"0"},{
+                    "created_at":"2020-11-04T14:05:57.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "`ersion":"11.0.1008",
+                    "id":"96efad2f-a24f-4cde-8e21-9cd78f78381b",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "key":"pause_at_snapshot", "value":"0"},{
+                    "created_at":"2020-11-04T14:05:57.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "id":"572a0b21-a415-498f-b7fa-6144d850ef56",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "key":"policy_attribute_id",
+                    "value":"b79aa5f3-405b-4da4-96e2-893abf7cb5fd"},{
+                    "created_at":"2020-11-04T14:05:57.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "id":"dfd7314d-8443-4a95-8e2a-7aad35ef97ea",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "key":"preferredgroup", "value":"[]"},{
+                    "created_at": "2023-11-24T06:16:54.000000",
+                    "updated_at": null,"deleted_at": null,
+                    "deleted": false,"version": "11.0.1008",
+                    "id": "61515c56-52a6-4d9c-afaa-e9286b9ba48b",
+                    "snapshot_id": "a82dfe6c-d55f-464d-824d-32a6a3feb922",
+                    "key": "slo_id","value": "18926bd1-bdb3-4a94-b660-ddc0e7b89a34"
+                    },{"created_at":"2020-11-04T14:05:57.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "id":"2e17e1e4-4bb1-48a9-8f11-c4cd2cfca2a9",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "key":"topology", "value":"\"\\\"\\\"\""},{
+                    "created_at":"2020-11-04T14:05:57.000000",
+                    "updated_at":null, "deleted_at":null, "deleted":false,
+                    "version":"11.0.1008",
+                    "id":"33762790-8743-4e20-9f50-3505a00dbe76",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "key":"policy_approx_backup_size", "value":"6"} ],
+                    "backup_status": "available","backup_time_taken": 192,
+                    "copy_type": "snapshot, backup","recovery_point_info":null,
+                    "restores_info":""} }
+    post:
+      summary: Restore
+      description: Starts a restore according to the provided information.
+      tags:
+        - Restores
+      parameters:
+        - name: recovery_point_id
+          in: path
+          description: ID of the recovery point/snapshot to restore.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: false
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: false
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/OneClickRestore'
+                - $ref: '#/components/schemas/SelectiveRestore'
+                - $ref: '#/components/schemas/InplaceRestore'
+      responses:
+        '202':
+          description: Returns the information about the restore that has started.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"restore":{ "id":"3df1d432-2f76-4ebd-8f89-1275428842ff",
+                    "created_at":"2020-11-05T14:30:56.048656",
+                    "updated_at":"2020-11-05T14:30:56.048656",
+                    "finished_at":null,
+                    "user_id":"ccddc7e7a015487fa02920f4d4979779",
+                    "project_id":"c76b3355a164498aa95ddbc960adc238",
+                    "status":"restoring", "restore_type":"restore",
+                    "snapshot_id":"2e56d167-bad7-43c7-8ede-a613c3fe7844",
+                    "links":[{ "rel":"self",
+                    "href":"http://nbosjm_backend/v2/c76b3355a164498aa95ddbc960adc238/restores/3df1d432-2f76-4ebd-8f89-1275428842ff"},{
+                    "rel":"bookmark",
+                    "href":"http://nbosjm_backend/c76b3355a164498aa95ddbc960adc238/restores/3df1d432-2f76-4ebd-8f89-1275428842ff"}
+                    ], "name":"One Click Restore", "description":"One Click
+                    Restore", "host":"", "size":0, "uploaded_size":0,
+                    "progress_percent":0, "progress_msg":null,
+                    "warning_msg":null, "error_msg":null, "time_taken":0,
+                    "restore_options":{"openstack":{
+                    },"type":"openstack","oneclickrestore":true,"vmware":{
+                    },"restore_type":"oneclick" }, "metadata":[ ]} }
+  /protections/{protection_id}:
+    get:
+      summary: Show Protection
+      description: Shows all the details of the specified protection.
+      tags:
+        - Protections
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy to show.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"policy":{ "created_at":"2020-10-29T15:42:01.000000",
+                    "updated_at":"2020-10-29T15:42:18.000000",
+                    "id":"c4e3aeeb-7d87-4c49-99ed-677e51ba715e",
+                    "user_id":"ccddc7e7a015487fa02920f4d4979779",
+                    "project_id":"c76b3355a164498aa95ddbc960adc238",
+                    "availability_zone":"nova",
+                    "policy_type_id":"f82ce76f-17fe-438b-aa37-7a023058e50d",
+                    "name":"API created", "description":"API description",
+                    "interval":null, "storage_usage":{"usage":0,"full":{
+                    "snap_count":0, "usage":0},"incremental":{ "snap_count":0,
+                    "usage":0} }, "instances":[{
+                    "id":"7c1bb5d2-aa5a-44f7-abcd-2d76b819b4c8",
+                    "name":"cirros-3", "metadata":{
+                    "nbu_policy_name": "snap-backup-43+16dcc908-8849-445d-8b10-faad2bab9c37",
+                    "nbu_subscription_id": "4d3f4da0-4b51-49a0-acb9-9b0c135f532a",
+                    "policy_id": "c4e3aeeb-7d87-4c49-99ed-677e51ba715e",
+                    "policy_name": "API created"}} ],
+                    "metadata":{"backup_media_target": "mediaServer.host.com:/mnt/vpfs_shares/usha/ushare-2",
+                    "forced_rescan": "1","full_backup_interval": "5","hostnames":"[\"cirros-3\"]","pause_at_snapshot": "0","policy_attribute_id":"b79aa5f3-405b-4da4-96e2-893abf7cb5fd","preferredgroup":"[]","slo_id": "9b1f412c-f8c4-4d5b-bfb6-95c8e72c9a03","topology": "\"\\\"\\\"\"","policy_approx_backup_size":"6"}, "jobschedule":{"enabled": false,"start_date": "12/20/2023","end_date": "No
+                    End","start_time": "09:00 PM","timezone": "Asia/Calcutta","local_clock": "12/20/2023, 2:07:21 PM Asia/Calcutta","backup_type": "FULL","replication": "False","keep_backup_for": "4 Hours","snapshot_and_backup_options": "BackupFromSnapshot","backup_media_path": "mediaServer.host.com:/mnt/vpfs_shares/usha/ushare-2","interval": "2","retention_policy_value": "1","duplication": "None","retention_policy_type": "Number of Snapshots to Keep","keep_snapshot_for": "4 Hours","backup_initiation": "0","appliance_timezone": "Asia/Kolkata","global_jobscheduler": true
+                    }, "status":"available", "error_msg":null, "links":[{
+                    "rel":"self",
+                    "href":"http://nbosjm_backend/v2/c76b3355a164498aa95ddbc960adc238/policies/c4e3aeeb-7d87-4c49-99ed-677e51ba715e"},{
+                    "rel":"bookmark",
+                    "href":"http://nbosjm_backend/c76b3355a164498aa95ddbc960adc238/policies/c4e3aeeb-7d87-4c49-99ed-677e51ba715e"}
+                    ], "scheduler_trust":null} }
+    put:
+      summary: Modify Protection
+      description: >-
+        Modifies a protection in the specified tenant/project with the provided
+        details.
+      tags:
+        - Protections
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy to modify.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      requestBody:
+        description: Request body to modify the protection.
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProtectionCreate'
+      responses:
+        '202':
+          description: Successfully modified the specified protection.
+    delete:
+      summary: Delete Protection
+      description: Deletes the specified protection.
+      tags:
+        - Protections
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy to delete.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Successfully deleted the specified protection.
+  /protections/protection_import:
+    post:
+      summary: Import Protections
+      description: Import protections from the configured NetBackup. All protections from the NetBackup catalog will be imported.
+      tags:
+        - Protection Import and Migration
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully initiated the protection import job.
+  /protections/protection_import_to_new_cloud:
+    post:
+      summary: Import Protections to new cloud
+      description: Import protections to the new cloud from the configured NetBackup. All protections from the NetBackup catalog will be imported.
+      tags:
+        - Protection Import and Migration
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully initiated the job to import the protections to new cloud.
+  /import_protection_status:
+    get:
+      summary: Get Imported Protections status
+      description: Provides the list of all imported protections with status.
+      tags:
+        - Protection Import and Migration
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns status of imported protections.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"imported_backup_images": [{"backup_image_id": "OPENSTACK_INSTANCE_0ef0f7d1-21ac-4355-b41f-7b22225e7de8_8d1378fce75740a3827eab8714c99bac_1722422049", "status": "Available", "error_msg": null, "protection_id": "2e231460-37b0-4967-93b7-e5598af5d007", "import_type": 1, "air_copy": null, "snapshot_id": "1e650710-65db-421c-b2bf-ade907bd5ffa"}, {"backup_image_id": "OPENSTACK_INSTANCE_0ef0f7d1-21ac-4355-b41f-7b22225e7de8_8d1378fce75740a3827eab8714c99bac_1722851490", "status": "Available", "error_msg": null, "protection_id": "a2c83aaa-10ca-4982-b2ef-d6124eb6246b", "import_type": 1, "air_copy": null, "snapshot_id": "1008b6b8-310f-45b6-9a5c-d0043b9c8cfa"}]}
+  /protection_plan/:
+    get:
+      summary: List Protection Plans
+      description: Requests the list of available protection plans.
+      tags:
+        - Protection Plans
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Response contains the list of available protection plans with
+            their details.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"policy_attribute_list":[{"id":"f16b86e0-6878-4497-b479-655fa27223e4","created_at":"2023-11-24T06:12:54.000000","updated_at":"2023-11-24T06:12:54.000000","status":"available","name":"Gold","description":"","metadata":[{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"005c9e06-92cc-4884-bc28-ffcd81ac9e47","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","key":"slo_id","value":"18926bd1-bdb3-4a94-b660-ddc0e7b89a34"}],"field_values":[{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"02410b23-3cf5-43b9-a0e1-4461e795bb63","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"replication","value":"False"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"2fceff7e-b310-4dbc-8181-89ed6d048efa","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"snapshot_and_backup_options","value":"BackupFromSnapshot"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"3fb489e4-4ae1-48f6-81a7-692da10922c5","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"backup_media_path","value":"mediaServer.host.com:/mnt/vpfs_shares/usha/ushare_2"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"5d8c87a3-cb07-400e-8fef-9237bc6ed04b","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"interval","value":"1"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"63078874-4b43-45e8-a6cd-a0495c88a886","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"backup_type","value":"FULL"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"83bd7c11-e485-4b2e-ac7e-0857bf299c3b","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"backup_initiation","value":"0"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"a0e853a4-e64a-4a04-aa5f-689172382d5b","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"keep_snapshot_for","value":"2 Hours"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"a3217e38-b4f0-47f6-8565-afe64a9a5c94","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"keep_backup_for","value":"4 Hours"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"b0982423-0dc1-47fe-85d5-f823441eae24","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"duplication","value":"None"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"b74283c6-3c0d-4279-9f99-5c483842600c","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"retention_policy_type","value":"Number of Snapshots to Keep"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"ef6873f9-6a7b-4866-9726-7d8cc1adcbaa","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"fullbackup_interval","value":"-1"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"f331d473-67e0-4c59-9050-1f0349d33242","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"retention_policy_value","value":"1"}]}]}
+  /protection_plan/{protection_plan_id}:
+    get:
+      summary: Show Protection Plan
+      description: Requests the details of a specified protection plan.
+      tags:
+        - Protection Plans
+      parameters:
+        - name: protection_plan_id
+          in: path
+          description: ID of the protection plan/policy attribute to show.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns details of the requested protection plan.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"policy_attribute":{"id":"f16b86e0-6878-4497-b479-655fa27223e4","created_at":"2023-11-24T06:12:54.000000","updated_at":"2023-11-24T06:12:54.000000","user_id":"02e51ee738a5464f9a8c7fa23a91b310","project_id":"8d1378fce75740a3827eab8714c99bac","status":"available","name":"Gold","description":"","field_values":[{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"02410b23-3cf5-43b9-a0e1-4461e795bb63","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"replication","value":"False"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"2fceff7e-b310-4dbc-8181-89ed6d048efa","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"snapshot_and_backup_options","value":"BackupFromSnapshot"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"3fb489e4-4ae1-48f6-81a7-692da10922c5","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"backup_media_path","value":"mediaServer.host.com:/mnt/vpfs_shares/usha/ushare_2"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"5d8c87a3-cb07-400e-8fef-9237bc6ed04b","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"interval","value":"1"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"63078874-4b43-45e8-a6cd-a0495c88a886","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"backup_type","value":"FULL"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"83bd7c11-e485-4b2e-ac7e-0857bf299c3b","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"backup_initiation","value":"0"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"a0e853a4-e64a-4a04-aa5f-689172382d5b","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"keep_snapshot_for","value":"2 Hours"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"a3217e38-b4f0-47f6-8565-afe64a9a5c94","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"keep_backup_for","value":"4 Hours"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"b0982423-0dc1-47fe-85d5-f823441eae24","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"duplication","value":"None"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"b74283c6-3c0d-4279-9f99-5c483842600c","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"retention_policy_type","value":"Number of Snapshots to Keep"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"ef6873f9-6a7b-4866-9726-7d8cc1adcbaa","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"fullbackup_interval","value":"-1"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"f331d473-67e0-4c59-9050-1f0349d33242","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"retention_policy_value","value":"1"}],"metadata":[{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"005c9e06-92cc-4884-bc28-ffcd81ac9e47","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","key":"slo_id","value":"18926bd1-bdb3-4a94-b660-ddc0e7b89a34"}],"policy_attribute_assignments":[{"created_at":"2023-11-24T06:13:41.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"ee961653-094b-4448-b36b-53f4e60e2cc6","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","project_id":"8d1378fce75740a3827eab8714c99bac","policy_attribute_name":"Gold","project_name":"admin"}]}}
+  /protection_plan/{protection_plan_id}/assign:
+    post:
+      summary: Assign Protection Plan
+      description: >-
+        Adds projects to the protection plan or removes the projects from
+        protection plan.
+      tags:
+        - Protection Plans
+      parameters:
+        - name: protection_plan_id
+          in: path
+          description: ID of the protection plan/policy attribute to assign.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      requestBody:
+        description: Request body to assign the protection plan.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProtectionPlan'
+      responses:
+        '200':
+          description: Protection Plan is assigned successfully.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"policy_attribute":{"id":"f16b86e0-6878-4497-b479-655fa27223e4","created_at":"2023-11-24T06:12:54.000000","updated_at":"2023-11-24T06:12:54.000000","user_id":"02e51ee738a5464f9a8c7fa23a91b310","project_id":"8d1378fce75740a3827eab8714c99bac","status":"available","name":"snap-back-new-ushare-43","description":"","field_values":[{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"02410b23-3cf5-43b9-a0e1-4461e795bb63","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"replication","value":"False"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"2fceff7e-b310-4dbc-8181-89ed6d048efa","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"snapshot_and_backup_options","value":"BackupFromSnapshot"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"3fb489e4-4ae1-48f6-81a7-692da10922c5","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"backup_media_path","value":"mediaServer.host.com:/mnt/vpfs_shares/usha/ushare_2"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"5d8c87a3-cb07-400e-8fef-9237bc6ed04b","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"interval","value":"1"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"63078874-4b43-45e8-a6cd-a0495c88a886","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"backup_type","value":"FULL"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"83bd7c11-e485-4b2e-ac7e-0857bf299c3b","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"backup_initiation","value":"0"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"a0e853a4-e64a-4a04-aa5f-689172382d5b","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"keep_snapshot_for","value":"2 Hours"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"a3217e38-b4f0-47f6-8565-afe64a9a5c94","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"keep_backup_for","value":"4 Hours"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"b0982423-0dc1-47fe-85d5-f823441eae24","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"duplication","value":"None"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"b74283c6-3c0d-4279-9f99-5c483842600c","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"retention_policy_type","value":"Number of Snapshots to Keep"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"ef6873f9-6a7b-4866-9726-7d8cc1adcbaa","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"fullbackup_interval","value":"-1"},{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"f331d473-67e0-4c59-9050-1f0349d33242","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","policy_attribute_field_name":"retention_policy_value","value":"1"}],"metadata":[{"created_at":"2023-11-24T06:13:37.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"005c9e06-92cc-4884-bc28-ffcd81ac9e47","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","key":"slo_id","value":"18926bd1-bdb3-4a94-b660-ddc0e7b89a34"}],"policy_attribute_assignments":[{"created_at":"2023-12-21T13:37:08.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"a803efab-cda7-4e8f-9259-45f9af481857","policy_attribute_id":"f16b86e0-6878-4497-b479-655fa27223e4","project_id":"82883ba622c148b78e5e0df30fcf076e","policy_attribute_name":"snap-back-new-ushare-43","project_name":"service"}]},"failed_ids":[]}
+  /protection_plan/assigned/{project_id}:
+    get:
+      summary: List Assigned Protection Plans
+      description: Requests the lists of the protection plans assigned to a project.
+      tags:
+        - Protection Plans
+      parameters:
+        - name: project_id
+          in: path
+          description: ID of the project to fetch assigned protection plans from.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Returns list of the protection plans with some information assigned
+            to the provided project.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"policy_attributes":[
+                    {"created_at":"2020-10-29T15:39:13.000000","updated_at":null,"deleted_at":null,"deleted":false,"version":"11.0.1008","id":"8b4a6236-63f1-4e2d-b8d1-23b37f4b4346","policy_attribute_id":"b79aa5f3-405b-4da4-96e2-893abf7cb5fd","project_id":"c76b3355a164498aa95ddbc960adc238","policy_attribute_name":"Gold","project_name":"robert"
+                    }] }
+  /protections:
+    get:
+      summary: List Protections
+      description: Provides the list of all protections for the specified tenant/project ID.
+      tags:
+        - Protections
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+        - name: all_policies
+          in: query
+          description: >-
+            Administrator role is required to perform this task. True lists
+            protections of all tenants/projects.
+          required: false
+          schema:
+            type: boolean
+        - name: page_number
+          in: query
+          description: Displays the protections from the specified page number.
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          description: Specifies the number of protections to be displayed on one page.
+          required: false
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Returns the list of the protections.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {
+                      "policies": [
+                        {
+                          "project_id": "34d1e9839abf443d8626ac3d783d5e54",
+                          "user_id": "d85b52d1275f4b3e89959bf1b4d013a2",
+                          "id": "95dd6355-ebab-4ce0-8618-191d87434eb2",
+                          "name": "protection32",
+                          "snapshots_info": "",
+                          "description": "no-description",
+                          "policy_type_id": "f82ce76f-17fe-438b-aa37-7a023058e50d",
+                          "status": "available",
+                          "created_at": "2025-01-20T08:05:11.000000",
+                          "updated_at": "2025-02-05T08:22:08.000000",
+                          "scheduler_trust": {
+                            "scheduler_enabled": "True",
+                            "trust": {
+                              "created_at": "2024-12-05T10:41:59.000000",
+                              "updated_at": "None",
+                              "deleted_at": "None",
+                              "deleted": "False",
+                              "version": "11.0.1008",
+                              "name": "trust-e7d1b0ea-0e4d-4d53-ab32-a372840e46b4",
+                              "project_id": "34d1e9839abf443d8626ac3d783d5e54",
+                              "user_id": "d85b52d1275f4b3e89959bf1b4d013a2",
+                              "value": "b903d235b5c14f73af3cf57b113a5c47",
+                              "description": "token id for user d85b52d1275f4b3e89959bf1b4d013a2 project 34d1e9839abf443d8626ac3d783d5e54",
+                              "category": "identity",
+                              "type": "trust_id",
+                              "public": "False",
+                              "hidden": "True",
+                              "status": "available",
+                              "metadata": [
+                                {
+                                  "created_at": "2024-12-05T10:41:59.000000",
+                                  "updated_at": "None",
+                                  "deleted_at": "None",
+                                  "deleted": "False",
+                                  "version": "11.0.1008",
+                                  "id": "79522c29-7c17-4dfa-b5bf-bbbda8dd1864",
+                                  "settings_name": "trust-e7d1b0ea-0e4d-4d53-ab32-a372840e46b4",
+                                  "settings_project_id": "34d1e9839abf443d8626ac3d783d5e54",
+                                  "key": "role_name",
+                                  "value": "admin"
+                                }
+                              ]
+                            },
+                            "is_valid": "True",
+                            "scheduler_obj": {
+                              "policy_id": "95dd6355-ebab-4ce0-8618-191d87434eb2",
+                              "user_id": "d85b52d1275f4b3e89959bf1b4d013a2",
+                              "project_id": "34d1e9839abf443d8626ac3d783d5e54",
+                              "user_domain_id": "default",
+                              "user": "d85b52d1275f4b3e89959bf1b4d013a2",
+                              "tenant": "34d1e9839abf443d8626ac3d783d5e54"
+                            }
+                          },
+                          "links": [
+                            {
+                              "rel": "self",
+                              "href": "http://nbosjm_backend/34d1e9839abf443d8626ac3d783d5e54/policies/95dd6355-ebab-4ce0-8618-191d87434eb2"
+                            },
+                            {
+                              "rel": "bookmark",
+                              "href": "http://nbosjm_backend/34d1e9839abf443d8626ac3d783d5e54/policies/95dd6355-ebab-4ce0-8618-191d87434eb2"
+                            }
+                          ]
+                        },
+                        {
+                          "project_id": "34d1e9839abf443d8626ac3d783d5e54",
+                          "user_id": "d85b52d1275f4b3e89959bf1b4d013a2",
+                          "id": "56bd2f6a-afbc-455a-ac89-f779986b370a",
+                          "name": "protection31",
+                          "snapshots_info": "",
+                          "description": "no-description",
+                          "policy_type_id": "f82ce76f-17fe-438b-aa37-7a023058e50d",
+                          "status": "available",
+                          "created_at": "2025-01-20T06:19:15.000000",
+                          "updated_at": "2025-02-05T06:37:08.000000",
+                          "scheduler_trust": {
+                            "scheduler_enabled": "True",
+                            "trust": {
+                              "created_at": "2024-12-05T10:41:59.000000",
+                              "updated_at": "None",
+                              "deleted_at": "None",
+                              "deleted": "False",
+                              "version": "11.0.1008",
+                              "name": "trust-e7d1b0ea-0e4d-4d53-ab32-a372840e46b4",
+                              "project_id": "34d1e9839abf443d8626ac3d783d5e54",
+                              "user_id": "d85b52d1275f4b3e89959bf1b4d013a2",
+                              "value": "b903d235b5c14f73af3cf57b113a5c47",
+                              "description": "token id for user d85b52d1275f4b3e89959bf1b4d013a2 project 34d1e9839abf443d8626ac3d783d5e54",
+                              "category": "identity",
+                              "type": "trust_id",
+                              "public": "False",
+                              "hidden": "True",
+                              "status": "available",
+                              "metadata": [
+                                {
+                                  "created_at": "2024-12-05T10:41:59.000000",
+                                  "updated_at": "None",
+                                  "deleted_at": "None",
+                                  "deleted": "False",
+                                  "version": "11.0.1008",
+                                  "id": "79522c29-7c17-4dfa-b5bf-bbbda8dd1864",
+                                  "settings_name": "trust-e7d1b0ea-0e4d-4d53-ab32-a372840e46b4",
+                                  "settings_project_id": "34d1e9839abf443d8626ac3d783d5e54",
+                                  "key": "role_name",
+                                  "value": "admin"
+                                }
+                              ]
+                            },
+                            "is_valid": "True",
+                            "scheduler_obj": {
+                              "policy_id": "56bd2f6a-afbc-455a-ac89-f779986b370a",
+                              "user_id": "d85b52d1275f4b3e89959bf1b4d013a2",
+                              "project_id": "34d1e9839abf443d8626ac3d783d5e54",
+                              "user_domain_id": "default",
+                              "user": "d85b52d1275f4b3e89959bf1b4d013a2",
+                              "tenant": "34d1e9839abf443d8626ac3d783d5e54"
+                            }
+                          },
+                          "links": [
+                            {
+                              "rel": "self",
+                              "href": "http://nbosjm_backend/34d1e9839abf443d8626ac3d783d5e54/policies/56bd2f6a-afbc-455a-ac89-f779986b370a"
+                            },
+                            {
+                              "rel": "bookmark",
+                              "href": "http://nbosjm_backend/34d1e9839abf443d8626ac3d783d5e54/policies/56bd2f6a-afbc-455a-ac89-f779986b370a"
+                            }
+                          ]
+                        }
+                      ],
+                      "pagination": {
+                        "page_number": 1,
+                        "page_size": 10,
+                        "total_pages": 1,
+                        "total_items": 2
+                      }
+                      
+                    }
+    post:
+      summary: Create Protection
+      description: >-
+        Creates a protection in the specified tenant/project with the provided
+        details.
+      tags:
+        - Protections
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      requestBody:
+        description: |-
+          Request body to create the protection.<br>
+           Using a protection-plan-id will pull the following information from the protection.
+            * interval
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProtectionCreate'
+      responses:
+        '202':
+          description: Response upon successfully starting the protection creation process.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"policies":{ "project_id":"c76b3355a164498aa95ddbc960adc238",
+                    "user_id":"ccddc7e7a015487fa02920f4d4979779",
+                    "id":"c4e3aeeb-7d87-4c49-99ed-677e51ba715e", "name":"API
+                    created", "snapshots_info":"", "description":"API
+                    description",
+                    "policy_type_id":"f82ce76f-17fe-438b-aa37-7a023058e50d",
+                    "status":"creating",
+                    "created_at":"2020-10-29T15:42:01.000000",
+                    "updated_at":"2020-10-29T15:42:01.000000",
+                    "scheduler_trust":null, "links":[{ "rel":"self",
+                    "href":"http://nbosjm_backend/v2/c76b3355a164498aa95ddbc960adc238/policies/c4e3aeeb-7d87-4c49-99ed-677e51ba715e"},{
+                    "rel":"bookmark",
+                    "href":"http://nbosjm_backend/c76b3355a164498aa95ddbc960adc238/policies/c4e3aeeb-7d87-4c49-99ed-677e51ba715e"}
+                    ]} }
+  /protections/{protection_id}/unlock:
+    post:
+      summary: Unlock Protection
+      description: Unlocks the specified protection.
+      tags:
+        - Protections
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy to unlock.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Successfully unlocked the specified protection.
+  /protections/{protection_id}/apply_forced_rescan:
+    post:
+      summary: Apply forced rescan
+      description: Apply forced rescan for a specific policy
+      tags:
+        - Protections
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Successfully applied force rescan for the specified protection.
+  /protections/{protection_id}/full_backup_interval:
+    get:
+      summary: Get full backup interval
+      description: Get full backup interval value for specific policy
+      tags:
+        - Protections
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns the value of full backup interval for the specified protection.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                     {"full_backup_interval": "5"}
+    post:
+      summary: Set full backup interval
+      description: Set full backup interval value for specific policy
+      tags:
+        - Protections
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to run the authentication against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      requestBody:
+        description: Request body to change full backup interval value.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_backup_interval:
+                  type: string
+              
+      responses:
+        '200':
+          description: Successfully changed value of full backup interval for specified protection
+  /recovery_points/{recovery_point_id}/mount:
+    post:
+      summary: Mount Backup
+      description: Mounts a backup to the provided file recovery manager.
+      tags:
+        - Backup Mount
+      parameters:
+        - name: recovery_point_id
+          in: path
+          description: ID of the recovery point/snapshot to mount.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BackupMount'
+      responses:
+        '200':
+          description: Backup mount request is received and will be processed.
+  /recovery_points/mounted/list:
+    get:
+      summary: List mounted backups in a project
+      description: Provides the list of all backups mounted in a project.
+      tags:
+        - Backup Mount
+      parameters:
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request is received and a list of backups is provided.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"mounted_snapshots":[
+                    {"snapshot_id":"ed4f29e8-7544-4e1c-af8a-a76031211926","snapshot_name":"snapshot","policy_id":"4bafaa03-f69a-45d5-a6fc-ae0119c77974","mounturl":"[\"http://192.168.100.87\"]","status":"mounted","mount_copy_number": "2"
+                    }] }
+  /protections/{protection_id}/recovery_points/mounted/list:
+    get:
+      summary: List the mounted backups in the protection
+      description: >-
+        Provides the list of all backups that are mounted in a specified
+        protection.
+      tags:
+        - Backup Mount
+      parameters:
+        - name: protection_id
+          in: path
+          description: ID of the protection/policy to search for mounted backups.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request is received and a list of backups is provided.
+          content:
+            application/json:
+              examples:
+                jsonObject:
+                  value: >-
+                    {"mounted_snapshots":[
+                    {"snapshot_id":"ed4f29e8-7544-4e1c-af8a-a76031211926","snapshot_name":"snapshot","policy_id":"4bafaa03-f69a-45d5-a6fc-ae0119c77974","mounturl":"[\"http://192.168.100.87\"]","status":"mounted","mount_copy_number": "2"
+                    }] }
+  /recovery_points/{recovery_point_id}/dismount:
+    post:
+      summary: Dismount Backup
+      description: Unmounts a backup copy mounted on the provided file recovery manager instance.
+      tags:
+        - Backup Mount
+      parameters:
+        - name: recovery_point_id
+          in: path
+          description: ID of the recovery point/snapshot to unmount.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Project-Id
+          in: header
+          description: Project to authenticate against.
+          required: true
+          schema:
+            type: string
+        - name: X-Auth-Token
+          in: header
+          description: Authentication token to use.
+          required: true
+          schema:
+            type: string
+        - name: Content-Type
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: Accept
+          in: header
+          description: application/json
+          required: true
+          schema:
+            type: string
+        - name: User-Agent
+          in: header
+          description: python-nbosjmclient
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'Backup dismount request is received and will be processed.'
+components:
+  schemas:
+    EmailSettings:
+      type: object
+      properties:
+        settings:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailSetting'
+    EmailSetting:
+      type: object
+      description: >-
+        E-Mail Notification Settings are done through the settings API. Use the
+        values from the following table to set Email Notifications up through
+        API.
+      properties:
+        category:
+          type: string
+        name:
+          type: string
+        is_public:
+          type: boolean
+        is_hidden:
+          type: boolean
+        metadata:
+          type: object
+        type:
+          type: string
+        value:
+          type: string
+        description:
+          type: string
+    ProtectionPlan:
+      type: object
+      properties:
+        policy_attribute:
+          type: object
+          properties:
+            remove_projects:
+              type: array
+              items:
+                type: string
+            add_projects:
+              type: array
+              items:
+                type: string
+    Snapshot:
+      type: object
+      properties:
+        snapshot:
+          type: object
+          properties:
+            is_scheduled:
+              type: boolean
+            name:
+              type: string
+            description:
+              type: string
+    BackupMount:
+      type: object
+      properties:
+        mount:
+          type: object
+          properties:
+            mount_vm_id:
+              type: string
+            options:
+              type: object
+              required : ['copy_number']
+              properties: 
+                copy_number:
+                  type: string
+                copy_type:
+                  type: string
+                  enum:
+                    - BACKUP
+    Trust:
+      type: object
+      properties:
+        trusts:
+          type: object
+          properties:
+            role_name:
+              type: string
+            is_cloud_trust:
+              type: boolean
+    OneClickRestore:
+      type: object
+      description: >-
+        The One-Click restore requires a body to provide all necessary
+        information in json format.
+      properties:
+        restore:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            options:
+              type: object
+              properties:
+                openstack:
+                  type: object
+                  properties: {}
+                copy_number:
+                  type: integer
+                copy_type:
+                  type: string
+                  enum:
+                    - SNASHOT
+                    - BACKUP
+                type:
+                  type: string
+                oneclickrestore:
+                  type: boolean
+                  properties: {}
+                restore_type:
+                  type: string
+                  enum:
+                    - oneclick
+    SelectiveRestore:
+      type: object
+      description: Starts a restore according to the provided information.
+      properties:
+        restore:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            options:
+              type: object
+              properties:
+                openstack:
+                  type: object
+                  properties:
+                    instances:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          include:
+                            type: boolean
+                          id:
+                            type: string
+                          availability_zone:
+                            type: string
+                          vdisks:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                new_volume_type:
+                                  type: string
+                                availability_zone:
+                                  type: string
+                          nics:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                mac_address:
+                                  type: string
+                                ip_adress:
+                                  type: string
+                                network:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: string
+                                    subnet:
+                                      type: object
+                                      properties:
+                                        id:
+                                          type: string
+                          flavor:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              vcpus:
+                                type: integer
+                              disk:
+                                type: integer
+                              swap:
+                                type: integer
+                              ram:
+                                type: integer
+                              ephemeral:
+                                type: integer
+                    restore_topology:
+                      type: boolean
+                    networks_mapping:
+                      type: object
+                      properties:
+                        networks:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              snapshot_network:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  subnet:
+                                    type: object
+                                    properties:
+                                      id:
+                                        type: string
+                              target_network:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  name:
+                                    type: string
+                                  subnet:
+                                    type: object
+                                    properties:
+                                      id:
+                                        type: string
+                type:
+                  type: string
+                copy_number:
+                  type: integer
+                copy_type:
+                  type: string
+                  enum:
+                    - SNASHOT
+                    - BACKUP
+                oneclickrestore:
+                  type: boolean
+                restore_type:
+                  type: string
+    InplaceRestore:
+      type: object
+      description: Starts a restore according to the provided information.
+                  In-Place restore is supported only for backup copy.
+      properties:
+        restore:
+          type: object
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            options:
+              type: object
+              properties:
+                restore_type:
+                  type: string
+                  enum:
+                    - inplace
+                type:
+                  type: string
+                oneclickrestore:
+                  type: boolean
+                copy_number:
+                  type: integer
+                copy_type:
+                  type: string
+                  enum:
+                    - BACKUP
+                openstack:
+                  type: object
+                  properties:
+                    instances:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          restore_boot_disk:
+                            type: boolean
+                          include:
+                            type: boolean
+                          vdisks:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                restore_cinder_volume:
+                                  type: boolean
+    PolicyImport:
+      type: object
+      properties:
+        policy_ids:
+          type: array
+          items:
+            type: string
+        storage_type:
+          type: string
+          enum:
+            - s3
+            - nfs
+        backup_path:
+          type: array
+          items:
+            type: string
+    ProtectionCreate:
+      type: object
+      description: >-
+        Using a protection-plan-id will pull the following information from the
+        policy.
+        <ul><li>interval</li></ul>
+      properties:
+        policy:
+          type: object
+          required: ['jobschedule']
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            policy_type_id:
+              type: string
+            source_platform:
+              type: string
+            instances:
+              type: array
+              items:
+                type: object
+                properties:
+                  instance-id:
+                    type: string
+            jobschedule:
+              type: object
+              required: ['timezone']
+              properties:
+                timezone:
+                  type: string
+                start_date:
+                  type: string
+                  format: MM/DD/YYYY
+                end_date:
+                  type: string
+                  format: MM/DD/YYYY
+                start_time:
+                  type: string
+                  format: HH:MM AM/PM
+                enabled:
+                  type: boolean
+            metadata:
+              type: object
+              required: ['policy_attribute_id']
+              properties:
+                policy_attribute_id:
+                  type: string
+                additionalProperties:
+                  type: string
+  examples:
+    OneClickRestore:
+      summary: >-
+        The One-Click restore requires a body to provide all necessary
+        information in json format.
+      value:
+        restore:
+          options:
+            openstack: {}
+            type: openstack
+            oneclickrestore: true
+            vmware: {}
+            restore_type: oneclick
+          name: One Click Restore
+          description: One Click Restore
+    SelectiveRestore:
+      summary: >-
+        The selective restore requires a body to provide all necessary
+        information in json format.
+      value:
+        restore:
+          name: <restore name>
+          description: <restore description>
+          options:
+            openstack:
+              instances:
+                - name: <new name of instance>
+                  include: true
+                  id: <original id of instance to be restored>
+                  availability_zone: <availability zone>
+                  vdisks:
+                    - id: <original ID of Volume>
+                      new_volume_type: <new volume type>
+                      availability_zone: <Volume availability zone>
+                  nics:
+                    - mac_address: <mac address of the pre-created port>
+                      ip_address: <IP of the pre-created port>
+                      id: <ID of the pre-created port>
+                      network:
+                        subnet:
+                          id: <ID of the subnet of the pre-created port>
+                        id: <ID of the network of the pre-created port>
+                  flavor:
+                    vcpus: <Integer>
+                    disk: <Integer>
+                    swap: <Integer>
+                    ram: <Integer>
+                    ephemeral: <Integer>
+                    id: <Integer>
+              restore_topology: true
+              networks_mapping:
+                networks:
+                  - snapshot_network:
+                      subnet:
+                        id: <ID of the original Subnet ID>
+                      id: <ID of the original Network ID>
+                    target_network:
+                      subnet:
+                        id: <ID of the target Subnet ID>
+                      id: <ID of the target Network ID>
+                      name: <name of the target network>
+            restore_type: selective
+            type: openstack
+            oneclickrestore: false

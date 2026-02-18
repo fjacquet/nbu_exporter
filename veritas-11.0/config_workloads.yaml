@@ -1,0 +1,3606 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Workloads Configuration API
+  version: "13.0"
+  description: |
+    The NetBackup Workloads Configuration API provides access to NetBackup configuration.
+externalDocs:
+  description: Getting Started Guide
+  url: http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: https://<masterserver>:1556/netbackup
+    description: NetBackup Master
+paths:
+  /config/workloads/hyperv/query-builder-fields:
+    get:
+      description: |
+        Retrieves the query builder field information. The field list is sorted by field name and is case insensitive.
+
+          **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|PROTECTION|POLICIES|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Hyper-V Workloads
+      parameters:
+        - name: filter
+          description: |
+            Filter criteria syntax is based on OData standards. Filtering is supported on the following attributes:
+            |Name|Supported Operators|Description|Schema|
+            |---|---|---|---|
+            |ruleFields/odataFilterFieldName|startswith not|The OData name of the field. Example: "ruleFields/any(p:not startswith(p/odataFilterFieldName,'foobar')).|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully retrieved the query builder field information.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/queryBuilderFieldsResponse"
+        "400":
+          $ref: ./common.yaml#/components/responses/errorBadRequest
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          description: Query builder field information does not exist.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "415":
+          $ref: ./common.yaml#/components/responses/errorUnsupportedMediaType
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  /config/workloads/hyperv/query-builder-field-values:
+    post:
+      description: |
+        Gets the query builder field values for the given request.
+
+        **Access Control**\
+        Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+        Namespace: `|PROTECTION|POLICIES|`\
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Hyper-V Workloads
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema:
+              $ref: "#/components/schemas/getQueryBuilderFieldValuesRequest"
+      responses:
+        "200":
+          description: Successfully retrieved query field values.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/getQueryBuilderFieldValuesResponse"
+        "400":
+          $ref: ./common.yaml#/components/responses/errorBadRequest
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          description: Query builder field information does not exist.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "415":
+          $ref: ./common.yaml#/components/responses/errorUnsupportedMediaType
+        "422":
+          description: Unprocessable entity.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  /config/workloads/hyperv/test-query:
+    post:
+      description: |
+        Initiates the HyperV client selection Test Query.
+
+        Each call to this API generates a testQueryId. That testQueryId is then used for fetching the results.
+        The results of that fetch are the virtual machines that NetBackup selects based on the specified query rules.
+
+        **Access Control**\
+        Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+        Namespace: `|PROTECTION|POLICIES|`\
+        Requires Operation: `|OPERATIONS|UPDATE|`\
+        OR\
+        Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Hyper-V Workloads
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema:
+              $ref: "#/components/schemas/initiateTestQueryRequest"
+      responses:
+        "200":
+          description: Successfully initiated HyperV Test Query discovery.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/initiateTestQueryResults"
+        "400":
+          $ref: ./common.yaml#/components/responses/errorBadRequest
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/hyperv/test-query/{testQueryId}":
+    get:
+      description: |
+        Retrieves the HyperV assets that are discovered for the given testQueryId.
+
+        The API generates the results of a HyperV test query.
+        Executing /config/workloads/hyperv/test-query API generates a testQueryId.
+        That testQueryId is then used by this API for fetching the results.
+        The results are the virtual machines that NetBackup selects based on the specified query rules.
+
+        **Access Control**\
+        Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+        Namespace: `|PROTECTION|POLICIES|`\
+        Requires Operation: `|OPERATIONS|UPDATE|`\
+        OR\
+        Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Hyper-V Workloads
+      parameters:
+        - name: testQueryId
+          description: |
+            The ID of the HyperV testQuery.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully returned the host names of discovered virtual machines and associated information.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/discoveryQueryTestResultResponse"
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+    delete:
+      description: |
+        Cancels the specified HyperV test query.
+
+        **Access Control**\
+        Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+        Namespace: `|PROTECTION|POLICIES|`\
+        Requires Operation: `|OPERATIONS|UPDATE|`\
+        OR\
+        Requires Operation: `|OPERATIONS|ADD|`
+      tags:
+        - Hyper-V Workloads
+      parameters:
+        - name: testQueryId
+          description: |
+            The ID of the HyperV testQuery.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Successfully canceled the HyperV test query.
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          description: No query exists with the specified test query ID.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  /config/workloads/hyperv/validate-query-syntax:
+    post:
+      description: |
+        Validates the syntax of the OData query.
+
+        **Access Control**\
+        Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+        Namespace: `|PROTECTION|POLICIES|`\
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Hyper-V Workloads
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema:
+              $ref: "#/components/schemas/validateQuerySyntaxRequest"
+      responses:
+        "200":
+          description: Successfully validated the query syntax.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/validateQuerySyntaxResponse"
+        "400":
+          $ref: ./common.yaml#/components/responses/errorBadRequest
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "415":
+          $ref: ./common.yaml#/components/responses/errorUnsupportedMediaType
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  /config/workloads/vmware/query-builder-fields:
+    get:
+      description: |
+        Retrieves the fields' information for the Query Builder. Field list is sorted by field name, case insensitive.
+
+          **Access Control**\
+          Enforcement Type: [API-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+          Namespace: `|PROTECTION|POLICIES|`\
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: filter
+          description: |
+            Filter criteria syntax is based on OData standards. Filtering is supported on the following attributes:
+            |Name|Supported Operators|Description|Schema|
+            |---|---|---|---|
+            |ruleFields/odataFilterFieldName|startswith not|The OData name of the field. Example: "ruleFields/any(p:not startswith(p/odataFilterFieldName,'foobar')).|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully retrieved the fields' information.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/queryBuilderFieldsResponse"
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "415":
+          $ref: ./common.yaml#/components/responses/errorUnsupportedMediaType
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/vmware/vcenter-recovery-topologies/{vcenter-id}":
+    get:
+      description: |
+        Gets the vCenter recovery topology information for the given vCenter ID.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified vcenter_identifier or esx_identifier or restore_esx_identifier or datacenter_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: vcenter-id
+          description: |
+            The ID of the vCenter. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully returned the vCenter topology information for the specified vCenter ID.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/workloadData"
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "415":
+          $ref: ./common.yaml#/components/responses/errorUnsupportedMediaType
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/vmware/vcenter-topologies/{vcenter-id}":
+    get:
+      description: |
+        Gets the vCenter topology information for the given vCenter ID.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified vcenter_identifier or esx_identifier or datacenter_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: vcenter-id
+          description: |
+            The ID of the vCenter. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully returned the vCenter topology information for the specified vCenter ID.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/workloadData"
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/vmware/vcenters/{vcenter-id}/esxiservers/{esxiserver-id}/datastores":
+    get:
+      description: |
+        Returns the list of datastores available for the given host or cluster on the specified vCenter.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified vcenter_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: vcenter-id
+          description: |
+            The ID of the vCenter. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: esxiserver-id
+          description: |
+            The name of the host or cluster exactly as configured in the VMware server topology view whether short or fully-qualified.
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: ./common.yaml#/components/headers/forceUpdateHeader
+      responses:
+        "200":
+          description: |
+            Successfully returned the list of datastores available for the given host or cluster on the specified vCenter.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/datastoreResource"
+        "400":
+          description: Bad or invalid request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/vmware/vcenters/{vcenter-id}/esxiservers/{esxiserver-id}/resource-pools":
+    get:
+      description: |
+        Returns the list of resource pools available for the given host or cluster on the specified vCenter.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified vcenter_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: vcenter-id
+          description: |
+            The ID of the vCenter. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: esxiserver-id
+          description: |
+            The name of the host or cluster exactly as configured in the VMware server topology view whether short or fully-qualified.
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: ./common.yaml#/components/headers/forceUpdateHeader
+      responses:
+        "200":
+          description: |
+            Successfully returned the list of resource pools available for the given host or cluster on the specified vCenter.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/resourcePoolResource"
+        "400":
+          description: Bad or invalid request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/vmware/vcenters/{vcenter-id}/esxiservers/{esxiserver-id}/networks":
+    get:
+      description: |
+        Returns the list of networks available for the given host or cluster on the specified vCenter.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified vcenter_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: vcenter-id
+          description: |
+            The ID of the vCenter. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: esxiserver-id
+          description: |
+            The name of the host or cluster exactly as configured in the VMware server topology view whether short or fully-qualified.
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: ./common.yaml#/components/headers/forceUpdateHeader
+      responses:
+        "200":
+          description: |
+            Successfully returned the list of networks available for the given host or cluster on the specified vCenter.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/networkResource"
+        "400":
+          description: Bad or invalid request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/vmware/vcloud-directors/{vcloud-director-id}/organizations/{organization}/organization-vdcs/{organization-vdc}/vcenters/{vcenter-id}/esxiservers/{esxiserver-id}/datastores":
+    get:
+      description: |
+        Returns the list of datastores available for the given host or cluster in the specified VMware Cloud Director Organization and Organization vDC.
+
+        **Access Control**\
+        Server
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified vcloud_director_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+
+        Asset
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the `data.attributes.commonAssetAttributes.accessControlId` attribute in the asset-service response, for the organization and organization vDC object-level namespace) \
+        Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: vcloud-director-id
+          description: |
+            The ID of the VMware Cloud Director. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: organization
+          description: |
+            The name of the VMware Cloud Organization.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: organization-vdc
+          description: |
+            The name of the VMware Cloud Organization vDC.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: vcenter-id
+          description: |
+            The ID of the vCenter. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: esxiserver-id
+          description: |
+            The name of the host or cluster exactly as configured in the VMware server topology view whether short or fully-qualified.
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: ./common.yaml#/components/headers/forceUpdateHeader
+      responses:
+        "200":
+          description: |
+            Successfully returned the list of datastores available for the given host or cluster in the specified VMware Cloud Director Organization and Organization vDC.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/vCloudDatastoreResource"
+        "400":
+          description: Bad or invalid request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/vmware/vcloud-directors/{vcloud-director-id}/organizations/{organization}/organization-vdcs/{organization-vdc}/vcenters/{vcenter-id}/esxiservers/{esxiserver-id}/resource-pools":
+    get:
+      description: |
+        Returns the list of resource pools available for the given host or cluster in the specified VMware Cloud Director Organization and Organization vDC.
+
+        **Access Control**\
+        Server
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified vcloud_director_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+
+        Asset
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the `data.attributes.commonAssetAttributes.accessControlId` attribute in the asset-service response, for the organization and organization vDC object-level namespace) \
+        Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: vcloud-director-id
+          description: |
+            The ID of the VMware Cloud Director. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: organization
+          description: |
+            The name of the VMware Cloud Organization.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: organization-vdc
+          description: |
+            The name of the VMware Cloud Organization vDC.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: vcenter-id
+          description: |
+            The ID of the vCenter. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: esxiserver-id
+          description: |
+            The name of the host or cluster exactly as configured in the VMware server topology view whether short or fully-qualified.
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: ./common.yaml#/components/headers/forceUpdateHeader
+      responses:
+        "200":
+          description: |
+            Successfully returned the list of resource pools available for the given host or cluster in the specified VMware Cloud Director Organization and Organization vDC.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/vCloudResourcePoolResource"
+        "400":
+          description: Bad or invalid request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/vmware/vcloud-topologies/{vcloud-director-id}":
+    get:
+      description: |
+        Gets the VMware Cloud Director topology information for the given VMware Cloud Director ID.
+
+        **Access Control**\
+          Server
+          Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+          Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified vcloud_director_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+          Requires Operation: `|OPERATIONS|VIEW|`
+
+          Asset
+          Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+          Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified organization and vApp in the asset-service response, for the object-level namespace) \
+          Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: vcloud-director-id
+          description: |
+            The ID of the VMware Cloud Director. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter
+          description: |
+            Filter criteria syntax is based on OData standards. When using filters, the `assetType` parameter must be included as part of any filter.
+            Filtering is supported on the following attributes:
+            |Name|Supported Operators|Description|Schema|
+            |---|---|---|---|
+            |assetType|eq|The type of asset to filter by. This parameter is required when using any filter and must be one of the following values: [vCDOrg, vCDOrgvDC, vCDvApp].|string|
+            |organizationId|eq|VMware Cloud Director Organization Id.|string|
+            |organizationVdcId|eq|VMware Cloud Director Organization vDC Id.|string|
+            |vAppId|eq|VMware Cloud Director vApp Id.|string|
+            |vCloudFullPath|eq startswith|The path to filter assets by. Format /serverName/orgName/orgVdcName/vAppName.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully returned the VMware Cloud topology information for the specified VMware Cloud Director ID based on the applied filter.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/vCloudWorkloadData"
+        "400":
+          description: Bad Request - Invalid filter or missing/incorrect assetType.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#components/schemas/invalidFilter"
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/vmware/vcloud-recovery-topologies/{vcloud-director-id}":
+    get:
+      description: |
+        Gets the VMware Cloud Director recovery topology information for the given VMware Cloud Director ID.
+
+        **Access Control**\
+          Server
+          Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+          Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified vcloud_director_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+          Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+
+          Asset
+          Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+          Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified organization and vApp in the asset-service response, for the object-level namespace) \
+          Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: vcloud-director-id
+          description: |
+            The ID of the VMware Cloud Director. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filter
+          description: |
+            Filter criteria syntax is based on OData standards. When using filters, the `assetType` parameter must be included as part of any filter.
+            Filtering is supported on the following attributes:
+            |Name|Supported Operators|Description|Schema|
+            |---|---|---|---|
+            |assetType|eq|The type of asset to filter by. This parameter is required when using any filter and must be one of the following values: [vCDOrg, vCDOrgvDC, vCDvApp].|string|
+            |organizationId|eq|VMware Cloud Director Organization Id.|string|
+            |organizationVdcId|eq|VMware Cloud Director Organization vDC Id.|string|
+            |vAppId|eq|VMware Cloud Director vApp Id.|string|
+            |vCloudFullPath|eq startswith|The path to filter assets by. Format /serverName/orgName/orgVdcName/vAppName.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully returned the VMware Cloud recovery topology information for the specified VMware Cloud Director ID.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/vCloudWorkloadData"
+        "400":
+          description: Bad Request - Invalid filter or missing/incorrect assetType.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#components/schemas/invalidFilter"
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/vmware/vcloud-vcenter-topologies/vcloud-directors/{vcloud-director-id}/organizations/{organization}/organization-vdcs/{organization-vdc}":
+    get:
+      description: |
+        Gets the vCenter topology information for the given Organization and Organization vDC.
+
+        **Access Control**\
+        Server
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified vcloud_director_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+
+        Asset
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified organization and organization vDC in the asset-service response, for the object-level namespace) \
+        Requires Operation: `|OPERATIONS|ASSETS|VMWARE|RESTORE_DESTINATION|`
+      tags:
+        - VMware Workloads
+      parameters:
+        - name: vcloud-director-id
+          description: |
+            The ID of the VMware Cloud Director. This ID is the server name and must match the name (short name or fully qualified domain name) that was specified when the server was added.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: organization
+          description: |
+            The name of the VMware Cloud Organization.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: organization-vdc
+          description: |
+            The name of the VMware Cloud organization vDC.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully returned the VMware Cloud topology information for the specified VMware Cloud Organization and VMware Cloud Organization vDC.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/workloadData"
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/rhv/rhv-recovery-topologies/{rhv-id}":
+    get:
+      description: |
+        Gets the Red Hat Virtualization recovery topology information for the given RHV ID.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified rhvmgr_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|ASSETS|RHV|RESTORE_DESTINATION|`
+      tags:
+        - Red Hat Virtualization Workloads
+      parameters:
+        - name: rhv-id
+          description: |
+            The RHV ID is the server name that must match either the server's short name or the fully qualified domain name that was specified while adding the server.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully returned the RHV topology information for the specified RHV ID.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/rhvWorkloadData"
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/rhv/rhv-topologies/{rhv-id}":
+    get:
+      description: |
+        Gets the Red Hat Virtualization topology information for the given RHV ID.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified rhvmgr_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Red Hat Virtualization Workloads
+      parameters:
+        - name: rhv-id
+          description: |
+            The RHV ID is the server name that must match either the server's short name or the fully qualified domain name that was specified while adding the server.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successfully returned the RHV topology information for the specified RHV ID.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/rhvWorkloadData"
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/rhv/rhv-topologies/{rhv-id}/datacenters/{datacenter-id}/storage-domains":
+    get:
+      description: |
+        Returns the list of storage domains available for the given datacenter on the specified RHV server.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the data.meta.accessControlId metadata response attribute for the specified rhvmgr_identifier namespace in the API response. GET /config/servers/vmservers?meta=accessControlId)\
+        Requires Operation: `|OPERATIONS|ASSETS|RHV|RESTORE_DESTINATION|`
+      tags:
+        - Red Hat Virtualization Workloads
+      parameters:
+        - name: rhv-id
+          description: |
+            The RHV ID is the server name that must match either the server's short name or the fully qualified domain name that was specified while adding the server.
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: datacenter-id
+          description: |
+            The short name or the fully qualified domain name of the datacenter that is configured in the RHV server topology view.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: |
+            Successfully returned the list of storage domains available for the given datacenter on the specified RHV server.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/storageDomainsResponse"
+        "400":
+          description: Bad or invalid request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          $ref: ./common.yaml#/components/responses/errorNotFound
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/dbpaas/assets/{assetId}/connect":
+    post:
+      description: |
+        Associates a named credential to a DBPaaS asset after successful credential validation.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the `data.attributes.commonAssetAttributes.accessControlId` attribute in the asset service response, for the object-level namespace)\
+        Requires Operation: `|OPERATIONS|VIEW|`\
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|UPDATE_CONFIGURATION|`
+      tags:
+        - DBPaaS Workloads
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          description: AssetID of the instance.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema:
+              $ref: "#/components/schemas/dbPaaSAssetConfiguration"
+        description: Configuration details of the instance.
+        required: true
+      responses:
+        "204":
+          description: Successfully validated the instance credentials.
+        "400":
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          description: The specified asset does not exist.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+  "/config/workloads/{workload}/pre-check":
+    post:
+      description: |
+        Performs a pre-check on a given workload asset that needs to be protected.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the `data.attributes.commonAssetAttributes.accessControlId` attribute in the asset service response, for the object-level namespace)\
+        Requires Operations: 
+         - Workload: Cloud\
+                Requires Operation: `|OPERATIONS|VIEW|`\
+                Requires Operation: `|OPERATIONS|ASSETS|CLOUD|UPDATE_CONFIGURATION|`
+      tags:
+        - Pre-Check
+      parameters:
+        - name: workload
+          description: The type of workload for which pre check needs to be performed.
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - cloud
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema:
+              $ref: "#/components/schemas/assetPreCheckRequest"
+        description: Input details for validation.
+        required: true
+      responses:
+        "200":
+          description: List of validation items.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: "#/components/schemas/assetPreCheckResponse"
+        "400":
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "415":
+          $ref: ./common.yaml#/components/responses/errorUnsupportedMediaType
+        "500":
+          description: Internal server error. Failed to start the pre-check.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+  /config/dbpaas/assets/cleanup:
+    post:
+      description: |
+        Cleanup DBPaaS restore staging location.
+
+        **Access Control**\
+        Enforcement Type: [Object-Level](http://sort.veritas.com/public/documents/nbu/11.0/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+        Namespace: (Reference the `data.attributes.commonAssetAttributes.accessControlId` attribute in the asset service response, for the object-level namespace)\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|RESTORE_ORIGINAL|`\
+        OR\
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|RESTORE_ALTERNATE|`\
+        OR\
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|RESTORE_OVERWRITE|`\
+        OR\
+        Requires Operation: `|OPERATIONS|ASSETS|CLOUD|GRANULAR_RESTORE|`
+      tags:
+        - DBPaaS Workloads
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=13.0:
+            schema:
+              $ref: "#/components/schemas/dbPaaSAssetCleanupConfiguration"
+        description: Configuration details of the instance.
+        required: true
+      responses:
+        "204":
+          description: DBPaaS staging location cleanup successful.
+        "400":
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "401":
+          $ref: ./common.yaml#/components/responses/errorUnauthorized
+        "404":
+          description: The specified asset does not exist.
+          content:
+            application/vnd.netbackup+json;version=13.0:
+              schema:
+                $ref: ./common.yaml#/components/schemas/errorResponse
+        "500":
+          $ref: ./common.yaml#/components/responses/errorInternalServerError
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    vmServerType:
+      type: string
+      enum:
+        - VMWARE_VIRTUAL_CENTER_SERVER
+        - VMWARE_ESX_SERVER
+        - VMWARE_RESTORE_ESX_SERVER
+        - VMWARE_VCLOUD_DIRECTOR
+        - HYPERV_SERVER
+        - SYSTEM_CENTER_VMM_SERVER
+        - HYPERV_CLUSTER_SERVER
+        - HYPERSCALE_SERVER
+        - RED_HAT_VIRTUALIZATION_MANAGER
+        - OPENSTACK_HORIZON_SERVER
+    queryBuilderFieldsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+              description: |
+                This property is always set to "queryBuilderFields" because there is no unique identifier.
+              enum:
+                - queryBuilderFields
+            attributes:
+              type: object
+              properties:
+                ruleFields:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/queryBuilderFields"
+    queryBuilderFields:
+      type: object
+      properties:
+        fieldName:
+          type: string
+          description: The field name.
+        fieldType:
+          type: string
+          description: The field type.
+          enum:
+            - LIST
+            - KEYWORD_VALUE
+            - NUMERIC
+            - STRING
+        fieldIsScvmmType:
+          type: boolean
+          description: True if the field is a scvmm field, false otherwise.
+        supportedOperators:
+          type: array
+          description: A list of supported operators.
+          items:
+            $ref: "#/components/schemas/supportedOperatorDetails"
+        odataFilterFieldName:
+          type: string
+          description: |
+            The OData name of the field. Use this field when you are working with the intelligentClientSelections of a VMware/HyperV/KVM policy's backupSelections.
+      required:
+        - fieldName
+        - fieldType
+        - supportedOperators
+    supportedOperatorDetails:
+      type: object
+      properties:
+        operatorName:
+          type: string
+          description: The operator name.
+        multipleValueAllowed:
+          type: boolean
+          description: True if field allows multiple values, false otherwise.
+        leftValueAllowed:
+          type: boolean
+          description: True if left value allowed, false otherwise.
+        rightValueAllowed:
+          type: boolean
+          description: True if right value allowed, false otherwise.
+    validateQuerySyntaxRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              description: The resource type. Must be set to "validateQuerySyntaxRequest".
+              enum:
+                - validateQuerySyntaxRequest
+            attributes:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: The OData query.
+          required:
+            - type
+            - attributes
+    validateQuerySyntaxResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              description: The resource type. Must be set to "validateQuerySyntaxResponse".
+              enum:
+                - validateQuerySyntaxResponse
+            attributes:
+              type: object
+              properties:
+                queries:
+                  type: array
+                  description: Odata filter split into individual queries.
+                  items:
+                    type: string
+                complex:
+                  type: boolean
+                  description: Whether the odata filter is complex or not.
+          required:
+            - type
+            - attributes
+    getQueryBuilderFieldValuesRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              description: The resource type. Must be set to "getQueryBuilderFieldValuesRequest".
+              enum:
+                - getQueryBuilderFieldValuesRequest
+            attributes:
+              type: object
+              properties:
+                schemeName:
+                  type: string
+                  description: The query scheme name.
+                  enum:
+                    - VMWARE
+                    - HYPERV
+                    - KVM
+                fieldName:
+                  type: string
+                  description: The name of the query field name.
+                fieldType:
+                  type: string
+                  description: The type of query field type.
+                  enum:
+                    - NUMERIC
+                    - STRING
+                    - LIST
+                    - KEYWORD_VALUE
+                isScvmmServer:
+                  type: boolean
+                  description: The type of the discovery host. True in the case of SCVMM server.
+                  default: false
+                discoveryHostName:
+                  type: string
+                  description: |
+                    The server name used for live browsing to obtain possible field values. This can be omitted for fields which does not require live browsing.
+          required:
+            - type
+            - attributes
+    getQueryBuilderFieldValuesResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - getQueryBuilderFieldValuesResponse
+            id:
+              type: string
+              description: The name assigned to query builder values.
+            attributes:
+              type: object
+              properties:
+                ruleFieldValues:
+                  $ref: "#/components/schemas/queryBuilderFieldValues"
+    queryBuilderFieldValues:
+      type: object
+      properties:
+        fieldName:
+          type: string
+          description: The field name for the query builder.
+        values:
+          type: array
+          description: A list of possible field values.
+          items:
+            type: string
+        isRestricted:
+          type: boolean
+          description: Flag indicating if possible values are restricted to the values list.
+    initiateTestQueryRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              description: The resource type. Must be set to "initiateTestQueryRequest".
+              enum:
+                - initiateTestQueryRequest
+            attributes:
+              type: object
+              properties:
+                testQuery:
+                  type: string
+                  description: The test query in OData format. Not specifying a value results in querying all VMs.
+                discoveryHost:
+                  type: string
+                  description: The name of the host to perform discovery on.
+                alternateClientName:
+                  type: string
+                  description: The alternate client name.
+                isScvmmServer:
+                  type: boolean
+                  description: Whether the server type is SCVMM. Valid in the case of Hyper-V policy only.
+                  default: false
+                snapshotMethod:
+                  type: string
+                  description: The supported snapshot method.
+                snapshotArgs:
+                  type: string
+                  description: The supported snapshot arguments.
+                streamingAttribute:
+                  type: boolean
+                  description: Whether multistreaming is enabled.
+                  default: false
+              required:
+                - discoveryHost
+                - snapshotMethod
+                - snapshotArgs
+          required:
+            - type
+            - attributes
+    initiateTestQueryResults:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+              description: The queryId associated with this run of the test query. It is used to retrieve the results of the test query.
+    discoveryQueryTestResultResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - discoveryQueryTestResultResponse
+            id:
+              type: string
+              description: The queryId associated with this discovery.
+            attributes:
+              type: object
+              properties:
+                isDiscoveryDone:
+                  type: boolean
+                  description: Flag indicating if discovery is completed.
+                discoveryQueryTestResult:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/discoveryQueryTestResult"
+              required:
+                - isDiscoveryDone
+                - discoveryQueryTestResult
+          required:
+            - type
+            - id
+            - attributes
+      required:
+        - data
+    discoveryQueryTestResult:
+      type: object
+      properties:
+        hostName:
+          type: string
+          description: The name of the host discovered.
+        isVMExcludedFromDiscovery:
+          type: boolean
+          description: Flag indicating if VM is included or excluded from discovery.
+        vmState:
+          type: string
+          description: The state of the VM host.
+          enum:
+            - VM_INCLUDED
+            - VM_EXCLUDED
+            - VM_FAILED
+            - VM_UNKNOWN
+        errorMessage:
+          type: string
+          description: Error message that is associated with this discovery test.
+    workloadSummary:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+    workloadData:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                hierarchy:
+                  $ref: "#/components/schemas/vCenterTopology"
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/vmware/vcenter-recovery-topologies/b3079apphp2b6.engba.veritas.com
+          type: /vmware/vcenter-topologies
+          id: b3079apphp2b6.engba.veritas.com
+          attributes:
+            hierarchy:
+              type: VCENTER
+              name: b3079apphp2b6.engba.veritas.com
+              children:
+                - type: DATACENTER
+                  name: ha-datacenter
+                  children:
+                    - type: HOST
+                      name: b3079apphp2b6.engba.veritas.com
+                      children: []
+    vCenterTopology:
+      type: object
+      description: The vCenter topology.
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/vCenterTopology"
+    datastoreResource:
+      type: object
+      description: The properties of the list of datastores available on the ESXi or Cluster server.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                datastores:
+                  type: array
+                  description: The list of datastores.
+                  items:
+                    $ref: "#/components/schemas/datastoreNode"
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/vmware/vcenters/vcenter.server.com/esxiservers/esxi.server.com/datastores
+          type: datastores
+          id: vcenter.server.com_esxi.server.com
+          attributes:
+            datastores:
+              - name: hp2b12-ds1
+                id: datastore-6953
+                nodetype: Datastore
+                type: VMFS
+                freeSpaceInBytes: 34354676834
+                blockSize: 512
+                physicalDevice: ds:///vmfs/volumes/57f6dc7d-83dd7f32-6849-0017a477049c
+                children: []
+    resourcePoolResource:
+      type: object
+      description: The properties of the list of resource pools available on the ESXi or Cluster server.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                resourcePools:
+                  type: array
+                  description: The list of resource pools.
+                  items:
+                    $ref: "#/components/schemas/resourcePoolNode"
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/vmware/vcenters/vcenter.server.com/esxiservers/esxi.server.com/resource-pools
+          type: resourcepools
+          id: vcenter.server.com_esxi.server.com
+          attributes:
+            resourcePools:
+              - name: MTV
+                type: ResourcePool
+                path: /Minions-DC/host/esxi.server.com/Resources/MTV
+                children: []
+              - name: ROS
+                type: ResourcePool
+                path: /Minions-DC/host/esxi.server.com/Resources/ROS
+                children: []
+    networkResource:
+      type: object
+      description: The properties of the list of networks available on the ESXi or Cluster server.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                networks:
+                  type: array
+                  description: The list of networks.
+                  items:
+                    type: string
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/vmware/vcenters/vcenter.server.com/esxiservers/esxi.server.com/networks
+          type: networks
+          id: vcenter.server.com_esxi.server.com
+          attributes:
+            networks:
+              - VM Network1
+              - VM Network2
+              - VM Network3
+    folderResource:
+      type: object
+      description: The properties of the list of folders.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              description: The type for a folder.
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                folders:
+                  type: array
+                  description: The list of folders.
+                  items:
+                    $ref: "#/components/schemas/folderNode"
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/vmware/vcenters/vcenter.server.com/folders
+          type: folders
+          id: vcenter.server.com
+          attributes:
+            folders:
+              - name: folder-1
+                type: Folder
+                path: /datacenter1/vm/folder-1
+                children: []
+              - name: folder-2
+                type: Folder
+                path: /datacenter1/vm/folder-2
+                children: []
+    vCloudStoragePoliciesResource:
+      type: object
+      description: The properties of the list of VMware Cloud storage policies.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            isFastProvisioned:
+              type: boolean
+              description: Flag that indicates if an Organization VDC is fast provisioned.
+            attributes:
+              type: object
+              properties:
+                storagePolicies:
+                  type: array
+                  description: The list of VMware Cloud storage policies.
+                  items:
+                    $ref: "#/components/schemas/vCloudStoragePolicyNode"
+      example:
+        data:
+          id: test-org-vdc
+          links:
+            self:
+              href: /config/workloads/vmware/vcloud-directors/vcloud.server.com/organizations/test-org/organization-vdcs/test-org-vdc/storage-policies
+          type: storagePolicies
+          isFastProvisioned: true
+          attributes:
+            storagePolicies:
+              - policy: 3c35a474-9db2-4d97-ada8-c589c8c5e5f4
+                name: storage-policy-1
+                isDefaultStoragePolicy: true
+                isEnabled: true
+              - policy: 89f6e8c8-6b5f-4f90-b069-185a4eb6e3be
+                name: storage-policy-2
+                isDefaultStoragePolicy: false
+                isEnabled: false
+    compatibleDatastores:
+      type: object
+      description: The list of datastores compatible with a specified storage policy.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              description: The resource type for compatible datastores.
+            id:
+              type: string
+            attributes:
+              type: object
+              properties:
+                compatibleDatastores:
+                  type: array
+                  description: The list of datastores compatible with a specified storage policy.
+                  items:
+                    $ref: "#/components/schemas/compatibleDatastoreNode"
+      example:
+        data:
+          id: vcenter.server.com
+          type: compatibleDatastores
+          attributes:
+            compatibleDatastores:
+              - id: datastore-1
+                name: test-datastore-1
+              - id: datastore-2
+                name: test-datastore-2
+          links:
+            self: href:/config/workloads/vmware/vcenters/vcenter.server.com/esxiservers/esxi.server.com/storage-policies/sp-id-1/compatible-datastores
+    storagePoliciesResource:
+      type: object
+      description: The properties of the list of storage policies.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                storagePolicies:
+                  type: array
+                  description: The list of storage policies.
+                  items:
+                    $ref: "#/components/schemas/storagePolicyNode"
+      example:
+        data:
+          id: vcenter.server.com
+          links:
+            self:
+              href: /config/workloads/vmware/vcenters/vcenter.server.com/storage-policies
+          type: storagepolicies
+          attributes:
+            storagePolicies:
+              - description: Test storage policy 1.
+                name: storage-policy-1
+                policy: 3c35a474-9db2-4d97-ada8-c589c8c5e5f4
+              - description: Test storage policy 2.
+                name: storage-policy-2
+                policy: 89f6e8c8-6b5f-4f90-b069-185a4eb6e3be
+    datastoreNode:
+      type: object
+      description: The properties of the datastore.
+      properties:
+        type:
+          type: string
+          description: Type of datastore
+        name:
+          type: string
+        id:
+          type: string
+        freeSpaceInBytes:
+          type: integer
+          description: The size in Bytes.
+          format: int64
+        blockSize:
+          type: integer
+          description: Minimum possible disk space usage.
+        physicalDevice:
+          type: string
+        nodetype:
+          type: string
+          description: Specifies if this is a Folder, Datastore cluster or Datastore
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/datastoreNode"
+    resourcePoolNode:
+      type: object
+      description: The properties of the resource pool.
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        path:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/resourcePoolNode"
+    folderNode:
+      type: object
+      description: The properties of the folder.
+      properties:
+        name:
+          type: string
+          description: Name of the folder.
+        path:
+          type: string
+          description: Path of the folder.
+        children:
+          type: array
+          description: The list of folders.
+          items:
+            $ref: "#/components/schemas/folderNode"
+    vCloudStoragePolicyNode:
+      type: object
+      description: The properties of the VMware Cloud storage policy.
+      properties:
+        policy:
+          type: string
+          description: Identifier of the storage policy.
+        name:
+          type: string
+          description: Name of the storage policy.
+        isDefaultStoragePolicy:
+          type: boolean
+          description: Flag that indicates if this is the default storage policy of an Organization vDC.
+        isEnabled:
+          type: boolean
+          description: Flag that indicates if this storage policy is enabled.
+    storagePolicyNode:
+      type: object
+      description: The properties of the storage policy.
+      properties:
+        description:
+          type: string
+          description: Description of the storage policy.
+        name:
+          type: string
+          description: Name of the storage policy.
+        policy:
+          type: string
+          description: Identifier of the storage policy.
+    compatibleDatastoreNode:
+      type: object
+      description: The properties of the compatible datastore.
+      properties:
+        id:
+          type: string
+          description: Identifier of the datastore.
+        name:
+          type: string
+          description: Name of the datastore.
+    vCloudDatastoreResource:
+      type: object
+      description: The properties of the list of datastores available on the ESXi or Cluster server in the VMware Cloud Director organizations vDC.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                datastores:
+                  type: array
+                  description: The list of datastores.
+                  items:
+                    $ref: "#/components/schemas/datastoreNode"
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/vmware/vcloud-directors/vcloud.server.com/organizations/main-org/vcenters/vcenter.server.com/esxiservers/esxi.server.com/datastores
+          type: datastores
+          id: vcloud.server.com_main-org_esxi.server.com
+          attributes:
+            datastores:
+              - name: hp2b12-ds1
+                id: datastore-2075
+                nodetype: Datastore
+                type: VMFS
+                freeSpaceInBytes: 34354676834
+                physicalDevice: ds:///vmfs/volumes/57f6dc7d-83dd7f32-6849-0017a477049c
+                children: []
+    vCloudFolderResource:
+      type: object
+      description: The properties of the list of folders.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              description: The type for a folder.
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                folders:
+                  type: array
+                  description: The list of folders.
+                  items:
+                    $ref: "#/components/schemas/folderNode"
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/vmware/vcloud-directors/vcloud.server.com/organizations/main-org/vcenters/vcenter.server.com/folders
+          type: folders
+          id: vcloud.server.com_main-org_vcenter.server.com
+          attributes:
+            folders:
+              - name: folder-1
+                type: Folder
+                path: /datacenter1/vm/folder-1
+                children: []
+              - name: folder-2
+                type: Folder
+                path: /datacenter1/vm/folder-2
+                children: []
+    vCloudResourcePoolResource:
+      type: object
+      description: The properties of the list of resource pools available on the ESXi or Cluster server in the VMware Cloud Director organizations vDC.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                resourcePools:
+                  type: array
+                  description: The list of resource pools.
+                  items:
+                    $ref: "#/components/schemas/resourcePoolNode"
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/vmware/vcloud-directors/vcloud.server.com/organizations/main-org/vcenters/vcenter.server.com/esxiservers/esxi.server.com/resource-pools
+          type: resourcepools
+          id: vcloud.server.com_main-org_esxi.server.com
+          attributes:
+            resourcePools:
+              - name: MTV
+                type: ResourcePool
+                path: /Minions-DC/host/esxi.server.com/Resources/MTV
+                children: []
+              - name: ROS
+                type: ResourcePool
+                path: /Minions-DC/host/esxi.server.com/Resources/ROS
+                children: []
+    vCloudWorkloadData:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - id
+            - links
+            - attributes
+          properties:
+            type:
+              type: string
+              description: The response for the VMware Cloud topology.
+              enum:
+                - vCloudTopology
+            id:
+              type: string
+              description: The ID of the VMware Cloud director.
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                hierarchy:
+                  $ref: "#/components/schemas/vCloudTopology"
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/vmware/vcloud-recovery-topologies/vcloud.server.com
+          type: /vmware/vcloud-topologies
+          id: vcloud.server.com
+          attributes:
+            hierarchy:
+              type: VCLOUD_DIRECTOR
+              id: vcloud.server.com
+              name: vcloud.server.com
+              children:
+                - type: VCLOUD_ORGANIZATION
+                  id: 608521c7-3287-47c1-b7a7-a0ed2eb9f025
+                  name: test-organization
+                  children:
+                    - type: VCLOUD_ORGANIZATION_VDC
+                      id: d9cc614a-c4ec-4d85-b95d-e90cece0e730
+                      name: test-org-vdc
+                      children:
+                        - type: VCLOUD_VAPP
+                          id: c9cc614a-c4ec-4d85-b95d-e90cece0e720
+                          name: test-vapp
+                          children: []
+    vCloudTopology:
+      type: object
+      description: The VMware Cloud Director topology.
+      required:
+        - type
+        - id
+        - name
+        - children
+      properties:
+        type:
+          type: string
+          enum:
+            - VCLOUD_DIRECTOR
+            - VCLOUD_ORGANIZATION
+            - VCLOUD_ORGANIZATION_VDC
+            - VCLOUD_VAPP
+        name:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/vCloudTopologyCircular"
+    vCloudTopologyCircular:
+      $ref: "#/components/schemas/vCloudTopology"
+    invalidFilter:
+      type: object
+      properties:
+        errorCode:
+          type: integer
+          example: 8850
+        errorMessage:
+          type: string
+          example: Invalid filter or missing/incorrect assetType parameter. Valid assetType must be included whenever a filter is specified.
+        attributeErrors:
+          type: object
+        errorDetails:
+          type: array
+          items:
+            type: string
+          example:
+            - Invalid assetType value
+        fileUploadErrors:
+          type: array
+          items:
+            type: object
+    rhvWorkloadData:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              description: The response for the RHV topology.
+              enum:
+                - rhvTopology
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                hierarchy:
+                  $ref: "#/components/schemas/rhvTopology"
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/rhv/rhv-topologies/b3079apphp2b6.engba.veritas.com
+          type: rhvTopology
+          id: b3079apphp2b6.engba.veritas.com
+          attributes:
+            hierarchy:
+              name: b3079apphp2b6.engba.veritas.com
+              clusters:
+                - name: rhvcluster01
+                  datacenterId: b9d7e837-aaa6-4c4f-91f8-068b1f36b500
+                  datacenterName: rhevdc02
+    rhvTopology:
+      type: object
+      description: The RHV topology.
+      properties:
+        name:
+          type: string
+        clusters:
+          type: array
+          description: The list of clusters.
+          items:
+            $ref: "#/components/schemas/rhvClusterNode"
+    rhvClusterNode:
+      type: object
+      description: The RHV cluster.
+      properties:
+        name:
+          type: string
+        datacenterId:
+          type: string
+        datacenterName:
+          type: string
+    storageDomainsResponse:
+      type: object
+      description: The list of storage domains available on the datacenter.
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              description: The response for the RHV storage domains.
+              enum:
+                - rhvTopologyStorageDomains
+            id:
+              type: string
+            links:
+              type: object
+              properties:
+                self:
+                  type: object
+                  properties:
+                    href:
+                      type: string
+            attributes:
+              type: object
+              properties:
+                storageDomains:
+                  type: array
+                  description: The list of storage domains.
+                  items:
+                    $ref: "#/components/schemas/storageDomainNode"
+      example:
+        data:
+          links:
+            self:
+              href: /config/workloads/rhv/rhv-topologies/rhv.server.com/datacenters/dc.server.com/storage-domains
+          type: rhvTopologyStorageDomains
+          id: rhv.server.com_dc.server.com
+          attributes:
+            storageDomains:
+              - name: hp2b12-sd1
+                status: ACTIVE
+                storageType: ISCSI
+    storageDomainNode:
+      type: object
+      description: The properties of the storage domain.
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          description: The status of the storage domain.
+          enum:
+            - ACTIVATING
+            - ACTIVE
+            - DETACHING
+            - INACTIVE
+            - LOCKED
+            - MAINTENANCE
+            - MIXED
+            - PREPARING_FOR_MAINTENANCE
+            - UNATTACHED
+            - UNKNOWN
+        storageType:
+          type: string
+          description: The type of the storage domain.
+          enum:
+            - CINDER
+            - FCP
+            - GLANCE
+            - GLUSTERFS
+            - ISCSI
+            - LOCALFS
+            - MANAGED_BLOCK_STORAGE
+            - NFS
+            - POSIXFS
+    kvmHostsResponse:
+      type: object
+      description: The properties of the KVM hosts.
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/kvmHostResponseData"
+        links:
+          $ref: ./common.yaml#/components/schemas/paginationLinks
+        meta:
+          type: object
+          properties:
+            pagination:
+              $ref: ./common.yaml#/components/schemas/paginationAttributes
+    kvmHostResponse:
+      type: object
+      description: The properties of the KVM hosts.
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/kvmHostResponseData"
+    kvmHostResponseData:
+      type: object
+      description: The properties of a KVM host.
+      properties:
+        id:
+          type: string
+          format: hostname
+          description: The ID of the KVM host.
+        type:
+          type: string
+          enum:
+            - kvmHost
+        attributes:
+          $ref: "#/components/schemas/kvmHostAttributes"
+        links:
+          type: object
+          properties:
+            self:
+              type: object
+              properties:
+                href:
+                  type: string
+    kvmHostAttributes:
+      type: object
+      properties:
+        kvmHost:
+          type: object
+          properties:
+            hostId:
+              type: integer
+              description: The id of the KVM host.
+            hostname:
+              type: string
+              format: hostname
+              description: The hostname of the KVM host.
+            accessControlId:
+              type: string
+              description: Access control id of the KVM host.
+            status:
+              type: string
+              description: The result of the validation operation.
+              enum:
+                - VALID
+                - INVALID
+            lastValidatedTime:
+              type: string
+              format: date-time
+              description: The timestamp of when the KVM host was last validated in ISO 8601 format.
+    mssqlInstanceResponseArray:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/mssqlInstanceResponseData"
+        included:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - attributes
+              - type
+            properties:
+              id:
+                type: string
+                description: The Microsoft SQL Server instance group ID.
+              type:
+                type: string
+                enum:
+                  - mssqlInstanceGroup
+              attributes:
+                type: object
+                required:
+                  - instanceGroupName
+                properties:
+                  instanceGroupName:
+                    type: string
+                    description: The Microsoft SQL Server instance group name.
+        links:
+          $ref: ./common.yaml#/components/schemas/paginationLinks
+        meta:
+          type: object
+          properties:
+            pagination:
+              $ref: ./common.yaml#/components/schemas/paginationAttributes
+    mssqlInstanceResponseData:
+      type: object
+      required:
+        - id
+        - attributes
+        - type
+      properties:
+        id:
+          type: string
+          description: The Microsoft SQL Server instance ID.
+        type:
+          type: string
+          enum:
+            - mssqlInstance
+        attributes:
+          $ref: "#/components/schemas/mssqlInstanceAttributes"
+        relationships:
+          type: object
+          properties:
+            instanceGroup:
+              type: object
+              required:
+                - links
+                - data
+              properties:
+                links:
+                  type: object
+                  properties:
+                    self:
+                      type: object
+                      required:
+                        - href
+                      properties:
+                        href:
+                          type: string
+                          description: The link to retrieve the instance group relationship object for this instance.
+                data:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - id
+                      - type
+                    properties:
+                      id:
+                        type: string
+                        description: The id of the instance group to which this instance belongs.
+                      type:
+                        type: string
+                        enum:
+                          - mssqlInstanceGroup
+            policies:
+              $ref: "#/components/schemas/relatedPolicies"
+    mssqlInstanceAttributes:
+      type: object
+      required:
+        - instanceName
+        - state
+        - hostName
+        - clusterType
+        - registeredTimeUTC
+        - providerGeneratedId
+      properties:
+        instanceName:
+          type: string
+          description: The Microsoft SQL Server instance name.
+        state:
+          type: string
+          description: The state of the Microsoft SQL Server instance.
+          enum:
+            - ACTIVE
+            - INACTIVE
+            - UNREGISTERED
+        hostName:
+          type: string
+          description: The name of the Microsoft SQL Server.
+        clusterType:
+          type: string
+          description: The type of the Microsoft SQL Server cluster.
+        registeredTimeUTC:
+          type: string
+          format: date-time
+          description: |
+            The time when the Microsoft SQL Server instance was registered, in ISO 8601 format.
+        providerGeneratedId:
+          type: string
+          description: The provider generated id of the Microsoft SQL Server instance.
+    mssqlAvailabilityGroupResponseArray:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/mssqlAvailabilityGroupResponseData"
+        links:
+          $ref: ./common.yaml#/components/schemas/paginationLinks
+        meta:
+          type: object
+          properties:
+            pagination:
+              $ref: ./common.yaml#/components/schemas/paginationAttributes
+    mssqlAvailabilityGroupResponseData:
+      type: object
+      required:
+        - id
+        - attributes
+        - type
+      properties:
+        id:
+          type: string
+          description: The ID of the Microsoft SQL Server availability group.
+        type:
+          type: string
+          enum:
+            - mssqlAvailabilityGroup
+        attributes:
+          $ref: "#/components/schemas/mssqlAvailabilityGroupAttributes"
+        relationships:
+          type: object
+          description: The details of the policies that are associated with SQL availability group.
+          properties:
+            policies:
+              $ref: "#/components/schemas/relatedPolicies"
+    mssqlAvailabilityGroupAttributes:
+      type: object
+      required:
+        - availabilityGroupName
+      properties:
+        availabilityGroupId:
+          type: string
+          description: The ID of the Microsoft SQL Server availability group.
+        availabilityGroupName:
+          type: string
+          description: The name of the Microsoft SQL Server availability group.
+        clusterName:
+          type: string
+          description: The cluster name of the Microsoft SQL Server availability group.
+    mssqlDatabasesResponseArray:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/mssqlDatabaseResponseData"
+    mssqlDatabaseResponseData:
+      type: object
+      required:
+        - id
+        - attributes
+        - type
+      properties:
+        id:
+          type: string
+          description: The ID of the Microsoft SQL Server database.
+        type:
+          type: string
+          enum:
+            - mssqlDatabase
+        attributes:
+          type: object
+          required:
+            - dbName
+          properties:
+            dbName:
+              type: string
+              description: The name of the Microsoft SQL Server database.
+    mssqlFilegroupResponseArray:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/mssqlFilegroupResponseData"
+    mssqlFilegroupResponseData:
+      type: object
+      required:
+        - id
+        - attributes
+        - type
+      properties:
+        id:
+          type: string
+          description: The ID of the Microsoft SQL Server filegroup.
+        type:
+          type: string
+          enum:
+            - mssqlFilegroup
+        attributes:
+          type: object
+          required:
+            - filegroupName
+            - dbName
+            - filegroupType
+            - size
+            - accessType
+          properties:
+            filegroupName:
+              type: string
+              description: The name of the Microsoft SQL Server filegroup.
+            dbName:
+              type: string
+              description: The name of the Microsoft SQL Server database.
+            filegroupType:
+              type: string
+              description: The type of the Microsoft SQL Server filegroup.
+              enum:
+                - ROWS
+                - FILESTREAM
+                - MEMORY_OPTIMIZED
+            size:
+              type: integer
+              format: int64
+              description: The size of the Microsoft SQL Server filegroup in bytes.
+            accessType:
+              type: string
+              description: The access type (read-write, read-only) of the Microsoft SQL Server filegroup.
+              enum:
+                - READ_WRITE
+                - READ_ONLY
+    mssqlDatabaseFileResponseArray:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/mssqlDatabaseFileResponseData"
+    mssqlDatabaseFileResponseData:
+      type: object
+      required:
+        - id
+        - attributes
+        - type
+      properties:
+        id:
+          type: string
+          description: The ID of the Microsoft SQL Server database file.
+        type:
+          type: string
+          enum:
+            - mssqlDatabaseFile
+        attributes:
+          type: object
+          required:
+            - databaseFileName
+            - dbName
+            - physicalName
+            - size
+            - state
+            - accessType
+          properties:
+            databaseFileName:
+              type: string
+              description: The name of the Microsoft SQL Server database file.
+            dbName:
+              type: string
+              description: The name of the Microsoft SQL Server database.
+            physicalName:
+              type: string
+              description: The physical name of the Microsoft SQL Server database file.
+            size:
+              type: integer
+              format: int64
+              description: The size of the Microsoft SQL Server database file in MB.
+            state:
+              type: string
+              description: The state of the Microsoft SQL Server database file.
+              enum:
+                - ONLINE
+                - OFFLINE
+                - RESTORING
+                - RECOVERY_PENDING
+                - SUSPECT
+                - DEFUNCT
+            accessType:
+              type: string
+              description: The access type (read-write, read-only) of the Microsoft SQL Server filegroup.
+              enum:
+                - READ_WRITE
+                - READ_ONLY
+    mssqlReplicaResponseArray:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/mssqlReplicaResponseData"
+    mssqlReplicaResponseData:
+      type: object
+      required:
+        - id
+        - attributes
+        - type
+      properties:
+        id:
+          type: string
+          description: The replica ID of the Microsoft SQL Server.
+        type:
+          type: string
+          enum:
+            - mssqlInstance
+        attributes:
+          type: object
+          required:
+            - instanceName
+            - hostName
+          properties:
+            instanceName:
+              type: string
+              description: The name of the Microsoft SQL Server instance.
+            hostName:
+              type: string
+              description: The name of the Microsoft SQL Server.
+    mssqlInstanceGroupResponseArray:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/mssqlInstanceGroupResponseData"
+        links:
+          $ref: ./common.yaml#/components/schemas/paginationLinks
+        meta:
+          type: object
+          properties:
+            pagination:
+              $ref: ./common.yaml#/components/schemas/paginationAttributes
+    mssqlInstanceGroupResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/mssqlInstanceGroupResponseData"
+    mssqlInstanceGroupResponseData:
+      type: object
+      required:
+        - id
+        - attributes
+        - type
+      properties:
+        id:
+          type: string
+          description: The Microsoft SQL Server instance group ID.
+        type:
+          type: string
+          enum:
+            - mssqlInstanceGroup
+        attributes:
+          type: object
+          required:
+            - instanceGroupName
+          properties:
+            instanceGroupName:
+              type: string
+              description: The Microsoft SQL Server instance group name.
+        relationships:
+          type: object
+          description: The details of the credential associated with the instance group.
+          properties:
+            policies:
+              type: object
+              required:
+                - links
+                - data
+              properties:
+                links:
+                  type: object
+                  properties:
+                    self:
+                      $ref: ./common.yaml#/components/schemas/resourceSelfLink
+                    related:
+                      type: object
+                      required:
+                        - href
+                      properties:
+                        href:
+                          type: string
+                          description: The link to the NetBackup policy.
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        description: The resource type for the policy link.
+                        enum:
+                          - policy
+                      id:
+                        type: string
+                        description: The name of the policy.
+    relatedPolicies:
+      type: object
+      required:
+        - links
+        - data
+      properties:
+        links:
+          type: object
+          properties:
+            related:
+              type: object
+              required:
+                - href
+              properties:
+                href:
+                  type: string
+                  description: The link to the NetBackup policy.
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: The resource type for the policy link.
+                enum:
+                  - policy
+              id:
+                type: string
+                description: The name of the policy.
+    oracleDataFilesArray:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - type
+              - attributes
+            properties:
+              id:
+                type: string
+                description: The Oracle database identification number.
+              type:
+                type: string
+                description: The type of Oracle metadata.
+                enum:
+                  - oracleDataFile
+              attributes:
+                type: object
+                required:
+                  - dataFileName
+                  - size
+                  - status
+                  - databaseName
+                  - tablespaceName
+                properties:
+                  dataFileName:
+                    type: string
+                    description: The fully qualified path of the Oracle datafile on the file system.
+                  size:
+                    type: integer
+                    format: int64
+                    description: The size of the Oracle datafile in bytes.
+                  status:
+                    type: string
+                    description: The status of the Oracle datafile.
+                  databaseName:
+                    type: string
+                    description: The database associated with corresponding Oracle datafile.
+                  tablespaceName:
+                    type: string
+                    description: The tablespace associated with corresponding Oracle datafile.
+    oracleTablespacesArray:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - type
+              - attributes
+            properties:
+              id:
+                type: string
+                description: The tablespace identification number.
+              type:
+                type: string
+                enum:
+                  - oracleTableSpace
+                description: The type of Oracle metadata.
+              attributes:
+                type: object
+                required:
+                  - tableSpaceName
+                  - size
+                  - status
+                  - databaseName
+                properties:
+                  tableSpaceName:
+                    type: string
+                    description: The name of the tablespace.
+                  size:
+                    type: integer
+                    format: int64
+                    description: The size of the tablespace in bytes.
+                  status:
+                    type: string
+                    description: The status of the tablespace.
+                  databaseName:
+                    type: string
+                    description: The database associated with tablespace.
+    oracleDumpAreasResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - type
+              - attributes
+            properties:
+              id:
+                type: string
+                enum:
+                  - oracleDumpArea
+              type:
+                type: string
+                enum:
+                  - oracleDumpArea
+                description: The type of Oracle metadata.
+              attributes:
+                type: object
+                required:
+                  - dumpAreaName
+                  - databaseName
+                  - databaseType
+                  - devicePath
+                  - mountPoint
+                properties:
+                  dumpAreaName:
+                    type: string
+                    description: The name of the dump area.
+                  databaseName:
+                    type: string
+                    description: The database name that is associated with the dump area.
+                  databaseType:
+                    type: string
+                    description: The database type.
+                  devicePath:
+                    type: string
+                    description: The device mount path.
+                  mountPoint:
+                    type: string
+                    description: The device mount point.
+      example:
+        data:
+          - type: oracleDumpArea
+            id: oracleDumpArea
+            attributes:
+              dumpAreaName: abc
+              databaseName: DB_1
+              devicePath: C:/oracle/dumpAreas
+              mountPoint: D:/mountPoint
+    oracleCopyAreasResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - type
+              - attributes
+            properties:
+              id:
+                type: string
+                enum:
+                  - oracleCopyArea
+              type:
+                type: string
+                enum:
+                  - oracleCopyArea
+                description: The type of Oracle metadata.
+              attributes:
+                type: object
+                required:
+                  - copyAreaName
+                  - devicePath
+                properties:
+                  copyAreaName:
+                    type: string
+                    description: The name of the copy area.
+                  devicePath:
+                    type: string
+                    description: The device mount path.
+      example:
+        data:
+          - type: oracleCopyArea
+            id: oracleCopyArea
+            attributes:
+              copyAreaName: abc
+              devicePath: C:/oracle/copyAreas
+    messageQueueBrokerConfigResponse:
+      type: object
+      description: Returns MQ Broker configurations.
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/brokerConfigData"
+    brokerConfigData:
+      type: object
+      required:
+        - type
+        - id
+        - attributes
+      properties:
+        type:
+          description: The type of MQ Broker configuration response.
+          type: string
+          enum:
+            - mqBrokerConfigResponse
+        id:
+          description: The response identifier
+          type: string
+        attributes:
+          description: The attributes of the MQ Broker configuration.
+          type: object
+          required:
+            - port
+            - mqBrokerName
+            - virtualHostName
+            - nodeName
+            - exchangeName
+            - connectMqViaPbx
+            - heartbeat
+          properties:
+            port:
+              type: integer
+              description: Port on which MQ Borker is running on master server.
+            mqBrokerName:
+              type: string
+              description: The host on which MQ Broker is residing.
+            virtualHostName:
+              type: string
+              description: Name of virtual host on MQ Broker.
+            nodeName:
+              type: string
+              description: Node name of the MQ Broker.
+            exchangeName:
+              type: string
+              description: Name of the exchanges present on MQ Broker.
+            connectMqViaPbx:
+              type: boolean
+              description: Flag indicating should MQ connection be established via pbx.
+            serviceName:
+              type: string
+              description: Name of sevice to which connect via pbx.
+            heartbeat:
+              type: integer
+              description: Heartbeat timeout value for connection.
+    dbPaaSAssetConfiguration:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/dbPaaSAssetConfigurationRequestData"
+    dbPaaSAssetConfigurationRequestData:
+      type: object
+      required:
+        - type
+        - attributes
+      properties:
+        type:
+          type: string
+          description: Specify dbpaasassetconnect as the operation type.
+          enum:
+            - dbpaasassetconnect
+        attributes:
+          $ref: "#/components/schemas/dbPaaSAssetConfigurationAttributes"
+    dbPaaSAssetConfigurationAttributes:
+      type: object
+      required:
+        - dbPaaSAssetConnectionAttributesList
+      properties:
+        validationHost:
+          type: string
+          description: Specify the NetBackup host to be used for the validation operation. This is applicable only if configMode is BYO.
+        dbPaaSAssetConnectionAttributesList:
+          type: array
+          description: |
+            The list of connection attributes used for establishing connection with the given DBPaaS asset.
+          items:
+            $ref: "#/components/schemas/assetConfigurationAttributeList"
+    assetConfigurationAttributeList:
+      type: object
+      properties:
+        name:
+          type: string
+          description: |
+            The name of the key in the key-value pair. The value of this key can be either a single value or a multiple values. For example, an username or a list of asset IDs of virtual machines. For DBPaaS assets supported key names are: credentialName, configMode, associateCred and checkSuperUser
+        singlevalue:
+          type: string
+          description: |
+            The value in the key-value pair. For example, private key for passkey or the actual user name. For DBPaaS assets valid values for key are: credentialName - name of credential configMode - BYO or BAAS (default BYO) associateCred - true or false (default true) checkSuperUser - true or false (default false)
+        multivalue:
+          type: array
+          items:
+            type: string
+            description: The list of values for the key.
+      required:
+        - name
+    appConfigurationRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/appConfigurationRequestData"
+    appConfigurationRequestData:
+      type: object
+      required:
+        - type
+        - attributes
+      properties:
+        type:
+          type: string
+          description: Specify 'appconfigure' as the operation type.
+          enum:
+            - appconfigure
+        attributes:
+          $ref: "#/components/schemas/appConfigurationAttributes"
+    appConfigurationAttributes:
+      type: object
+      properties:
+        appConfigurationAttributeList:
+          type: array
+          description: |
+            The list of configuration attributes used for establishing connection with the hosted application.
+          items:
+            $ref: "#/components/schemas/assetConfigurationAttributeList"
+    appConfigurationUpdateRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/appConfigurationUpdateRequestData"
+    appConfigurationUpdateRequestData:
+      type: object
+      required:
+        - type
+        - attributes
+      properties:
+        type:
+          type: string
+          description: Specify 'appconfigure' as the operation type.
+          enum:
+            - appconfigure
+        attributes:
+          $ref: "#/components/schemas/appConfigurationUpdateAttributes"
+    appConfigurationUpdateAttributes:
+      type: object
+      required:
+        - applicationAssetId
+      properties:
+        applicationAssetId:
+          type: string
+          description: AssetID of the application of which credentials are to be updated.
+        appConfigurationAttributeList:
+          type: array
+          description: |
+            The list of configuration attributes required to configure the hosted application.
+          items:
+            $ref: "#/components/schemas/assetConfigurationAttributeList"
+    assetPreCheckRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/assetPreCheckRequestData"
+    assetPreCheckRequestData:
+      type: object
+      required:
+        - type
+        - attributes
+      properties:
+        type:
+          type: string
+          description: Specify precheck as the operation type.
+          enum:
+            - assetPreCheckRequest
+        attributes:
+          $ref: "#/components/schemas/assetPreCheckRequestAttributes"
+    assetPreCheckRequestAttributes:
+      type: object
+      required:
+        - assetId
+        - workloadAttributes
+      properties:
+        validationHost:
+          type: string
+          description: |
+            Specify the NetBackup media server. Only applicable if pre-check operation needs to be executed via media server. If not specified then Datamover Container will be used for validation
+        assetId:
+          type: string
+          description: Specify Id of an asset.
+        workloadAttributes:
+          $ref: "#/components/schemas/workloadAttributes"
+    workloadAttributes:
+      type: object
+      description: The workload specific attributes for a pre-check.
+      properties:
+        cloudAttributes:
+          $ref: "#/components/schemas/cloudAttributes"
+    cloudAttributes:
+      type: object
+      description: The input details for Cloud workload.
+      properties:
+        assetType:
+          type: string
+          description: Specify asset type of a given asset.
+        configId:
+          type: string
+          description: Specify configuration Id associated with the specified asset. If not specified then preferred config attached to asset will be used.
+        configLocation:
+          type: string
+          enum:
+            - LOCAL
+            - REMOTE
+          description: Specify the location of configs to be used for validation.
+        usePreferredConfig:
+          type: boolean
+          description: Specify if the preferred config must be used for validation.
+        skipAssociatePreferredConfig:
+          type: boolean
+          description: Specify if the config used for validation needs to be skipped for association as preferred config for the asset. Default is false and config will be associated as preferred config if the precheck operation is successful.
+        credentialName:
+          type: string
+          description: Specify the credentials for precheck operations. If not specified, then credentials associated with the asset will be used.
+        skipAssociateCredential:
+          type: boolean
+          description: Specify if the credentials specified needs to be skipped for association with the asset. Default value false and credentials will be associated with the asset if the precheck operation is successful.
+        validationList:
+          type: array
+          description: The list of validation that needs to be performed on the specified asset.
+          items:
+            $ref: "#/components/schemas/dbPaaSAssetPreCheckValidationList"
+    dbPaaSAssetPreCheckValidationList:
+      default: ALL
+      enum:
+        - ALL
+        - ACCESSIBILITY
+        - CONNECTIVITY
+        - DATABASE
+        - STAGING
+      type: string
+      description: The list of validation need to perform on the given asset.
+    assetPreCheckResponse:
+      description: The pre-check response schema for given asset.
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/assetPreCheckResponseData"
+    assetPreCheckResponseData:
+      type: object
+      description: Describes the response of the validations.
+      required:
+        - type
+        - attributes
+      properties:
+        type:
+          type: string
+          enum:
+            - assetPreCheckResponse
+          description: Specify precheck as the operation type.
+        attributes:
+          $ref: "#/components/schemas/assetPreCheckResponseAttributes"
+    assetPreCheckResponseAttributes:
+      type: object
+      required:
+        - assetId
+        - status
+        - configs
+      properties:
+        assetId:
+          type: string
+          description: The asset Id of the specified asset.
+        status:
+          type: string
+          enum:
+            - FAILED
+            - SUCCESSFUL
+          description: Overall status of validations performed.
+        configs:
+          type: array
+          description: The list of validations for each config Id performed on the specified asset.
+          items:
+            $ref: "#/components/schemas/assetPreCheckValidationAttributes"
+    assetPreCheckValidationAttributes:
+      type: object
+      required:
+        - configId
+        - configLocation
+        - validationStatus
+        - validationMessage
+        - totalValidationItems
+        - totalSuccessfulValidationItems
+        - totalFailedValidationItems
+        - totalSkippedValidationItems
+      properties:
+        validationHost:
+          type: string
+          description: The NetBackup media server used for the pre-check operation.
+        configId:
+          type: string
+          description: The configuration Id associated with the specified asset Applicable for cloud workload.
+        configLocation:
+          type: string
+          enum:
+            - LOCAL
+            - REMOTE
+          description: Location of configs used for validation.
+        validations:
+          type: array
+          description: The list of validations performed on the specified asset.
+          items:
+            $ref: "#/components/schemas/assetPreCheckValidationResults"
+        validationStatus:
+          type: string
+          enum:
+            - FAILED
+            - PARTIALLY_SUCCESSFUL
+            - SUCCESSFUL
+          description: Status of the validation.
+        validationMessage:
+          type: string
+          description: Description of the validation result.
+        totalValidationItems:
+          type: integer
+          description: Total number of validation performed.
+        totalSuccessfulValidationItems:
+          type: integer
+          description: Number of sucessful validations.
+        totalPartialSuccessfulValidationItems:
+          type: integer
+          description: Number of partial sucessful validations.
+        totalFailedValidationItems:
+          type: integer
+          description: Number of failed validations.
+        totalSkippedValidationItems:
+          type: integer
+          description: Number of skipped validations.
+    assetPreCheckValidationResults:
+      type: object
+      description: Describes the precheck result.
+      properties:
+        name:
+          type: string
+          description: Name of the validation.
+        class:
+          type: string
+          description: Class of the validation.
+          enum:
+            - ACCESSIBILITY
+            - CONNECTIVITY
+            - DATABASE
+            - STAGING
+        status:
+          type: string
+          enum:
+            - FAILED
+            - PARTIAL_SUCCESSFUL
+            - SKIPPED
+            - SUCCESSFUL
+          description: Status of the validation.
+        description:
+          type: string
+          description: Description of the validation result.
+        rcaCode:
+          type: string
+          description: Corresponding RCA code.
+        articleId:
+          type: string
+          description: RCA corresponding article id.
+      required:
+        - name
+        - class
+        - status
+        - description
+    dbPaaSAssetCleanupConfiguration:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: "#/components/schemas/dbPaaSAssetCleanupRequestData"
+    dbPaaSAssetCleanupRequestData:
+      type: object
+      required:
+        - type
+        - attributes
+      properties:
+        type:
+          type: string
+          description: Specify dbpaasStagingCleanup as the operation type.
+          enum:
+            - dbpaasStagingCleanup
+        attributes:
+          $ref: "#/components/schemas/dbPaaSAssetCleanupAttributes"
+    dbPaaSAssetCleanupAttributes:
+      type: object
+      required:
+        - mountPath
+        - assetId
+      properties:
+        validationHost:
+          type: string
+          description: Specify the NetBackup host to be used for the staging cleanup operation.
+        mountPath:
+          type: string
+          description: Specify the EFS staging location where restore files are present.
+        assetId:
+          type: string
+          description: Specify asset ID of the DBPaaS asset.
+        configMode:
+          type: string
+          description: Specify config mode BYO or BAAS (default BYO)
+          enum:
+            - BYO
+            - BAAS
+    allLinks:
+      type: object
+      properties:
+        self:
+          type: object
+          properties:
+            href:
+              type: string
+        first:
+          type: object
+          properties:
+            href:
+              type: string
+        last:
+          type: object
+          properties:
+            href:
+              type: string
+        next:
+          type: object
+          properties:
+            href:
+              type: string
+        prev:
+          type: object
+          properties:
+            href:
+              type: string
+    vmserver:
+      type: object
+      properties:
+        serverName:
+          type: string
+          description: The name of the virtual machine server.
+        vmType:
+          type: string
+          description: The type of virtual machine server.
+          enum:
+            - VMWARE_VIRTUAL_CENTER_SERVER
+            - VMWARE_ESX_SERVER
+            - VMWARE_RESTORE_ESX_SERVER
+            - VMWARE_VCLOUD_DIRECTOR
+            - HYPERV_SERVER
+            - SYSTEM_CENTER_VMM_SERVER
+            - HYPERV_CLUSTER_SERVER
+            - HYPERSCALE_SERVER
+            - RED_HAT_VIRTUALIZATION_MANAGER
+            - OPENSTACK_HORIZON_SERVER
+        userId:
+          type: string
+          description: The username for the credentials.
+        password:
+          type: string
+          description: The password for the credentials.
+        port:
+          type: integer
+          description: The port used to connect to the server.
+        proxy:
+          type: string
+          description: The NetBackup host to use for the validation operation.
+        validate:
+          type: boolean
+          description: Indicates if the validation operation is ignored.
+          default: true
+      required:
+        - serverName
+        - vmType
+        - userId
+        - password
+    hostGenericSchema:
+      type: object
+      properties:
+        certificate:
+          type: string
+          description: |
+            The signing certificate that is provided by the master server to establish a secure connection.
+        token:
+          type: string
+          description: The authentication token that is required to make API calls.
+        hostName:
+          type: string
+          description: The host name for the communicating host.
+        groupId:
+          type: string
+          description: The group identifier of the host.
+        url:
+          type: string
+          description: The NetBackup WebSocket Service (WSS) endpoint URL.
+        priority:
+          type: integer
+          description: |
+            Specifies the order in which to attempt to connect to the host. NetBackup attempts to connect to the host that has the highest priority.
+        state:
+          type: string
+          description: |
+            Indicates the state of the host. Possible values are null, activated, and deactivated.
+          enum:
+            - ACTIVATED
+            - DEACTIVATED
+        connectionState:
+          type: string
+          description: |
+            Indicates whether or not the host is connected. Possible values are null, connected, and disconnected.
+          enum:
+            - CONNECTED
+            - DISCONNECTED
+        endpointType:
+          type: string
+          description: |
+            Indicates the type of host. For Veritas Alta View endpoint value should be passed as GMS. For other end points, value should be pass as OTHERS. Possible values are null, GMS, and OTHERS.
+          enum:
+            - GMS
+            - OTHERS
+      required:
+        - certificate
+        - token
+        - hostName
+        - groupId
+        - url
+        - priority
+    hostGenericSchemaArray:
+      type: array
+      items:
+        $ref: "#/components/schemas/hostGenericSchema"
+    updateHostSchema:
+      type: object
+      properties:
+        hostName:
+          type: string
+          description: The identifier for the communicating host.
+        state:
+          type: string
+          description: |
+            Indicates the state of the host. Possible values are activated, deactivated.
+          enum:
+            - ACTIVATED
+            - DEACTIVATED
+        endpointType:
+          type: string
+          description: |
+            Indicates the type of host. For Veritas Alta View endpoint value should be passed as GMS. For other end points, value should be pass as OTHERS. Possible values are null, GMS, and OTHERS.
+          enum:
+            - GMS
+            - OTHERS
+      required:
+        - hostName
+        - state
+    emptyResponse:
+      type: object
+    urlSchema:
+      type: object
+      properties:
+        url:
+          type: string
+          description: The URL of the WebSocket endpoint that NetBackup connects to.
+      required:
+        - url
+  requestBodies:
+    vmserver:
+      content:
+        application/vnd.netbackup+json;version=13.0:
+          schema:
+            $ref: "#/components/schemas/vmserver"
+      required: true
+    postConfigWorkloadsVmwareVcenterTopologies:
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              file:
+                description: The file to be uploaded.
+                type: string
+                format: binary
+            required:
+              - file
+    configWorkloadsKvmHostRequest:
+      content:
+        application/vnd.netbackup+json;version=13.0:
+          schema:
+            type: object
+            required:
+              - hostName
+            properties:
+              hostName:
+                type: string
+                format: hostname
+                description: The name of the KVM host.
+      required: true
+    hostGenericSchema:
+      content:
+        application/vnd.netbackup+json;version=13.0:
+          schema:
+            $ref: "#/components/schemas/hostGenericSchema"
+      description: The details for the host.
+      required: true
+  parameters:
+    instanceGroupId:
+      name: instanceGroupId
+      in: path
+      description: The ID of the instance group.
+      required: true
+      schema:
+        type: integer
+    databaseId:
+      name: databaseId
+      in: path
+      description: The NetBackup ID for the Oracle RAC database.
+      required: true
+      schema:
+        type: string
+    clientName:
+      name: clientName
+      in: path
+      description: The host name of the client.
+      required: true
+      schema:
+        type: string
+    instanceName:
+      name: instanceName
+      in: path
+      description: |
+        The unique name that is specified by the NetBackup user for the configuration instance.
+      required: true
+      schema:
+        type: string
+    oracleDBAssetID:
+      name: databaseAssetID
+      description: The asset ID for the Oracle database.
+      in: path
+      required: true
+      schema:
+        type: string
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []
