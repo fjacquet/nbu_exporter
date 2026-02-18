@@ -44,5 +44,8 @@ old/
 tmp/
 *.tmp
 
+# MkDocs build output
+site/
+
 # AI/code assistant artifacts
 .codegpt

@@ -1,0 +1,61 @@
+site_name: NBU Exporter
+site_description: Prometheus exporter for Veritas NetBackup
+site_url: https://fjacquet.github.io/nbu_exporter/
+repo_url: https://github.com/fjacquet/nbu_exporter
+repo_name: fjacquet/nbu_exporter
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets:
+      base_path: ["."]
+  - tables
+  - attr_list
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Configuration: getting-started/configuration.md
+      - Quick Start: getting-started/quickstart.md
+  - Metrics Reference: metrics.md
+  - OpenTelemetry Integration:
+      - Setup Guide: opentelemetry-example.md
+      - Trace Analysis: trace-analysis-guide.md
+  - Migration Guides:
+      - NetBackup 11.0: netbackup-11-migration.md
+      - API 10.5: api-10.5-migration.md
+  - Deployment:
+      - Verification: deployment-verification.md
+      - Quick Reference: deployment-quick-reference.md
+      - Docker: docker.md
+  - Configuration Examples: config-examples/README.md
+  - Changelog: changelog.md

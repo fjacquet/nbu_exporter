@@ -4,6 +4,10 @@ A production-ready Prometheus exporter that collects backup job statistics and s
 
 ![CI](https://github.com/fjacquet/nbu_exporter/actions/workflows/build.yml/badge.svg)
 ![Coverage](https://github.com/fjacquet/nbu_exporter/actions/workflows/coverage.yml/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/fjacquet/nbu_exporter)](https://goreportcard.com/report/github.com/fjacquet/nbu_exporter)
+![Go Version](https://img.shields.io/github/go-mod/go-version/fjacquet/nbu_exporter)
+[![Latest Release](https://img.shields.io/github/v/release/fjacquet/nbu_exporter)](https://github.com/fjacquet/nbu_exporter/releases/latest)
+[![License: GPL](https://img.shields.io/github/license/fjacquet/nbu_exporter)](LICENSE)
 [![Documentation](https://img.shields.io/badge/docs-github%20pages-blue)](https://fjacquet.github.io/nbu_exporter/)
 
 ## Features
