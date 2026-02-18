@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (No unreleased changes yet)
 
+## [2.2.1] - 2026-02-18
+
+### Fixed
+
+- **Double URL-encoding of job filter query parameter** ([#13](https://github.com/fjacquet/nbu_exporter/issues/13)): The `endTime` filter for job metrics was pre-encoded with `%20` for spaces, but `BuildURL()` applies URL encoding automatically via `url.Values.Encode()`. This caused double-encoding (`%20` → `%2520`), making the NetBackup API return HTTP 400 errors. Job metrics (`nbu_jobs_bytes`, `nbu_jobs_count`, `nbu_status_count`) were not collected as a result. Storage metrics were unaffected.
+
 ## [2.2.0] - 2026-01-24
 
 ### Added
