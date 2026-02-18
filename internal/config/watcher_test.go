@@ -28,7 +28,7 @@ func TestWatchConfigFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}
-	defer watcher.Close()
+	defer func() { _ = watcher.Close() }()
 
 	// Give watcher time to start
 	time.Sleep(100 * time.Millisecond)
@@ -71,7 +71,7 @@ func TestWatchConfigFileAtomicWrite(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}
-	defer watcher.Close()
+	defer func() { _ = watcher.Close() }()
 
 	// Give watcher time to start
 	time.Sleep(100 * time.Millisecond)
@@ -118,7 +118,7 @@ func TestWatchConfigFileReloadError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}
-	defer watcher.Close()
+	defer func() { _ = watcher.Close() }()
 
 	// Give watcher time to start
 	time.Sleep(100 * time.Millisecond)
@@ -163,7 +163,7 @@ func TestWatchConfigFileOtherFileIgnored(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create watcher: %v", err)
 	}
-	defer watcher.Close()
+	defer func() { _ = watcher.Close() }()
 
 	// Give watcher time to start
 	time.Sleep(100 * time.Millisecond)
@@ -215,7 +215,7 @@ func TestWatchConfigFileClose(t *testing.T) {
 	}
 
 	// Close the watcher
-	watcher.Close()
+	_ = watcher.Close()
 
 	// Wait for goroutine to exit
 	time.Sleep(100 * time.Millisecond)

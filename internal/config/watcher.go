@@ -86,7 +86,7 @@ func WatchConfigFile(configPath string, reloadFn ReloadFunc) (*fsnotify.Watcher,
 	configName := filepath.Base(configPath)
 
 	if err := watcher.Add(configDir); err != nil {
-		watcher.Close()
+		_ = watcher.Close()
 		return nil, err
 	}
 

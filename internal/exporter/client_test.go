@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
+	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 )
@@ -1155,7 +1156,7 @@ func TestNbuClientCloseWaitsForActiveRequests(t *testing.T) {
 		<-requestComplete // Wait for test to signal completion
 		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(mockAPIResponse{})
+		_ = json.NewEncoder(w).Encode(mockAPIResponse{})
 	}))
 	defer server.Close()
 
@@ -1177,7 +1178,7 @@ func TestNbuClientCloseWaitsForActiveRequests(t *testing.T) {
 	// Close should block waiting for request
 	closeDone := make(chan struct{})
 	go func() {
-		client.Close()
+		_ = client.Close()
 		close(closeDone)
 	}()
 
@@ -1216,7 +1217,7 @@ func TestNbuClientFetchDataRejectsAfterClose(t *testing.T) {
 	client := NewNbuClient(cfg)
 
 	// Close the client
-	client.Close()
+	_ = client.Close()
 
 	// Attempt to fetch - should fail
 	var result mockAPIResponse
@@ -1252,13 +1253,8 @@ func TestNewNbuClient_TLSConfig(t *testing.T) {
 
 			client := NewNbuClient(cfg)
 
-			if client == nil {
-				t.Error("NewNbuClient() returned nil")
-			}
-
-			if client.client == nil {
-				t.Error("NewNbuClient() did not initialize HTTP client")
-			}
+			require.NotNil(t, client, "NewNbuClient() returned nil")
+			require.NotNil(t, client.client, "NewNbuClient() did not initialize HTTP client")
 
 			// Verify config is stored
 			if client.cfg.NbuServer.InsecureSkipVerify != tt.insecureSkipVerify {
@@ -1279,7 +1275,7 @@ func TestNbuClientCloseTimeout(t *testing.T) {
 		time.Sleep(5 * time.Second)
 		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(mockAPIResponse{})
+		_ = json.NewEncoder(w).Encode(mockAPIResponse{})
 	}))
 	defer server.Close()
 
@@ -1292,7 +1288,7 @@ func TestNbuClientCloseTimeout(t *testing.T) {
 
 	go func() {
 		var result mockAPIResponse
-		client.FetchData(requestCtx, server.URL, &result)
+		_ = client.FetchData(requestCtx, server.URL, &result)
 	}()
 
 	// Wait for request to start
@@ -1418,7 +1414,7 @@ func TestClientNetworkTimeout(t *testing.T) {
 		time.Sleep(5 * time.Second)
 		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(mockAPIResponse{})
+		_ = json.NewEncoder(w).Encode(mockAPIResponse{})
 	}))
 	defer server.Close()
 
@@ -1530,7 +1526,7 @@ func TestClientHTTPErrorsComprehensive(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
-				json.NewEncoder(w).Encode(map[string]string{
+				_ = json.NewEncoder(w).Encode(map[string]string{
 					"error": fmt.Sprintf("HTTP %d error", tt.statusCode),
 				})
 			}))
@@ -1650,9 +1646,9 @@ func TestClientServerClosesDuringTransfer(t *testing.T) {
 		}
 		// Read some data
 		buf := make([]byte, 1024)
-		conn.Read(buf)
+		_, _ = conn.Read(buf)
 		// Close without sending response
-		conn.Close()
+		_ = conn.Close()
 	}()
 
 	cfg := createBasicTestConfig("13.0", testAPIKey)
@@ -1667,7 +1663,7 @@ func TestClientServerClosesDuringTransfer(t *testing.T) {
 	err = client.FetchData(ctx, testURL, &result)
 
 	// Close listener and wait for server goroutine
-	listener.Close()
+	_ = listener.Close()
 	<-serverClosed
 
 	if err == nil {

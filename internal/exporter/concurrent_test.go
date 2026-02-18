@@ -33,7 +33,7 @@ func TestCollectorConcurrentCollect(t *testing.T) {
 	cfg := createConcurrentTestConfig(server)
 	collector, err := NewNbuCollector(cfg)
 	require.NoError(t, err)
-	defer collector.Close()
+	defer func() { _ = collector.Close() }()
 
 	const numGoroutines = 10
 	var wg sync.WaitGroup
@@ -74,7 +74,7 @@ func TestCollectorConcurrentDescribe(t *testing.T) {
 	cfg := createConcurrentTestConfig(server)
 	collector, err := NewNbuCollector(cfg)
 	require.NoError(t, err)
-	defer collector.Close()
+	defer func() { _ = collector.Close() }()
 
 	const numGoroutines = 10
 	var wg sync.WaitGroup
@@ -153,7 +153,7 @@ func TestCollectorConcurrentCollectAndDescribe(t *testing.T) {
 	cfg := createConcurrentTestConfig(server)
 	collector, err := NewNbuCollector(cfg)
 	require.NoError(t, err)
-	defer collector.Close()
+	defer func() { _ = collector.Close() }()
 
 	const numGoroutines = 5
 	var wg sync.WaitGroup
@@ -263,7 +263,7 @@ func TestCollectorCloseWithActiveCollect(t *testing.T) {
 
 		w.Header().Set(contentTypeHeader, contentTypeJSON)
 		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]interface{}{"data": []interface{}{}})
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"data": []interface{}{}})
 	}))
 	defer server.Close()
 
@@ -326,8 +326,9 @@ func createConcurrentTestServer(t *testing.T) *httptest.Server {
 		w.WriteHeader(http.StatusOK)
 
 		// Return appropriate response based on path
-		if r.URL.Path == "/netbackup/storage/storage-units" {
-			json.NewEncoder(w).Encode(map[string]interface{}{
+		switch r.URL.Path {
+		case "/netbackup/storage/storage-units":
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"data": []interface{}{},
 				"meta": map[string]interface{}{
 					"pagination": map[string]interface{}{
@@ -336,8 +337,8 @@ func createConcurrentTestServer(t *testing.T) *httptest.Server {
 					},
 				},
 			})
-		} else if r.URL.Path == "/netbackup/admin/jobs" {
-			json.NewEncoder(w).Encode(map[string]interface{}{
+		case "/netbackup/admin/jobs":
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"data": []interface{}{},
 				"meta": map[string]interface{}{
 					"pagination": map[string]interface{}{
@@ -346,9 +347,9 @@ func createConcurrentTestServer(t *testing.T) *httptest.Server {
 					},
 				},
 			})
-		} else {
+		default:
 			// Default empty response for version detection
-			json.NewEncoder(w).Encode(map[string]interface{}{"data": []interface{}{}})
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"data": []interface{}{}})
 		}
 	}))
 }

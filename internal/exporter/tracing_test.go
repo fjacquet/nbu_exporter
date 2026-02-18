@@ -38,7 +38,7 @@ func TestTracerWrapper_StartSpan_NilSafe(t *testing.T) {
 	wrapper := NewTracerWrapper(nil, "test-component")
 	ctx := context.Background()
 
-	ctx, span := wrapper.StartSpan(ctx, "test-operation", trace.SpanKindClient)
+	_, span := wrapper.StartSpan(ctx, "test-operation", trace.SpanKindClient)
 
 	// Span should never be nil
 	if span == nil {
@@ -55,7 +55,7 @@ func TestTracerWrapper_SpanMethodsSafe(t *testing.T) {
 	wrapper := NewTracerWrapper(nil, "test-component")
 	ctx := context.Background()
 
-	ctx, span := wrapper.StartSpan(ctx, "test-operation", trace.SpanKindInternal)
+	_, span := wrapper.StartSpan(ctx, "test-operation", trace.SpanKindInternal)
 	defer span.End()
 
 	// These should all be safe without nil-checks

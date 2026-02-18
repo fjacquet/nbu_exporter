@@ -247,7 +247,7 @@ func testCustomEndpoint(t *testing.T) {
 
 	customHandler := func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(customResponse))
+		_, _ = w.Write([]byte(customResponse))
 	}
 
 	server := testutil.NewMockServer().
@@ -496,7 +496,7 @@ func TestMockServerBuilderExtended(t *testing.T) {
 			if resp.StatusCode != expectedStatus {
 				t.Errorf("Endpoint %s: expected status %d, got %d", path, expectedStatus, resp.StatusCode)
 			}
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 	})
 
@@ -517,7 +517,7 @@ func TestMockServerBuilderExtended(t *testing.T) {
 		if resp13.StatusCode != http.StatusNotAcceptable {
 			t.Errorf("Expected 406 for rejected version 13.0, got %d", resp13.StatusCode)
 		}
-		resp13.Body.Close()
+		_ = resp13.Body.Close()
 
 		// 12.0 should be accepted
 		req12, _ := http.NewRequest("GET", server.URL+testutil.TestPathAdminJobs, nil)
@@ -526,7 +526,7 @@ func TestMockServerBuilderExtended(t *testing.T) {
 		if resp12.StatusCode != http.StatusOK {
 			t.Errorf("Expected 200 for accepted version 12.0, got %d", resp12.StatusCode)
 		}
-		resp12.Body.Close()
+		_ = resp12.Body.Close()
 	})
 
 	t.Run("WithVersionDetection_StorageEndpoint", func(t *testing.T) {

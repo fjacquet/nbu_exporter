@@ -3,7 +3,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"net"
 	"net/http"
@@ -153,8 +152,8 @@ func TestSetupLogging_Success(t *testing.T) {
 	// Create a temp file for logging
 	tmpFile, err := os.CreateTemp("", "test_log_*.log")
 	require.NoError(t, err)
-	defer os.Remove(tmpFile.Name())
-	tmpFile.Close()
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
+	_ = tmpFile.Close()
 
 	cfg := createTestConfig()
 	cfg.Server.LogName = tmpFile.Name()
@@ -172,8 +171,8 @@ func TestSetupLogging_DebugMode(t *testing.T) {
 	// Create a temp file for logging
 	tmpFile, err := os.CreateTemp("", "test_log_*.log")
 	require.NoError(t, err)
-	defer os.Remove(tmpFile.Name())
-	tmpFile.Close()
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
+	_ = tmpFile.Close()
 
 	cfg := createTestConfig()
 	cfg.Server.LogName = tmpFile.Name()
@@ -240,7 +239,7 @@ func TestServerErrorChan(t *testing.T) {
 	assert.NotNil(t, errChan, "ErrorChan should return non-nil channel")
 
 	// Verify channel is receive-only (compile-time check)
-	var _ <-chan error = server.ErrorChan()
+	var _ <-chan error = server.ErrorChan() //nolint:staticcheck // compile-time type assertion
 }
 
 // TestServerShutdown_NoStart verifies Shutdown is safe when Start wasn't called.
@@ -494,7 +493,7 @@ func TestServerErrorPropagation(t *testing.T) {
 	// Use a port that's already in use
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 
 	// Parse the port
 	_, port, err := net.SplitHostPort(listener.Addr().String())
@@ -600,11 +599,3 @@ func BenchmarkValidateConfig(b *testing.B) {
 	}
 }
 
-// TestLogSuppression is a helper to suppress logrus output during tests.
-func suppressLogs() func() {
-	original := logrus.StandardLogger().Out
-	logrus.SetOutput(&bytes.Buffer{})
-	return func() {
-		logrus.SetOutput(original)
-	}
-}
