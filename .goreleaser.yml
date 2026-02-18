@@ -30,20 +30,56 @@ archives:
       - README.md
       - config.yaml
 
-# dockers:
-#   - # Image Docker multi-architecture
-#     dockerfile: Dockerfile.goreleaser
-#     image_templates:
-#       - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER | default \"fjacquet\" }}/{{ .ProjectName }}:{{ .Version }}"
-#       - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER | default \"fjacquet\" }}/{{ .ProjectName }}:latest"
-#     use: buildx
-#     build_flag_templates:
-#       - "--platform=linux/amd64,linux/arm64"
-#       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
-#       - "--label=org.opencontainers.image.version={{ .Version }}"
-#       - "--label=org.opencontainers.image.source=https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER | default \"fjacquet\" }}/{{ .ProjectName }}"
-#     extra_files:
-#       - config.yaml
+dockers:
+  - image_templates:
+      - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-amd64"
+    use: buildx
+    dockerfile: Dockerfile.goreleaser
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.source=https://github.com/fjacquet/{{ .ProjectName }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+    extra_files:
+      - config.yaml
+  - image_templates:
+      - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-arm64"
+    use: buildx
+    goarch: arm64
+    dockerfile: Dockerfile.goreleaser
+    build_flag_templates:
+      - "--pull"
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.title={{ .ProjectName }}"
+      - "--label=org.opencontainers.image.version={{ .Version }}"
+      - "--label=org.opencontainers.image.source=https://github.com/fjacquet/{{ .ProjectName }}"
+      - "--label=org.opencontainers.image.created={{ .Date }}"
+    extra_files:
+      - config.yaml
+
+docker_manifests:
+  - name_template: "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}"
+    image_templates:
+      - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-amd64"
+      - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-arm64"
+  - name_template: "ghcr.io/fjacquet/nbu_exporter:latest"
+    image_templates:
+      - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-amd64"
+      - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-arm64"
+
+brews:
+  - repository:
+      owner: fjacquet
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/fjacquet/nbu_exporter"
+    description: "Prometheus exporter for Veritas NetBackup"
+    license: "MIT"
+    test: |
+      system "#{bin}/nbu_exporter", "--version"
 
 changelog:
   sort: asc

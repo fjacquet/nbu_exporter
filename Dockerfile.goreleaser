@@ -12,11 +12,11 @@ WORKDIR /root/
 COPY nbu_exporter /usr/bin/nbu_exporter
 
 # Copy the configuration file (optional, can be mounted)
-COPY config.yaml /etc/config.yaml
+COPY config.yaml /etc/nbu_exporter/config.yaml
 
-# Expose the default port
-EXPOSE 8080
+# Expose the Prometheus metrics port
+EXPOSE 2112
 
 # Run the exporter with the default configuration
 ENTRYPOINT ["/usr/bin/nbu_exporter"]
-CMD ["--config", "/etc/config.yaml"]
+CMD ["--config", "/etc/nbu_exporter/config.yaml"]
