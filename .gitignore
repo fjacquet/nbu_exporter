@@ -36,7 +36,6 @@ Thumbs.db
 
 # Build and analysis tools
 .dccache
-.scannerwork/
 
 # Temporary and sample files
 samples/

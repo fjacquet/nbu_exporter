@@ -33,7 +33,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Needed for SonarCloud
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -54,9 +54,3 @@ jobs:
         uses: vladopajic/go-test-coverage@v2
         with:
           config: ./.testcoverage.yml
-
-      # - name: SonarQube Scan
-      #   if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-      #   uses: SonarSource/sonarqube-scan-action@v6
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
