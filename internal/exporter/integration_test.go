@@ -182,7 +182,7 @@ func verifyJobMetricsCollected(t *testing.T, jobsSizeSlice []JobMetricValue, job
 // With batch pagination (100 jobs per page), we test returning multiple jobs per page
 func TestPaginationHandling(t *testing.T) {
 	callCount := 0
-	totalJobs := 3 // Total jobs to return across all pages
+	totalJobs := 3     // Total jobs to return across all pages
 	expectedCalls := 1 // With batch pagination, all 3 jobs fit in 1 page
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

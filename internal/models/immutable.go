@@ -55,9 +55,9 @@ type ImmutableConfig struct {
 
 // NewImmutableConfig creates an ImmutableConfig from a validated Config.
 // This should be called AFTER:
-//   1. Config.Validate() has passed
-//   2. Version detection has completed (if needed)
-//   3. All config mutations are complete
+//  1. Config.Validate() has passed
+//  2. Version detection has completed (if needed)
+//  3. All config mutations are complete
 //
 // Returns an error if scraping interval cannot be parsed.
 func NewImmutableConfig(cfg *Config) (ImmutableConfig, error) {

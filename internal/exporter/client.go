@@ -81,9 +81,9 @@ const (
 // It manages TLS configuration, request headers, and provides methods for
 // fetching data from various NetBackup API endpoints.
 type NbuClient struct {
-	client  *resty.Client   // HTTP client with TLS configuration
-	cfg     models.Config   // Application configuration including API settings
-	tracing *TracerWrapper  // OpenTelemetry tracer wrapper for nil-safe distributed tracing
+	client  *resty.Client  // HTTP client with TLS configuration
+	cfg     models.Config  // Application configuration including API settings
+	tracing *TracerWrapper // OpenTelemetry tracer wrapper for nil-safe distributed tracing
 
 	// Connection tracking for graceful shutdown
 	mu         sync.Mutex    // Protects closed and closeChan

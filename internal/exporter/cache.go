@@ -23,9 +23,9 @@ const (
 //
 // Thread-safety: All methods are safe for concurrent use.
 type StorageCache struct {
-	cache            *cache.Cache
-	ttl              time.Duration
-	lastCollectionMu sync.RWMutex
+	cache              *cache.Cache
+	ttl                time.Duration
+	lastCollectionMu   sync.RWMutex
 	lastCollectionTime time.Time
 }
 
