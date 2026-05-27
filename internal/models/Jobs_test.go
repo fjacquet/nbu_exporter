@@ -200,6 +200,41 @@ func TestJobsUnmarshalJSONWithoutOptionalFields(t *testing.T) {
 	}
 }
 
+// TestJobsAcceleratorOptimizationAcceptsFloat is a regression test for issue #17:
+// NetBackup API 12.0 returns acceleratorOptimization as a JSON float (e.g. 0.0) for
+// some jobs (e.g. REPLICATE). It must unmarshal without error now that the field is float64.
+func TestJobsAcceleratorOptimizationAcceptsFloat(t *testing.T) {
+	jsonData := `{
+		"data": [{
+			"type": "job",
+			"id": "55555",
+			"attributes": {
+				"jobId": 55555,
+				"jobType": "REPLICATE",
+				"policyType": "STANDARD",
+				"status": 0,
+				"kilobytesTransferred": 2048,
+				"acceleratorOptimization": 0.0,
+				"startTime": "2024-11-08T10:00:00Z",
+				"endTime": "2024-11-08T11:00:00Z"
+			}
+		}],
+		"meta": {"pagination": {"count": 1}}
+	}`
+
+	var jobs Jobs
+	if err := json.Unmarshal([]byte(jsonData), &jobs); err != nil {
+		t.Fatalf("Failed to unmarshal JSON with float acceleratorOptimization: %v", err)
+	}
+
+	if len(jobs.Data) != 1 {
+		t.Fatalf("Expected 1 job, got %d", len(jobs.Data))
+	}
+	if got := jobs.Data[0].Attributes.AcceleratorOptimization; got != 0.0 {
+		t.Errorf("Expected acceleratorOptimization 0.0, got %v", got)
+	}
+}
+
 func TestJobsPagination(t *testing.T) {
 	// Read the test fixture
 	data, err := os.ReadFile("../../testdata/api-10.5/jobs-response.json")
