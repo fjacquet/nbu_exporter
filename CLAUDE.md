@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A Prometheus exporter for Veritas NetBackup (NBU), written in Go 1.25. Exposes backup job statistics and storage metrics via HTTP for Prometheus scraping, with optional OpenTelemetry distributed tracing.
+A Prometheus exporter for Veritas NetBackup (NBU), written in Go 1.26. Exposes backup job statistics and storage metrics via HTTP for Prometheus scraping, with optional OpenTelemetry distributed tracing.
 
 ## Prerequisites
 
-- Go 1.25+
-- `golangci-lint` (used by `make sure`)
+- Go 1.26+
+- `golangci-lint` v2.12.2, `govulncheck`, `cyclonedx-gomod` (install all via `make tools`)
 - Docker (optional, for container builds)
 
 ## Build & Development Commands
@@ -27,6 +27,8 @@ go test -race ./...         # With race detection
 
 # Code quality (format, test, build, lint)
 make sure
+
+# CI enforces 70% total coverage via .testcoverage.yml (vladopajic/go-test-coverage)
 
 # Run
 ./bin/nbu_exporter --config config.yaml
@@ -109,6 +111,12 @@ Requires `config.yaml` with sections: `server`, `nbuserver`, optional `opentelem
 - **Config hot-reload**: SIGHUP signal + fsnotify file watcher trigger config reload without restart
 - **Thread-safe config**: Immutable config wrapper with atomic swap for concurrent access
 - **Span hierarchy**: `prometheus.scrape` → `netbackup.fetch_storage` / `netbackup.fetch_jobs` → `netbackup.fetch_job_page`
+
+## Gotchas
+
+- **`vendor/` is gitignored** (not committed). After changing dependencies, run `go mod vendor` or build with `-mod=mod`, otherwise builds may fail on missing vendored modules.
+- **`make ci` excludes `vendor/` from `fmt-check`** — needed because `vendor/` is present locally but absent in CI (gitignored). Don't simplify it back to a bare `gofmt -l .`.
+- **CI workflows**: `ci.yml` is the main gate (fmt/vet/lint/`test-race`/govulncheck + 70% coverage via `.testcoverage.yml` + Semgrep + SBOM); `codeql.yml` runs CodeQL; `release.yml` is GoReleaser; `static.yml` deploys docs.
 
 ## Key Dependencies
 
