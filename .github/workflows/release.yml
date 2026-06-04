@@ -2,17 +2,15 @@
 
 name: 🚀 Release Go Exporter
 
-# Déclencheur : ce workflow s'exécute quand vous poussez un tag
-# qui commence par 'v' (ex: v1.0.0, v1.2.3-beta)
 on:
   push:
     tags:
       - "v*.*.*"
 
-# Permissions requises par le job
 permissions:
-  contents: write # Pour créer la Release GitHub
-  packages: write # Pour pousser l'image sur GHCR
+  contents: write # create the GitHub Release
+  packages: write # push the image to GHCR
+  id-token: write # cosign keyless signing / provenance
 
 jobs:
   goreleaser:
@@ -21,13 +19,18 @@ jobs:
       - name: ⬇️ Checkout code
         uses: actions/checkout@v4
         with:
-          # Nécessaire pour que GoReleaser puisse générer le changelog
-          fetch-depth: 0
+          fetch-depth: 0 # needed for changelog generation
 
       - name: 🏗️ Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
+          go-version-file: go.mod
+
+      - name: 🧰 Install SBOM tooling (syft)
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: 🔏 Install cosign
+        uses: sigstore/cosign-installer@v3
 
       - name: 🐋 Set up QEMU
         uses: docker/setup-qemu-action@v3
