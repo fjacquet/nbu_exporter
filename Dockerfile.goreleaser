@@ -1,22 +1,20 @@
 # Dockerfile for GoReleaser
-# This Dockerfile expects the binary to be pre-built by GoReleaser
+# Expects the binary to be pre-built by GoReleaser.
 FROM alpine:latest
 
-# Install ca-certificates for HTTPS requests
-RUN apk --no-cache add ca-certificates
+# ca-certificates for HTTPS, plus a non-root user and writable log dir
+RUN apk --no-cache add ca-certificates && \
+    adduser -D -u 10001 nbu && \
+    mkdir -p /var/log/nbu_exporter && \
+    chown nbu:nbu /var/log/nbu_exporter
 
-# Set up the working directory
-WORKDIR /root/
-
-# Copy the pre-built binary from GoReleaser
+# Copy the pre-built binary from GoReleaser and the default config
 COPY nbu_exporter /usr/bin/nbu_exporter
-
-# Copy the configuration file (optional, can be mounted)
 COPY config.yaml /etc/nbu_exporter/config.yaml
 
-# Expose the Prometheus metrics port
 EXPOSE 2112
 
-# Run the exporter with the default configuration
+USER nbu
+
 ENTRYPOINT ["/usr/bin/nbu_exporter"]
 CMD ["--config", "/etc/nbu_exporter/config.yaml"]
