@@ -1051,6 +1051,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#280-2026-06-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.8.0] - 2026-06-05
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.8.0] - 2026-06-05">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#270-2026-06-05" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1130,7 +1158,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#changed_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -1208,7 +1236,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#changed_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -1462,6 +1490,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#280-2026-06-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.8.0] - 2026-06-05
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.8.0] - 2026-06-05">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#270-2026-06-05" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1541,7 +1597,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#changed_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -1619,7 +1675,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed_1" class="md-nav__link">
+  <a href="#changed_2" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -1853,6 +1909,17 @@
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <h2 id="unreleased">[Unreleased]</h2>
 <p>(No unreleased changes yet)</p>
+<h2 id="280-2026-06-05">[2.8.0] - 2026-06-05</h2>
+<h3 id="changed">Changed</h3>
+<ul>
+<li>Migrated the Homebrew distribution from a <strong>formula</strong> (<code>brews</code>) to a
+  <strong>cask</strong> (<code>homebrew_casks</code>), following GoReleaser's deprecation of <code>brews</code>.
+  The cask references the darwin-only archive (<code>binary "nbu_exporter"</code>) and
+  includes a <code>postflight</code> hook that strips the Gatekeeper quarantine bit, since
+  the binary is not notarized. <code>brew install fjacquet/tap/nbu_exporter</code> is
+  unchanged for users. The tap's old <code>Formula/nbu_exporter.rb</code> is removed and a
+  <code>tap_migrations.json</code> entry migrates existing formula installs to the cask.</li>
+</ul>
 <h2 id="270-2026-06-05">[2.7.0] - 2026-06-05</h2>
 <h3 id="added">Added</h3>
 <ul>
@@ -1885,7 +1952,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
   <code>test-race</code>, <code>vuln</code>, <code>sbom</code>, and an aggregate <code>ci</code> target.</li>
 <li><strong>Architecture Decision Records</strong> under <code>docs/adr/</code>.</li>
 </ul>
-<h3 id="changed">Changed</h3>
+<h3 id="changed_1">Changed</h3>
 <ul>
 <li><strong>Go 1.26</strong> (from 1.25); the <code>go</code> directive is pinned to <code>1.26.4</code> so CI installs
   a toolchain that includes stdlib security fixes.</li>
@@ -1994,7 +2061,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>fsnotify file watcher detects config file changes (watches directory for vim/emacs atomic saves)</li>
 <li>Storage cache automatically flushed when NBU server address changes</li>
 </ul>
-<h3 id="changed_1">Changed</h3>
+<h3 id="changed_2">Changed</h3>
 <ul>
 <li><strong>BREAKING</strong>: Fixed typo <code>scrappingInterval</code> → <code>scrapingInterval</code> in configuration</li>
 <li>Accept header format now includes API version: <code>application/vnd.netbackup+json;version=X.Y</code></li>
