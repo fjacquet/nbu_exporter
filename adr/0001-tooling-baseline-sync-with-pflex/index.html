@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/getting-started/quickstart/">
+        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/adr/0001-tooling-baseline-sync-with-pflex/">
       
       
-        <link rel="prev" href="../configuration/">
+        <link rel="prev" href="../">
       
       
-        <link rel="next" href="../../metrics/">
+        <link rel="next" href="../../changelog/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Quick Start - NBU Exporter</title>
+        <title>ADR-0001 Tooling Baseline Sync - NBU Exporter</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#quick-start" class="md-skip">
+        <a href="#adr-0001-sync-the-toolingcisecurity-baseline-with-pflex_exporter" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Quick Start
+              ADR-0001 Tooling Baseline Sync
             
           </span>
         </div>
@@ -284,8 +284,6 @@
       
   
   
-    
-  
   
   
     
@@ -298,11 +296,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
@@ -323,7 +323,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -341,7 +341,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -369,7 +369,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../getting-started/configuration/" class="md-nav__link">
         
   
   
@@ -394,37 +394,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Quick Start
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
         
   
   
@@ -440,81 +413,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-build" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Build
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-configure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Configure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Run
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-add-to-prometheus" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Add to Prometheus
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#command-line-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Command Line Options
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -964,8 +862,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -976,13 +876,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
           <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
@@ -1003,7 +901,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1021,7 +919,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -1046,10 +944,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../adr/0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-0001 Tooling Baseline Sync
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1065,6 +990,109 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alternatives-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Alternatives considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#negative-trade-offs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Negative / trade-offs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#follow-ups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow-ups
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1131,10 +1159,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-build" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Build
+        Context
       
     </span>
   </a>
@@ -1142,10 +1170,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-configure" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Configure
+        Decision
       
     </span>
   </a>
@@ -1153,10 +1181,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-run" class="md-nav__link">
+  <a href="#alternatives-considered" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Run
+        Alternatives considered
       
     </span>
   </a>
@@ -1164,24 +1192,52 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-add-to-prometheus" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Add to Prometheus
+        Consequences
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Consequences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#positive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Positive
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#command-line-options" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#negative-trade-offs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Command Line Options
+        Negative / trade-offs
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#follow-ups" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Follow-ups
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1205,36 +1261,84 @@
   
 
 
-<h1 id="quick-start">Quick Start</h1>
-<h2 id="1-build">1. Build</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/fjacquet/nbu_exporter.git
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>nbu_exporter
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>make<span class="w"> </span>cli
-</code></pre></div>
-<h2 id="2-configure">2. Configure</h2>
-<p>Create <code>config.yaml</code> with your NetBackup server details. See <a href="../configuration/">Configuration</a> for all options.</p>
-<h2 id="3-run">3. Run</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./bin/nbu_exporter<span class="w"> </span>--config<span class="w"> </span>config.yaml
-</code></pre></div>
-<p>The exporter exposes:</p>
+<h1 id="adr-0001-sync-the-toolingcisecurity-baseline-with-pflex_exporter">ADR-0001: Sync the tooling/CI/security baseline with pflex_exporter</h1>
 <ul>
-<li><strong>Metrics</strong>: <code>http://localhost:2112/metrics</code></li>
-<li><strong>Health</strong>: <code>http://localhost:2112/health</code></li>
+<li><strong>Status:</strong> Accepted</li>
+<li><strong>Date:</strong> 2026-06-05</li>
+<li><strong>Deciders:</strong> Frederic Jacquet</li>
+<li><strong>Related:</strong> <code>docs/superpowers/specs/2026-06-04-sync-nbu-tooling-baseline-design.md</code>, <code>docs/superpowers/plans/2026-06-04-sync-nbu-tooling-baseline.md</code>, PR #19, release v2.5.0</li>
 </ul>
-<h2 id="4-add-to-prometheus">4. Add to Prometheus</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">scrape_configs</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;netbackup&#39;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;localhost:2112&#39;</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">scrape_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
-</code></pre></div>
-<h2 id="command-line-options">Command Line Options</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Flags:
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  -c, --config string   Path to configuration file (required)
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  -d, --debug           Enable debug mode
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  -h, --help            Help for nbu_exporter
-</code></pre></div>
+<h2 id="context">Context</h2>
+<p><code>nbu_exporter</code> and <code>pflex_exporter</code> are sibling Prometheus exporters maintained in
+parallel. Their application architecture and core dependency versions were already
+in sync, but the <strong>engineering-hygiene layer had drifted</strong>: <code>pflex_exporter</code> was
+ahead on Go version, Makefile quality targets, CI security scanning, SBOM
+generation, and Docker hardening.</p>
+<p>This drift also violated a standing project rule that every repository must run
+Semgrep scanning in CI — <code>pflex</code> honored it, <code>nbu</code> did not.</p>
+<p>We treat <strong><code>pflex_exporter</code> as the reference baseline</strong> for the tooling layer and
+bring <code>nbu_exporter</code> up to it, one-directionally, without copying pflex's
+domain-specific features.</p>
+<h2 id="decision">Decision</h2>
+<p>Adopt the following baseline in <code>nbu_exporter</code>:</p>
+<ol>
+<li><strong>Go 1.26</strong> — bumped from 1.25; the <code>go</code> directive is pinned to a patch release
+   (<code>go 1.26.4</code>) so CI (<code>go-version-file: go.mod</code>) installs a toolchain that
+   includes stdlib security fixes.</li>
+<li><strong>Makefile quality/security targets</strong> — <code>tools</code> (pinned <code>golangci-lint v2.12.2</code>,
+   <code>cyclonedx-gomod</code>, <code>govulncheck</code>), <code>fmt-check</code>, <code>vet</code>, <code>lint</code>, <code>test-race</code>,
+   <code>vuln</code>, <code>sbom</code>, and an aggregate <code>ci</code> target. <code>fmt-check</code> excludes <code>vendor/</code>.</li>
+<li><strong>Consolidated CI</strong> — a single <code>ci.yml</code> with <code>quality</code> + <code>sbom</code> + <code>semgrep</code>
+   jobs. <code>coverage.yml</code> was renamed to <code>codeql.yml</code> (it always ran CodeQL); the
+   old <code>build.yml</code> was retired. <strong>Both CodeQL and Semgrep</strong> run, plus govulncheck.
+   The 70 % coverage gate (<code>.testcoverage.yml</code>) is carried into <code>ci.yml</code>.</li>
+<li><strong>Supply-chain hardening</strong> — all GitHub Actions are <strong>SHA-pinned</strong> to their
+   latest releases (with version comments), and the Semgrep container image is
+   <strong>digest-pinned</strong>.</li>
+<li><strong>Release SBOM + signing</strong> — GoReleaser emits per-archive CycloneDX SBOMs
+   (syft) and <strong>cosign keyless</strong> signatures (bundle format) for the checksums file.</li>
+<li><strong>Docker hardening</strong> — builder pinned to <code>golang:1.26</code>, static build, and the
+   runtime image runs as a <strong>non-root user (uid 10001)</strong> in both <code>Dockerfile</code> and
+   <code>Dockerfile.goreleaser</code>.</li>
+</ol>
+<p>We <strong>keep GoReleaser + the Homebrew tap</strong> (more capable than pflex's hand-rolled
+Makefile release) rather than converging on pflex's release mechanism.</p>
+<h2 id="alternatives-considered">Alternatives considered</h2>
+<ul>
+<li><strong>Replace GoReleaser with pflex's Makefile-based release</strong> — rejected; GoReleaser</li>
+<li>Homebrew tap is strictly more capable and already working.</li>
+<li><strong>Match pflex exactly (Semgrep only, drop CodeQL)</strong> — rejected; running both
+  scanners catches complementary issue classes at acceptable CI cost.</li>
+<li><strong>Make Semgrep non-blocking to avoid pre-existing findings</strong> — rejected; it
+  contradicts the project's Semgrep mandate. Pre-existing findings were instead
+  triaged (false positives annotated, real hardening applied).</li>
+<li><strong>Container-image SBOM/provenance attestation (as pflex does via
+  <code>docker/build-push-action</code>)</strong> — deferred; <code>nbu</code> builds images through
+  GoReleaser, which does not natively attest image SBOMs. Out of scope.</li>
+</ul>
+<h2 id="consequences">Consequences</h2>
+<h3 id="positive">Positive</h3>
+<ul>
+<li>Semgrep + CodeQL + govulncheck now gate every PR; releases are signed and ship SBOMs.</li>
+<li>Reproducible CI via SHA-pinned actions; hardened, non-root container image.</li>
+<li>Stricter gates immediately surfaced and fixed real pre-existing debt: an
+  un-gofmt'd test file, 16 stdlib CVEs (from pinning <code>go 1.26.0</code>), and a committed
+  <code>.vscode/</code> editor config.</li>
+</ul>
+<h3 id="negative-trade-offs">Negative / trade-offs</h3>
+<ul>
+<li>SHA-pinned actions require periodic maintenance (e.g. Dependabot) to stay current.</li>
+<li><code>nbu</code> is now <strong>ahead of <code>pflex</code></strong> on SHA-pinning and SBOM-in-GoReleaser, so a
+  reverse-sync pass on <code>pflex</code> is warranted.</li>
+<li><code>cosign-installer v4</code> defaults to the new bundle format; the signing config had
+  to migrate from <code>--output-signature/--output-certificate</code> to <code>--bundle</code>.</li>
+</ul>
+<h3 id="follow-ups">Follow-ups</h3>
+<ul>
+<li>Migrate <code>.goreleaser.yml</code> off the deprecated <code>dockers</code>/<code>docker_manifests</code>
+  (→ <code>dockers_v2</code>) and <code>brews</code> properties.</li>
+<li>Reverse-sync the SHA-pinning + release SBOM/signing improvements into <code>pflex_exporter</code>.</li>
+</ul>
 
 
 

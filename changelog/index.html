@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/changelog/">
       
       
-        <link rel="prev" href="../config-examples/">
+        <link rel="prev" href="../adr/0001-tooling-baseline-sync-with-pflex/">
       
       
       
@@ -860,6 +860,123 @@
       
   
   
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-0001 Tooling Baseline Sync
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -931,7 +1048,18 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[Unreleased]">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#250-2026-06-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.5.0] - 2026-06-05
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.5.0] - 2026-06-05">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -939,6 +1067,28 @@
     <span class="md-ellipsis">
       
         Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
       
     </span>
   </a>
@@ -1002,7 +1152,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#changed_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -1035,7 +1185,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#security" class="md-nav__link">
+  <a href="#security_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Security
@@ -1253,7 +1403,18 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[Unreleased]">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#250-2026-06-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.5.0] - 2026-06-05
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.5.0] - 2026-06-05">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1261,6 +1422,28 @@
     <span class="md-ellipsis">
       
         Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security
       
     </span>
   </a>
@@ -1324,7 +1507,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#changed" class="md-nav__link">
+  <a href="#changed_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Changed
@@ -1357,7 +1540,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#security" class="md-nav__link">
+  <a href="#security_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Security
@@ -1557,8 +1740,39 @@
 <p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <h2 id="unreleased">[Unreleased]</h2>
-<h3 id="added">Added</h3>
 <p>(No unreleased changes yet)</p>
+<h2 id="250-2026-06-05">[2.5.0] - 2026-06-05</h2>
+<p>Tooling/CI/security baseline sync with the sibling <code>pflex_exporter</code> (see
+<a href="docs/adr/0001-tooling-baseline-sync-with-pflex.md">ADR-0001</a>, <a href="https://github.com/fjacquet/nbu_exporter/pull/19">#19</a>).</p>
+<h3 id="added">Added</h3>
+<ul>
+<li><strong>CycloneDX SBOMs and signed releases</strong>: each release archive now ships a
+  CycloneDX SBOM (syft), and the checksums file is signed with cosign keyless
+  (bundle format).</li>
+<li><strong>Consolidated CI</strong> (<code>ci.yml</code>): golangci-lint v2.12.2, <code>go vet</code>, race-enabled
+  tests, <code>govulncheck</code>, Semgrep, and a CycloneDX module SBOM — alongside the
+  existing CodeQL analysis. The 70% coverage gate (<code>.testcoverage.yml</code>) is retained.</li>
+<li><strong>Makefile quality/security targets</strong>: <code>tools</code>, <code>fmt-check</code>, <code>vet</code>, <code>lint</code>,
+  <code>test-race</code>, <code>vuln</code>, <code>sbom</code>, and an aggregate <code>ci</code> target.</li>
+<li><strong>Architecture Decision Records</strong> under <code>docs/adr/</code>.</li>
+</ul>
+<h3 id="changed">Changed</h3>
+<ul>
+<li><strong>Go 1.26</strong> (from 1.25); the <code>go</code> directive is pinned to <code>1.26.4</code> so CI installs
+  a toolchain that includes stdlib security fixes.</li>
+<li><strong>Docker image runs as non-root</strong> (uid 10001); the builder is pinned to
+  <code>golang:1.26</code> and the binary is built statically (<code>Dockerfile</code> and
+  <code>Dockerfile.goreleaser</code>).</li>
+<li>All GitHub Actions are <strong>SHA-pinned</strong> to their latest releases and the Semgrep
+  container image is <strong>digest-pinned</strong> for reproducible, supply-chain-hardened CI.</li>
+</ul>
+<h3 id="security">Security</h3>
+<ul>
+<li><code>govulncheck</code> runs in CI; pinning Go to 1.26.4 resolves 16 Go standard-library
+  vulnerabilities present in 1.26.0.</li>
+<li>Removed the committed <code>.vscode/</code> editor configuration and added it to
+  <code>.gitignore</code>.</li>
+</ul>
 <h2 id="221-2026-02-18">[2.2.1] - 2026-02-18</h2>
 <h3 id="fixed">Fixed</h3>
 <ul>
@@ -1651,7 +1865,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>fsnotify file watcher detects config file changes (watches directory for vim/emacs atomic saves)</li>
 <li>Storage cache automatically flushed when NBU server address changes</li>
 </ul>
-<h3 id="changed">Changed</h3>
+<h3 id="changed_1">Changed</h3>
 <ul>
 <li><strong>BREAKING</strong>: Fixed typo <code>scrappingInterval</code> → <code>scrapingInterval</code> in configuration</li>
 <li>Accept header format now includes API version: <code>application/vnd.netbackup+json;version=X.Y</code></li>
@@ -1714,7 +1928,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>Graceful shutdown - now uses proper context with timeout</li>
 <li>JSON unmarshaling errors now include response preview for easier debugging</li>
 </ul>
-<h3 id="security">Security</h3>
+<h3 id="security_1">Security</h3>
 <ul>
 <li>TLS certificate verification now configurable and secure by default</li>
 <li>API keys masked in logs to prevent accidental exposure</li>

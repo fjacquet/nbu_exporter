@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/getting-started/quickstart/">
+        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/adr/">
       
       
-        <link rel="prev" href="../configuration/">
+        <link rel="prev" href="../config-examples/">
       
       
-        <link rel="next" href="../../metrics/">
+        <link rel="next" href="0001-tooling-baseline-sync-with-pflex/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Quick Start - NBU Exporter</title>
+        <title>Overview - NBU Exporter</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +53,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#quick-start" class="md-skip">
+        <a href="#architecture-decision-records" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+    <a href=".." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Quick Start
+              Overview
             
           </span>
         </div>
@@ -230,7 +230,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+    <a href=".." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -260,7 +260,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -284,8 +284,6 @@
       
   
   
-    
-  
   
   
     
@@ -298,11 +296,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
@@ -323,7 +323,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -341,7 +341,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -369,7 +369,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../getting-started/configuration/" class="md-nav__link">
         
   
   
@@ -394,37 +394,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Quick Start
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
         
   
   
@@ -440,81 +413,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-build" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Build
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-configure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Configure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Run
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-add-to-prometheus" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Add to Prometheus
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#command-line-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Command Line Options
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -534,7 +432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../metrics/" class="md-nav__link">
+      <a href="../metrics/" class="md-nav__link">
         
   
   
@@ -615,7 +513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../opentelemetry-example/" class="md-nav__link">
+      <a href="../opentelemetry-example/" class="md-nav__link">
         
   
   
@@ -643,7 +541,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../trace-analysis-guide/" class="md-nav__link">
+      <a href="../trace-analysis-guide/" class="md-nav__link">
         
   
   
@@ -732,7 +630,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../netbackup-11-migration/" class="md-nav__link">
+      <a href="../netbackup-11-migration/" class="md-nav__link">
         
   
   
@@ -760,7 +658,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api-10.5-migration/" class="md-nav__link">
+      <a href="../api-10.5-migration/" class="md-nav__link">
         
   
   
@@ -849,7 +747,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment-verification/" class="md-nav__link">
+      <a href="../deployment-verification/" class="md-nav__link">
         
   
   
@@ -877,7 +775,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment-quick-reference/" class="md-nav__link">
+      <a href="../deployment-quick-reference/" class="md-nav__link">
         
   
   
@@ -905,7 +803,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docker/" class="md-nav__link">
+      <a href="../docker/" class="md-nav__link">
         
   
   
@@ -940,7 +838,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../config-examples/" class="md-nav__link">
+      <a href="../config-examples/" class="md-nav__link">
         
   
   
@@ -964,8 +862,10 @@
       
   
   
+    
   
   
+  
     
     
     
@@ -976,13 +876,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
           <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
@@ -1003,7 +901,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1018,10 +916,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../adr/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1037,6 +962,37 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#index" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Index
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1049,7 +1005,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
+      <a href="0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
         
   
   
@@ -1084,7 +1040,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../changelog/" class="md-nav__link">
+      <a href="../changelog/" class="md-nav__link">
         
   
   
@@ -1131,54 +1087,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-build" class="md-nav__link">
+  <a href="#index" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Build
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-configure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Configure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Run
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-add-to-prometheus" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Add to Prometheus
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#command-line-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Command Line Options
+        Index
       
     </span>
   </a>
@@ -1205,36 +1117,31 @@
   
 
 
-<h1 id="quick-start">Quick Start</h1>
-<h2 id="1-build">1. Build</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/fjacquet/nbu_exporter.git
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>nbu_exporter
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>make<span class="w"> </span>cli
-</code></pre></div>
-<h2 id="2-configure">2. Configure</h2>
-<p>Create <code>config.yaml</code> with your NetBackup server details. See <a href="../configuration/">Configuration</a> for all options.</p>
-<h2 id="3-run">3. Run</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./bin/nbu_exporter<span class="w"> </span>--config<span class="w"> </span>config.yaml
-</code></pre></div>
-<p>The exporter exposes:</p>
-<ul>
-<li><strong>Metrics</strong>: <code>http://localhost:2112/metrics</code></li>
-<li><strong>Health</strong>: <code>http://localhost:2112/health</code></li>
-</ul>
-<h2 id="4-add-to-prometheus">4. Add to Prometheus</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">scrape_configs</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;netbackup&#39;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;localhost:2112&#39;</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">scrape_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
-</code></pre></div>
-<h2 id="command-line-options">Command Line Options</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Flags:
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  -c, --config string   Path to configuration file (required)
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  -d, --debug           Enable debug mode
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  -h, --help            Help for nbu_exporter
-</code></pre></div>
+<h1 id="architecture-decision-records">Architecture Decision Records</h1>
+<p>This directory records significant architectural and engineering decisions for
+<code>nbu_exporter</code>, using lightweight <a href="https://adr.github.io/">ADRs</a>.</p>
+<p>Each ADR captures the <strong>context</strong>, the <strong>decision</strong>, the <strong>alternatives
+considered</strong>, and the <strong>consequences</strong>. ADRs are immutable once accepted; a
+superseding decision gets a new ADR that references the old one.</p>
+<h2 id="index">Index</h2>
+<table>
+<thead>
+<tr>
+<th>ADR</th>
+<th>Title</th>
+<th>Status</th>
+<th>Date</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="0001-tooling-baseline-sync-with-pflex/">0001</a></td>
+<td>Sync the tooling/CI/security baseline with pflex_exporter</td>
+<td>Accepted</td>
+<td>2026-06-05</td>
+</tr>
+</tbody>
+</table>
 
 
 
@@ -1290,10 +1197,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
