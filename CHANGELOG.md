@@ -7,9 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+(No unreleased changes yet)
+
+## [2.5.0] - 2026-06-05
+
+Tooling/CI/security baseline sync with the sibling `pflex_exporter` (see
+[ADR-0001](docs/adr/0001-tooling-baseline-sync-with-pflex.md), [#19](https://github.com/fjacquet/nbu_exporter/pull/19)).
+
 ### Added
 
-(No unreleased changes yet)
+- **CycloneDX SBOMs and signed releases**: each release archive now ships a
+  CycloneDX SBOM (syft), and the checksums file is signed with cosign keyless
+  (bundle format).
+- **Consolidated CI** (`ci.yml`): golangci-lint v2.12.2, `go vet`, race-enabled
+  tests, `govulncheck`, Semgrep, and a CycloneDX module SBOM — alongside the
+  existing CodeQL analysis. The 70% coverage gate (`.testcoverage.yml`) is retained.
+- **Makefile quality/security targets**: `tools`, `fmt-check`, `vet`, `lint`,
+  `test-race`, `vuln`, `sbom`, and an aggregate `ci` target.
+- **Architecture Decision Records** under `docs/adr/`.
+
+### Changed
+
+- **Go 1.26** (from 1.25); the `go` directive is pinned to `1.26.4` so CI installs
+  a toolchain that includes stdlib security fixes.
+- **Docker image runs as non-root** (uid 10001); the builder is pinned to
+  `golang:1.26` and the binary is built statically (`Dockerfile` and
+  `Dockerfile.goreleaser`).
+- All GitHub Actions are **SHA-pinned** to their latest releases and the Semgrep
+  container image is **digest-pinned** for reproducible, supply-chain-hardened CI.
+
+### Security
+
+- `govulncheck` runs in CI; pinning Go to 1.26.4 resolves 16 Go standard-library
+  vulnerabilities present in 1.26.0.
+- Removed the committed `.vscode/` editor configuration and added it to
+  `.gitignore`.
 
 ## [2.2.1] - 2026-02-18
 
