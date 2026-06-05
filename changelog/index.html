@@ -1051,6 +1051,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#260-2026-06-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.6.0] - 2026-06-05
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.6.0] - 2026-06-05">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#250-2026-06-05" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1163,7 +1191,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#removed" class="md-nav__link">
+  <a href="#removed_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Removed
@@ -1406,6 +1434,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#260-2026-06-05" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.6.0] - 2026-06-05
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.6.0] - 2026-06-05">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Removed
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#250-2026-06-05" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1518,7 +1574,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#removed" class="md-nav__link">
+  <a href="#removed_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Removed
@@ -1741,6 +1797,14 @@
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <h2 id="unreleased">[Unreleased]</h2>
 <p>(No unreleased changes yet)</p>
+<h2 id="260-2026-06-05">[2.6.0] - 2026-06-05</h2>
+<h3 id="removed">Removed</h3>
+<ul>
+<li>Dropped Homebrew tap distribution (<a href="https://github.com/fjacquet/nbu_exporter/pull/22">#22</a>).
+  Removed the GoReleaser <code>brews</code> block, the orphaned <code>TAP_GITHUB_TOKEN</code> env in the
+  release workflow, and the Homebrew install instructions from the README and
+  installation guide. Install via build-from-source, Docker, or GitHub Releases.</li>
+</ul>
 <h2 id="250-2026-06-05">[2.5.0] - 2026-06-05</h2>
 <p>Tooling/CI/security baseline sync with the sibling <code>pflex_exporter</code> (see
 <a href="docs/adr/0001-tooling-baseline-sync-with-pflex.md">ADR-0001</a>, <a href="https://github.com/fjacquet/nbu_exporter/pull/19">#19</a>).</p>
@@ -1909,7 +1973,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>Added comprehensive package-level documentation with usage examples</li>
 <li>All code now passes SonarCloud "Sonar Way" quality profile checks</li>
 </ul>
-<h3 id="removed">Removed</h3>
+<h3 id="removed_1">Removed</h3>
 <ul>
 <li><code>cmd.go</code> - Unused <code>ConfigCommand</code> structure</li>
 <li><code>debug.go</code> - File containing only commented-out code</li>
