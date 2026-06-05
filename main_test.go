@@ -598,4 +598,3 @@ func BenchmarkValidateConfig(b *testing.B) {
 		_, _ = validateConfig(configPath)
 	}
 }
-
