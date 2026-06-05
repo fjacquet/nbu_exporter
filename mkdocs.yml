@@ -58,4 +58,7 @@ nav:
       - Quick Reference: deployment-quick-reference.md
       - Docker: docker.md
   - Configuration Examples: config-examples/README.md
+  - Architecture Decisions:
+      - Overview: adr/README.md
+      - ADR-0001 Tooling Baseline Sync: adr/0001-tooling-baseline-sync-with-pflex.md
   - Changelog: changelog.md
