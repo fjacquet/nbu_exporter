@@ -25,8 +25,13 @@ make test-coverage          # Tests with HTML coverage report
 go test ./internal/exporter -run TestVersionDetection  # Run specific test
 go test -race ./...         # With race detection
 
-# Code quality (format, test, build, lint)
+# Code quality (format, vet, test, build, lint)
 make sure
+
+# Reproduce the CI gate locally (fmt-check, vet, lint, test-race, govulncheck)
+make tools                  # one-time: install pinned golangci-lint, govulncheck, cyclonedx-gomod
+make ci
+make sbom                   # CycloneDX SBOM -> dist/sbom.cdx.json
 
 # CI enforces 70% total coverage via .testcoverage.yml (vladopajic/go-test-coverage)
 
@@ -117,6 +122,10 @@ Requires `config.yaml` with sections: `server`, `nbuserver`, optional `opentelem
 - **`vendor/` is gitignored** (not committed). After changing dependencies, run `go mod vendor` or build with `-mod=mod`, otherwise builds may fail on missing vendored modules.
 - **`make ci` excludes `vendor/` from `fmt-check`** — needed because `vendor/` is present locally but absent in CI (gitignored). Don't simplify it back to a bare `gofmt -l .`.
 - **CI workflows**: `ci.yml` is the main gate (fmt/vet/lint/`test-race`/govulncheck + 70% coverage via `.testcoverage.yml` + Semgrep + SBOM); `codeql.yml` runs CodeQL; `release.yml` is GoReleaser; `static.yml` deploys docs.
+- **`go` directive is patch-pinned (`go 1.26.4`)** on purpose — CI installs the exact version via `go-version-file`, and `govulncheck` fails on the stdlib CVEs present in `1.26.0`. Don't loosen it to `go 1.26`.
+- **Workflow actions are SHA-pinned** (40-char commit + version comment) and the Semgrep image is digest-pinned. Keep new `uses:` SHA-pinned — Semgrep/CodeRabbit flag floating tags.
+- **Release signing uses cosign's bundle format** (`--bundle` in `.goreleaser.yml signs`). cosign v4 ignores the old `--output-signature`/`--output-certificate` flags.
+- **Architecture decisions** live in `docs/adr/` (see ADR-0001 for the tooling-baseline rationale).
 
 ## Key Dependencies
 
