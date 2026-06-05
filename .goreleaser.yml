@@ -121,21 +121,28 @@ docker_manifests:
       - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-amd64"
       - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-arm64"
 
-brews:
-  - # Homebrew formula is published for macOS only: it references the darwin-only
-    # archive, so no on_linux block is generated.
+homebrew_casks:
+  - # Casks are macOS-only by definition; references the darwin-only archive.
     ids:
       - macos
     repository:
       owner: fjacquet
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-    directory: Formula
+    directory: Casks
+    binaries:
+      - nbu_exporter
     homepage: "https://github.com/fjacquet/nbu_exporter"
     description: "Prometheus exporter for Veritas NetBackup"
     license: "MIT"
-    test: |
-      system "#{bin}/nbu_exporter", "--version"
+    # The binary is not notarized/signed; strip the Gatekeeper quarantine bit on
+    # install so it runs without a "developer cannot be verified" prompt.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/nbu_exporter"]
+          end
 
 changelog:
   sort: asc
