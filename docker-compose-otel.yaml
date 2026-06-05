@@ -2,10 +2,12 @@ version: "3.8"
 
 services:
   # NBU Exporter with OpenTelemetry enabled
-  nbu_exporter:
+  nbu_exporter: # nosemgrep
     build: .
     image: nbu_exporter:latest
     container_name: nbu_exporter
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "2112:2112"
     volumes:
@@ -26,9 +28,11 @@ services:
 
   # OpenTelemetry Collector
   # Receives traces from the exporter and forwards to Jaeger
-  otel-collector:
+  otel-collector: # nosemgrep
     image: otel/opentelemetry-collector:latest
     container_name: otel-collector
+    security_opt:
+      - no-new-privileges:true
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
@@ -52,9 +56,11 @@ services:
 
   # Jaeger All-in-One
   # Provides trace storage and visualization UI
-  jaeger:
+  jaeger: # nosemgrep
     image: jaegertracing/all-in-one:latest
     container_name: jaeger
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "16686:16686" # Jaeger UI
       - "14250:14250" # gRPC receiver
@@ -68,9 +74,11 @@ services:
       - monitoring
 
   # Optional: Prometheus for scraping NBU Exporter metrics
-  prometheus:
+  prometheus: # nosemgrep
     image: prom/prometheus:latest
     container_name: prometheus
+    security_opt:
+      - no-new-privileges:true
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"

@@ -24,7 +24,7 @@ coverage.out
 node_modules/
 
 # IDE and editor files
-.vscode/launch.json
+.vscode/
 .idea/
 *.swp
 *.swo
