@@ -603,7 +603,8 @@ func (c *NbuClient) Close() error {
 		c.client = nil
 	}
 
-	return nil
+	// c.mu is released in both branches above (early unlock before waiting, or in the else), not via defer.
+	return nil // nosemgrep
 }
 
 // CloseWithContext releases resources with explicit timeout control.
@@ -645,5 +646,6 @@ func (c *NbuClient) CloseWithContext(ctx context.Context) error {
 		c.client = nil
 	}
 
-	return nil
+	// c.mu is released in both branches above (early unlock before waiting, or in the else), not via defer.
+	return nil // nosemgrep
 }

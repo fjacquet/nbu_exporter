@@ -30,6 +30,29 @@ archives:
       - README.md
       - config.yaml
 
+sboms:
+  - id: archive
+    artifacts: archive
+    cmd: syft
+    args:
+      - "$artifact"
+      - "--output"
+      - "cyclonedx-json=$document"
+    documents:
+      - "{{ .ArtifactName }}.sbom.cdx.json"
+
+signs:
+  - cmd: cosign
+    artifacts: checksum
+    output: true
+    certificate: "${artifact}.pem"
+    args:
+      - "sign-blob"
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes"
+
 dockers:
   - image_templates:
       - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-amd64"
