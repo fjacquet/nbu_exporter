@@ -23,13 +23,20 @@ A Prometheus exporter that collects backup job statistics and storage metrics fr
 ## Quick Start
 
 ```bash
-# Build
-make cli
+# Install (macOS/Linux)
+brew install fjacquet/tap/nbu_exporter
 
 # Configure
 cp config.yaml.example config.yaml  # edit with your NBU server details
 
 # Run
+nbu_exporter --config config.yaml
+```
+
+Or build from source:
+
+```bash
+make cli
 ./bin/nbu_exporter --config config.yaml
 ```
 
