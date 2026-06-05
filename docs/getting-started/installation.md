@@ -7,6 +7,29 @@
 - Access to NetBackup REST API
 - NetBackup API key (generated from NBU UI)
 
+## Homebrew (macOS)
+
+On macOS, install via the tap:
+
+```bash
+brew install fjacquet/tap/nbu_exporter
+```
+
+Or tap the repository first, then install:
+
+```bash
+brew tap fjacquet/tap
+brew install nbu_exporter
+```
+
+Upgrade to the latest release:
+
+```bash
+brew upgrade nbu_exporter
+```
+
+> **Linux users:** Homebrew is not published for Linux. Use a [GitHub Release](#github-releases) binary, [Docker](#docker), or build [from source](#from-source).
+
 ## From Source
 
 ```bash

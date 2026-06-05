@@ -8,13 +8,25 @@ before:
     - go mod tidy
 
 builds:
-  - # Définit la compilation principale
+  # macOS build, kept as its own id so the Homebrew formula can reference a
+  # darwin-only archive (Homebrew is published for macOS only).
+  - id: macos
+    main: ./main.go
+    binary: "{{ .ProjectName }}"
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    env:
+      - CGO_ENABLED=0
+  # Linux + Windows build, used for GitHub Release archives and Docker images.
+  - id: others
     main: ./main.go
     binary: "{{ .ProjectName }}"
     goos:
       - linux
       - windows
-      - darwin
     goarch:
       - amd64
       - arm64
@@ -22,8 +34,20 @@ builds:
       - CGO_ENABLED=0
 
 archives:
-  - # Archives pour les différentes plateformes
-    # Windows utilise automatiquement .zip, les autres .tar.gz
+  # darwin-only archive consumed by the Homebrew formula (brews.ids below).
+  - id: macos
+    ids:
+      - macos
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+      - config.yaml
+  # linux + windows archives for the GitHub Release.
+  # Windows utilise automatiquement .zip, les autres .tar.gz
+  - id: others
+    ids:
+      - others
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - LICENSE
@@ -57,6 +81,8 @@ signs:
 dockers:
   - image_templates:
       - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-amd64"
+    ids:
+      - others
     use: buildx
     dockerfile: Dockerfile.goreleaser
     build_flag_templates:
@@ -70,6 +96,8 @@ dockers:
       - config.yaml
   - image_templates:
       - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-arm64"
+    ids:
+      - others
     use: buildx
     goarch: arm64
     dockerfile: Dockerfile.goreleaser
@@ -92,6 +120,22 @@ docker_manifests:
     image_templates:
       - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-amd64"
       - "ghcr.io/fjacquet/nbu_exporter:{{ .Version }}-arm64"
+
+brews:
+  - # Homebrew formula is published for macOS only: it references the darwin-only
+    # archive, so no on_linux block is generated.
+    ids:
+      - macos
+    repository:
+      owner: fjacquet
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/fjacquet/nbu_exporter"
+    description: "Prometheus exporter for Veritas NetBackup"
+    license: "MIT"
+    test: |
+      system "#{bin}/nbu_exporter", "--version"
 
 changelog:
   sort: asc

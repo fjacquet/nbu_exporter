@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (No unreleased changes yet)
 
+## [2.7.0] - 2026-06-05
+
+### Added
+
+- Re-introduced the Homebrew tap, **scoped to macOS only**. The GoReleaser
+  build is split into a darwin-only `macos` build/archive and a `others`
+  (linux + windows) build/archive; the formula references the macOS archive,
+  so it generates a `depends_on :macos` formula with no `on_linux` block.
+  Linux users should use a GitHub Release binary, Docker, or build from source.
+
 ## [2.6.0] - 2026-06-05
 
 ### Removed
