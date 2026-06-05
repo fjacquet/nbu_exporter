@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (No unreleased changes yet)
 
+## [2.6.0] - 2026-06-05
+
+### Removed
+
+- Dropped Homebrew tap distribution ([#22](https://github.com/fjacquet/nbu_exporter/pull/22)).
+  Removed the GoReleaser `brews` block, the orphaned `TAP_GITHUB_TOKEN` env in the
+  release workflow, and the Homebrew install instructions from the README and
+  installation guide. Install via build-from-source, Docker, or GitHub Releases.
+
 ## [2.5.0] - 2026-06-05
 
 Tooling/CI/security baseline sync with the sibling `pflex_exporter` (see
