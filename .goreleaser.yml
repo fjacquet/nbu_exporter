@@ -45,11 +45,12 @@ signs:
   - cmd: cosign
     artifacts: checksum
     output: true
-    certificate: "${artifact}.pem"
+    # cosign v2.6+/v4 installer defaults to the new bundle format (cert + sig in
+    # one file); the old --output-certificate/--output-signature flags are ignored.
+    signature: "${artifact}.bundle"
     args:
       - "sign-blob"
-      - "--output-certificate=${certificate}"
-      - "--output-signature=${signature}"
+      - "--bundle=${signature}"
       - "${artifact}"
       - "--yes"
 
