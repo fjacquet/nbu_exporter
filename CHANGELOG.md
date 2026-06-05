@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 (No unreleased changes yet)
 
+## [2.8.0] - 2026-06-05
+
+### Changed
+
+- Migrated the Homebrew distribution from a **formula** (`brews`) to a
+  **cask** (`homebrew_casks`), following GoReleaser's deprecation of `brews`.
+  The cask references the darwin-only archive (`binary "nbu_exporter"`) and
+  includes a `postflight` hook that strips the Gatekeeper quarantine bit, since
+  the binary is not notarized. `brew install fjacquet/tap/nbu_exporter` is
+  unchanged for users. The tap's old `Formula/nbu_exporter.rb` is removed and a
+  `tap_migrations.json` entry migrates existing formula installs to the cask.
+
 ## [2.7.0] - 2026-06-05
 
 ### Added
