@@ -1,53 +1,43 @@
-# Go build artifacts
-vendor/
-*.o
-*.a
-*.so
+# Build artifacts
 bin/
 dist/
-node_modules/
-
-# Binaries
+vendor/
+coverage.out
+coverage.html
+*.coverprofile
+/nbu_exporter
 nbu-exporter
-nbu_exporter
 
 # Logs
+log/
 *.log
-nbu-exporter.log
-nbu_exporter.log
 
-# Test coverage
-coverage.out
-*.coverprofile
+# Docs build (mkdocs)
+site/
 
-# Node.js (prettier/tooling)
-node_modules/
+# Local config & secrets — never commit
+.env
+*.local.yaml
+.claude.local.md
+.claude/settings.local.json
 
-# IDE and editor files
+# Editor / OS noise
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# OS files
 .DS_Store
 Thumbs.db
 
-# Build and analysis tools
+# Local tooling state
+.rtk/
 .dccache
+.codegpt
+node_modules/
 
-# Temporary and sample files
+# Repo-specific
 samples/
 old/
 tmp/
 *.tmp
-
-# MkDocs build output
-site/
-
-# AI/code assistant artifacts
-.codegpt
-
-# Environment secrets — never commit real credentials
-.env
