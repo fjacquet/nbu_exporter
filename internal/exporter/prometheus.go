@@ -26,6 +26,7 @@ type CollectorOption func(*collectorOptions)
 
 type collectorOptions struct {
 	tracerProvider trace.TracerProvider
+	apiTrace       bool
 }
 
 func defaultCollectorOptions() collectorOptions {
@@ -39,6 +40,15 @@ func defaultCollectorOptions() collectorOptions {
 func WithCollectorTracerProvider(tp trace.TracerProvider) CollectorOption {
 	return func(o *collectorOptions) {
 		o.tracerProvider = tp
+	}
+}
+
+// WithCollectorAPITrace enables NetBackup API response-body trace logging on
+// the collector's HTTP client (see WithAPITrace). Used by the --trace flag for
+// live-appliance payload validation.
+func WithCollectorAPITrace(enabled bool) CollectorOption {
+	return func(o *collectorOptions) {
+		o.apiTrace = enabled
 	}
 }
 
@@ -108,8 +118,8 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 		opt(&options)
 	}
 
-	// Create base client with same TracerProvider
-	client := NewNbuClient(cfg, WithTracerProvider(options.tracerProvider))
+	// Create base client with same TracerProvider and API trace setting
+	client := NewNbuClient(cfg, WithTracerProvider(options.tracerProvider), WithAPITrace(options.apiTrace))
 
 	// Perform version detection if needed (reuses shared logic)
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

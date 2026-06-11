@@ -38,6 +38,7 @@ make sbom                   # CycloneDX SBOM -> dist/sbom.cdx.json
 # Run
 ./bin/nbu_exporter --config config.yaml
 ./bin/nbu_exporter -c config.yaml -d    # with debug mode
+./bin/nbu_exporter -c config.yaml --trace  # log API response bodies (live-appliance payload validation; never logs headers)
 
 # Docker
 make docker                 # Build image

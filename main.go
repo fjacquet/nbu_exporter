@@ -9,7 +9,7 @@
 //
 // Usage:
 //
-//	nbu_exporter --config config.yaml [--debug]
+//	nbu_exporter --config config.yaml [--debug] [--trace]
 //
 // Configuration is provided via YAML file specifying:
 //   - Server settings (host, port, metrics URI, scraping interval)
@@ -50,6 +50,7 @@ const (
 var (
 	configFile string
 	debug      bool
+	apiTrace   bool
 )
 
 // Server encapsulates the HTTP server and its dependencies for serving Prometheus metrics.
@@ -84,6 +85,7 @@ var (
 type Server struct {
 	cfg              *models.SafeConfig     // Thread-safe config wrapper
 	configPath       string                 // Path to config file (for reload)
+	apiTrace         bool                   // Log NetBackup API response bodies (--trace flag)
 	httpSrv          *http.Server           // HTTP server instance
 	registry         *prometheus.Registry   // Prometheus metrics registry
 	telemetryManager *telemetry.Manager     // OpenTelemetry telemetry manager (nil if disabled)
@@ -175,6 +177,10 @@ func (s *Server) Start() error {
 	var collectorOpts []exporter.CollectorOption
 	if tracerProvider != nil {
 		collectorOpts = append(collectorOpts, exporter.WithCollectorTracerProvider(tracerProvider))
+	}
+	if s.apiTrace {
+		collectorOpts = append(collectorOpts, exporter.WithCollectorAPITrace(true))
+		log.Info("API trace enabled: logging every NetBackup API response body (bodies only, never headers)")
 	}
 
 	collector, err := exporter.NewNbuCollector(*cfg, collectorOpts...)
@@ -496,6 +502,7 @@ func main() {
 
 			// Create and start server
 			server := NewServer(safeCfg, configFile)
+			server.apiTrace = apiTrace
 			if err := server.Start(); err != nil {
 				return err
 			}
@@ -523,6 +530,7 @@ func main() {
 
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "", "Path to configuration file (required)")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Enable debug mode")
+	rootCmd.PersistentFlags().BoolVar(&apiTrace, "trace", false, "Log every NetBackup API response body (live-appliance payload validation; bodies only, never headers; very verbose)")
 	_ = rootCmd.MarkPersistentFlagRequired("config")
 
 	if err := rootCmd.Execute(); err != nil {

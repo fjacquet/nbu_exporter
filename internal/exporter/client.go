@@ -47,6 +47,7 @@ type ClientOption func(*clientOptions)
 
 type clientOptions struct {
 	tracerProvider trace.TracerProvider
+	apiTrace       bool
 }
 
 func defaultClientOptions() clientOptions {
@@ -61,6 +62,33 @@ func WithTracerProvider(tp trace.TracerProvider) ClientOption {
 	return func(o *clientOptions) {
 		o.tracerProvider = tp
 	}
+}
+
+// WithAPITrace enables logging of every NetBackup API response body
+// (method, URL, status, body) for validating payload shapes against a live
+// appliance. Headers are never logged, so the Authorization API key cannot
+// leak; responses from credential-bearing endpoints (login/token) are skipped
+// entirely. Very verbose — debugging only. Distinct from WithTracerProvider
+// (OpenTelemetry distributed tracing).
+func WithAPITrace(enabled bool) ClientOption {
+	return func(o *clientOptions) {
+		o.apiTrace = enabled
+	}
+}
+
+// isCredentialEndpoint reports whether url targets an endpoint whose response
+// body may carry credentials: NetBackup POST /login returns a JWT in the body,
+// and token/API-key management endpoints return key material. The exporter
+// authenticates with a static API key and never calls these, but the API trace
+// hook skips them defensively so trace logs can never contain credentials.
+func isCredentialEndpoint(url string) bool {
+	u := strings.ToLower(url)
+	for _, fragment := range []string{"/login", "/token", "/api-key", "/apikey"} {
+		if strings.Contains(u, fragment) {
+			return true
+		}
+	}
+	return false
 }
 
 // HTTP header names used in NetBackup API requests.
@@ -136,6 +164,24 @@ func NewNbuClient(cfg models.Config, opts ...ClientOption) *NbuClient {
 
 	// Enable automatic Retry-After header handling for 429 responses
 	client.AddRetryAfterErrorCondition()
+
+	if options.apiTrace {
+		// Deliberately not resty's SetDebug: that dumps request headers,
+		// including the Authorization API key. This logs only method, URL,
+		// status, and the response body — never headers — and skips
+		// credential-bearing endpoints altogether.
+		client.OnAfterResponse(func(_ *resty.Client, r *resty.Response) error {
+			if isCredentialEndpoint(r.Request.URL) {
+				return nil
+			}
+			log.WithFields(log.Fields{
+				"method": r.Request.Method,
+				"url":    r.Request.URL,
+				"status": r.StatusCode(),
+			}).Infof("API trace:\n%s", r.Body())
+			return nil
+		})
+	}
 
 	// Configure connection pool and TLS in http.Transport for unified config
 	httpClient := client.GetClient()

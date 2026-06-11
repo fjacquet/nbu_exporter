@@ -1670,3 +1670,50 @@ func TestClientServerClosesDuringTransfer(t *testing.T) {
 		t.Error("FetchData() expected error when server closes connection, got nil")
 	}
 }
+
+// TestTraceDoesNotBreakCalls verifies that enabling API trace logging
+// (the --trace flag) leaves request handling and JSON decoding untouched:
+// the OnAfterResponse hook must only observe the response, never alter it.
+func TestTraceDoesNotBreakCalls(t *testing.T) {
+	server := createTestServer(t, "13.0", testAPIKey)
+	defer server.Close()
+
+	cfg := createBasicTestConfig("13.0", testAPIKey)
+	client := NewNbuClient(cfg, WithAPITrace(true))
+
+	var result mockAPIResponse
+	// Exercises the trace hook on a data call; the decoded result must be unaffected.
+	if err := client.FetchData(context.Background(), server.URL, &result); err != nil {
+		t.Fatalf(errMsgFetchDataUnexpected, err)
+	}
+
+	if len(result.Data) != 1 {
+		t.Fatalf(errMsgFetchDataItemCount, len(result.Data))
+	}
+
+	if result.Data[0].Attributes.Name != testResourceName {
+		t.Errorf("FetchData() name = %v, want %s", result.Data[0].Attributes.Name, testResourceName)
+	}
+}
+
+// TestIsCredentialEndpoint verifies the trace hook's credential-endpoint guard:
+// responses whose bodies may carry tokens or API keys must never be logged.
+func TestIsCredentialEndpoint(t *testing.T) {
+	tests := []struct {
+		url  string
+		want bool
+	}{
+		{"https://nbu:1556/netbackup/login", true},
+		{"https://nbu:1556/netbackup/security/api-keys", true},
+		{"https://nbu:1556/netbackup/security/apikeys/details", true},
+		{"https://nbu:1556/netbackup/security/Token", true},
+		{"https://nbu:1556/admin/jobs?page[limit]=1", false},
+		{"https://nbu:1556/netbackup/storage/storage-units", false},
+	}
+
+	for _, tt := range tests {
+		if got := isCredentialEndpoint(tt.url); got != tt.want {
+			t.Errorf("isCredentialEndpoint(%q) = %v, want %v", tt.url, got, tt.want)
+		}
+	}
+}

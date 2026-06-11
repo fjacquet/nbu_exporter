@@ -41,4 +41,19 @@ Flags:
   -c, --config string   Path to configuration file (required)
   -d, --debug           Enable debug mode
   -h, --help            Help for nbu_exporter
+      --trace           Log every NetBackup API response body (live-appliance
+                        payload validation; bodies only, never headers; very verbose)
+```
+
+### Validating against a live appliance
+
+`--trace` logs the method, URL, status, and body of every NetBackup API
+response so payload shapes can be checked against a real master server.
+Request and response headers are never logged (the `Authorization` API key
+cannot leak), and credential-bearing endpoints (login/token/API-key) are
+skipped entirely:
+
+```bash
+./bin/nbu_exporter --config config.yaml --trace
+curl -s localhost:2112/metrics > /dev/null   # trigger a scrape, then read the log
 ```
