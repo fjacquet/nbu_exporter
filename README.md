@@ -37,14 +37,30 @@ make cli
 Then configure and run:
 
 ```bash
-# Configure
-cp config.yaml.example config.yaml  # edit with your NBU server details
+# Configure — supply credentials via environment variables (never commit secrets)
+cp .env.example .env        # fill in NBU1_HOSTNAME and NBU1_APIKEY
+cp config.yaml config.local.yaml  # optional: edit server settings
 
 # Run
-nbu_exporter --config config.yaml   # or ./bin/nbu_exporter when built from source
+NBU1_HOSTNAME=nbu.example.com NBU1_APIKEY=mykey nbu_exporter --config config.yaml
+# or with a .env file sourced into your shell, simply:
+nbu_exporter --config config.yaml
 ```
 
+`host` and `apiKey` in `config.yaml` support `${VAR}` interpolation — see
+[Configuration Guide](https://fjacquet.github.io/nbu_exporter/getting-started/configuration/) for details.
+
 Metrics are exposed at `http://localhost:2112/metrics`.
+
+### Environment Variables / .env
+
+| Variable | Description | Default in compose |
+|----------|-------------|-------------------|
+| `NBU1_HOSTNAME` | NetBackup master server hostname | `master.my.domain` |
+| `NBU1_APIKEY` | NetBackup API key | _(empty)_ |
+
+`NBU1_*` is a single-server quickstart convenience — `config.yaml` is always the source of truth.
+For multiple servers add more entries directly in `config.yaml` (literal values or additional env refs).
 
 ## Documentation
 

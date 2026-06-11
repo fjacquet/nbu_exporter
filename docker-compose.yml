@@ -30,10 +30,14 @@ services:
         reservations:
           cpus: "0.25"
           memory: 128M
-    # Optional: Environment variables
-    # environment:
-    #   - NBU_API_KEY=${NBU_API_KEY}
-    #   - TZ=UTC
+    environment:
+      # Single-server quickstart: set these in a .env file (gitignored).
+      # config.yaml is the source of truth — these vars are only consumed
+      # when config.yaml references them as ${NBU1_HOSTNAME} / ${NBU1_APIKEY}.
+      # For multiple servers add more entries in config.yaml (literal values
+      # or your own env references) rather than extending this block.
+      - NBU1_HOSTNAME=${NBU1_HOSTNAME:-master.my.domain}
+      - NBU1_APIKEY=${NBU1_APIKEY:-}
     networks:
       - monitoring
 

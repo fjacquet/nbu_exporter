@@ -33,6 +33,45 @@ nbuserver:
 !!! warning
     Never commit API keys to version control. Use environment variables or secure secret management.
 
+## Environment Variables / .env
+
+The `host` and `apiKey` fields in the `nbuserver` section support `${VAR}` interpolation.
+At startup the exporter expands every `${VAR}` reference and fails loudly if a variable is not set.
+
+**One-server quickstart** — copy `.env.example` to `.env`, fill in your values, and reference
+them from `config.yaml`:
+
+```bash
+cp .env.example .env
+# edit .env — set NBU1_HOSTNAME and NBU1_APIKEY
+```
+
+```yaml
+nbuserver:
+  host: "${NBU1_HOSTNAME}"
+  apiKey: "${NBU1_APIKEY}"
+```
+
+The `NBU1_*` variables are passed into the container by `docker-compose.yml` from the `.env`
+file automatically.
+
+**Multi-server** — `config.yaml` is the source of truth. Add one `nbuserver` entry per cluster
+and supply literal values or your own env references:
+
+```yaml
+# Cluster A
+nbuserver:
+  host: "nbu-a.example.com"
+  apiKey: "literal-key-a"
+
+# Cluster B (env-interpolated)
+nbuserver:
+  host: "${NBU_B_HOST}"
+  apiKey: "${NBU_B_KEY}"
+```
+
+The `.env` / `NBU1_*` naming is a single-server convenience; there is no limit on variable names.
+
 ## Server Section
 
 | Field | Type | Required | Description |

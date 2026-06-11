@@ -48,3 +48,6 @@ site/
 
 # AI/code assistant artifacts
 .codegpt
+
+# Environment secrets — never commit real credentials
+.env

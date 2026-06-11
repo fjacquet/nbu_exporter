@@ -9,6 +9,25 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// ResolveSecrets expands ${ENV} references in the NBU server host and apiKey fields.
+// Mutates cfg in place. Call this immediately after YAML decode, before Validate().
+// Returns an error (with field context) if any referenced variable is not set.
+func ResolveSecrets(cfg *models.Config) error {
+	host, err := ExpandEnv(cfg.NbuServer.Host)
+	if err != nil {
+		return fmt.Errorf("nbuserver.host: %w", err)
+	}
+	cfg.NbuServer.Host = host
+
+	apiKey, err := ExpandEnv(cfg.NbuServer.APIKey)
+	if err != nil {
+		return fmt.Errorf("nbuserver.apiKey: %w", err)
+	}
+	cfg.NbuServer.APIKey = apiKey
+
+	return nil
+}
+
 // FileExists checks if the given file exists and is accessible.
 func FileExists(filename string) bool {
 	_, err := os.Stat(filename)
@@ -42,6 +61,10 @@ func ReadFile(cfg *models.Config, filepath string) error {
 	decoder := yaml.NewDecoder(f)
 	if err := decoder.Decode(cfg); err != nil {
 		return fmt.Errorf("failed to decode config file %s: %w", filepath, err)
+	}
+
+	if err := ResolveSecrets(cfg); err != nil {
+		return fmt.Errorf("config file %s: %w", filepath, err)
 	}
 
 	return nil

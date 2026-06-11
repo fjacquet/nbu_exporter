@@ -4,11 +4,35 @@ package models
 import (
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
+
+// envRefRe matches ${VAR} references; duplicated here to break the import cycle
+// between models and utils (utils already imports models).
+var envRefRe = regexp.MustCompile(`\$\{([A-Za-z_][A-Za-z0-9_]*)\}`)
+
+// expandEnv replaces ${VAR} references with env var values; fail-fast on unset vars.
+func expandEnv(s string) (string, error) {
+	var missing []string
+	out := envRefRe.ReplaceAllStringFunc(s, func(match string) string {
+		name := envRefRe.FindStringSubmatch(match)[1]
+		val, ok := os.LookupEnv(name)
+		if !ok {
+			missing = append(missing, name)
+			return ""
+		}
+		return val
+	})
+	if len(missing) > 0 {
+		return "", fmt.Errorf("environment variable(s) referenced in config but not set: %s", strings.Join(missing, ", "))
+	}
+	return out, nil
+}
 
 // SafeConfig provides thread-safe access to configuration.
 // It uses RWMutex to allow concurrent reads while serializing writes.
@@ -83,6 +107,19 @@ func (sc *SafeConfig) ReloadConfig(configPath string) (serverChanged bool, err e
 	if err := decoder.Decode(&newCfg); err != nil {
 		return false, fmt.Errorf("failed to decode config: %w", err)
 	}
+
+	// Expand ${ENV} references in secret fields before validation.
+	host, err := expandEnv(newCfg.NbuServer.Host)
+	if err != nil {
+		return false, fmt.Errorf("nbuserver.host: %w", err)
+	}
+	newCfg.NbuServer.Host = host
+
+	apiKey, err := expandEnv(newCfg.NbuServer.APIKey)
+	if err != nil {
+		return false, fmt.Errorf("nbuserver.apiKey: %w", err)
+	}
+	newCfg.NbuServer.APIKey = apiKey
 
 	// Validate config
 	if err := newCfg.Validate(); err != nil {

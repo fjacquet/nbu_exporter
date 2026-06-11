@@ -10,7 +10,13 @@ nbuserver:
   uri: "/netbackup"
   domain: "my.domain"
   domainType: "NT"
-  host: "master.my.domain"
+  # host and apiKey support ${ENV_VAR} interpolation — set values in a .env
+  # file (gitignored) and reference them here.  Literal values also work
+  # (behaviour is unchanged when no ${...} syntax is present).
+  # Literal style (default, backwards-compatible):
+  #   host: "master.my.domain"
+  #   apiKey: "my-api-key"
+  host: "${NBU1_HOSTNAME}"
   port: "1556"
   apiVersion:
     "13.0" # Optional: NetBackup API version (13.0, 12.0, or 3.0)
@@ -19,7 +25,7 @@ nbuserver:
     #   - 13.0 (NetBackup 11.0+)
     #   - 12.0 (NetBackup 10.5)
     #   - 3.0  (NetBackup 10.0-10.4)
-  apiKey: "my-api-key"
+  apiKey: "${NBU1_APIKEY}"
   contentType: "application/vnd.netbackup+json; version=13.0" # Should match apiVersion
   insecureSkipVerify: false # Set to true to skip TLS certificate verification (not recommended for production)
 

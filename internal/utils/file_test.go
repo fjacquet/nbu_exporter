@@ -3,6 +3,7 @@ package utils
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
@@ -193,3 +194,113 @@ func TestReadFileInvalidPermissions(t *testing.T) {
 		t.Error("Expected error for file with no read permissions, got nil")
 	}
 }
+
+func TestResolveSecrets(t *testing.T) {
+	t.Run("expands host and apiKey from environment", func(t *testing.T) {
+		t.Setenv("TEST_NBU_HOST", "resolved-host.example.com")
+		t.Setenv("TEST_NBU_KEY", "resolved-api-key")
+
+		cfg := &models.Config{}
+		cfg.NbuServer.Host = "${TEST_NBU_HOST}"
+		cfg.NbuServer.APIKey = "${TEST_NBU_KEY}"
+
+		if err := ResolveSecrets(cfg); err != nil {
+			t.Fatalf("ResolveSecrets() unexpected error: %v", err)
+		}
+		if cfg.NbuServer.Host != "resolved-host.example.com" {
+			t.Errorf("Host = %q, want %q", cfg.NbuServer.Host, "resolved-host.example.com")
+		}
+		if cfg.NbuServer.APIKey != "resolved-api-key" {
+			t.Errorf("APIKey = %q, want %q", cfg.NbuServer.APIKey, "resolved-api-key")
+		}
+	})
+
+	t.Run("literal values pass through unchanged", func(t *testing.T) {
+		cfg := &models.Config{}
+		cfg.NbuServer.Host = "literal-host"
+		cfg.NbuServer.APIKey = "literal-key"
+
+		if err := ResolveSecrets(cfg); err != nil {
+			t.Fatalf("ResolveSecrets() unexpected error: %v", err)
+		}
+		if cfg.NbuServer.Host != "literal-host" {
+			t.Errorf("Host = %q, want %q", cfg.NbuServer.Host, "literal-host")
+		}
+		if cfg.NbuServer.APIKey != "literal-key" {
+			t.Errorf("APIKey = %q, want %q", cfg.NbuServer.APIKey, "literal-key")
+		}
+	})
+
+	t.Run("unset host variable returns error with field context", func(t *testing.T) {
+		cfg := &models.Config{}
+		cfg.NbuServer.Host = "${UNSET_HOST_VAR_XYZ}"
+		cfg.NbuServer.APIKey = "literal-key"
+
+		err := ResolveSecrets(cfg)
+		if err == nil {
+			t.Fatal("ResolveSecrets() expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "nbuserver.host") {
+			t.Errorf("error %q should mention field nbuserver.host", err.Error())
+		}
+		if !strings.Contains(err.Error(), "UNSET_HOST_VAR_XYZ") {
+			t.Errorf("error %q should name the missing var", err.Error())
+		}
+	})
+
+	t.Run("unset apiKey variable returns error with field context", func(t *testing.T) {
+		t.Setenv("TEST_NBU_HOST2", "some-host")
+		cfg := &models.Config{}
+		cfg.NbuServer.Host = "${TEST_NBU_HOST2}"
+		cfg.NbuServer.APIKey = "${UNSET_KEY_VAR_ABC}"
+
+		err := ResolveSecrets(cfg)
+		if err == nil {
+			t.Fatal("ResolveSecrets() expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "nbuserver.apiKey") {
+			t.Errorf("error %q should mention field nbuserver.apiKey", err.Error())
+		}
+		if !strings.Contains(err.Error(), "UNSET_KEY_VAR_ABC") {
+			t.Errorf("error %q should name the missing var", err.Error())
+		}
+	})
+
+	t.Run("ReadFile expands env refs in host and apiKey", func(t *testing.T) {
+		t.Setenv("TEST_NBU_HOST3", "env-host.example.com")
+		t.Setenv("TEST_NBU_KEY3", "env-api-key")
+
+		tmpDir := t.TempDir()
+		filePath := filepath.Join(tmpDir, "env-config.yaml")
+		content := `
+server:
+  host: "localhost"
+  port: "2112"
+  uri: "/metrics"
+  scrapingInterval: "5m"
+  logName: "test.log"
+nbuserver:
+  host: "${TEST_NBU_HOST3}"
+  port: "1556"
+  scheme: "https"
+  uri: "/netbackup"
+  apiKey: "${TEST_NBU_KEY3}"
+  apiVersion: "13.0"
+`
+		if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file: %v", err)
+		}
+
+		var cfg models.Config
+		if err := ReadFile(&cfg, filePath); err != nil {
+			t.Fatalf("ReadFile() unexpected error: %v", err)
+		}
+		if cfg.NbuServer.Host != "env-host.example.com" {
+			t.Errorf("Host = %q, want %q", cfg.NbuServer.Host, "env-host.example.com")
+		}
+		if cfg.NbuServer.APIKey != "env-api-key" {
+			t.Errorf("APIKey = %q, want %q", cfg.NbuServer.APIKey, "env-api-key")
+		}
+	})
+}
+
