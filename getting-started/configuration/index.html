@@ -429,6 +429,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#environment-variables-env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables / .env
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#server-section" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1109,6 +1120,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#environment-variables-env" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Variables / .env
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#server-section" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1193,6 +1215,33 @@
 <p class="admonition-title">Warning</p>
 <p>Never commit API keys to version control. Use environment variables or secure secret management.</p>
 </div>
+<h2 id="environment-variables-env">Environment Variables / .env</h2>
+<p>The <code>host</code> and <code>apiKey</code> fields in the <code>nbuserver</code> section support <code>${VAR}</code> interpolation.
+At startup the exporter expands every <code>${VAR}</code> reference and fails loudly if a variable is not set.</p>
+<p><strong>One-server quickstart</strong> — copy <code>.env.example</code> to <code>.env</code>, fill in your values, and reference
+them from <code>config.yaml</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># edit .env — set NBU1_HOSTNAME and NBU1_APIKEY</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU1_HOSTNAME}&quot;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU1_APIKEY}&quot;</span>
+</code></pre></div>
+<p>The <code>NBU1_*</code> variables are passed into the container by <code>docker-compose.yml</code> from the <code>.env</code>
+file automatically.</p>
+<p><strong>Multi-server</strong> — <code>config.yaml</code> is the source of truth. Add one <code>nbuserver</code> entry per cluster
+and supply literal values or your own env references:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Cluster A</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;nbu-a.example.com&quot;</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;literal-key-a&quot;</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Cluster B (env-interpolated)</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU_B_HOST}&quot;</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU_B_KEY}&quot;</span>
+</code></pre></div>
+<p>The <code>.env</code> / <code>NBU1_*</code> naming is a single-server convenience; there is no limit on variable names.</p>
 <h2 id="server-section">Server Section</h2>
 <table>
 <thead>
