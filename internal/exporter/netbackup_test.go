@@ -33,13 +33,14 @@ func TestFetchJobDetails_BatchProcessing(t *testing.T) {
 	client := NewNbuClient(cfg)
 
 	// Initialize maps for metrics
-	jobsSize := make(map[JobMetricKey]float64)
-	jobsCount := make(map[JobMetricKey]float64)
-	jobsStatusCount := make(map[JobStatusKey]float64)
+	agg := NewJobAggregator()
+	jobsSize := agg.Size
+	jobsCount := agg.Count
+	jobsStatusCount := agg.StatusCount
 
 	startTime := time.Now().Add(-5 * time.Minute)
 
-	nextOffset, err := FetchJobDetails(context.Background(), client, jobsSize, jobsCount, jobsStatusCount, 0, startTime)
+	nextOffset, err := FetchJobDetails(context.Background(), client, agg, 0, startTime)
 	if err != nil {
 		t.Fatalf("FetchJobDetails failed: %v", err)
 	}
@@ -147,13 +148,13 @@ func TestFetchJobDetails_EmptyBatch(t *testing.T) {
 	cfg := createTestConfig(server.URL, "12.0")
 	client := NewNbuClient(cfg)
 
-	jobsSize := make(map[JobMetricKey]float64)
-	jobsCount := make(map[JobMetricKey]float64)
-	jobsStatusCount := make(map[JobStatusKey]float64)
+	agg := NewJobAggregator()
+	jobsCount := agg.Count
+	jobsStatusCount := agg.StatusCount
 
 	startTime := time.Now().Add(-5 * time.Minute)
 
-	nextOffset, err := FetchJobDetails(context.Background(), client, jobsSize, jobsCount, jobsStatusCount, 0, startTime)
+	nextOffset, err := FetchJobDetails(context.Background(), client, agg, 0, startTime)
 	if err != nil {
 		t.Fatalf("FetchJobDetails failed: %v", err)
 	}
@@ -188,13 +189,13 @@ func TestFetchJobDetails_MixedJobTypes(t *testing.T) {
 	cfg := createTestConfig(server.URL, "12.0")
 	client := NewNbuClient(cfg)
 
-	jobsSize := make(map[JobMetricKey]float64)
-	jobsCount := make(map[JobMetricKey]float64)
-	jobsStatusCount := make(map[JobStatusKey]float64)
+	agg := NewJobAggregator()
+	jobsCount := agg.Count
+	jobsStatusCount := agg.StatusCount
 
 	startTime := time.Now().Add(-5 * time.Minute)
 
-	_, err := FetchJobDetails(context.Background(), client, jobsSize, jobsCount, jobsStatusCount, 0, startTime)
+	_, err := FetchJobDetails(context.Background(), client, agg, 0, startTime)
 	if err != nil {
 		t.Fatalf("FetchJobDetails failed: %v", err)
 	}
