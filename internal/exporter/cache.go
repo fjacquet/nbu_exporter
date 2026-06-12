@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	storageCacheKey = "storage_metrics"
-	defaultCacheTTL = 5 * time.Minute
+	storageCacheKey      = "storage_metrics"
+	storageUnitsCacheKey = "storage_units"
+	defaultCacheTTL      = 5 * time.Minute
 )
 
 // StorageCache provides TTL-based caching for storage metrics.
@@ -58,6 +59,21 @@ func (sc *StorageCache) Set(metrics []StorageMetricValue) {
 	sc.lastCollectionMu.Lock()
 	sc.lastCollectionTime = time.Now()
 	sc.lastCollectionMu.Unlock()
+}
+
+// GetUnits returns cached per-unit storage attributes if available.
+// Returns nil, false on cache miss. Unit info is cached under the same TTL as
+// the storage metrics, so a metrics hit implies a units hit.
+func (sc *StorageCache) GetUnits() ([]StorageUnitInfo, bool) {
+	if cached, found := sc.cache.Get(storageUnitsCacheKey); found {
+		return cached.([]StorageUnitInfo), true
+	}
+	return nil, false
+}
+
+// SetUnits stores per-unit storage attributes in the cache with default TTL.
+func (sc *StorageCache) SetUnits(units []StorageUnitInfo) {
+	sc.cache.Set(storageUnitsCacheKey, units, cache.DefaultExpiration)
 }
 
 // GetLastCollectionTime returns the timestamp of the last successful fetch.

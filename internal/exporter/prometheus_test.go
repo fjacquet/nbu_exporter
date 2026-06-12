@@ -348,6 +348,17 @@ func TestNbuCollectorDescribe(t *testing.T) {
 		"nbu_api_version",
 		"nbu_up",
 		"nbu_last_scrape_timestamp_seconds",
+		// Storage attribute metrics
+		"nbu_disk_capacity_bytes",
+		"nbu_storage_max_concurrent_jobs",
+		"nbu_storage_max_fragment_size_bytes",
+		"nbu_storage_info",
+		// Extended job metrics
+		"nbu_jobs_state_count",
+		"nbu_jobs_files_count",
+		"nbu_jobs_dedup_ratio",
+		"nbu_jobs_queued_count",
+		"nbu_job_duration_seconds",
 	}
 
 	descriptorNames := make(map[string]bool)
@@ -805,10 +816,14 @@ func TestNbuCollectorHelpStringIncludesTTL(t *testing.T) {
 		_ = collector.Close()
 	}()
 
-	// Get descriptors
-	descCh := make(chan *prometheus.Desc, 10)
-	collector.Describe(descCh)
-	close(descCh)
+	// Get descriptors. Describe sends every descriptor synchronously, so the
+	// receiver must run concurrently with the sender — a fixed-size buffer would
+	// deadlock once the descriptor count exceeds it (matches TestNbuCollectorDescribe).
+	descCh := make(chan *prometheus.Desc)
+	go func() {
+		collector.Describe(descCh)
+		close(descCh)
+	}()
 
 	// Find nbu_disk_bytes descriptor and verify HELP string
 	foundDiskBytes := false

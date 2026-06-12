@@ -1,0 +1,82 @@
+# Prometheus alerting rules for nbu_exporter.
+#
+# Load via prometheus.yml:
+#   rule_files:
+#     - /etc/prometheus/rules/nbu_alerts.yml
+#
+# Validate:  promtool check rules grafana/alerts.yml
+groups:
+  - name: nbu_exporter
+    rules:
+      # ----------------------------------------------------------- Availability
+      - alert: NbuExporterDown
+        expr: up{job="netbackup"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "nbu_exporter is not scrapable ({{ $labels.instance }})"
+          description: "Prometheus cannot scrape the NetBackup exporter for >5m."
+
+      - alert: NbuApiUnreachable
+        expr: nbu_up == 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "NetBackup API unreachable ({{ $labels.instance }})"
+          description: "All NetBackup collections (storage and jobs) have failed for >10m."
+
+      # ------------------------------------------------------------- Staleness
+      - alert: NbuMetricsStale
+        expr: time() - nbu_last_scrape_timestamp_seconds > 1800
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "NetBackup {{ $labels.source }} metrics are stale"
+          description: "No successful {{ $labels.source }} collection in >30m on {{ $labels.instance }}."
+
+      # ----------------------------------------------------------- Backup SLOs
+      - alert: NbuBackupSuccessRateLow
+        expr: |
+          sum(nbu_status_count{action="BACKUP",status="0"})
+            / clamp_min(sum(nbu_status_count{action="BACKUP"}), 1) * 100 < 90
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backup success rate below 90%"
+          description: "BACKUP success rate is {{ printf \"%.1f\" $value }}% over the current window."
+
+      - alert: NbuJobsQueuedSustained
+        expr: sum(nbu_jobs_queued_count) > 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backup jobs queued for >30m"
+          description: "{{ $value }} job(s) remain queued; check media/storage availability."
+
+      # --------------------------------------------------------------- Storage
+      - alert: NbuStorageAlmostFull
+        expr: |
+          sum by (name) (nbu_disk_bytes{size="used"})
+            / sum by (name) (nbu_disk_bytes) * 100 > 90
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Storage unit {{ $labels.name }} over 90% used"
+          description: "{{ $labels.name }} is {{ printf \"%.1f\" $value }}% full."
+
+      - alert: NbuStorageWarning
+        expr: |
+          sum by (name) (nbu_disk_bytes{size="used"})
+            / sum by (name) (nbu_disk_bytes) * 100 > 80
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Storage unit {{ $labels.name }} over 80% used"
+          description: "{{ $labels.name }} is {{ printf \"%.1f\" $value }}% full."

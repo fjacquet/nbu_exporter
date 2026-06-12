@@ -96,9 +96,11 @@ func TestCollectorConcurrentDescribe(t *testing.T) {
 				count++
 			}
 
-			// Should always get 8 descriptors (including nbu_up and nbu_last_scrape_timestamp_seconds)
-			if count != 8 {
-				t.Errorf("Describe() returned %d descriptors, expected 8", count)
+			// Should always get the full descriptor set (8 core + 4 storage
+			// attribute + 5 extended job metrics).
+			const expectedDescriptors = 17
+			if count != expectedDescriptors {
+				t.Errorf("Describe() returned %d descriptors, expected %d", count, expectedDescriptors)
 			}
 		}()
 	}

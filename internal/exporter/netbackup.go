@@ -26,6 +26,8 @@ const (
 	sizeTypeFree     = "free"                   // Metric dimension for free capacity
 	sizeTypeUsed     = "used"                   // Metric dimension for used capacity
 	bytesPerKilobyte = 1024                     // Conversion factor from kilobytes to bytes
+	bytesPerMegabyte = 1024 * 1024              // Conversion factor from megabytes to bytes
+	jobStateQueued   = "QUEUED"                 // Job state indicating the job is waiting for a resource
 
 	// Pre-allocation capacity hints for job metrics.
 	// Typical environments have 20-100 unique job type/policy/status combinations:
@@ -48,7 +50,21 @@ const (
 //   - client: NetBackup API client
 //
 // Returns a slice of StorageMetricValue and an error if the API request fails.
+//
+// FetchStorage is a backward-compatible wrapper over FetchStorageFull that
+// returns only the free/used capacity metrics. New callers that also need
+// per-unit attributes (capacity, concurrency, info) should use FetchStorageFull.
 func FetchStorage(ctx context.Context, client *NbuClient) ([]StorageMetricValue, error) {
+	metrics, _, err := FetchStorageFull(ctx, client)
+	return metrics, err
+}
+
+// FetchStorageFull retrieves storage unit information from the NetBackup API and
+// returns both the free/used capacity metrics and the per-unit attributes
+// (StorageUnitInfo) derived from the same response.
+//
+// Tape storage units are excluded as they don't report meaningful capacity values.
+func FetchStorageFull(ctx context.Context, client *NbuClient) ([]StorageMetricValue, []StorageUnitInfo, error) {
 	// Start child span "netbackup.fetch_storage" from parent context
 	ctx, span := client.tracing.StartSpan(ctx, "netbackup.fetch_storage", trace.SpanKindClient)
 	defer span.End()
@@ -63,26 +79,42 @@ func FetchStorage(ctx context.Context, client *NbuClient) ([]StorageMetricValue,
 	if err := client.FetchData(ctx, url, &storages); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, fmt.Errorf("failed to fetch storage data: %w", err)
+		return nil, nil, fmt.Errorf("failed to fetch storage data: %w", err)
 	}
 
 	var metrics []StorageMetricValue
+	var units []StorageUnitInfo
 	for _, data := range storages.Data {
 		// Skip tape storage units
 		if data.Attributes.StorageType == storageTypeTape {
 			continue
 		}
 
-		stuName := data.Attributes.Name
-		stuType := data.Attributes.StorageServerType
+		attr := data.Attributes
+		stuName := attr.Name
+		stuType := attr.StorageServerType
 
 		metrics = append(metrics, StorageMetricValue{
 			Key:   StorageMetricKey{Name: stuName, Type: stuType, Size: sizeTypeFree},
-			Value: float64(data.Attributes.FreeCapacityBytes),
+			Value: float64(attr.FreeCapacityBytes),
 		})
 		metrics = append(metrics, StorageMetricValue{
 			Key:   StorageMetricKey{Name: stuName, Type: stuType, Size: sizeTypeUsed},
-			Value: float64(data.Attributes.UsedCapacityBytes),
+			Value: float64(attr.UsedCapacityBytes),
+		})
+
+		units = append(units, StorageUnitInfo{
+			Name:               stuName,
+			Type:               stuType,
+			SubType:            attr.StorageSubType,
+			TotalCapacityBytes: float64(attr.TotalCapacityBytes),
+			MaxConcurrentJobs:  float64(attr.MaxConcurrentJobs),
+			MaxFragmentBytes:   float64(attr.MaxFragmentSizeMegabytes) * bytesPerMegabyte,
+			IsCloud:            attr.IsCloudSTU,
+			WormCapable:        attr.WormCapable,
+			UseWorm:            attr.UseWorm,
+			ReplicationCapable: attr.ReplicationCapable,
+			InstantAccess:      attr.InstantAccessEnabled,
 		})
 	}
 
@@ -95,20 +127,55 @@ func FetchStorage(ctx context.Context, client *NbuClient) ([]StorageMetricValue,
 	span.SetAttributes(attrs...)
 
 	log.Debugf("Fetched storage data for %d storage units", len(storages.Data))
-	return metrics, nil
+	return metrics, units, nil
+}
+
+// aggregateJob folds a single job's attributes into every job-derived metric.
+// Centralizing the per-job logic keeps FetchJobDetails focused on pagination.
+func aggregateJob(agg *JobAggregator, attr models.JobAttributes) {
+	status := strconv.Itoa(attr.Status)
+	jobKey := JobMetricKey{Action: attr.JobType, PolicyType: attr.PolicyType, Status: status}
+	statusKey := JobStatusKey{Action: attr.JobType, Status: status}
+	policyKey := JobPolicyKey{Action: attr.JobType, PolicyType: attr.PolicyType}
+
+	// Existing metrics: bytes, count, status count.
+	agg.Count[jobKey]++
+	agg.StatusCount[statusKey]++
+	agg.Size[jobKey] += float64(attr.KilobytesTransferred * bytesPerKilobyte)
+
+	// State breakdown (default empty state to "UNKNOWN" to avoid an empty label).
+	state := attr.State
+	if state == "" {
+		state = "UNKNOWN"
+	}
+	agg.StateCount[JobStateKey{Action: attr.JobType, State: state}]++
+
+	// Queued jobs by reason code.
+	if state == jobStateQueued {
+		reason := strconv.Itoa(attr.JobQueueReason)
+		agg.QueuedCount[JobQueueKey{Action: attr.JobType, Reason: reason}]++
+	}
+
+	// Files transferred and dedup-ratio mean (per action/policy).
+	agg.FilesCount[policyKey] += float64(attr.NumberOfFiles)
+	agg.DedupSum[policyKey] += attr.DedupRatio
+	agg.DedupCount[policyKey]++
+
+	// Duration histogram for completed jobs only (EndTime after StartTime).
+	if !attr.EndTime.IsZero() && attr.EndTime.After(attr.StartTime) {
+		agg.observeDuration(policyKey, attr.EndTime.Sub(attr.StartTime).Seconds())
+	}
 }
 
 // FetchJobDetails retrieves a page of job records (up to 100) at the specified
-// pagination offset and updates the provided metrics maps with job statistics.
-// This function processes all jobs in the API response and uses the API's
-// pagination metadata to determine the next offset.
+// pagination offset and folds each job into the aggregator. It processes all jobs
+// in the API response and uses the API's pagination metadata to determine the
+// next offset.
 //
 // Parameters:
 //   - ctx: Context for request cancellation and timeout
 //   - client: Configured NetBackup API client
-//   - jobsSize: Typed map to accumulate bytes transferred per job type/status
-//   - jobsCount: Typed map to accumulate job counts per job type/status
-//   - jobsStatusCount: Typed map to accumulate job counts per action/status
+//   - agg: Aggregator accumulating all job-derived metrics across pages
 //   - offset: Pagination offset (starts at 0, use Meta.Pagination.Next for subsequent calls)
 //   - startTime: Filter to only include jobs completed after this time
 //
@@ -118,8 +185,7 @@ func FetchStorage(ctx context.Context, client *NbuClient) ([]StorageMetricValue,
 func FetchJobDetails(
 	ctx context.Context,
 	client *NbuClient,
-	jobsSize, jobsCount map[JobMetricKey]float64,
-	jobsStatusCount map[JobStatusKey]float64,
+	agg *JobAggregator,
 	offset int,
 	startTime time.Time,
 ) (int, error) {
@@ -157,22 +223,7 @@ func FetchJobDetails(
 
 	// Process ALL jobs in the batch response
 	for _, job := range jobs.Data {
-		// Create structured metric keys
-		jobKey := JobMetricKey{
-			Action:     job.Attributes.JobType,
-			PolicyType: job.Attributes.PolicyType,
-			Status:     strconv.Itoa(job.Attributes.Status),
-		}
-
-		statusKey := JobStatusKey{
-			Action: job.Attributes.JobType,
-			Status: strconv.Itoa(job.Attributes.Status),
-		}
-
-		// Update metrics using typed keys directly
-		jobsCount[jobKey]++
-		jobsStatusCount[statusKey]++
-		jobsSize[jobKey] += float64(job.Attributes.KilobytesTransferred * bytesPerKilobyte)
+		aggregateJob(agg, job.Attributes)
 	}
 
 	// Batch span attributes for job page
@@ -249,11 +300,46 @@ func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, o
 // Returns typed slices and an error if:
 //   - The scraping interval cannot be parsed
 //   - Any API request fails during pagination
+//
+// FetchAllJobs is a backward-compatible wrapper over FetchAllJobsFull that
+// returns only the size/count/status slices. New callers that also need the
+// state, dedup, files, queued, and duration metrics should use FetchAllJobsFull.
 func FetchAllJobs(
 	ctx context.Context,
 	client *NbuClient,
 	scrapingInterval string,
 ) (jobsSize []JobMetricValue, jobsCount []JobMetricValue, statusCount []JobStatusMetricValue, err error) {
+	agg, err := FetchAllJobsFull(ctx, client, scrapingInterval)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	jobsSize = make([]JobMetricValue, 0, len(agg.Size))
+	jobsCount = make([]JobMetricValue, 0, len(agg.Count))
+	statusCount = make([]JobStatusMetricValue, 0, len(agg.StatusCount))
+	for key, value := range agg.Size {
+		jobsSize = append(jobsSize, JobMetricValue{Key: key, Value: value})
+	}
+	for key, value := range agg.Count {
+		jobsCount = append(jobsCount, JobMetricValue{Key: key, Value: value})
+	}
+	for key, value := range agg.StatusCount {
+		statusCount = append(statusCount, JobStatusMetricValue{Key: key, Value: value})
+	}
+	return jobsSize, jobsCount, statusCount, nil
+}
+
+// FetchAllJobsFull aggregates all job-derived statistics over the scraping window
+// and returns the populated JobAggregator. It uses batch pagination (100 jobs per
+// request) and filters to jobs that completed after now-scrapingInterval.
+//
+// Returns an error if the scraping interval cannot be parsed or any API request
+// fails during pagination.
+func FetchAllJobsFull(
+	ctx context.Context,
+	client *NbuClient,
+	scrapingInterval string,
+) (*JobAggregator, error) {
 	// Start child span "netbackup.fetch_jobs" from parent context
 	ctx, span := client.tracing.StartSpan(ctx, "netbackup.fetch_jobs", trace.SpanKindClient)
 	defer span.End()
@@ -262,30 +348,27 @@ func FetchAllJobs(
 	if parseErr != nil {
 		span.RecordError(parseErr)
 		span.SetStatus(codes.Error, parseErr.Error())
-		return nil, nil, nil, fmt.Errorf("invalid scraping interval %s: %w", scrapingInterval, parseErr)
+		return nil, fmt.Errorf("invalid scraping interval %s: %w", scrapingInterval, parseErr)
 	}
 
 	startTime := time.Now().Add(duration).UTC()
 	log.Debugf("Fetching jobs since %s", startTime.Format(time.RFC3339))
 
-	// Use typed maps for aggregation with pre-allocated capacity hints.
-	// Struct keys are comparable in Go, enabling direct map lookups.
-	// Pre-allocation reduces memory reallocations during job processing.
-	sizeMap := make(map[JobMetricKey]float64, expectedJobMetricKeys)
-	countMap := make(map[JobMetricKey]float64, expectedJobMetricKeys)
-	statusMap := make(map[JobStatusKey]float64, expectedStatusMetricKeys)
+	// Single aggregator threaded through every page; comparable struct keys enable
+	// direct map lookups, and capacity hints reduce reallocation during processing.
+	agg := NewJobAggregator()
 
 	// Track page count
 	pageCount := 0
 
-	err = HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
+	err := HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
 		pageCount++
-		return FetchJobDetails(ctx, client, sizeMap, countMap, statusMap, offset, startTime)
+		return FetchJobDetails(ctx, client, agg, offset, startTime)
 	})
 
 	// Calculate total jobs fetched
 	totalJobs := 0
-	for _, count := range countMap {
+	for _, count := range agg.Count {
 		totalJobs += int(count)
 	}
 
@@ -303,25 +386,9 @@ func FetchAllJobs(
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return nil, nil, nil, err
-	}
-
-	// Convert maps to typed slices with pre-allocated capacity.
-	// Slice capacity is set to exact map size (known at this point) to avoid reallocations.
-	jobsSize = make([]JobMetricValue, 0, len(sizeMap))
-	jobsCount = make([]JobMetricValue, 0, len(countMap))
-	statusCount = make([]JobStatusMetricValue, 0, len(statusMap))
-
-	for key, value := range sizeMap {
-		jobsSize = append(jobsSize, JobMetricValue{Key: key, Value: value})
-	}
-	for key, value := range countMap {
-		jobsCount = append(jobsCount, JobMetricValue{Key: key, Value: value})
-	}
-	for key, value := range statusMap {
-		statusCount = append(statusCount, JobStatusMetricValue{Key: key, Value: value})
+		return nil, err
 	}
 
 	span.SetStatus(codes.Ok, fmt.Sprintf("Fetched %d jobs across %d pages", totalJobs, pageCount))
-	return jobsSize, jobsCount, statusCount, nil
+	return agg, nil
 }
