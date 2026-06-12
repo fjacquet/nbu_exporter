@@ -1244,17 +1244,45 @@
 <td>Number of jobs by type, policy, and status</td>
 </tr>
 <tr>
-<td><code>nbu_jobs_size_bytes</code></td>
+<td><code>nbu_jobs_bytes</code></td>
 <td><code>action</code>, <code>policy_type</code>, <code>status</code></td>
 <td>Total bytes transferred by jobs</td>
 </tr>
 <tr>
-<td><code>nbu_jobs_status_count</code></td>
+<td><code>nbu_status_count</code></td>
 <td><code>action</code>, <code>status</code></td>
 <td>Job count aggregated by action and status</td>
 </tr>
+<tr>
+<td><code>nbu_jobs_state_count</code></td>
+<td><code>action</code>, <code>state</code></td>
+<td>Job count per lifecycle state (e.g. <code>ACTIVE</code>, <code>QUEUED</code>, <code>DONE</code>)</td>
+</tr>
+<tr>
+<td><code>nbu_jobs_queued_count</code></td>
+<td><code>action</code>, <code>reason</code></td>
+<td>Queued job count per NetBackup queue reason code</td>
+</tr>
+<tr>
+<td><code>nbu_jobs_files_count</code></td>
+<td><code>action</code>, <code>policy_type</code></td>
+<td>Total number of files processed by jobs</td>
+</tr>
+<tr>
+<td><code>nbu_jobs_dedup_ratio</code></td>
+<td><code>action</code>, <code>policy_type</code></td>
+<td>Mean deduplication ratio across jobs (emitted only when jobs exist)</td>
+</tr>
+<tr>
+<td><code>nbu_job_duration_seconds</code></td>
+<td><code>action</code>, <code>policy_type</code></td>
+<td>Histogram of completed job durations in seconds</td>
+</tr>
 </tbody>
 </table>
+<p>The <code>nbu_job_duration_seconds</code> histogram covers completed jobs only (those with an
+<code>EndTime</code> after <code>StartTime</code>). Bucket upper bounds (seconds): 60, 300, 900, 1800,
+3600, 7200, 14400, 28800, 86400.</p>
 <h2 id="storage-metrics">Storage Metrics</h2>
 <table>
 <thead>
@@ -1266,13 +1294,34 @@
 </thead>
 <tbody>
 <tr>
-<td><code>nbu_storage_bytes</code></td>
+<td><code>nbu_disk_bytes</code></td>
 <td><code>name</code>, <code>type</code>, <code>size</code></td>
-<td>Storage unit capacity</td>
+<td>Storage unit capacity; <code>size</code> is <code>free</code> or <code>used</code></td>
+</tr>
+<tr>
+<td><code>nbu_disk_capacity_bytes</code></td>
+<td><code>name</code>, <code>type</code></td>
+<td>Authoritative total capacity reported by the API</td>
+</tr>
+<tr>
+<td><code>nbu_storage_max_concurrent_jobs</code></td>
+<td><code>name</code>, <code>type</code></td>
+<td>Maximum concurrent jobs the unit accepts</td>
+</tr>
+<tr>
+<td><code>nbu_storage_max_fragment_size_bytes</code></td>
+<td><code>name</code>, <code>type</code></td>
+<td>Maximum fragment size in bytes</td>
+</tr>
+<tr>
+<td><code>nbu_storage_info</code></td>
+<td><code>name</code>, <code>type</code>, <code>subtype</code>, <code>is_cloud</code>, <code>worm_capable</code>, <code>use_worm</code>, <code>replication_capable</code>, <code>instant_access</code></td>
+<td>Storage unit capabilities (value always <code>1</code>)</td>
 </tr>
 </tbody>
 </table>
-<p>The <code>size</code> label is either <code>free</code> (available capacity in bytes) or <code>used</code> (used capacity in bytes).</p>
+<p><code>nbu_disk_capacity_bytes</code> is a separate metric (not a <code>size="total"</code> label) so that
+<code>sum(nbu_disk_bytes{name=X})</code> continues to equal total capacity (free + used).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Tape storage units are excluded from metrics collection.</p>
@@ -1288,9 +1337,24 @@
 </thead>
 <tbody>
 <tr>
+<td><code>nbu_up</code></td>
+<td>—</td>
+<td><code>1</code> if any collection succeeded, <code>0</code> if all collections failed</td>
+</tr>
+<tr>
 <td><code>nbu_api_version</code></td>
 <td><code>version</code></td>
 <td>Currently active NetBackup API version (13.0, 12.0, or 3.0)</td>
+</tr>
+<tr>
+<td><code>nbu_response_time_ms</code></td>
+<td>—</td>
+<td>NetBackup API response time in milliseconds</td>
+</tr>
+<tr>
+<td><code>nbu_last_scrape_timestamp_seconds</code></td>
+<td><code>source</code></td>
+<td>Unix timestamp of the last successful collection (<code>source</code>: <code>storage</code> or <code>jobs</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -1309,13 +1373,17 @@
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">scrape_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
 </code></pre></div>
+<p>Alerting rules are provided in <code>grafana/alerts.yml</code> (load via <code>rule_files</code>).</p>
 <h2 id="grafana-dashboard">Grafana Dashboard</h2>
-<p>A pre-built Grafana dashboard is included in the <code>grafana/</code> directory:</p>
-<ol>
-<li>Import <code>grafana/NBU Statistics-1629904585394.json</code> into your Grafana instance</li>
-<li>Configure the Prometheus datasource</li>
-<li>View NetBackup job statistics and storage utilization</li>
-</ol>
+<p>Two dashboards live in the <code>grafana/</code> directory:</p>
+<ul>
+<li><code>grafana/nbu-overview.json</code> — fully templated overview (health, storage, jobs,
+  durations). Recommended; works on any server via the <code>$storage_unit</code> /
+  <code>$policy_type</code> template variables.</li>
+<li><code>grafana/NBU Statistics-1629904585394.json</code> — the original 2021 dashboard, kept
+  for reference.</li>
+</ul>
+<p>To import: load the JSON into Grafana and select your Prometheus datasource.</p>
 
 
 
