@@ -33,10 +33,15 @@ nbuserver:
 !!! warning
     Never commit API keys to version control. Use environment variables or secure secret management.
 
-## Environment Variables / .env
+## Environment Variables / .env loading
 
 The `host` and `apiKey` fields in the `nbuserver` section support `${VAR}` interpolation.
 At startup the exporter expands every `${VAR}` reference and fails loudly if a variable is not set.
+
+`nbu_exporter` loads a `.env` file natively at startup — you do not need a shell wrapper or
+`export` statements. It looks for `.env` in the working directory first, then in the same
+directory as `config.yaml`. Already-set environment variables always win: values in `.env`
+never shadow real env/secret injection.
 
 **One-server quickstart** — copy `.env.example` to `.env`, fill in your values, and reference
 them from `config.yaml`:

@@ -479,6 +479,10 @@ func main() {
 		Short: "Prometheus exporter for Veritas NetBackup",
 		Long:  "NBU Exporter collects metrics from NetBackup API and exposes them in Prometheus format",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			// Load .env before config interpolation so ${NBU1_*} refs resolve.
+			// Already-set environment variables always win (no-override semantics).
+			utils.LoadDotEnv(configFile)
+
 			// Validate and load configuration
 			cfg, err := validateConfig(configFile)
 			if err != nil {
