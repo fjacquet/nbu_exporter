@@ -429,10 +429,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#environment-variables-env" class="md-nav__link">
+  <a href="#environment-variables-env-loading" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Environment Variables / .env
+        Environment Variables / .env loading
       
     </span>
   </a>
@@ -1120,10 +1120,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#environment-variables-env" class="md-nav__link">
+  <a href="#environment-variables-env-loading" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Environment Variables / .env
+        Environment Variables / .env loading
       
     </span>
   </a>
@@ -1215,9 +1215,13 @@
 <p class="admonition-title">Warning</p>
 <p>Never commit API keys to version control. Use environment variables or secure secret management.</p>
 </div>
-<h2 id="environment-variables-env">Environment Variables / .env</h2>
+<h2 id="environment-variables-env-loading">Environment Variables / .env loading</h2>
 <p>The <code>host</code> and <code>apiKey</code> fields in the <code>nbuserver</code> section support <code>${VAR}</code> interpolation.
 At startup the exporter expands every <code>${VAR}</code> reference and fails loudly if a variable is not set.</p>
+<p><code>nbu_exporter</code> loads a <code>.env</code> file natively at startup — you do not need a shell wrapper or
+<code>export</code> statements. It looks for <code>.env</code> in the working directory first, then in the same
+directory as <code>config.yaml</code>. Already-set environment variables always win: values in <code>.env</code>
+never shadow real env/secret injection.</p>
 <p><strong>One-server quickstart</strong> — copy <code>.env.example</code> to <code>.env</code>, fill in your values, and reference
 them from <code>config.yaml</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
