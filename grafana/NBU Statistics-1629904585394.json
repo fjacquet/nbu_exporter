@@ -115,7 +115,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(nbu_disk_bytes{name=\"stu_adv_prod-mebck-srv1\",size=\"used\"})/sum(nbu_disk_bytes{name=\"stu_adv_prod-mebck-srv1\"})*100",
+          "expr": "sum(nbu_disk_bytes{name=~\"$storage_unit\",size=\"used\"})/sum(nbu_disk_bytes{name=~\"$storage_unit\"})*100",
           "hide": false,
           "interval": "",
           "legendFormat": "% Used",
@@ -178,7 +178,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum(nbu_disk_bytes{name=\"stu_dedup_prod-mebck-srv1\",size=\"used\"})/sum(nbu_disk_bytes{name=\"stu_dedup_prod-mebck-srv1\"})*100",
+          "expr": "sum(nbu_disk_bytes{name=~\"$storage_unit\",size=\"used\"})/sum(nbu_disk_bytes{name=~\"$storage_unit\"})*100",
           "hide": false,
           "interval": "",
           "legendFormat": "% Used",
@@ -1627,7 +1627,39 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Datasource",
+        "current": {},
+        "hide": 0,
+        "refresh": 1
+      },
+      {
+        "name": "storage_unit",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "label": "Storage unit",
+        "query": {
+          "query": "label_values(nbu_disk_bytes, name)",
+          "refId": "StandardVariableQuery"
+        },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "refresh": 2,
+        "sort": 1
+      }
+    ]
   },
   "time": {
     "from": "now-24h",
