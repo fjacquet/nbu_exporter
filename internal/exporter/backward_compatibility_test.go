@@ -234,8 +234,8 @@ func TestBackwardCompatibilityNoBreakingChanges(t *testing.T) {
 		cfg := models.Config{}
 		cfg.SetDefaults()
 
-		// Default should be 13.0 for new deployments
-		assert.Equal(t, "13.0", cfg.NbuServer.APIVersion, "Default API version should be 13.0")
+		// Default should be 14.0 for new deployments
+		assert.Equal(t, "14.0", cfg.NbuServer.APIVersion, "Default API version should be 14.0")
 	})
 }
 
