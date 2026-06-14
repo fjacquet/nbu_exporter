@@ -10,31 +10,27 @@
       
       
       
-        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/getting-started/quickstart/">
+        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-14-quickstart-stack-design/">
       
       
-        <link rel="prev" href="../configuration/">
-      
-      
-        <link rel="next" href="../../metrics/">
       
       
         
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Quick Start - NBU Exporter</title>
+        <title>Observability Quickstart Stack — Design - NBU Exporter</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +49,7 @@
       
     
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#quick-start" class="md-skip">
+        <a href="#observability-quickstart-stack-design" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +90,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+    <a href="../../.." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Quick Start
+              Observability Quickstart Stack — Design
             
           </span>
         </div>
@@ -230,7 +226,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+    <a href="../../.." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -260,7 +256,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -284,8 +280,6 @@
       
   
   
-    
-  
   
   
     
@@ -298,11 +292,13 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
@@ -323,7 +319,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -341,7 +337,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../installation/" class="md-nav__link">
+      <a href="../../../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -369,7 +365,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../configuration/" class="md-nav__link">
+      <a href="../../../getting-started/configuration/" class="md-nav__link">
         
   
   
@@ -394,37 +390,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Quick Start
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../getting-started/quickstart/" class="md-nav__link">
         
   
   
@@ -440,98 +409,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-build" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Build
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-configure" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Configure
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Run
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-add-to-prometheus" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Add to Prometheus
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#command-line-options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Command Line Options
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Command Line Options">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#validating-against-a-live-appliance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Validating against a live appliance
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -551,7 +428,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../metrics/" class="md-nav__link">
+      <a href="../../../metrics/" class="md-nav__link">
         
   
   
@@ -632,7 +509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../opentelemetry-example/" class="md-nav__link">
+      <a href="../../../opentelemetry-example/" class="md-nav__link">
         
   
   
@@ -660,7 +537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../trace-analysis-guide/" class="md-nav__link">
+      <a href="../../../trace-analysis-guide/" class="md-nav__link">
         
   
   
@@ -749,7 +626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../netbackup-11-migration/" class="md-nav__link">
+      <a href="../../../netbackup-11-migration/" class="md-nav__link">
         
   
   
@@ -777,7 +654,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api-10.5-migration/" class="md-nav__link">
+      <a href="../../../api-10.5-migration/" class="md-nav__link">
         
   
   
@@ -866,7 +743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment-verification/" class="md-nav__link">
+      <a href="../../../deployment-verification/" class="md-nav__link">
         
   
   
@@ -894,7 +771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../deployment-quick-reference/" class="md-nav__link">
+      <a href="../../../deployment-quick-reference/" class="md-nav__link">
         
   
   
@@ -922,7 +799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../docker/" class="md-nav__link">
+      <a href="../../../docker/" class="md-nav__link">
         
   
   
@@ -950,7 +827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../dashboards/" class="md-nav__link">
+      <a href="../../../dashboards/" class="md-nav__link">
         
   
   
@@ -985,7 +862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../config-examples/" class="md-nav__link">
+      <a href="../../../config-examples/" class="md-nav__link">
         
   
   
@@ -1066,7 +943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/" class="md-nav__link">
+      <a href="../../../adr/" class="md-nav__link">
         
   
   
@@ -1094,7 +971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../adr/0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
+      <a href="../../../adr/0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
         
   
   
@@ -1129,7 +1006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../changelog/" class="md-nav__link">
+      <a href="../../../changelog/" class="md-nav__link">
         
   
   
@@ -1176,10 +1053,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-build" class="md-nav__link">
+  <a href="#background" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Build
+        Background
       
     </span>
   </a>
@@ -1187,10 +1064,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-configure" class="md-nav__link">
+  <a href="#goals" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Configure
+        Goals
       
     </span>
   </a>
@@ -1198,10 +1075,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-run" class="md-nav__link">
+  <a href="#non-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Run
+        Non-goals
       
     </span>
   </a>
@@ -1209,10 +1086,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-add-to-prometheus" class="md-nav__link">
+  <a href="#branch-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Add to Prometheus
+        Branch / integration
       
     </span>
   </a>
@@ -1220,22 +1097,77 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#command-line-options" class="md-nav__link">
+  <a href="#architecture-files" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Command Line Options
+        Architecture / files
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Command Line Options">
+    <nav class="md-nav" aria-label="Architecture / files">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#validating-against-a-live-appliance" class="md-nav__link">
+  <a href="#docker-composeyml-build-based-demo" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Validating against a live appliance
+        docker-compose.yml (build-based demo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-composeghcryml-image-based-demo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        docker-compose.ghcr.yml (image-based demo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deployprometheusnburulesyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        deploy/prometheus/nbu.rules.yml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prometheusyml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prometheus.yml
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grafana-provisioning-new" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Grafana provisioning (new)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docs
       
     </span>
   </a>
@@ -1244,6 +1176,28 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verification
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#risks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Risks
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1267,47 +1221,152 @@
   
 
 
-<h1 id="quick-start">Quick Start</h1>
-<h2 id="1-build">1. Build</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/fjacquet/nbu_exporter.git
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">cd</span><span class="w"> </span>nbu_exporter
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>make<span class="w"> </span>cli
-</code></pre></div>
-<h2 id="2-configure">2. Configure</h2>
-<p>Create <code>config.yaml</code> with your NetBackup server details. See <a href="../configuration/">Configuration</a> for all options.</p>
-<h2 id="3-run">3. Run</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>./bin/nbu_exporter<span class="w"> </span>--config<span class="w"> </span>config.yaml
-</code></pre></div>
-<p>The exporter exposes:</p>
+<h1 id="observability-quickstart-stack-design">Observability Quickstart Stack — Design</h1>
+<p><strong>Date:</strong> 2026-06-14
+<strong>Status:</strong> Approved (pending implementation plan)
+<strong>Scope:</strong> Bring <code>nbu_exporter</code>'s docker-compose demo up to the family canonical
+"observability quickstart stack" (<code>exporter-standards</code> → <code>references/stack.md</code>).</p>
+<h2 id="background">Background</h2>
+<p>The family standard requires every exporter to ship a one-command demo stack:
+exporter + Prometheus + <strong>Grafana</strong> with auto-provisioned datasource and dashboards,
+a ghcr-image compose variant, Prometheus alerting rules, and docs. <code>nbu_exporter</code>'s
+current <code>docker-compose.yml</code> runs only the exporter + Prometheus — no Grafana, no
+provisioning, no ghcr variant, no <code>rule_files</code> wiring — so <code>docker compose up</code> yields
+metrics with nothing to view them in.</p>
+<p>What already exists and is reused, not rebuilt:
+- <code>grafana/nbu-overview.json</code> — fully-templated overview dashboard (uses a
+  <code>${datasource}</code> variable and a <code>$storage_unit</code>/<code>$policy_type</code> template variable).
+- <code>grafana/NBU Statistics-1629904585394.json</code> — legacy dashboard.
+- <code>grafana/alerts.yml</code> — complete Prometheus alerting rules (<code>NbuExporterDown</code>,
+  <code>NbuApiUnreachable</code>, <code>NbuMetricsStale</code>, backup SLOs).
+- <code>prometheus.yml</code> — scrape jobs for the exporter and otel-collector.
+- Hardening conventions on existing services (<code>no-new-privileges</code>, healthchecks,
+  <code>restart: unless-stopped</code>).
+- GoReleaser publishes <code>ghcr.io/fjacquet/nbu_exporter:latest</code>.</p>
+<h2 id="goals">Goals</h2>
 <ul>
-<li><strong>Metrics</strong>: <code>http://localhost:2112/metrics</code></li>
-<li><strong>Health</strong>: <code>http://localhost:2112/health</code></li>
+<li><code>docker compose up</code> brings up exporter + Prometheus + Grafana with the dashboard(s)
+  and datasource auto-provisioned and the alerting rules loaded.</li>
+<li>A ghcr-image variant that pulls the published image instead of building.</li>
+<li>Alerting rules live at the canonical <code>deploy/prometheus/</code> path and are loaded by
+  Prometheus.</li>
+<li>Docs describe the demo and the dashboards, wired into the mkdocs nav.</li>
 </ul>
-<h2 id="4-add-to-prometheus">4. Add to Prometheus</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">scrape_configs</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;netbackup&#39;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;localhost:2112&#39;</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">scrape_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
+<h2 id="non-goals">Non-goals</h2>
+<ul>
+<li>No changes to dashboard JSON content (this work only provisions existing files).</li>
+<li>No Go code changes; no new metrics.</li>
+<li>Not reconciling <code>grafana/build_overview.py</code> with the hand-edited
+  <code>nbu-overview.json</code> (separate follow-up).</li>
+<li>Not renaming <code>docker-compose-otel.yaml</code> → <code>.yml</code> (trivial, optional follow-up).</li>
+</ul>
+<h2 id="branch-integration">Branch / integration</h2>
+<p>New branch <code>feat/quickstart-stack</code> off <code>main</code>, its own PR, independent of PR #27.
+This work provisions <code>grafana/nbu-overview.json</code> but never edits it, so there is no
+file conflict with #27. The dashboard's 11.2 panels appear once #27 merges; the stack
+functions regardless.</p>
+<h2 id="architecture-files">Architecture / files</h2>
+<h3 id="docker-composeyml-build-based-demo"><code>docker-compose.yml</code> (build-based demo)</h3>
+<ul>
+<li>Remove the obsolete top-level <code>version: "3.8"</code> key.</li>
+<li>Keep <code>nbu_exporter</code> (built from <code>./Dockerfile</code>) and <code>prometheus</code> as-is, plus:</li>
+<li>Prometheus: add a read-only mount of <code>./deploy/prometheus/nbu.rules.yml</code> →
+    <code>/etc/prometheus/rules/nbu.rules.yml</code>.</li>
+<li>New <code>grafana</code> service:<ul>
+<li><code>image: grafana/grafana:latest</code></li>
+<li><code>ports: ["3000:3000"]</code></li>
+<li><code>environment</code>: <code>GF_SECURITY_ADMIN_USER=${GF_ADMIN_USER:-admin}</code>,
+  <code>GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD:-admin}</code></li>
+<li><code>volumes</code>:</li>
+<li><code>./grafana/provisioning:/etc/grafana/provisioning:ro</code></li>
+<li><code>./grafana/nbu-overview.json:/var/lib/grafana/dashboards/nbu-overview.json:ro</code></li>
+<li><code>./grafana/NBU Statistics-1629904585394.json:/var/lib/grafana/dashboards/nbu-statistics.json:ro</code></li>
+<li><code>grafana-storage:/var/lib/grafana</code></li>
+<li><code>security_opt: [no-new-privileges:true]</code>, <code>restart: unless-stopped</code>,
+  <code>depends_on: [prometheus]</code>, <code>networks: [monitoring]</code></li>
+<li>healthcheck: <code>wget --spider http://localhost:3000/api/health</code></li>
+</ul>
+</li>
+<li>Add <code>grafana-storage</code> to the <code>volumes:</code> block.</li>
+</ul>
+<h3 id="docker-composeghcryml-image-based-demo"><code>docker-compose.ghcr.yml</code> (image-based demo)</h3>
+<ul>
+<li>Same topology and provisioning as <code>docker-compose.yml</code>, except the exporter service
+  uses <code>image: ghcr.io/fjacquet/nbu_exporter:latest</code> and has no <code>build:</code> key.</li>
+</ul>
+<h3 id="deployprometheusnburulesyml"><code>deploy/prometheus/nbu.rules.yml</code></h3>
+<ul>
+<li><code>git mv grafana/alerts.yml deploy/prometheus/nbu.rules.yml</code> (content unchanged).</li>
+<li>Update the header comment's load-path example to the new mount path.</li>
+</ul>
+<h3 id="prometheusyml"><code>prometheus.yml</code></h3>
+<ul>
+<li>Add:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">rule_files</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/etc/prometheus/rules/nbu.rules.yml</span>
+</code></pre></div></li>
+<li>Keep existing scrape jobs unchanged.</li>
+</ul>
+<h3 id="grafana-provisioning-new">Grafana provisioning (new)</h3>
+<ul>
+<li><code>grafana/provisioning/datasources/datasource.yml</code>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">datasources</span><span class="p">:</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Prometheus</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prometheus</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">access</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">proxy</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://prometheus:9090</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">    </span><span class="nt">isDefault</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div></li>
+<li><code>grafana/provisioning/dashboards/dashboards.yml</code>:
+  <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">providers</span><span class="p">:</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">nbu</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">orgId</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">folder</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">NetBackup</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">file</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="nt">disableDeletion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">    </span><span class="nt">updateIntervalSeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">    </span><span class="nt">allowUiUpdates</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="nt">options</span><span class="p">:</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/var/lib/grafana/dashboards</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">      </span><span class="nt">foldersFromFilesStructure</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div>
-<h2 id="command-line-options">Command Line Options</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Flags:
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  -c, --config string   Path to configuration file (required)
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  -d, --debug           Enable debug mode
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  -h, --help            Help for nbu_exporter
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>      --trace           Log every NetBackup API response body (live-appliance
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>                        payload validation; bodies only, never headers; very verbose)
-</code></pre></div>
-<h3 id="validating-against-a-live-appliance">Validating against a live appliance</h3>
-<p><code>--trace</code> logs the method, URL, status, and body of every NetBackup API
-response so payload shapes can be checked against a real master server.
-Request and response headers are never logged (the <code>Authorization</code> API key
-cannot leak), and credential-bearing endpoints (login/token/API-key) are
-skipped entirely:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./bin/nbu_exporter<span class="w"> </span>--config<span class="w"> </span>config.yaml<span class="w"> </span>--trace
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>localhost:2112/metrics<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w">   </span><span class="c1"># trigger a scrape, then read the log</span>
-</code></pre></div>
+  The <code>${datasource}</code> template variable in the dashboards resolves to the default
+  provisioned Prometheus datasource automatically.</li>
+</ul>
+<h3 id="docs">Docs</h3>
+<ul>
+<li><code>docs/dashboards.md</code> (new): describe the overview and legacy dashboards, the panels,
+  and how they map to exporter metrics; note the provisioned datasource and folder.</li>
+<li><code>docs/deployment/docker.md</code> (update): add the <code>docker compose up</code> demo walkthrough
+  for both <code>docker-compose.yml</code> (build) and <code>docker-compose.ghcr.yml</code> (pull), with the
+  service URLs (exporter <code>:2112</code>, Prometheus <code>:9090</code>, Grafana <code>:3000</code> admin/admin).</li>
+<li><code>mkdocs.yml</code>: add <code>Dashboards: dashboards.md</code> under the Deployment nav section.</li>
+</ul>
+<h2 id="verification">Verification</h2>
+<p>No Go code, so no unit tests. Acceptance checks:
+- <code>docker compose -f docker-compose.yml config -q</code> → exit 0 (valid compose).
+- <code>docker compose -f docker-compose.ghcr.yml config -q</code> → exit 0.
+- <code>promtool check rules deploy/prometheus/nbu.rules.yml</code> → SUCCESS (if <code>promtool</code>
+  available; otherwise YAML-lint the file).
+- The two provisioning YAMLs parse (yaml-lint / <code>python3 -c yaml.safe_load</code>).
+- <code>mkdocs build --strict</code> → succeeds (nav + new page resolve).
+- Manual checklist (needs a reachable NBU appliance): <code>docker compose up</code>, confirm
+  Grafana at <code>:3000</code> shows the NetBackup folder with the overview dashboard populated
+  from the Prometheus datasource, and Prometheus <code>/rules</code> lists the nbu rules.</p>
+<h2 id="risks">Risks</h2>
+<ul>
+<li><strong>Datasource UID matching:</strong> dashboards use a <code>${datasource}</code> variable, not a hard
+  UID, so a single default Prometheus datasource is sufficient; verified by the manual
+  checklist.</li>
+<li><strong>Legacy dashboard on <code>main</code>:</strong> until #27 merges, the provisioned legacy dashboard is
+  the un-templatized version. Acceptable — it still loads; provisioning serves whatever
+  JSON is on disk.</li>
+<li><strong><code>:latest</code> image tags</strong> in the demo composes are intentional (consistent with the
+  existing compose files and the demo's purpose); not for production use.</li>
+</ul>
 
 
 
@@ -1363,10 +1422,10 @@ skipped entirely:</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

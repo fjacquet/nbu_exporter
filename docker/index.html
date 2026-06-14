@@ -16,7 +16,7 @@
         <link rel="prev" href="../deployment-quick-reference/">
       
       
-        <link rel="next" href="../config-examples/">
+        <link rel="next" href="../dashboards/">
       
       
         
@@ -907,6 +907,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#quickstart-demo-stack-docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quickstart demo stack (Docker Compose)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quickstart demo stack (Docker Compose)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#start-the-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start the stack
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Service URLs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-provisioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-provisioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tear-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tear down
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#verify-container" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -921,6 +993,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dashboards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dashboards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1175,6 +1275,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#quickstart-demo-stack-docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quickstart demo stack (Docker Compose)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quickstart demo stack (Docker Compose)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#start-the-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Start the stack
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#service-urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Service URLs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#auto-provisioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-provisioning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tear-down" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tear down
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#verify-container" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1247,10 +1419,64 @@
 </code></pre></div>
 <h2 id="docker-compose-with-opentelemetry">Docker Compose with OpenTelemetry</h2>
 <p>See the <a href="../opentelemetry-example/">OpenTelemetry Setup Guide</a> for a complete Docker Compose stack with OpenTelemetry Collector and Jaeger.</p>
+<h2 id="quickstart-demo-stack-docker-compose">Quickstart demo stack (Docker Compose)</h2>
+<p>The repository ships a self-contained demo stack — the exporter plus Prometheus and Grafana — so you
+can see metrics, alerts, and dashboards end to end with a single command.</p>
+<h3 id="start-the-stack">Start the stack</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Build the exporter locally, then start exporter + Prometheus + Grafana</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Or pull the published image instead of building</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>docker<span class="w"> </span>compose<span class="w"> </span>-f<span class="w"> </span>docker-compose.ghcr.yml<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p>The build variant uses <code>docker-compose.yml</code> and builds the exporter from the local source. The ghcr
+variant uses <code>docker-compose.ghcr.yml</code>, which pulls <code>ghcr.io/fjacquet/nbu_exporter:latest</code>; the two
+files are otherwise identical.</p>
+<h3 id="service-urls">Service URLs</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>URL</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Exporter metrics</td>
+<td><a href="http://localhost:2112/metrics">http://localhost:2112/metrics</a></td>
+<td>Scraped by the in-stack Prometheus</td>
+</tr>
+<tr>
+<td>Prometheus</td>
+<td><a href="http://localhost:9090">http://localhost:9090</a></td>
+<td>Loads alerting rules from <code>deploy/prometheus/nbu.rules.yml</code></td>
+</tr>
+<tr>
+<td>Grafana</td>
+<td><a href="http://localhost:3000">http://localhost:3000</a></td>
+<td>Default login <code>admin</code> / <code>admin</code></td>
+</tr>
+</tbody>
+</table>
+<p>Override the Grafana credentials with the <code>GF_ADMIN_USER</code> and <code>GF_ADMIN_PASSWORD</code> environment
+variables (for example in a gitignored <code>.env</code> file).</p>
+<h3 id="auto-provisioning">Auto-provisioning</h3>
+<p>The Grafana datasource and the NetBackup dashboards are provisioned automatically — no manual import
+is needed. See <a href="../dashboards/">Dashboards</a> for what is included. Prometheus loads the alerting rules
+from <code>deploy/prometheus/nbu.rules.yml</code>.</p>
+<h3 id="configuration">Configuration</h3>
+<p><code>config.yaml</code> is the source of truth for the exporter; it is mounted read-only into the container. For
+the single-target quickstart, set <code>NBU1_HOSTNAME</code> and <code>NBU1_APIKEY</code> (for example in a gitignored
+<code>.env</code> file) so the exporter knows which NetBackup master to query.</p>
+<h3 id="tear-down">Tear down</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Stop the stack and remove the named volumes (Prometheus + Grafana data)</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>down<span class="w"> </span>-v
+</code></pre></div>
 <h2 id="verify-container">Verify Container</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>nbu_exporter
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>curl<span class="w"> </span>http://localhost:2112/metrics
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>curl<span class="w"> </span>http://localhost:2112/health
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>nbu_exporter
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>curl<span class="w"> </span>http://localhost:2112/metrics
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>curl<span class="w"> </span>http://localhost:2112/health
 </code></pre></div>
 
 
