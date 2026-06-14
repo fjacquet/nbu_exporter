@@ -3,6 +3,7 @@ package exporter
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"testing"
 
@@ -40,6 +41,18 @@ func (f *fixtureClient) DetectAPIVersion(context.Context) (string, error) {
 }
 
 func (f *fixtureClient) Close() error { return nil }
+
+// errClient is a NetBackupClient mock whose FetchData always fails, used to
+// exercise sub-collector graceful-degradation/error paths.
+type errClient struct{}
+
+func (errClient) FetchData(context.Context, string, interface{}) error {
+	return errors.New("fetch failed")
+}
+func (errClient) DetectAPIVersion(context.Context) (string, error) {
+	return models.APIVersion140, nil
+}
+func (errClient) Close() error { return nil }
 
 // testConfig returns a minimal valid config with a base URL set, enough for
 // sub-collectors to build request URLs.

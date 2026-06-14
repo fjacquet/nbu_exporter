@@ -259,6 +259,9 @@ func buildSubCollectors(c *NbuCollector) []subCollector {
 	if c.cfg.Collectors.Catalog.Enabled {
 		subs = append(subs, newCatalogCollector(c.client, c.cfg))
 	}
+	if c.cfg.Collectors.SLO.Enabled {
+		subs = append(subs, newSLOCollector(c.client, c.cfg))
+	}
 	return subs
 }
 
