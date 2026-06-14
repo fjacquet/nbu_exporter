@@ -1,0 +1,7 @@
+{
+  "data": [
+    { "id": "slo-1", "type": "slov3", "attributes": { "name": "Gold" } },
+    { "id": "slo-2", "type": "slov3", "attributes": { "name": "Silver" } },
+    { "id": "slo-3", "type": "slov3", "attributes": { "name": "Bronze" } }
+  ]
+}
