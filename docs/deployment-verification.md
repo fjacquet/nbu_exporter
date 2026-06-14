@@ -522,7 +522,7 @@ echo "Test 2: Legacy configuration structure"
 cat > /tmp/test-config-2.yaml << 'EOF'
 server:
     host: "localhost"
-    port: "2113"
+    port: "2112"
     uri: "/metrics"
     scrapingInterval: "1h"
     logName: "/tmp/test2.log"
