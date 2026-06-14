@@ -1,6 +1,6 @@
 {
-  "uid": "nbu-overview",
-  "title": "NetBackup \u2014 Vue d'ensemble / Overview",
+  "uid": "nbu-jobs",
+  "title": "NetBackup \u2014 Sauvegardes / Jobs",
   "tags": [
     "netbackup",
     "nbu",
@@ -41,6 +41,28 @@
         "current": {},
         "hide": 0,
         "refresh": 1
+      },
+      {
+        "name": "policy_type",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "label": "Policy type",
+        "query": {
+          "query": "label_values(nbu_jobs_count, policy_type)",
+          "refId": "StandardVariableQuery"
+        },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "refresh": 2,
+        "sort": 1
       }
     ]
   },
@@ -62,7 +84,7 @@
     {
       "type": "row",
       "id": 1,
-      "title": "Sant\u00e9 / Health",
+      "title": "R\u00e9sultats / Outcomes",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -75,289 +97,6 @@
     {
       "type": "stat",
       "id": 2,
-      "title": "Disponibilit\u00e9 / Availability",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 1,
-        "w": 5,
-        "h": 4
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "mappings": [
-            {
-              "type": "value",
-              "options": {
-                "0": {
-                  "text": "DOWN",
-                  "color": "red"
-                },
-                "1": {
-                  "text": "UP",
-                  "color": "green"
-                }
-              }
-            }
-          ],
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "nbu_up",
-          "legendFormat": "",
-          "range": false,
-          "instant": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "stat",
-      "id": 3,
-      "title": "Version API / API version",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "gridPos": {
-        "x": 5,
-        "y": 1,
-        "w": 4,
-        "h": 4
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "mappings": [],
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "name"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "nbu_api_version",
-          "legendFormat": "{{version}}",
-          "range": false,
-          "instant": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "stat",
-      "id": 4,
-      "title": "Fra\u00eecheur scrape / Scrape staleness",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "gridPos": {
-        "x": 9,
-        "y": 1,
-        "w": 6,
-        "h": 4
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "mappings": [],
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 300
-              },
-              {
-                "color": "red",
-                "value": 900
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "time() - nbu_last_scrape_timestamp_seconds",
-          "legendFormat": "{{source}}",
-          "range": false,
-          "instant": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "timeseries",
-      "id": 5,
-      "title": "Latence API / API latency",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "gridPos": {
-        "x": 15,
-        "y": 1,
-        "w": 9,
-        "h": 4
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ms",
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "showPoints": "never",
-            "stacking": {
-              "mode": "none"
-            },
-            "lineWidth": 1
-          },
-          "color": {
-            "mode": "palette-classic"
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "mean",
-            "lastNotNull",
-            "max"
-          ]
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "nbu_response_time_ms",
-          "legendFormat": "r\u00e9ponse / response",
-          "range": true,
-          "instant": false,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "row",
-      "id": 6,
-      "title": "Indicateurs cl\u00e9s / Key indicators",
-      "collapsed": false,
-      "gridPos": {
-        "x": 0,
-        "y": 5,
-        "w": 24,
-        "h": 1
-      },
-      "panels": []
-    },
-    {
-      "type": "stat",
-      "id": 7,
       "title": "Taux succ\u00e8s BACKUP / Backup success rate",
       "datasource": {
         "type": "prometheus",
@@ -365,9 +104,9 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 6,
-        "w": 5,
-        "h": 5
+        "y": 1,
+        "w": 6,
+        "h": 8
       },
       "fieldConfig": {
         "defaults": {
@@ -425,124 +164,44 @@
       ]
     },
     {
-      "type": "stat",
-      "id": 8,
-      "title": "\u00c9checs BACKUP / Failed backups",
+      "type": "piechart",
+      "id": 3,
+      "title": "\u00c9tats des jobs / Job states",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
       "gridPos": {
-        "x": 5,
-        "y": 6,
-        "w": 5,
-        "h": 5
+        "x": 6,
+        "y": 1,
+        "w": 9,
+        "h": 8
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "none",
-          "mappings": [],
           "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
+            "mode": "palette-classic"
           }
         },
         "overrides": []
       },
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": [
+            "value",
+            "percent"
+          ]
+        },
+        "pieType": "donut",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
           ],
           "fields": "",
           "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "sum(nbu_status_count{action=\"BACKUP\"}) - sum(nbu_status_count{action=\"BACKUP\",status=\"0\"})",
-          "legendFormat": "",
-          "range": false,
-          "instant": true,
-          "refId": "A"
         }
-      ]
-    },
-    {
-      "type": "stat",
-      "id": 9,
-      "title": "Stockage % utilis\u00e9 / Storage % used",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "gridPos": {
-        "x": 10,
-        "y": 6,
-        "w": 4,
-        "h": 5
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "mappings": [],
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 80
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
       },
       "targets": [
         {
@@ -550,73 +209,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(nbu_disk_bytes{size=\"used\"}) / clamp_min(sum(nbu_disk_bytes), 1) * 100",
-          "legendFormat": "",
-          "range": false,
-          "instant": true,
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "type": "stat",
-      "id": 10,
-      "title": "Fichiers infect\u00e9s / Infected files",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "gridPos": {
-        "x": 14,
-        "y": 6,
-        "w": 5,
-        "h": 5
-      },
-      "fieldConfig": {
-        "defaults": {
-          "unit": "none",
-          "mappings": [],
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "expr": "sum(nbu_malware_files_infected)",
-          "legendFormat": "",
+          "expr": "sum by (state) (nbu_jobs_state_count)",
+          "legendFormat": "{{state}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -625,17 +219,17 @@
     },
     {
       "type": "barchart",
-      "id": 11,
-      "title": "Alertes par s\u00e9v\u00e9rit\u00e9 / Alerts by severity",
+      "id": 4,
+      "title": "Jobs par politique / Jobs by policy",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
       "gridPos": {
-        "x": 19,
-        "y": 6,
-        "w": 5,
-        "h": 5
+        "x": 15,
+        "y": 1,
+        "w": 9,
+        "h": 8
       },
       "fieldConfig": {
         "defaults": {
@@ -660,8 +254,334 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (severity) (nbu_alerts_count)",
-          "legendFormat": "{{severity}}",
+          "expr": "sum by (policy_type) (nbu_jobs_count{action=\"BACKUP\",policy_type=~\"$policy_type\"})",
+          "legendFormat": "{{policy_type}}",
+          "range": false,
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 5,
+      "title": "Volume & file / Volume & queue",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "id": 6,
+      "title": "Volume sauvegard\u00e9 / Backup volume",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal"
+            },
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (policy_type) (nbu_jobs_bytes{action=\"BACKUP\",policy_type=~\"$policy_type\"})",
+          "legendFormat": "{{policy_type}}",
+          "range": true,
+          "instant": false,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "id": 7,
+      "title": "Jobs en file / Queued jobs",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 10,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "legend": {
+          "showLegend": false
+        },
+        "xTickLabelRotation": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum by (reason) (nbu_jobs_queued_count)",
+          "legendFormat": "{{reason}}",
+          "range": false,
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "id": 8,
+      "title": "Dur\u00e9es & efficacit\u00e9 / Durations & efficiency",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "id": 9,
+      "title": "Dur\u00e9e jobs p50/p95 / Job duration p50/p95",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 16,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none"
+            },
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le, policy_type) (nbu_job_duration_seconds_bucket{policy_type=~\"$policy_type\"}))",
+          "legendFormat": "p95 {{policy_type}}",
+          "range": true,
+          "instant": false,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "histogram_quantile(0.50, sum by (le, policy_type) (nbu_job_duration_seconds_bucket{policy_type=~\"$policy_type\"}))",
+          "legendFormat": "p50 {{policy_type}}",
+          "range": true,
+          "instant": false,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 10,
+      "title": "Fichiers trait\u00e9s / Files processed",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 19,
+        "w": 4,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "sum(nbu_jobs_files_count{policy_type=~\"$policy_type\"})",
+          "legendFormat": "",
+          "range": false,
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "id": 11,
+      "title": "D\u00e9dup moyenne / Mean dedup ratio",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 19,
+        "w": 4,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "mappings": [],
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "expr": "avg(nbu_jobs_dedup_ratio{policy_type=~\"$policy_type\"})",
+          "legendFormat": "",
           "range": false,
           "instant": true,
           "refId": "A"

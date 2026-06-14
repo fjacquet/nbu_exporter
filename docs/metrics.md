@@ -116,14 +116,28 @@ scrape_configs:
 
 Alerting rules are provided in `grafana/alerts.yml` (load via `rule_files`).
 
-## Grafana Dashboard
+## Dashboards
 
-Two dashboards live in the `grafana/` directory:
+The Grafana dashboards are **generated** by `python3 grafana/build_dashboards.py`
+(pure Python stdlib). Never hand-edit the JSON in `grafana/` — the generator is the
+single source of truth and a metric-reference validator fails the build on any
+unknown `nbu_*` name. Regenerate after changing the builders in `grafana/gen/`.
 
-- `grafana/nbu-overview.json` — fully templated overview (health, storage, jobs,
-  durations). Recommended; works on any server via the `$storage_unit` /
-  `$policy_type` template variables.
-- `grafana/NBU Statistics-1629904585394.json` — the original 2021 dashboard, kept
-  for reference.
+Four focused dashboards live in the `grafana/` directory:
+
+| File | uid | Focus |
+|------|-----|-------|
+| `grafana/nbu-overview.json` | `nbu-overview` | One-screen health + headline KPIs |
+| `grafana/nbu-jobs.json` | `nbu-jobs` | Backup outcomes, states, volume, queue, durations, dedup |
+| `grafana/nbu-storage.json` | `nbu-storage` | Capacity utilization, storage units, limits |
+| `grafana/nbu-dataprotection.json` | `nbu-dataprotection` | Alerts, malware scans, catalog posture, SLOs (11.2) |
+
+The dashboards cross-link to each other via the shared `netbackup` tag (a tag-based
+dashboard-links dropdown) and use the `${datasource}` template variable so they work
+on any server. Jobs adds a `policy_type` variable and Storage adds a `storage_unit`
+variable for per-unit / per-policy filtering.
+
+The legacy "NBU Statistics" dashboard (the original 2021 export) was retired; its
+views now live in the Storage and Jobs dashboards.
 
 To import: load the JSON into Grafana and select your Prometheus datasource.
