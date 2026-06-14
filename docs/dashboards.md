@@ -40,3 +40,15 @@ data, so it is safe to leave in place on older NetBackup versions.
 
 The previous single overview and the legacy "NBU Statistics" dashboard have been retired; their views
 now live in the Overview, Jobs, and Storage dashboards above.
+
+## Node Exporter Full (Grafana 1860)
+
+This repo bundles the community [Node Exporter Full](https://grafana.com/grafana/dashboards/1860-node-exporter-full/)
+dashboard (`node-exporter-full.json`, auto-provisioned). It visualizes **host OS** metrics
+(CPU, memory, disk, network) exposed by [`prom/node-exporter`](https://hub.docker.com/r/prom/node-exporter) —
+**not** this exporter's own metrics.
+
+`node_exporter` is **not** part of this demo stack: it belongs on the hosts you actually want to
+monitor, not bolted onto the exporter's compose. To use this dashboard, run `prom/node-exporter`
+on those hosts and add a `node-exporter` scrape job to your Prometheus; the dashboard then
+visualizes them.
