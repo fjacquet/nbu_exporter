@@ -53,7 +53,7 @@ The exporter can automatically detect the highest supported API version availabl
    ```yaml
    server:
        host: "localhost"
-       port: "2112"
+       port: "9440"
        uri: "/metrics"
        scrapingInterval: "1h"
        logName: "log/nbu-exporter.log"
@@ -86,7 +86,7 @@ The exporter can automatically detect the highest supported API version availabl
 
 5. **Test metrics endpoint**
    ```bash
-   curl http://localhost:2112/metrics | grep nbu_
+   curl http://localhost:9440/metrics | grep nbu_
    ```
 
 **Expected Result:** Exporter automatically detects API version 13.0 and collects metrics successfully.
@@ -152,7 +152,7 @@ The exporter can automatically detect the highest supported API version availabl
 
 4. **Verify metrics collection**
    ```bash
-   curl http://localhost:2112/metrics | grep nbu_api_version
+   curl http://localhost:9440/metrics | grep nbu_api_version
    # Expected: nbu_api_version{version="13.0"} 1
    ```
 
@@ -248,7 +248,7 @@ nbuserver:
      nbu_exporter:
        image: nbu_exporter:latest
        ports:
-         - "2112:2112"
+         - "9440:9440"
        volumes:
          - ./config.yaml:/config.yaml:ro
        command: ["--config", "/config.yaml"]
@@ -291,7 +291,7 @@ nbuserver:
      config.yaml: |
        server:
          host: "0.0.0.0"
-         port: "2112"
+         port: "9440"
          uri: "/metrics"
          scrapingInterval: "1h"
          logName: "/var/log/nbu-exporter.log"
@@ -328,7 +328,7 @@ nbuserver:
          - name: nbu-exporter
            image: nbu_exporter:latest
            ports:
-           - containerPort: 2112
+           - containerPort: 9440
            volumeMounts:
            - name: config
              mountPath: /config.yaml
@@ -386,7 +386,7 @@ nbuserver:
 
 4. **Verify metrics collection**
    ```bash
-   curl http://localhost:2112/metrics | grep nbu_
+   curl http://localhost:9440/metrics | grep nbu_
    ```
 
 ---
@@ -441,7 +441,7 @@ nbuserver:
 
 5. **Verify functionality**
    ```bash
-   curl http://localhost:2112/metrics | grep nbu_
+   curl http://localhost:9440/metrics | grep nbu_
    ```
 
 ---
@@ -516,7 +516,7 @@ nbuserver:
 
 1. **Check API version metric**
    ```bash
-   curl http://localhost:2112/metrics | grep nbu_api_version
+   curl http://localhost:9440/metrics | grep nbu_api_version
    ```
 
 2. **Verify NetBackup API responses**
@@ -579,7 +579,7 @@ After migration, verify the following:
 
 ### ✅ Metrics Collection
 
-- [ ] Metrics endpoint responds: `curl http://localhost:2112/metrics`
+- [ ] Metrics endpoint responds: `curl http://localhost:9440/metrics`
 - [ ] Job metrics are present: `grep nbu_jobs_count`
 - [ ] Storage metrics are present: `grep nbu_storage_bytes`
 - [ ] API version metric is present: `grep nbu_api_version`

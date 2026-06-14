@@ -49,7 +49,7 @@ echo "Test 4: Backward compatibility - config without API version"
 cat > /tmp/test-config-no-version.yaml << 'EOF'
 server:
     host: "localhost"
-    port: "2112"
+    port: "9440"
     uri: "/metrics"
     scrapingInterval: "5m"
     logName: "/tmp/test-deployment.log"

@@ -26,7 +26,7 @@ Edit `config.yaml` to enable OpenTelemetry:
 ```yaml
 server:
     host: "localhost"
-    port: "2112"
+    port: "9440"
     uri: "/metrics"
     scrapingInterval: "1h"
     logName: "log/nbu-exporter.log"
@@ -60,8 +60,8 @@ docker-compose -f docker-compose-otel.yaml logs -f nbu_exporter
 
 ### 3. Access the Services
 
-- **NBU Exporter Metrics**: http://localhost:2112/metrics
-- **NBU Exporter Health**: http://localhost:2112/health
+- **NBU Exporter Metrics**: http://localhost:9440/metrics
+- **NBU Exporter Health**: http://localhost:9440/health
 - **Jaeger UI**: http://localhost:16686
 - **Prometheus**: http://localhost:9090 (if enabled)
 - **Collector Metrics**: http://localhost:8888/metrics

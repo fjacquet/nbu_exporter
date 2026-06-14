@@ -26,7 +26,7 @@ curl -k -H "Authorization: YOUR_API_KEY" \
 
 # Verify current exporter is running
 ps aux | grep nbu_exporter
-curl http://localhost:2112/health
+curl http://localhost:9440/health
 ```
 
 ## Deployment Procedures
@@ -157,7 +157,7 @@ docker pull fjacquet/nbu_exporter:latest
 # Start new container
 docker run -d \
   --name nbu_exporter \
-  -p 2112:2112 \
+  -p 9440:9440 \
   -v $(pwd)/config.yaml:/config.yaml \
   --restart unless-stopped \
   fjacquet/nbu_exporter:latest --config /config.yaml
@@ -177,7 +177,7 @@ ps aux | grep nbu_exporter
 docker ps | grep nbu_exporter
 
 # Check health endpoint
-curl http://localhost:2112/health
+curl http://localhost:9440/health
 # Expected: {"status":"healthy"}
 ```
 
@@ -185,10 +185,10 @@ curl http://localhost:2112/health
 
 ```bash
 # Check metrics endpoint responds
-curl -s http://localhost:2112/metrics | head -20
+curl -s http://localhost:9440/metrics | head -20
 
 # Verify NBU-specific metrics are present
-curl -s http://localhost:2112/metrics | grep -E "^nbu_" | head -10
+curl -s http://localhost:9440/metrics | grep -E "^nbu_" | head -10
 
 # Expected metrics:
 # nbu_storage_bytes{...}
@@ -212,16 +212,16 @@ tail -50 log/nbu-exporter.log | grep -E "Successfully fetched|API version"
 
 ```bash
 # Verify storage metrics have data
-curl -s http://localhost:2112/metrics | grep "nbu_storage_bytes" | wc -l
+curl -s http://localhost:9440/metrics | grep "nbu_storage_bytes" | wc -l
 # Should be > 0 if storage units exist
 
 # Verify job metrics have data
-curl -s http://localhost:2112/metrics | grep "nbu_jobs_count" | wc -l
+curl -s http://localhost:9440/metrics | grep "nbu_jobs_count" | wc -l
 # Should be > 0 if jobs exist in time window
 
 # Check metric values are reasonable
-curl -s http://localhost:2112/metrics | grep "nbu_storage_bytes" | grep "size=\"free\""
-curl -s http://localhost:2112/metrics | grep "nbu_jobs_count"
+curl -s http://localhost:9440/metrics | grep "nbu_storage_bytes" | grep "size=\"free\""
+curl -s http://localhost:9440/metrics | grep "nbu_jobs_count"
 ```
 
 ### Level 5: Prometheus Integration
@@ -261,7 +261,7 @@ curl -s 'http://prometheus:9090/api/v1/query?query=scrape_duration_seconds{job="
 cat > test-config-no-version.yaml << 'EOF'
 server:
     host: "localhost"
-    port: "2112"
+    port: "9440"
     uri: "/metrics"
     scrapingInterval: "1h"
     logName: "log/test.log"
@@ -308,10 +308,10 @@ kill -TERM $LEGACY_PID
 
 ```bash
 # Capture metrics before upgrade
-curl -s http://localhost:2112/metrics | grep "^nbu_" > metrics-before.txt
+curl -s http://localhost:9440/metrics | grep "^nbu_" > metrics-before.txt
 
 # After upgrade, capture again
-curl -s http://localhost:2112/metrics | grep "^nbu_" > metrics-after.txt
+curl -s http://localhost:9440/metrics | grep "^nbu_" > metrics-after.txt
 
 # Compare metric names (should be identical)
 diff <(cut -d'{' -f1 metrics-before.txt | sort -u) \
@@ -352,8 +352,8 @@ sudo systemctl start nbu_exporter
 # Or: ./bin/nbu_exporter --config config.yaml &
 
 # Verify rollback
-curl http://localhost:2112/health
-curl http://localhost:2112/metrics | grep "^nbu_" | head -5
+curl http://localhost:9440/health
+curl http://localhost:9440/metrics | grep "^nbu_" | head -5
 ```
 
 ### Detailed Rollback Steps
@@ -410,7 +410,7 @@ sudo systemctl status nbu_exporter
 # Docker
 docker run -d \
   --name nbu_exporter \
-  -p 2112:2112 \
+  -p 9440:9440 \
   -v $(pwd)/config.yaml:/config.yaml \
   --restart unless-stopped \
   fjacquet/nbu_exporter:previous-version --config /config.yaml
@@ -424,11 +424,11 @@ echo $! > nbu_exporter.pid
 
 ```bash
 # Check health
-curl http://localhost:2112/health
+curl http://localhost:9440/health
 # Expected: {"status":"healthy"}
 
 # Check metrics
-curl -s http://localhost:2112/metrics | grep "^nbu_" | wc -l
+curl -s http://localhost:9440/metrics | grep "^nbu_" | wc -l
 # Should be > 0
 
 # Check logs
@@ -492,7 +492,7 @@ echo "Test 1: Configuration without API version field"
 cat > /tmp/test-config-1.yaml << 'EOF'
 server:
     host: "localhost"
-    port: "2112"
+    port: "9440"
     uri: "/metrics"
     scrapingInterval: "5m"
     logName: "/tmp/test1.log"
@@ -522,7 +522,7 @@ echo "Test 2: Legacy configuration structure"
 cat > /tmp/test-config-2.yaml << 'EOF'
 server:
     host: "localhost"
-    port: "2112"
+    port: "9440"
     uri: "/metrics"
     scrapingInterval: "1h"
     logName: "/tmp/test2.log"
@@ -559,7 +559,7 @@ EXPECTED_METRICS=(
 )
 
 for metric in "${EXPECTED_METRICS[@]}"; do
-    if curl -s http://localhost:2112/metrics | grep -q "^# HELP $metric"; then
+    if curl -s http://localhost:9440/metrics | grep -q "^# HELP $metric"; then
         echo "✓ PASS: Metric $metric exists"
     else
         echo "✗ FAIL: Metric $metric missing"
@@ -592,10 +592,10 @@ Monitor these metrics closely:
 
 ```bash
 # Check error rate
-curl -s http://localhost:2112/metrics | grep "nbu_scrape_errors_total"
+curl -s http://localhost:9440/metrics | grep "nbu_scrape_errors_total"
 
 # Check scrape duration
-curl -s http://localhost:2112/metrics | grep "nbu_scrape_duration_seconds"
+curl -s http://localhost:9440/metrics | grep "nbu_scrape_duration_seconds"
 
 # Monitor logs for errors
 tail -f log/nbu-exporter.log | grep -E "ERROR|WARN"
@@ -647,7 +647,7 @@ Establish performance baselines:
 
 ```bash
 # Scrape duration baseline
-curl -s http://localhost:2112/metrics | grep "nbu_scrape_duration_seconds"
+curl -s http://localhost:9440/metrics | grep "nbu_scrape_duration_seconds"
 
 # Memory usage baseline
 ps aux | grep nbu_exporter | awk '{print $6}'
@@ -724,7 +724,7 @@ curl -k -H "Authorization: YOUR_API_KEY" \
 tail -100 log/nbu-exporter.log | grep -E "ERROR|Successfully"
 
 # Test metrics endpoint
-curl -s http://localhost:2112/metrics | grep "^nbu_" | wc -l
+curl -s http://localhost:9440/metrics | grep "^nbu_" | wc -l
 
 # Check Prometheus scraping
 curl -s 'http://prometheus:9090/api/v1/query?query=up{job="netbackup"}'
@@ -895,14 +895,14 @@ echo
 
 # Verify deployment
 echo "Verifying deployment..."
-if curl -sf http://localhost:2112/health > /dev/null; then
+if curl -sf http://localhost:9440/health > /dev/null; then
     echo "✓ Health check passed"
 else
     echo "✗ Health check failed"
     exit 1
 fi
 
-if curl -s http://localhost:2112/metrics | grep -q "^nbu_"; then
+if curl -s http://localhost:9440/metrics | grep -q "^nbu_"; then
     echo "✓ Metrics available"
 else
     echo "✗ Metrics not available"
@@ -998,14 +998,14 @@ echo
 
 # Verify rollback
 echo "Verifying rollback..."
-if curl -sf http://localhost:2112/health > /dev/null; then
+if curl -sf http://localhost:9440/health > /dev/null; then
     echo "✓ Health check passed"
 else
     echo "✗ Health check failed"
     exit 1
 fi
 
-if curl -s http://localhost:2112/metrics | grep -q "^nbu_"; then
+if curl -s http://localhost:9440/metrics | grep -q "^nbu_"; then
     echo "✓ Metrics available"
 else
     echo "✗ Metrics not available"

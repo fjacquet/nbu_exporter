@@ -20,8 +20,8 @@ Create `config.yaml` with your NetBackup server details. See [Configuration](con
 
 The exporter exposes:
 
-- **Metrics**: `http://localhost:2112/metrics`
-- **Health**: `http://localhost:2112/health`
+- **Metrics**: `http://localhost:9440/metrics`
+- **Health**: `http://localhost:9440/health`
 
 ## 4. Add to Prometheus
 
@@ -29,7 +29,7 @@ The exporter exposes:
 scrape_configs:
   - job_name: 'netbackup'
     static_configs:
-      - targets: ['localhost:2112']
+      - targets: ['localhost:9440']
     scrape_interval: 60s
     scrape_timeout: 30s
 ```
@@ -55,5 +55,5 @@ skipped entirely:
 
 ```bash
 ./bin/nbu_exporter --config config.yaml --trace
-curl -s localhost:2112/metrics > /dev/null   # trigger a scrape, then read the log
+curl -s localhost:9440/metrics > /dev/null   # trigger a scrape, then read the log
 ```

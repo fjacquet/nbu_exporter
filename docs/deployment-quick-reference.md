@@ -29,8 +29,8 @@ grep -q "apiVersion:" config.yaml || \
 sudo systemctl start nbu_exporter
 
 # 5. Verify
-curl http://localhost:2112/health
-curl http://localhost:2112/metrics | grep "^nbu_" | head -5
+curl http://localhost:9440/health
+curl http://localhost:9440/metrics | grep "^nbu_" | head -5
 ```
 
 ## Quick Rollback
@@ -48,17 +48,17 @@ cp "${BACKUP_DIR}nbu_exporter" bin/nbu_exporter
 sudo systemctl start nbu_exporter
 
 # 4. Verify
-curl http://localhost:2112/health
+curl http://localhost:9440/health
 ```
 
 ## Verification Commands
 
 ```bash
 # Health check
-curl http://localhost:2112/health
+curl http://localhost:9440/health
 
 # Metrics check
-curl -s http://localhost:2112/metrics | grep "^nbu_" | wc -l
+curl -s http://localhost:9440/metrics | grep "^nbu_" | wc -l
 
 # Log check
 tail -50 log/nbu-exporter.log | grep -E "ERROR|Successfully"

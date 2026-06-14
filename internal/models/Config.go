@@ -353,7 +353,7 @@ func (c *Config) GetNBUBaseURL() string {
 // GetServerAddress returns the complete server address for HTTP server binding.
 // Format: host:port
 //
-// Example: "0.0.0.0:2112"
+// Example: "0.0.0.0:9440"
 func (c *Config) GetServerAddress() string {
 	return fmt.Sprintf("%s:%s", c.Server.Host, c.Server.Port)
 }

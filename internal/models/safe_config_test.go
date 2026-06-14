@@ -10,7 +10,7 @@ import (
 func TestNewSafeConfig(t *testing.T) {
 	cfg := &Config{}
 	cfg.Server.Host = "localhost"
-	cfg.Server.Port = "2112"
+	cfg.Server.Port = "9440"
 
 	sc := NewSafeConfig(cfg)
 
@@ -25,7 +25,7 @@ func TestNewSafeConfig(t *testing.T) {
 func TestSafeConfigGet(t *testing.T) {
 	cfg := &Config{}
 	cfg.Server.Host = "localhost"
-	cfg.Server.Port = "2112"
+	cfg.Server.Port = "9440"
 	cfg.NbuServer.Host = "nbu1.example.com"
 	cfg.NbuServer.Port = "1556"
 
@@ -43,7 +43,7 @@ func TestSafeConfigGet(t *testing.T) {
 func TestSafeConfigConcurrentAccess(t *testing.T) {
 	cfg := &Config{}
 	cfg.Server.Host = "localhost"
-	cfg.Server.Port = "2112"
+	cfg.Server.Port = "9440"
 	cfg.NbuServer.Host = "nbu1.example.com"
 	cfg.NbuServer.Port = "1556"
 	sc := NewSafeConfig(cfg)
@@ -70,7 +70,7 @@ func TestSafeConfigReloadServerChanged(t *testing.T) {
 
 	initialConfig := `server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "5m"
 nbuserver:
@@ -100,7 +100,7 @@ nbuserver:
 	// Update config with different server
 	newConfig := `server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "5m"
 nbuserver:
@@ -134,7 +134,7 @@ func TestSafeConfigReloadPortChanged(t *testing.T) {
 
 	initialConfig := `server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "5m"
 nbuserver:
@@ -155,7 +155,7 @@ nbuserver:
 	// Change port only
 	newConfig := `server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "5m"
 nbuserver:
@@ -205,7 +205,7 @@ func TestSafeConfigReloadInvalidConfig(t *testing.T) {
 	// Start with valid config
 	cfg := &Config{}
 	cfg.Server.Host = "localhost"
-	cfg.Server.Port = "2112"
+	cfg.Server.Port = "9440"
 	cfg.Server.URI = "/metrics"
 	cfg.Server.ScrapingInterval = "5m"
 	cfg.NbuServer.Host = "nbu1.example.com"
@@ -234,7 +234,7 @@ func TestSafeConfigReloadMalformedYAML(t *testing.T) {
 	// Write malformed YAML
 	malformedConfig := `server:
   host: "localhost
-  port: 2112
+  port: 9440
     invalid indent
 `
 	if err := os.WriteFile(configPath, []byte(malformedConfig), 0644); err != nil {
@@ -263,7 +263,7 @@ func TestSafeConfigConcurrentReload(t *testing.T) {
 
 	validConfig := `server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "5m"
 nbuserver:

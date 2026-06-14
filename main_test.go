@@ -540,10 +540,10 @@ func TestServerErrorPropagation(t *testing.T) {
 func TestConfigGetServerAddress(t *testing.T) {
 	cfg := createTestConfig()
 	cfg.Server.Host = "0.0.0.0"
-	cfg.Server.Port = "2112"
+	cfg.Server.Port = "9440"
 
 	addr := cfg.GetServerAddress()
-	assert.Equal(t, "0.0.0.0:2112", addr)
+	assert.Equal(t, "0.0.0.0:9440", addr)
 }
 
 // TestConfigGetNBUBaseURL verifies NBU base URL construction.

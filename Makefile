@@ -83,7 +83,7 @@ run-cli: cli
 
 # Run the Docker container
 run-docker: docker
-	docker run -d -p 2112:2112 --name $(CLI_BIN) $(CLI_BIN)
+	docker run -d -p 9440:9440 --name $(CLI_BIN) $(CLI_BIN)
 
 # Clean up build artifacts
 clean:

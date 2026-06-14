@@ -117,7 +117,7 @@ func TestIntegrationBackwardCompatibility(t *testing.T) {
 			LogName          string `yaml:"logName"`
 			CacheTTL         string `yaml:"cacheTTL"`
 		}{
-			Port:             "2112",
+			Port:             "9440",
 			Host:             "localhost",
 			URI:              "/metrics",
 			ScrapingInterval: "5m",

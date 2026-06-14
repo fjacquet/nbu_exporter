@@ -241,7 +241,7 @@ nbuserver:
 ---
 server:
     host: "localhost"
-    port: "2112"
+    port: "9440"
     uri: "/metrics"
     scrapingInterval: "1h"
     logName: "log/nbu-exporter.log"
@@ -264,7 +264,7 @@ nbuserver:
 ### 1. Check Health Endpoint
 
 ```bash
-curl http://localhost:2112/health
+curl http://localhost:9440/health
 
 # Expected output:
 # {"status":"healthy"}
@@ -273,7 +273,7 @@ curl http://localhost:2112/health
 ### 2. Check Metrics Endpoint
 
 ```bash
-curl http://localhost:2112/metrics | grep nbu_
+curl http://localhost:9440/metrics | grep nbu_
 
 # Expected output should include:
 # nbu_storage_bytes{name="...",type="...",size="free"} ...
@@ -351,10 +351,10 @@ sudo systemctl status nbu_exporter
 
 ```bash
 # Check health
-curl http://localhost:2112/health
+curl http://localhost:9440/health
 
 # Check metrics
-curl http://localhost:2112/metrics | grep nbu_
+curl http://localhost:9440/metrics | grep nbu_
 ```
 
 ### Step 6: Report Issue
@@ -414,12 +414,12 @@ tail -f log/nbu-exporter.log
 ps aux | grep nbu_exporter
 
 # Check if port is accessible
-curl http://localhost:2112/health
+curl http://localhost:9440/health
 ```
 
 **Solutions:**
 1. Verify exporter is running
-2. Check firewall rules allow access to port 2112
+2. Check firewall rules allow access to port 9440
 3. Verify NetBackup API is accessible
 4. Check API key is valid and not expired
 
@@ -470,7 +470,7 @@ ERROR Failed to fetch data: HTTP 401 Unauthorized
 ps aux | grep nbu_exporter
 
 # Check job count
-curl http://localhost:2112/metrics | grep nbu_jobs_count
+curl http://localhost:9440/metrics | grep nbu_jobs_count
 ```
 
 **Solutions:**
@@ -507,7 +507,7 @@ curl http://localhost:2112/metrics | grep nbu_jobs_count
 **Diagnosis:**
 ```bash
 # Check what metrics are available
-curl http://localhost:2112/metrics | grep nbu_
+curl http://localhost:9440/metrics | grep nbu_
 
 # Check logs for errors
 grep ERROR log/nbu-exporter.log

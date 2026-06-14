@@ -387,7 +387,7 @@ func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 			LogName          string `yaml:"logName"`
 			CacheTTL         string `yaml:"cacheTTL"`
 		}{
-			Port:             "2112",
+			Port:             "9440",
 			Host:             "localhost",
 			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
@@ -449,7 +449,7 @@ func TestNbuCollectorCreateScrapeSpanWithTracer(t *testing.T) {
 			LogName          string `yaml:"logName"`
 			CacheTTL         string `yaml:"cacheTTL"`
 		}{
-			Port:             "2112",
+			Port:             "9440",
 			Host:             "localhost",
 			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
@@ -517,7 +517,7 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 			LogName          string `yaml:"logName"`
 			CacheTTL         string `yaml:"cacheTTL"`
 		}{
-			Port:             "2112",
+			Port:             "9440",
 			Host:             "localhost",
 			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
@@ -634,7 +634,7 @@ func TestNbuCollectorTracingDisabled(t *testing.T) {
 			LogName          string `yaml:"logName"`
 			CacheTTL         string `yaml:"cacheTTL"`
 		}{
-			Port:             "2112",
+			Port:             "9440",
 			Host:             "localhost",
 			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
@@ -709,7 +709,7 @@ func TestNbuCollectorStorageCacheIntegration(t *testing.T) {
 			LogName          string `yaml:"logName"`
 			CacheTTL         string `yaml:"cacheTTL"`
 		}{
-			Port:             "2112",
+			Port:             "9440",
 			Host:             "localhost",
 			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
@@ -780,7 +780,7 @@ func TestNbuCollectorHelpStringIncludesTTL(t *testing.T) {
 			LogName          string `yaml:"logName"`
 			CacheTTL         string `yaml:"cacheTTL"`
 		}{
-			Port:             "2112",
+			Port:             "9440",
 			Host:             "localhost",
 			URI:              testPathMetrics,
 			ScrapingInterval: "5m",

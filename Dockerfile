@@ -32,7 +32,7 @@ COPY --from=builder /app/nbu_exporter /usr/bin/nbu_exporter
 COPY config.yaml /etc/nbu_exporter/config.yaml
 
 # Expose the default port (configurable via config.yaml)
-EXPOSE 2112
+EXPOSE 9440
 
 USER nbu
 

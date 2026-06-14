@@ -3,7 +3,7 @@
 # The exporter will try versions in order: 14.0 -> 13.0 -> 12.0 -> 3.0
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "1h"
   logName: "stdout" # stdout-only logging (see config.yaml for file-logging notes)

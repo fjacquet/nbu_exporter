@@ -42,7 +42,7 @@ make sbom                   # CycloneDX SBOM -> dist/sbom.cdx.json
 
 # Docker
 make docker                 # Build image
-make run-docker             # Run container on port 2112
+make run-docker             # Run container on port 9440
 
 # Clean
 make clean

@@ -51,7 +51,7 @@ func TestLoadDotEnvFeedsInterpolation(t *testing.T) {
 	if err := os.WriteFile(cfgPath, []byte(`
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "1h"
   logName: "test.log"

@@ -1,7 +1,7 @@
 ---
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "1h" # Changed from scrappingInterval (typo fix)
   # "stdout" (also "" or "-") logs to stdout only — ideal for containers
