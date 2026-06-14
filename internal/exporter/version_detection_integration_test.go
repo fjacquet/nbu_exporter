@@ -136,7 +136,9 @@ func TestFallbackBehavior(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
 		requestedVersion := ""
-		if strings.Contains(acceptHeader, testutil.APIVersion130) {
+		if strings.Contains(acceptHeader, testutil.APIVersion140) {
+			requestedVersion = "14.0"
+		} else if strings.Contains(acceptHeader, testutil.APIVersion130) {
 			requestedVersion = "13.0"
 		} else if strings.Contains(acceptHeader, testutil.APIVersion120) {
 			requestedVersion = "12.0"
@@ -180,8 +182,8 @@ func TestFallbackBehavior(t *testing.T) {
 		t.Errorf("Expected version 3.0, got %s", detectedVersion)
 	}
 
-	// Verify fallback order: 13.0 -> 12.0 -> 3.0
-	expectedOrder := []string{"13.0", "12.0", "3.0"}
+	// Verify fallback order: 14.0 -> 13.0 -> 12.0 -> 3.0
+	expectedOrder := []string{"14.0", "13.0", "12.0", "3.0"}
 	if len(attemptedVersions) != len(expectedOrder) {
 		t.Errorf("Expected %d version attempts, got %d", len(expectedOrder), len(attemptedVersions))
 	}
