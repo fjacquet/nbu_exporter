@@ -4,7 +4,11 @@ server:
   port: "2112"
   uri: "/metrics"
   scrapingInterval: "1h" # Changed from scrappingInterval (typo fix)
-  logName: "log/nbu-exporter.log"
+  # "stdout" (also "" or "-") logs to stdout only — ideal for containers
+  # (captured by `docker logs`), systemd/journald, and Kubernetes. Set a file
+  # path (e.g. "/var/log/nbu_exporter/nbu-exporter.log") to also write a file;
+  # its parent directory must already exist and be writable.
+  logName: "stdout"
 nbuserver:
   scheme: "https"
   uri: "/netbackup"

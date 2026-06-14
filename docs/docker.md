@@ -83,6 +83,23 @@ files are otherwise identical.
 Override the Grafana credentials with the `GF_ADMIN_USER` and `GF_ADMIN_PASSWORD` environment
 variables (for example in a gitignored `.env` file).
 
+### Host ports
+
+If a host port is already in use (for example another Prometheus on `9090`), override the published
+port without editing the compose files:
+
+```bash
+NBU_EXPORTER_PORT=12112 PROMETHEUS_PORT=19090 GRAFANA_PORT=13000 docker compose up -d
+```
+
+The defaults are `2112` (exporter), `9090` (Prometheus), and `3000` (Grafana).
+
+### Logs
+
+The exporter logs to stdout (`logName: "stdout"` in `config.yaml`), so view logs with
+`docker compose logs -f nbu_exporter`. No log directory or bind mount is required; set `logName` to a
+file path in `config.yaml` if you also want a log file.
+
 ### Auto-provisioning
 
 The Grafana datasource and the NetBackup dashboards are provisioned automatically — no manual import
