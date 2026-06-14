@@ -253,6 +253,9 @@ func buildSubCollectors(c *NbuCollector) []subCollector {
 	if c.cfg.Collectors.Alerts.Enabled {
 		subs = append(subs, newAlertsCollector(c.client, c.cfg))
 	}
+	if c.cfg.Collectors.Malware.Enabled {
+		subs = append(subs, newMalwareCollector(c.client, c.cfg))
+	}
 	return subs
 }
 
