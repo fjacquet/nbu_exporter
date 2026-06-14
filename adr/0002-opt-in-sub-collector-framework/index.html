@@ -10,31 +10,27 @@
       
       
       
-        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/metrics/">
+        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/adr/0002-opt-in-sub-collector-framework/">
       
       
-        <link rel="prev" href="../getting-started/quickstart/">
-      
-      
-        <link rel="next" href="../opentelemetry-example/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Metrics Reference - NBU Exporter</title>
+        <title>ADR-0002: Pluggable opt-in sub-collector framework - NBU Exporter</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +49,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#metrics-reference" class="md-skip">
+        <a href="#adr-0002-pluggable-opt-in-sub-collector-framework" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +90,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+    <a href="../.." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Metrics Reference
+              ADR-0002: Pluggable opt-in sub-collector framework
             
           </span>
         </div>
@@ -230,7 +226,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+    <a href="../.." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -260,7 +256,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -341,7 +337,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/installation/" class="md-nav__link">
+      <a href="../../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -369,7 +365,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/configuration/" class="md-nav__link">
+      <a href="../../getting-started/configuration/" class="md-nav__link">
         
   
   
@@ -397,7 +393,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/quickstart/" class="md-nav__link">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
         
   
   
@@ -429,37 +425,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metrics Reference
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../metrics/" class="md-nav__link">
         
   
   
@@ -475,120 +444,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#job-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Job Metrics
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#storage-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Storage Metrics
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#netbackup-112-opt-in-collectors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        NetBackup 11.2 opt-in collectors
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="NetBackup 11.2 opt-in collectors">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-the-collectors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling the collectors
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#system-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System Metrics
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#label-encoding" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Label Encoding
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prometheus-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prometheus Configuration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#grafana-dashboard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Grafana Dashboard
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -654,7 +509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../opentelemetry-example/" class="md-nav__link">
+      <a href="../../opentelemetry-example/" class="md-nav__link">
         
   
   
@@ -682,7 +537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../trace-analysis-guide/" class="md-nav__link">
+      <a href="../../trace-analysis-guide/" class="md-nav__link">
         
   
   
@@ -771,7 +626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../netbackup-11-migration/" class="md-nav__link">
+      <a href="../../netbackup-11-migration/" class="md-nav__link">
         
   
   
@@ -799,7 +654,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-10.5-migration/" class="md-nav__link">
+      <a href="../../api-10.5-migration/" class="md-nav__link">
         
   
   
@@ -888,7 +743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment-verification/" class="md-nav__link">
+      <a href="../../deployment-verification/" class="md-nav__link">
         
   
   
@@ -916,7 +771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment-quick-reference/" class="md-nav__link">
+      <a href="../../deployment-quick-reference/" class="md-nav__link">
         
   
   
@@ -944,7 +799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../docker/" class="md-nav__link">
+      <a href="../../docker/" class="md-nav__link">
         
   
   
@@ -979,7 +834,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../config-examples/" class="md-nav__link">
+      <a href="../../config-examples/" class="md-nav__link">
         
   
   
@@ -1060,7 +915,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -1088,7 +943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
+      <a href="../0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
         
   
   
@@ -1123,7 +978,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../changelog/" class="md-nav__link">
+      <a href="../../changelog/" class="md-nav__link">
         
   
   
@@ -1170,10 +1025,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#job-metrics" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Job Metrics
+        Context
       
     </span>
   </a>
@@ -1181,10 +1036,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#storage-metrics" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Storage Metrics
+        Decision
       
     </span>
   </a>
@@ -1192,71 +1047,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#netbackup-112-opt-in-collectors" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        NetBackup 11.2 opt-in collectors
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="NetBackup 11.2 opt-in collectors">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-the-collectors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling the collectors
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#system-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System Metrics
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#label-encoding" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Label Encoding
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prometheus-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prometheus Configuration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#grafana-dashboard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Grafana Dashboard
+        Consequences
       
     </span>
   </a>
@@ -1283,256 +1077,76 @@
   
 
 
-<h1 id="metrics-reference">Metrics Reference</h1>
-<h2 id="job-metrics">Job Metrics</h2>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Labels</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>nbu_jobs_count</code></td>
-<td><code>action</code>, <code>policy_type</code>, <code>status</code></td>
-<td>Number of jobs by type, policy, and status</td>
-</tr>
-<tr>
-<td><code>nbu_jobs_bytes</code></td>
-<td><code>action</code>, <code>policy_type</code>, <code>status</code></td>
-<td>Total bytes transferred by jobs</td>
-</tr>
-<tr>
-<td><code>nbu_status_count</code></td>
-<td><code>action</code>, <code>status</code></td>
-<td>Job count aggregated by action and status</td>
-</tr>
-<tr>
-<td><code>nbu_jobs_state_count</code></td>
-<td><code>action</code>, <code>state</code></td>
-<td>Job count per lifecycle state (e.g. <code>ACTIVE</code>, <code>QUEUED</code>, <code>DONE</code>)</td>
-</tr>
-<tr>
-<td><code>nbu_jobs_queued_count</code></td>
-<td><code>action</code>, <code>reason</code></td>
-<td>Queued job count per NetBackup queue reason code</td>
-</tr>
-<tr>
-<td><code>nbu_jobs_files_count</code></td>
-<td><code>action</code>, <code>policy_type</code></td>
-<td>Total number of files processed by jobs</td>
-</tr>
-<tr>
-<td><code>nbu_jobs_dedup_ratio</code></td>
-<td><code>action</code>, <code>policy_type</code></td>
-<td>Mean deduplication ratio across jobs (emitted only when jobs exist)</td>
-</tr>
-<tr>
-<td><code>nbu_job_duration_seconds</code></td>
-<td><code>action</code>, <code>policy_type</code></td>
-<td>Histogram of completed job durations in seconds</td>
-</tr>
-</tbody>
-</table>
-<p>The <code>nbu_job_duration_seconds</code> histogram covers completed jobs only (those with an
-<code>EndTime</code> after <code>StartTime</code>). Bucket upper bounds (seconds): 60, 300, 900, 1800,
-3600, 7200, 14400, 28800, 86400.</p>
-<h2 id="storage-metrics">Storage Metrics</h2>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Labels</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>nbu_disk_bytes</code></td>
-<td><code>name</code>, <code>type</code>, <code>size</code></td>
-<td>Storage unit capacity; <code>size</code> is <code>free</code> or <code>used</code></td>
-</tr>
-<tr>
-<td><code>nbu_disk_capacity_bytes</code></td>
-<td><code>name</code>, <code>type</code></td>
-<td>Authoritative total capacity reported by the API</td>
-</tr>
-<tr>
-<td><code>nbu_storage_max_concurrent_jobs</code></td>
-<td><code>name</code>, <code>type</code></td>
-<td>Maximum concurrent jobs the unit accepts</td>
-</tr>
-<tr>
-<td><code>nbu_storage_max_fragment_size_bytes</code></td>
-<td><code>name</code>, <code>type</code></td>
-<td>Maximum fragment size in bytes</td>
-</tr>
-<tr>
-<td><code>nbu_storage_info</code></td>
-<td><code>name</code>, <code>type</code>, <code>subtype</code>, <code>is_cloud</code>, <code>worm_capable</code>, <code>use_worm</code>, <code>replication_capable</code>, <code>instant_access</code></td>
-<td>Storage unit capabilities (value always <code>1</code>)</td>
-</tr>
-</tbody>
-</table>
-<p><code>nbu_disk_capacity_bytes</code> is a separate metric (not a <code>size="total"</code> label) so that
-<code>sum(nbu_disk_bytes{name=X})</code> continues to equal total capacity (free + used).</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Tape storage units are excluded from metrics collection.</p>
-</div>
-<h2 id="netbackup-112-opt-in-collectors">NetBackup 11.2 opt-in collectors</h2>
-<p>These metrics require NetBackup 11.2 (API <code>version=14.0</code>) endpoints and are exposed
-by four optional sub-collectors. <strong>All default to disabled</strong> — enable only the ones
-your appliance and account permissions support. They are graceful: a failing
-endpoint is logged and skipped without affecting core storage/jobs metrics or
-flipping <code>nbu_up</code> to <code>0</code>.</p>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Type</th>
-<th>Labels</th>
-<th>Source endpoint</th>
-<th>Source API attribute</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>nbu_alerts_count</code></td>
-<td>Gauge</td>
-<td><code>severity</code>, <code>category</code></td>
-<td><code>GET /manage/alerts</code></td>
-<td>Alerts grouped by <code>severity</code> + <code>category</code></td>
-</tr>
-<tr>
-<td><code>nbu_malware_files_scanned</code></td>
-<td>Gauge</td>
-<td>—</td>
-<td><code>GET /malware/latest-scan-results</code></td>
-<td>Sum of <code>numberOfFilesScanned</code></td>
-</tr>
-<tr>
-<td><code>nbu_malware_files_infected</code></td>
-<td>Gauge</td>
-<td>—</td>
-<td><code>GET /malware/latest-scan-results</code></td>
-<td>Sum of <code>numberOfFilesImpacted</code></td>
-</tr>
-<tr>
-<td><code>nbu_malware_scan_count</code></td>
-<td>Gauge</td>
-<td><code>status</code></td>
-<td><code>GET /malware/latest-scan-results</code></td>
-<td>Results grouped by <code>scanState</code></td>
-</tr>
-<tr>
-<td><code>nbu_catalog_images_count</code></td>
-<td>Gauge</td>
-<td><code>malware_status</code>, <code>anomaly_status</code></td>
-<td><code>GET /catalog/images</code></td>
-<td><code>meta.pagination.count</code> per filter combination</td>
-</tr>
-<tr>
-<td><code>nbu_slo_count</code></td>
-<td>Gauge</td>
-<td>—</td>
-<td><code>GET /servicecatalog/slos</code></td>
-<td>Total number of <code>data[]</code> entries</td>
-</tr>
-</tbody>
-</table>
-<p>Notes on the implemented attributes (these differ from early guesses):</p>
+<h1 id="adr-0002-pluggable-opt-in-sub-collector-framework">ADR-0002: Pluggable opt-in sub-collector framework</h1>
 <ul>
-<li><strong>Malware infected count</strong> reads <code>numberOfFilesImpacted</code>, not
-  <code>numberOfFilesInfected</code>. The 11.2 <code>latest-scan-results</code> response uses
-  <code>numberOfFilesImpacted</code>.</li>
-<li><strong>Malware scan status</strong> is grouped by <code>scanState</code> (enum values such as
-  <code>SCAN_COMPLETED</code> / <code>SCAN_FAILED</code>), exposed via the <code>status</code> label.</li>
-<li><strong>Catalog posture</strong> is collected with count-only queries (<code>page[limit]=1</code>,
-  reading <code>meta.pagination.count</code>) issued once per curated combination of
-  <code>malwareStatus</code> × <code>anomalyStatus</code>, keeping label cardinality bounded.</li>
-<li><strong>SLO count</strong> is a single unlabeled gauge. The 11.2 SLO response has no
-  per-SLO enforcement-type attribute, so the originally planned
-  <code>enforcement_type</code> label was dropped.</li>
+<li><strong>Status:</strong> Accepted</li>
+<li><strong>Date:</strong> 2026-06-14</li>
+<li><strong>Deciders:</strong> Frederic Jacquet</li>
+<li><strong>Related:</strong> <code>docs/superpowers/specs/2026-06-14-nbu-11.2-validation-design.md</code>, <code>docs/superpowers/plans/2026-06-14-nbu-11.2-validation.md</code></li>
 </ul>
-<h3 id="enabling-the-collectors">Enabling the collectors</h3>
-<p>Add a <code>collectors</code> block to your <code>config.yaml</code> (each collector is a
-<code>{ enabled: false }</code> toggle; all default to disabled):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">collectors</span><span class="p">:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">alerts</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">malware</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">catalog</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">slo</span><span class="p">:</span><span class="w">     </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-</code></pre></div>
-<div class="admonition note">
-<p class="admonition-title">Job metrics and the missing 11.2 <code>admin.yaml</code></p>
-<p>Job metrics (<code>GET /admin/jobs</code>) are validated against the NetBackup 11.0
-(<code>version=13.0</code>) spec because <code>admin.yaml</code> is absent from the local
-<code>docs/veritas-11.2/</code> bundle. The endpoint is backward-compatible under
-<code>version=14.0</code>, so the existing job metrics remain correct. Obtaining the
-11.2 <code>admin.yaml</code> is a follow-up item to confirm no new job attributes were
-added.</p>
-</div>
-<h2 id="system-metrics">System Metrics</h2>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Labels</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>nbu_up</code></td>
-<td>—</td>
-<td><code>1</code> if any collection succeeded, <code>0</code> if all collections failed</td>
-</tr>
-<tr>
-<td><code>nbu_api_version</code></td>
-<td><code>version</code></td>
-<td>Currently active NetBackup API version (14.0, 13.0, 12.0, or 3.0)</td>
-</tr>
-<tr>
-<td><code>nbu_response_time_ms</code></td>
-<td>—</td>
-<td>NetBackup API response time in milliseconds</td>
-</tr>
-<tr>
-<td><code>nbu_last_scrape_timestamp_seconds</code></td>
-<td><code>source</code></td>
-<td>Unix timestamp of the last successful collection (<code>source</code>: <code>storage</code> or <code>jobs</code>)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="label-encoding">Label Encoding</h2>
-<p>Metrics use pipe-delimited keys internally, split into labels:</p>
+<h2 id="context">Context</h2>
+<p>Until now the exporter collected exactly two metric areas — storage and jobs —
+hardcoded directly in <code>NbuCollector.Collect</code> and fetched concurrently via an
+<code>errgroup</code>. Validating the implementation against the NetBackup 11.2 API
+(<code>version=14.0</code>) surfaced several additional, valuable signals the exporter did
+not expose: alerts (<code>/manage/alerts</code>), malware scan results
+(<code>/malware/latest-scan-results</code>), catalog posture (<code>/catalog/images</code>), and SLOs
+(<code>/servicecatalog/slos</code>).</p>
+<p>Adding these inline would have:</p>
 <ul>
-<li><strong>Storage</strong>: <code>name|type|size</code> (e.g., "pool1|AdvancedDisk|free")</li>
-<li><strong>Jobs</strong>: <code>action|policy_type|status</code> (e.g., "BACKUP|Standard|0")</li>
+<li>grown <code>prometheus.go</code> past the point where it can be reasoned about as one unit;</li>
+<li>made each new area untestable in isolation;</li>
+<li>forced every deployment (and every NetBackup version) to call endpoints it may
+  not need or support, increasing API load and failure surface.</li>
 </ul>
-<h2 id="prometheus-configuration">Prometheus Configuration</h2>
-<p>Add to your <code>prometheus.yml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">scrape_configs</span><span class="p">:</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;netbackup&#39;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;localhost:2112&#39;</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">scrape_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
-</code></pre></div>
-<p>Alerting rules are provided in <code>grafana/alerts.yml</code> (load via <code>rule_files</code>).</p>
-<h2 id="grafana-dashboard">Grafana Dashboard</h2>
-<p>Two dashboards live in the <code>grafana/</code> directory:</p>
+<p>These endpoints are also not universally available or relevant — malware and SLO
+features depend on appliance configuration, and <code>/catalog/images</code> is heavier than
+the core collectors.</p>
+<h2 id="decision">Decision</h2>
+<p>Introduce a small <code>subCollector</code> interface (<code>Name() string</code>,
+<code>Collect(ctx, ch) error</code>) in <code>internal/exporter/subcollector.go</code>. Each optional
+metric area is its own focused file (<code>collector_alerts.go</code>, <code>collector_malware.go</code>,
+<code>collector_catalog.go</code>, <code>collector_slo.go</code>) implementing that interface, taking
+the <code>NetBackupClient</code> interface for testability.</p>
+<p><code>NbuCollector</code> holds an <code>[]subCollector</code> built once at construction from config
+(<code>buildSubCollectors</code>) and runs them via <code>runSubCollectors</code> alongside the existing
+storage/jobs collection. Three properties are intentional:</p>
+<ol>
+<li><strong>Opt-in, default off.</strong> A new <code>collectors</code> config section
+   (<code>alerts</code>/<code>malware</code>/<code>catalog</code>/<code>slo</code>, each <code>{enabled: bool}</code>) gates each
+   collector; the zero value is disabled. Existing deployments and older NetBackup
+   versions are unaffected unless an operator explicitly enables a collector.</li>
+<li><strong>Per-collector graceful degradation.</strong> <code>runSubCollectors</code> runs each collector
+   concurrently and logs-and-skips on error; a failing endpoint never propagates
+   or suppresses the others. This extends the existing graceful-degradation
+   principle already used for storage/jobs.</li>
+<li><strong><code>nbu_up</code> stays tied to storage/jobs only.</strong> The optional collectors never
+   flip the core reachability signal, so enabling an unsupported endpoint cannot
+   make the exporter look "down".</li>
+</ol>
+<p>The core storage and jobs collection paths are left unchanged — they are not
+retrofitted onto the interface in this change.</p>
+<h2 id="consequences">Consequences</h2>
+<p><strong>Positive</strong></p>
 <ul>
-<li><code>grafana/nbu-overview.json</code> — fully templated overview (health, storage, jobs,
-  durations). Recommended; works on any server via the <code>$storage_unit</code> /
-  <code>$policy_type</code> template variables.</li>
-<li><code>grafana/NBU Statistics-1629904585394.json</code> — the original 2021 dashboard, kept
-  for reference.</li>
+<li>New metric areas are added as small, independently testable files that follow a
+  single established pattern.</li>
+<li>Operators pay only for the endpoints they enable; older appliances are safe by
+  default.</li>
+<li><code>prometheus.go</code> stays focused on the core collector and orchestration.</li>
 </ul>
-<p>To import: load the JSON into Grafana and select your Prometheus datasource.</p>
+<p><strong>Negative / trade-offs</strong></p>
+<ul>
+<li>Two parallel mechanisms now exist: the original storage/jobs code in
+  <code>prometheus.go</code> and the <code>subCollector</code> framework. Storage/jobs were not migrated
+  to keep this change focused; a future ADR could unify them if the duplication
+  becomes a burden.</li>
+<li>Sub-collector metric descriptors are created per-collector and emitted as const
+  metrics rather than registered through <code>NbuCollector.Describe</code> (the exporter
+  already uses the unchecked-collector pattern).</li>
+<li>Curated label subsets (e.g. catalog malware/anomaly status) are required to keep
+  cardinality bounded; this is a manual guard, not an automatic one.</li>
+</ul>
 
 
 
@@ -1588,10 +1202,10 @@ added.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
