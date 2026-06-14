@@ -2,9 +2,9 @@
 #
 # Load via prometheus.yml:
 #   rule_files:
-#     - /etc/prometheus/rules/nbu_alerts.yml
+#     - /etc/prometheus/rules/nbu.rules.yml
 #
-# Validate:  promtool check rules grafana/alerts.yml
+# Validate:  promtool check rules deploy/prometheus/nbu.rules.yml
 groups:
   - name: nbu_exporter
     rules:
