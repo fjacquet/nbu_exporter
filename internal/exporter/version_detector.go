@@ -1,6 +1,6 @@
 // Package exporter provides API version detection functionality for NetBackup.
 // It implements automatic version detection with fallback logic to support
-// multiple NetBackup versions (10.0, 10.5, and 11.0).
+// multiple NetBackup versions (10.0, 10.5, 11.0, and 11.2).
 package exporter
 
 import (
@@ -39,8 +39,8 @@ var DefaultRetryConfig = RetryConfig{
 }
 
 // APIVersionDetector handles automatic detection of supported NetBackup API versions.
-// It tests versions in descending order (13.0 → 12.0 → 3.0) and returns the first
-// working version. This allows the exporter to work with NetBackup 10.0, 10.5, and 11.0
+// It tests versions in descending order (14.0 → 13.0 → 12.0 → 3.0) and returns the first
+// working version. This allows the exporter to work with NetBackup 10.0, 10.5, 11.0, and 11.2
 // without manual configuration.
 //
 // The detector is immutable - it does not modify any configuration during detection.
@@ -81,14 +81,15 @@ func NewAPIVersionDetector(client *NbuClient, baseURL, apiKey string) *APIVersio
 }
 
 // DetectVersion attempts to detect the highest supported API version by testing
-// versions in descending order (13.0 → 12.0 → 3.0). It returns the first version
+// versions in descending order (14.0 → 13.0 → 12.0 → 3.0). It returns the first version
 // that successfully responds to a test request.
 //
 // The detection process:
-// 1. Try API version 13.0 (NetBackup 11.0)
-// 2. If HTTP 406, try API version 12.0 (NetBackup 10.5)
-// 3. If HTTP 406, try API version 3.0 (NetBackup 10.0-10.4)
-// 4. If all fail, return detailed error with troubleshooting steps
+// 1. Try API version 14.0 (NetBackup 11.2)
+// 2. If HTTP 406, try API version 13.0 (NetBackup 11.0)
+// 3. If HTTP 406, try API version 12.0 (NetBackup 10.5)
+// 4. If HTTP 406, try API version 3.0 (NetBackup 10.0-10.4)
+// 5. If all fail, return detailed error with troubleshooting steps
 //
 // Authentication errors (HTTP 401) cause immediate failure as they indicate
 // a configuration problem, not a version compatibility issue.
