@@ -30,6 +30,10 @@ site/
 .DS_Store
 Thumbs.db
 
+# Python bytecode (grafana dashboard generator)
+__pycache__/
+*.pyc
+
 # Local tooling state
 .rtk/
 .dccache
