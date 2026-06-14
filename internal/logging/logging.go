@@ -52,17 +52,28 @@ func LogError(msg string) {
 // PrepareLogs initializes the logging system with the specified log file.
 // It configures logging to write to both stdout and the log file with JSON formatting.
 //
+// If logName is empty, "stdout", or "-", logging is sent to stdout only and no
+// file is opened. This is the recommended mode for containers (logs are captured
+// by the runtime, e.g. `docker logs`) and avoids requiring a writable log
+// directory. Otherwise logs are written to both stdout and the named file; the
+// file's parent directory must already exist.
+//
 // Parameters:
-//   - logName: Path to the log file (will be created if it doesn't exist)
+//   - logName: Path to the log file, or "" / "stdout" / "-" for stdout only.
 //
 // Returns an error if the log file cannot be opened or created.
 func PrepareLogs(logName string) error {
+	log.SetFormatter(&log.JSONFormatter{PrettyPrint: true})
+
+	if logName == "" || logName == "stdout" || logName == "-" {
+		log.SetOutput(os.Stdout)
+		return nil
+	}
+
 	logFile, err := os.OpenFile(logName, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 	if err != nil {
 		return fmt.Errorf("failed to open log file: %v", err)
 	}
-	mw := io.MultiWriter(os.Stdout, logFile)
-	log.SetOutput(mw)
-	log.SetFormatter(&log.JSONFormatter{PrettyPrint: true})
+	log.SetOutput(io.MultiWriter(os.Stdout, logFile))
 	return nil
 }

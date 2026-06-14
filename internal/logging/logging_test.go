@@ -153,6 +153,33 @@ func TestPrepareLogs(t *testing.T) {
 	}
 }
 
+func TestPrepareLogsStdout(t *testing.T) {
+	// Empty / "stdout" / "-" select stdout-only mode: no file, no error.
+	for _, logName := range []string{"", "stdout", "-"} {
+		t.Run("logName="+logName, func(t *testing.T) {
+			if err := PrepareLogs(logName); err != nil {
+				t.Fatalf("PrepareLogs(%q) returned error: %v", logName, err)
+			}
+
+			// Logging still works (route to a buffer to capture output).
+			var buf bytes.Buffer
+			log.SetOutput(&buf)
+			LogInfo("stdout mode works")
+			if !strings.Contains(buf.String(), "stdout mode works") {
+				t.Errorf("logging did not work in stdout mode for %q", logName)
+			}
+
+			// No file named "stdout"/"-" should be created in the working dir.
+			if logName == "stdout" || logName == "-" {
+				if _, err := os.Stat(logName); err == nil {
+					_ = os.Remove(logName)
+					t.Errorf("PrepareLogs(%q) unexpectedly created a file", logName)
+				}
+			}
+		})
+	}
+}
+
 func TestPrepareLogsInvalidPath(t *testing.T) {
 	// Test with invalid path (directory that doesn't exist)
 	err := PrepareLogs("/nonexistent/directory/test.log")
