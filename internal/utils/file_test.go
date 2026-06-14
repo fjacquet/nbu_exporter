@@ -69,7 +69,7 @@ func TestReadFile(t *testing.T) {
 			fileContent: `
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "5m"
   logName: "test.log"
@@ -275,7 +275,7 @@ func TestResolveSecrets(t *testing.T) {
 		content := `
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "5m"
   logName: "test.log"

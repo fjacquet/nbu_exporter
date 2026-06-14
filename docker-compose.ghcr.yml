@@ -5,12 +5,12 @@ services:
     security_opt:
       - no-new-privileges:true
     ports:
-      - "${NBU_EXPORTER_PORT:-2112}:2112"
+      - "${NBU_EXPORTER_PORT:-9440}:9440"
     volumes:
       - ./config.yaml:/etc/nbu_exporter/config.yaml:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:2112/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9440/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -60,6 +60,8 @@ services:
       - ./grafana/nbu-jobs.json:/var/lib/grafana/dashboards/nbu-jobs.json:ro
       - ./grafana/nbu-storage.json:/var/lib/grafana/dashboards/nbu-storage.json:ro
       - ./grafana/nbu-dataprotection.json:/var/lib/grafana/dashboards/nbu-dataprotection.json:ro
+      # Companion dashboard (Grafana 1860) — requires a node_exporter scraped alongside.
+      - ./grafana/node-exporter-full.json:/var/lib/grafana/dashboards/node-exporter-full.json:ro
       - grafana-storage:/var/lib/grafana
     restart: unless-stopped
     depends_on:

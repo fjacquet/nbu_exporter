@@ -8,7 +8,7 @@ import (
 func createValidConfig() *Config {
 	cfg := &Config{}
 	cfg.Server.Host = "0.0.0.0"
-	cfg.Server.Port = "2112"
+	cfg.Server.Port = "9440"
 	cfg.Server.URI = "/metrics"
 	cfg.Server.ScrapingInterval = "5m"
 	cfg.Server.LogName = "test.log"
@@ -53,8 +53,8 @@ func TestNewImmutableConfig_Success(t *testing.T) {
 	}
 
 	// Verify server settings
-	if immutable.ServerAddress() != "0.0.0.0:2112" {
-		t.Errorf("expected server address 0.0.0.0:2112, got %s", immutable.ServerAddress())
+	if immutable.ServerAddress() != "0.0.0.0:9440" {
+		t.Errorf("expected server address 0.0.0.0:9440, got %s", immutable.ServerAddress())
 	}
 	if immutable.MetricsURI() != "/metrics" {
 		t.Errorf("expected metrics URI /metrics, got %s", immutable.MetricsURI())

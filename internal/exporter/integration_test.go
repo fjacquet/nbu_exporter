@@ -430,7 +430,7 @@ func createTestConfig(serverURL, apiVersion string) models.Config {
 
 	cfg := models.Config{}
 	cfg.Server.Host = "localhost"
-	cfg.Server.Port = "2112"
+	cfg.Server.Port = "9440"
 	cfg.Server.URI = testutil.TestPathMetrics
 	cfg.Server.ScrapingInterval = "5m"
 	cfg.Server.LogName = testutil.TestLogName

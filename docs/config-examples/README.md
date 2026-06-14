@@ -125,7 +125,7 @@ nbuserver:
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
 | `host` | string | Yes | - | Server bind address (e.g., "localhost", "0.0.0.0") |
-| `port` | string | Yes | - | Server port (1-65535, typically "2112") |
+| `port` | string | Yes | - | Server port (1-65535, typically "9440") |
 | `uri` | string | Yes | - | Metrics endpoint path (typically "/metrics") |
 | `scrapingInterval` | duration | Yes | - | Time window for job collection (e.g., "30m", "1h", "2h") |
 | `logName` | string | Yes | - | Log file path (e.g., "log/nbu-exporter.log") |

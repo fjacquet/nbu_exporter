@@ -9,7 +9,7 @@ services:
     security_opt:
       - no-new-privileges:true
     ports:
-      - "2112:2112"
+      - "9440:9440"
     volumes:
       - ./config.yaml:/etc/nbu_exporter/config.yaml:ro
       - ./log:/var/log/nbu_exporter
@@ -20,7 +20,7 @@ services:
     networks:
       - monitoring
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:2112/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9440/health"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -77,7 +77,7 @@ func createConfigWithAPIVersion(apiVersion string) *Config {
 			LogName          string `yaml:"logName"`
 			CacheTTL         string `yaml:"cacheTTL"`
 		}{
-			Port:             "2112",
+			Port:             "9440",
 			Host:             "localhost",
 			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
@@ -212,7 +212,7 @@ func TestConfigParseYAMLAPIVersion(t *testing.T) {
 			yaml: `
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: testPathMetrics
   scrapingInterval: "5m"
   logName: testLogName
@@ -232,7 +232,7 @@ nbuserver:
 			yaml: `
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: testPathMetrics
   scrapingInterval: "5m"
   logName: testLogName
@@ -251,7 +251,7 @@ nbuserver:
 			yaml: `
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: testPathMetrics
   scrapingInterval: "5m"
   logName: testLogName
@@ -318,7 +318,7 @@ func TestConfigBackwardCompatibility(t *testing.T) {
 			yaml: `
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "5m"
   logName: "test.log"
@@ -338,7 +338,7 @@ nbuserver:
 			yaml: `
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: "/metrics"
   scrapingInterval: "1h"
   logName: "nbu.log"
@@ -497,10 +497,10 @@ func TestConfigGetServerAddress(t *testing.T) {
 					CacheTTL         string `yaml:"cacheTTL"`
 				}{
 					Host: "0.0.0.0",
-					Port: "2112",
+					Port: "9440",
 				},
 			},
-			expected: "0.0.0.0:2112",
+			expected: "0.0.0.0:9440",
 		},
 		{
 			name: "localhost with custom port",
@@ -774,7 +774,7 @@ func TestConfigValidateServerFields(t *testing.T) {
 				LogName          string `yaml:"logName"`
 				CacheTTL         string `yaml:"cacheTTL"`
 			}{
-				Port:             "2112",
+				Port:             "9440",
 				Host:             "localhost",
 				URI:              testPathMetrics,
 				ScrapingInterval: "5m",
@@ -1012,7 +1012,7 @@ func createBaseTestConfig() Config {
 			LogName          string `yaml:"logName"`
 			CacheTTL         string `yaml:"cacheTTL"`
 		}{
-			Port:             "2112",
+			Port:             "9440",
 			Host:             "localhost",
 			URI:              testPathMetrics,
 			ScrapingInterval: "5m",
@@ -1253,7 +1253,7 @@ func TestConfigValidateOTelEndpoint(t *testing.T) {
 				LogName          string `yaml:"logName"`
 				CacheTTL         string `yaml:"cacheTTL"`
 			}{
-				Port:             "2112",
+				Port:             "9440",
 				Host:             "localhost",
 				URI:              testPathMetrics,
 				ScrapingInterval: "5m",
@@ -1424,7 +1424,7 @@ func TestConfigParseYAMLOpenTelemetry(t *testing.T) {
 			yaml: `
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: testPathMetrics
   scrapingInterval: "5m"
   logName: testLogName
@@ -1451,7 +1451,7 @@ opentelemetry:
 			yaml: `
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: testPathMetrics
   scrapingInterval: "5m"
   logName: testLogName
@@ -1473,7 +1473,7 @@ nbuserver:
 			yaml: `
 server:
   host: "localhost"
-  port: "2112"
+  port: "9440"
   uri: testPathMetrics
   scrapingInterval: "5m"
   logName: testLogName

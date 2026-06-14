@@ -50,7 +50,7 @@ nbu_exporter --config config.yaml
 `host` and `apiKey` in `config.yaml` support `${VAR}` interpolation — see
 [Configuration Guide](https://fjacquet.github.io/nbu_exporter/getting-started/configuration/) for details.
 
-Metrics are exposed at `http://localhost:2112/metrics`.
+Metrics are exposed at `http://localhost:9440/metrics`.
 
 ### Environment Variables / .env
 

@@ -15,13 +15,13 @@ The Docker image uses a multi-stage build with Alpine Linux for minimal footprin
 ## Run Container
 
 ```bash
-# Using Makefile (port 2112)
+# Using Makefile (port 9440)
 make run-docker
 
 # Manual with custom configuration
 docker run -d \
   --name nbu_exporter \
-  -p 2112:2112 \
+  -p 9440:9440 \
   -v $(pwd)/config.yaml:/etc/nbu_exporter/config.yaml \
   -v $(pwd)/log:/var/log/nbu_exporter \
   nbu_exporter
@@ -36,13 +36,13 @@ services:
     image: nbu_exporter:latest
     container_name: nbu_exporter
     ports:
-      - "2112:2112"
+      - "9440:9440"
     volumes:
       - ./config.yaml:/etc/nbu_exporter/config.yaml:ro
       - ./log:/var/log/nbu_exporter
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:2112/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9440/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -76,7 +76,7 @@ files are otherwise identical.
 
 | Service | URL | Notes |
 |---|---|---|
-| Exporter metrics | <http://localhost:2112/metrics> | Scraped by the in-stack Prometheus |
+| Exporter metrics | <http://localhost:9440/metrics> | Scraped by the in-stack Prometheus |
 | Prometheus | <http://localhost:9090> | Loads alerting rules from `deploy/prometheus/nbu.rules.yml` |
 | Grafana | <http://localhost:3000> | Default login `admin` / `admin` |
 
@@ -92,7 +92,7 @@ port without editing the compose files:
 NBU_EXPORTER_PORT=12112 PROMETHEUS_PORT=19090 GRAFANA_PORT=13000 docker compose up -d
 ```
 
-The defaults are `2112` (exporter), `9090` (Prometheus), and `3000` (Grafana).
+The defaults are `9440` (exporter), `9090` (Prometheus), and `3000` (Grafana).
 
 ### Logs
 
@@ -123,6 +123,6 @@ docker compose down -v
 
 ```bash
 docker logs nbu_exporter
-curl http://localhost:2112/metrics
-curl http://localhost:2112/health
+curl http://localhost:9440/metrics
+curl http://localhost:9440/health
 ```

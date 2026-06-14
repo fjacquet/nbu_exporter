@@ -109,7 +109,7 @@ Add to your `prometheus.yml`:
 scrape_configs:
   - job_name: 'netbackup'
     static_configs:
-      - targets: ['localhost:2112']
+      - targets: ['localhost:9440']
     scrape_interval: 60s
     scrape_timeout: 30s
 ```

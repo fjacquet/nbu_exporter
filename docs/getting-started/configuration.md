@@ -5,7 +5,7 @@ Create a `config.yaml` file:
 ```yaml
 server:
     host: "localhost"
-    port: "2112"
+    port: "9440"
     uri: "/metrics"
     scrapingInterval: "1h"
     logName: "log/nbu-exporter.log"

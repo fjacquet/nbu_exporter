@@ -497,7 +497,7 @@ func createTestConfigTLS(serverURL, apiVersion string) models.Config {
 
 	cfg := models.Config{}
 	cfg.Server.Host = "localhost"
-	cfg.Server.Port = "2112"
+	cfg.Server.Port = "9440"
 	cfg.Server.URI = "/metrics"
 	cfg.Server.ScrapingInterval = "24h"
 	cfg.Server.LogName = "test.log"
