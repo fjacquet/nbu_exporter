@@ -59,6 +59,19 @@ type Config struct {
 		Insecure     bool    `yaml:"insecure"`
 		SamplingRate float64 `yaml:"samplingRate"`
 	} `yaml:"opentelemetry"`
+
+	Collectors struct {
+		Alerts  CollectorToggle `yaml:"alerts"`
+		Malware CollectorToggle `yaml:"malware"`
+		Catalog CollectorToggle `yaml:"catalog"`
+		SLO     CollectorToggle `yaml:"slo"`
+	} `yaml:"collectors"`
+}
+
+// CollectorToggle enables an optional metric collector. New collectors default
+// to disabled so existing deployments and older NetBackup versions are unaffected.
+type CollectorToggle struct {
+	Enabled bool `yaml:"enabled"`
 }
 
 // SetDefaults sets default values for optional configuration fields.

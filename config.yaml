@@ -87,3 +87,10 @@ opentelemetry:
 #     endpoint: "otel-collector.example.com:4317"
 #     insecure: false
 #     samplingRate: 0.01
+
+# Optional: opt-in NetBackup 11.2 metric collectors (all default to disabled)
+collectors:
+  alerts:  { enabled: false }
+  malware: { enabled: false }
+  catalog: { enabled: false }
+  slo:     { enabled: false }

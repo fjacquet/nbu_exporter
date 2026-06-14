@@ -1809,3 +1809,12 @@ func TestSetDefaults_CacheTTL_Preserves(t *testing.T) {
 		t.Errorf("SetDefaults() should preserve existing CacheTTL, got %v, want '1h'", cfg.Server.CacheTTL)
 	}
 }
+
+func TestCollectorsConfigDefaults(t *testing.T) {
+	var c Config
+	c.SetDefaults()
+	if c.Collectors.Alerts.Enabled || c.Collectors.Malware.Enabled ||
+		c.Collectors.Catalog.Enabled || c.Collectors.SLO.Enabled {
+		t.Errorf("new collectors must default to disabled, got %+v", c.Collectors)
+	}
+}
