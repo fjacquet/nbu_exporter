@@ -250,6 +250,9 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 // buildSubCollectors returns the enabled optional collectors based on config.
 func buildSubCollectors(c *NbuCollector) []subCollector {
 	var subs []subCollector
+	if c.cfg.Collectors.Alerts.Enabled {
+		subs = append(subs, newAlertsCollector(c.client, c.cfg))
+	}
 	return subs
 }
 
