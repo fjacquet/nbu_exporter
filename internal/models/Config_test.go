@@ -32,7 +32,7 @@ func TestConfigSetDefaults(t *testing.T) {
 					APIVersion: "",
 				},
 			},
-			expectedAPIVer: "13.0",
+			expectedAPIVer: "14.0",
 		},
 		{
 			name: "preserves existing API version",
@@ -120,8 +120,8 @@ func assertAPIVersionValidation(t *testing.T, config *Config, err error, apiVers
 			t.Errorf(testErrorValidateUnexpected, err)
 		}
 		// Verify default was set if empty
-		if apiVersion == "" && config.NbuServer.APIVersion != "13.0" {
-			t.Errorf("Validate() APIVersion = %v, want default 13.0", config.NbuServer.APIVersion)
+		if apiVersion == "" && config.NbuServer.APIVersion != "14.0" {
+			t.Errorf("Validate() APIVersion = %v, want default 14.0", config.NbuServer.APIVersion)
 		}
 	}
 }
@@ -330,7 +330,7 @@ nbuserver:
   apiKey: "test-key"
   contentType: "application/json"
 `,
-			expectedAPIVer: "13.0",
+			expectedAPIVer: "14.0",
 			shouldValidate: true,
 		},
 		{
@@ -353,7 +353,7 @@ nbuserver:
   contentType: "application/json"
   insecureSkipVerify: false
 `,
-			expectedAPIVer: "13.0",
+			expectedAPIVer: "14.0",
 			shouldValidate: true,
 		},
 	}
@@ -368,7 +368,7 @@ nbuserver:
 
 func TestSupportedAPIVersions(t *testing.T) {
 	// Test that the supported versions list contains expected versions
-	expectedVersions := []string{"13.0", "12.0", "3.0"}
+	expectedVersions := []string{"14.0", "13.0", "12.0", "3.0"}
 
 	if len(SupportedAPIVersions) != len(expectedVersions) {
 		t.Errorf("SupportedAPIVersions length = %d, want %d", len(SupportedAPIVersions), len(expectedVersions))
@@ -401,6 +401,11 @@ func TestAPIVersionConstants(t *testing.T) {
 			name:     "APIVersion130 constant",
 			constant: APIVersion130,
 			expected: "13.0",
+		},
+		{
+			name:     "APIVersion140 constant",
+			constant: APIVersion140,
+			expected: "14.0",
 		},
 	}
 
@@ -963,10 +968,15 @@ func TestConfigValidateSupportedVersions(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name:       "unsupported version 14.0",
+			name:       "supported version 14.0",
 			apiVersion: "14.0",
+			wantErr:    false,
+		},
+		{
+			name:       "unsupported version 99.0",
+			apiVersion: "99.0",
 			wantErr:    true,
-			errMsg:     "unsupported API version: 14.0",
+			errMsg:     "unsupported API version: 99.0",
 		},
 		{
 			name:       "unsupported version 2.0",

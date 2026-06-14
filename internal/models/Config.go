@@ -20,11 +20,13 @@ const (
 	APIVersion120 = "12.0"
 	// APIVersion130 represents NetBackup 11.0 API version
 	APIVersion130 = "13.0"
+	// APIVersion140 represents NetBackup 11.2 API version
+	APIVersion140 = "14.0"
 )
 
 // SupportedAPIVersions contains all supported NetBackup API versions in descending order.
 // This list is used for version detection fallback (newest to oldest).
-var SupportedAPIVersions = []string{APIVersion130, APIVersion120, APIVersion30}
+var SupportedAPIVersions = []string{APIVersion140, APIVersion130, APIVersion120, APIVersion30}
 
 // Config represents the complete application configuration for the NBU exporter.
 // It includes settings for the server and the NBU server.
@@ -61,15 +63,15 @@ type Config struct {
 
 // SetDefaults sets default values for optional configuration fields.
 // Currently sets:
-//   - Default API version to "13.0" (NetBackup 11.0) if not specified
+//   - Default API version to "14.0" (NetBackup 11.2) if not specified
 //   - Default NBU server URI to "/netbackup" if not specified
 //   - Default storage cache TTL to "5m" if not specified
 //
 // This method is called automatically by Validate() before validation checks.
 func (c *Config) SetDefaults() {
-	// Set default API version for NetBackup 11.0
+	// Set default API version for NetBackup 11.2
 	if c.NbuServer.APIVersion == "" {
-		c.NbuServer.APIVersion = APIVersion130
+		c.NbuServer.APIVersion = APIVersion140
 	}
 
 	// Set default NBU server URI
