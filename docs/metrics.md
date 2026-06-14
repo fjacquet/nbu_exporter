@@ -33,6 +33,58 @@ The `nbu_job_duration_seconds` histogram covers completed jobs only (those with 
 !!! note
     Tape storage units are excluded from metrics collection.
 
+## NetBackup 11.2 opt-in collectors
+
+These metrics require NetBackup 11.2 (API `version=14.0`) endpoints and are exposed
+by four optional sub-collectors. **All default to disabled** — enable only the ones
+your appliance and account permissions support. They are graceful: a failing
+endpoint is logged and skipped without affecting core storage/jobs metrics or
+flipping `nbu_up` to `0`.
+
+| Metric | Type | Labels | Source endpoint | Source API attribute |
+|--------|------|--------|-----------------|----------------------|
+| `nbu_alerts_count` | Gauge | `severity`, `category` | `GET /manage/alerts` | Alerts grouped by `severity` + `category` |
+| `nbu_malware_files_scanned` | Gauge | — | `GET /malware/latest-scan-results` | Sum of `numberOfFilesScanned` |
+| `nbu_malware_files_infected` | Gauge | — | `GET /malware/latest-scan-results` | Sum of `numberOfFilesImpacted` |
+| `nbu_malware_scan_count` | Gauge | `status` | `GET /malware/latest-scan-results` | Results grouped by `scanState` |
+| `nbu_catalog_images_count` | Gauge | `malware_status`, `anomaly_status` | `GET /catalog/images` | `meta.pagination.count` per filter combination |
+| `nbu_slo_count` | Gauge | — | `GET /servicecatalog/slos` | Total number of `data[]` entries |
+
+Notes on the implemented attributes (these differ from early guesses):
+
+- **Malware infected count** reads `numberOfFilesImpacted`, not
+  `numberOfFilesInfected`. The 11.2 `latest-scan-results` response uses
+  `numberOfFilesImpacted`.
+- **Malware scan status** is grouped by `scanState` (enum values such as
+  `SCAN_COMPLETED` / `SCAN_FAILED`), exposed via the `status` label.
+- **Catalog posture** is collected with count-only queries (`page[limit]=1`,
+  reading `meta.pagination.count`) issued once per curated combination of
+  `malwareStatus` × `anomalyStatus`, keeping label cardinality bounded.
+- **SLO count** is a single unlabeled gauge. The 11.2 SLO response has no
+  per-SLO enforcement-type attribute, so the originally planned
+  `enforcement_type` label was dropped.
+
+### Enabling the collectors
+
+Add a `collectors` block to your `config.yaml` (each collector is a
+`{ enabled: false }` toggle; all default to disabled):
+
+```yaml
+collectors:
+  alerts:  { enabled: false }
+  malware: { enabled: false }
+  catalog: { enabled: false }
+  slo:     { enabled: false }
+```
+
+!!! note "Job metrics and the missing 11.2 `admin.yaml`"
+    Job metrics (`GET /admin/jobs`) are validated against the NetBackup 11.0
+    (`version=13.0`) spec because `admin.yaml` is absent from the local
+    `docs/veritas-11.2/` bundle. The endpoint is backward-compatible under
+    `version=14.0`, so the existing job metrics remain correct. Obtaining the
+    11.2 `admin.yaml` is a follow-up item to confirm no new job attributes were
+    added.
+
 ## System Metrics
 
 | Metric | Labels | Description |
