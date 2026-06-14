@@ -2611,7 +2611,7 @@
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Verify current exporter is running</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nbu_exporter
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>curl<span class="w"> </span>http://localhost:2112/health
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>curl<span class="w"> </span>http://localhost:9440/health
 </code></pre></div>
 <h2 id="deployment-procedures">Deployment Procedures</h2>
 <h3 id="method-1-binary-upgrade-recommended">Method 1: Binary Upgrade (Recommended)</h3>
@@ -2712,7 +2712,7 @@
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Start new container</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="w">  </span>--name<span class="w"> </span>nbu_exporter<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">2112</span>:2112<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">9440</span>:9440<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">  </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/config.yaml:/config.yaml<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="w">  </span>--restart<span class="w"> </span>unless-stopped<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="w">  </span>fjacquet/nbu_exporter:latest<span class="w"> </span>--config<span class="w"> </span>/config.yaml
@@ -2728,15 +2728,15 @@
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>docker<span class="w"> </span>ps<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nbu_exporter
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="c1"># Check health endpoint</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>curl<span class="w"> </span>http://localhost:2112/health
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>curl<span class="w"> </span>http://localhost:9440/health
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="c1"># Expected: {&quot;status&quot;:&quot;healthy&quot;}</span>
 </code></pre></div>
 <h3 id="level-2-metrics-availability">Level 2: Metrics Availability</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="c1"># Check metrics endpoint responds</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-20
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-20
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="c1"># Verify NBU-specific metrics are present</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-10
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-10
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Expected metrics:</span>
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="c1"># nbu_storage_bytes{...}</span>
@@ -2754,16 +2754,16 @@
 </code></pre></div>
 <h3 id="level-4-data-validation">Level 4: Data Validation</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Verify storage metrics have data</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_storage_bytes&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_storage_bytes&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># Should be &gt; 0 if storage units exist</span>
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="c1"># Verify job metrics have data</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_jobs_count&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_jobs_count&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="c1"># Should be &gt; 0 if jobs exist in time window</span>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="c1"># Check metric values are reasonable</span>
-<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_storage_bytes&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;size=\&quot;free\&quot;&quot;</span>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_jobs_count&quot;</span>
+<a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_storage_bytes&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;size=\&quot;free\&quot;&quot;</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_jobs_count&quot;</span>
 </code></pre></div>
 <h3 id="level-5-prometheus-integration">Level 5: Prometheus Integration</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Query Prometheus to verify scraping</span>
@@ -2793,7 +2793,7 @@
 <a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>test-config-no-version.yaml<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="s">server:</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="s">    host: &quot;localhost&quot;</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="s">    port: &quot;2112&quot;</span>
+<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="s">    port: &quot;9440&quot;</span>
 <a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="s">    uri: &quot;/metrics&quot;</span>
 <a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="s">    scrapingInterval: &quot;1h&quot;</span>
 <a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="s">    logName: &quot;log/test.log&quot;</span>
@@ -2834,10 +2834,10 @@
 </code></pre></div>
 <h3 id="test-3-metrics-consistency">Test 3: Metrics Consistency</h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># Capture metrics before upgrade</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>metrics-before.txt
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>metrics-before.txt
 <a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="c1"># After upgrade, capture again</span>
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>metrics-after.txt
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span>&gt;<span class="w"> </span>metrics-after.txt
 <a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="c1"># Compare metric names (should be identical)</span>
 <a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>diff<span class="w"> </span>&lt;<span class="o">(</span>cut<span class="w"> </span>-d<span class="s1">&#39;{&#39;</span><span class="w"> </span>-f1<span class="w"> </span>metrics-before.txt<span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u<span class="o">)</span><span class="w"> </span><span class="se">\</span>
@@ -2873,8 +2873,8 @@
 <a id="__codelineno-19-15" name="__codelineno-19-15" href="#__codelineno-19-15"></a><span class="c1"># Or: ./bin/nbu_exporter --config config.yaml &amp;</span>
 <a id="__codelineno-19-16" name="__codelineno-19-16" href="#__codelineno-19-16"></a>
 <a id="__codelineno-19-17" name="__codelineno-19-17" href="#__codelineno-19-17"></a><span class="c1"># Verify rollback</span>
-<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a>curl<span class="w"> </span>http://localhost:2112/health
-<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a>curl<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-5
+<a id="__codelineno-19-18" name="__codelineno-19-18" href="#__codelineno-19-18"></a>curl<span class="w"> </span>http://localhost:9440/health
+<a id="__codelineno-19-19" name="__codelineno-19-19" href="#__codelineno-19-19"></a>curl<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-5
 </code></pre></div>
 <h3 id="detailed-rollback-steps">Detailed Rollback Steps</h3>
 <h4 id="step-1-stop-new-version">Step 1: Stop New Version</h4>
@@ -2918,7 +2918,7 @@
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="c1"># Docker</span>
 <a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a><span class="w">  </span>--name<span class="w"> </span>nbu_exporter<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">2112</span>:2112<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">9440</span>:9440<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="w">  </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/config.yaml:/config.yaml<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="w">  </span>--restart<span class="w"> </span>unless-stopped<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a><span class="w">  </span>fjacquet/nbu_exporter:previous-version<span class="w"> </span>--config<span class="w"> </span>/config.yaml
@@ -2929,11 +2929,11 @@
 </code></pre></div>
 <h4 id="step-5-verify-rollback-success">Step 5: Verify Rollback Success</h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Check health</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>curl<span class="w"> </span>http://localhost:2112/health
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>curl<span class="w"> </span>http://localhost:9440/health
 <a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="c1"># Expected: {&quot;status&quot;:&quot;healthy&quot;}</span>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a>
 <a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="c1"># Check metrics</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
 <a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="c1"># Should be &gt; 0</span>
 <a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>
 <a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="c1"># Check logs</span>
@@ -2989,7 +2989,7 @@
 <a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>/tmp/test-config-1.yaml<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
 <a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a><span class="s">server:</span>
 <a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a><span class="s">    host: &quot;localhost&quot;</span>
-<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a><span class="s">    port: &quot;2112&quot;</span>
+<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a><span class="s">    port: &quot;9440&quot;</span>
 <a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a><span class="s">    uri: &quot;/metrics&quot;</span>
 <a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a><span class="s">    scrapingInterval: &quot;5m&quot;</span>
 <a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a><span class="s">    logName: &quot;/tmp/test1.log&quot;</span>
@@ -3019,7 +3019,7 @@
 <a id="__codelineno-26-41" name="__codelineno-26-41" href="#__codelineno-26-41"></a>cat<span class="w"> </span>&gt;<span class="w"> </span>/tmp/test-config-2.yaml<span class="w"> </span><span class="s">&lt;&lt; &#39;EOF&#39;</span>
 <a id="__codelineno-26-42" name="__codelineno-26-42" href="#__codelineno-26-42"></a><span class="s">server:</span>
 <a id="__codelineno-26-43" name="__codelineno-26-43" href="#__codelineno-26-43"></a><span class="s">    host: &quot;localhost&quot;</span>
-<a id="__codelineno-26-44" name="__codelineno-26-44" href="#__codelineno-26-44"></a><span class="s">    port: &quot;2113&quot;</span>
+<a id="__codelineno-26-44" name="__codelineno-26-44" href="#__codelineno-26-44"></a><span class="s">    port: &quot;9440&quot;</span>
 <a id="__codelineno-26-45" name="__codelineno-26-45" href="#__codelineno-26-45"></a><span class="s">    uri: &quot;/metrics&quot;</span>
 <a id="__codelineno-26-46" name="__codelineno-26-46" href="#__codelineno-26-46"></a><span class="s">    scrapingInterval: &quot;1h&quot;</span>
 <a id="__codelineno-26-47" name="__codelineno-26-47" href="#__codelineno-26-47"></a><span class="s">    logName: &quot;/tmp/test2.log&quot;</span>
@@ -3056,7 +3056,7 @@
 <a id="__codelineno-26-78" name="__codelineno-26-78" href="#__codelineno-26-78"></a><span class="o">)</span>
 <a id="__codelineno-26-79" name="__codelineno-26-79" href="#__codelineno-26-79"></a>
 <a id="__codelineno-26-80" name="__codelineno-26-80" href="#__codelineno-26-80"></a><span class="k">for</span><span class="w"> </span>metric<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">EXPECTED_METRICS</span><span class="p">[@]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
-<a id="__codelineno-26-81" name="__codelineno-26-81" href="#__codelineno-26-81"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;^# HELP </span><span class="nv">$metric</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-26-81" name="__codelineno-26-81" href="#__codelineno-26-81"></a><span class="w">    </span><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;^# HELP </span><span class="nv">$metric</span><span class="s2">&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
 <a id="__codelineno-26-82" name="__codelineno-26-82" href="#__codelineno-26-82"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ PASS: Metric </span><span class="nv">$metric</span><span class="s2"> exists&quot;</span>
 <a id="__codelineno-26-83" name="__codelineno-26-83" href="#__codelineno-26-83"></a><span class="w">    </span><span class="k">else</span>
 <a id="__codelineno-26-84" name="__codelineno-26-84" href="#__codelineno-26-84"></a><span class="w">        </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ FAIL: Metric </span><span class="nv">$metric</span><span class="s2"> missing&quot;</span>
@@ -3084,10 +3084,10 @@
 <h3 id="first-24-hours">First 24 Hours</h3>
 <p>Monitor these metrics closely:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Check error rate</span>
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_scrape_errors_total&quot;</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_scrape_errors_total&quot;</span>
 <a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>
 <a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="c1"># Check scrape duration</span>
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_scrape_duration_seconds&quot;</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_scrape_duration_seconds&quot;</span>
 <a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>
 <a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="c1"># Monitor logs for errors</span>
 <a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>tail<span class="w"> </span>-f<span class="w"> </span>log/nbu-exporter.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;ERROR|WARN&quot;</span>
@@ -3131,7 +3131,7 @@
 <h3 id="performance-baseline">Performance Baseline</h3>
 <p>Establish performance baselines:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="c1"># Scrape duration baseline</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_scrape_duration_seconds&quot;</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;nbu_scrape_duration_seconds&quot;</span>
 <a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>
 <a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="c1"># Memory usage baseline</span>
 <a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>nbu_exporter<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $6}&#39;</span>
@@ -3190,7 +3190,7 @@
 <a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>tail<span class="w"> </span>-100<span class="w"> </span>log/nbu-exporter.log<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-E<span class="w"> </span><span class="s2">&quot;ERROR|Successfully&quot;</span>
 <a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>
 <a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="c1"># Test metrics endpoint</span>
-<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+<a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
 <a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>
 <a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="c1"># Check Prometheus scraping</span>
 <a id="__codelineno-32-8" name="__codelineno-32-8" href="#__codelineno-32-8"></a>curl<span class="w"> </span>-s<span class="w"> </span><span class="s1">&#39;http://prometheus:9090/api/v1/query?query=up{job=&quot;netbackup&quot;}&#39;</span>
@@ -3354,14 +3354,14 @@
 <a id="__codelineno-33-98" name="__codelineno-33-98" href="#__codelineno-33-98"></a>
 <a id="__codelineno-33-99" name="__codelineno-33-99" href="#__codelineno-33-99"></a><span class="c1"># Verify deployment</span>
 <a id="__codelineno-33-100" name="__codelineno-33-100" href="#__codelineno-33-100"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Verifying deployment...&quot;</span>
-<a id="__codelineno-33-101" name="__codelineno-33-101" href="#__codelineno-33-101"></a><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-sf<span class="w"> </span>http://localhost:2112/health<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-33-101" name="__codelineno-33-101" href="#__codelineno-33-101"></a><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-sf<span class="w"> </span>http://localhost:9440/health<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="p">;</span><span class="w"> </span><span class="k">then</span>
 <a id="__codelineno-33-102" name="__codelineno-33-102" href="#__codelineno-33-102"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Health check passed&quot;</span>
 <a id="__codelineno-33-103" name="__codelineno-33-103" href="#__codelineno-33-103"></a><span class="k">else</span>
 <a id="__codelineno-33-104" name="__codelineno-33-104" href="#__codelineno-33-104"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Health check failed&quot;</span>
 <a id="__codelineno-33-105" name="__codelineno-33-105" href="#__codelineno-33-105"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
 <a id="__codelineno-33-106" name="__codelineno-33-106" href="#__codelineno-33-106"></a><span class="k">fi</span>
 <a id="__codelineno-33-107" name="__codelineno-33-107" href="#__codelineno-33-107"></a>
-<a id="__codelineno-33-108" name="__codelineno-33-108" href="#__codelineno-33-108"></a><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-33-108" name="__codelineno-33-108" href="#__codelineno-33-108"></a><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
 <a id="__codelineno-33-109" name="__codelineno-33-109" href="#__codelineno-33-109"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Metrics available&quot;</span>
 <a id="__codelineno-33-110" name="__codelineno-33-110" href="#__codelineno-33-110"></a><span class="k">else</span>
 <a id="__codelineno-33-111" name="__codelineno-33-111" href="#__codelineno-33-111"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Metrics not available&quot;</span>
@@ -3454,14 +3454,14 @@
 <a id="__codelineno-34-78" name="__codelineno-34-78" href="#__codelineno-34-78"></a>
 <a id="__codelineno-34-79" name="__codelineno-34-79" href="#__codelineno-34-79"></a><span class="c1"># Verify rollback</span>
 <a id="__codelineno-34-80" name="__codelineno-34-80" href="#__codelineno-34-80"></a><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Verifying rollback...&quot;</span>
-<a id="__codelineno-34-81" name="__codelineno-34-81" href="#__codelineno-34-81"></a><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-sf<span class="w"> </span>http://localhost:2112/health<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-34-81" name="__codelineno-34-81" href="#__codelineno-34-81"></a><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-sf<span class="w"> </span>http://localhost:9440/health<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="p">;</span><span class="w"> </span><span class="k">then</span>
 <a id="__codelineno-34-82" name="__codelineno-34-82" href="#__codelineno-34-82"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Health check passed&quot;</span>
 <a id="__codelineno-34-83" name="__codelineno-34-83" href="#__codelineno-34-83"></a><span class="k">else</span>
 <a id="__codelineno-34-84" name="__codelineno-34-84" href="#__codelineno-34-84"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Health check failed&quot;</span>
 <a id="__codelineno-34-85" name="__codelineno-34-85" href="#__codelineno-34-85"></a><span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
 <a id="__codelineno-34-86" name="__codelineno-34-86" href="#__codelineno-34-86"></a><span class="k">fi</span>
 <a id="__codelineno-34-87" name="__codelineno-34-87" href="#__codelineno-34-87"></a>
-<a id="__codelineno-34-88" name="__codelineno-34-88" href="#__codelineno-34-88"></a><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:2112/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-34-88" name="__codelineno-34-88" href="#__codelineno-34-88"></a><span class="k">if</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>http://localhost:9440/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-q<span class="w"> </span><span class="s2">&quot;^nbu_&quot;</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
 <a id="__codelineno-34-89" name="__codelineno-34-89" href="#__codelineno-34-89"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✓ Metrics available&quot;</span>
 <a id="__codelineno-34-90" name="__codelineno-34-90" href="#__codelineno-34-90"></a><span class="k">else</span>
 <a id="__codelineno-34-91" name="__codelineno-34-91" href="#__codelineno-34-91"></a><span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✗ Metrics not available&quot;</span>

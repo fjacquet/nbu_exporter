@@ -1280,14 +1280,14 @@
 </code></pre></div>
 <p>The exporter exposes:</p>
 <ul>
-<li><strong>Metrics</strong>: <code>http://localhost:2112/metrics</code></li>
-<li><strong>Health</strong>: <code>http://localhost:2112/health</code></li>
+<li><strong>Metrics</strong>: <code>http://localhost:9440/metrics</code></li>
+<li><strong>Health</strong>: <code>http://localhost:9440/health</code></li>
 </ul>
 <h2 id="4-add-to-prometheus">4. Add to Prometheus</h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">scrape_configs</span><span class="p">:</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;netbackup&#39;</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;localhost:2112&#39;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;localhost:9440&#39;</span><span class="p p-Indicator">]</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">scrape_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
 </code></pre></div>
@@ -1306,7 +1306,7 @@ Request and response headers are never logged (the <code>Authorization</code> AP
 cannot leak), and credential-bearing endpoints (login/token/API-key) are
 skipped entirely:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>./bin/nbu_exporter<span class="w"> </span>--config<span class="w"> </span>config.yaml<span class="w"> </span>--trace
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>localhost:2112/metrics<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w">   </span><span class="c1"># trigger a scrape, then read the log</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>localhost:9440/metrics<span class="w"> </span>&gt;<span class="w"> </span>/dev/null<span class="w">   </span><span class="c1"># trigger a scrape, then read the log</span>
 </code></pre></div>
 
 

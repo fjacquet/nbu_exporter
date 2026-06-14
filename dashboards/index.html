@@ -923,6 +923,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#node-exporter-full-grafana-1860" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node Exporter Full (Grafana 1860)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1169,6 +1180,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#node-exporter-full-grafana-1860" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Node Exporter Full (Grafana 1860)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1251,6 +1273,15 @@ in <code>config.yaml</code> (<code>collectors.{alerts,malware,catalog,slo}.enabl
 data, so it is safe to leave in place on older NetBackup versions.</p>
 <p>The previous single overview and the legacy "NBU Statistics" dashboard have been retired; their views
 now live in the Overview, Jobs, and Storage dashboards above.</p>
+<h2 id="node-exporter-full-grafana-1860">Node Exporter Full (Grafana 1860)</h2>
+<p>This repo bundles the community <a href="https://grafana.com/grafana/dashboards/1860-node-exporter-full/">Node Exporter Full</a>
+dashboard (<code>node-exporter-full.json</code>, auto-provisioned). It visualizes <strong>host OS</strong> metrics
+(CPU, memory, disk, network) exposed by <a href="https://hub.docker.com/r/prom/node-exporter"><code>prom/node-exporter</code></a> —
+<strong>not</strong> this exporter's own metrics.</p>
+<p><code>node_exporter</code> is <strong>not</strong> part of this demo stack: it belongs on the hosts you actually want to
+monitor, not bolted onto the exporter's compose. To use this dashboard, run <code>prom/node-exporter</code>
+on those hosts and add a <code>node-exporter</code> scrape job to your Prometheus; the dashboard then
+visualizes them.</p>
 
 
 
