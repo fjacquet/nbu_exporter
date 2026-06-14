@@ -57,6 +57,7 @@ nav:
       - Verification: deployment-verification.md
       - Quick Reference: deployment-quick-reference.md
       - Docker: docker.md
+      - Dashboards: dashboards.md
   - Configuration Examples: config-examples/README.md
   - Architecture Decisions:
       - Overview: adr/README.md
