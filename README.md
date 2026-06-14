@@ -2,8 +2,8 @@
 
 A Prometheus exporter that collects backup job statistics and storage metrics from Veritas NetBackup REST API.
 
-![CI](https://github.com/fjacquet/nbu_exporter/actions/workflows/build.yml/badge.svg)
-![Coverage](https://github.com/fjacquet/nbu_exporter/actions/workflows/coverage.yml/badge.svg)
+[![CI](https://github.com/fjacquet/nbu_exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/fjacquet/nbu_exporter/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/fjacquet/nbu_exporter/actions/workflows/codeql.yml/badge.svg)](https://github.com/fjacquet/nbu_exporter/actions/workflows/codeql.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/fjacquet/nbu_exporter)](https://goreportcard.com/report/github.com/fjacquet/nbu_exporter)
 ![Go Version](https://img.shields.io/github/go-mod/go-version/fjacquet/nbu_exporter)
 [![Latest Release](https://img.shields.io/github/v/release/fjacquet/nbu_exporter)](https://github.com/fjacquet/nbu_exporter/releases/latest)
