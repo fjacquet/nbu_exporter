@@ -1,0 +1,2716 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Troubleshooting API
+  version: '14.0'
+  description: >
+    The NetBackup Troubleshooting API provides information about the NetBackup
+    status codes. This API also provides access to the NetBackup log check, log
+    settings, log collect, and log upload services.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+paths:
+  '/status-codes/{statusCode}':
+    get:
+      description: |
+        Provides information about the specified NetBackup status code.
+
+        **Access Control**\
+        Enforcement Type: `None`
+      tags:
+        - Status Codes
+      parameters:
+        - in: path
+          description: The NetBackup status code.
+          name: statusCode
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: >-
+            Successfully returned information about the specified NetBackup
+            status code.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_19
+                description: The status code information.
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    description: Contains the status code information.
+                    type: object
+                    required:
+                      - type
+                      - id
+                      - attributes
+                    properties:
+                      type:
+                        description: The resource type.
+                        type: string
+                        enum:
+                          - statusCode
+                      id:
+                        description: The status code identifier.
+                        type: string
+                      attributes:
+                        description: The status code information.
+                        type: object
+                        required:
+                          - statusMessage
+                        properties:
+                          statusMessage:
+                            description: >-
+                              The message corresponding to the specified
+                              NetBackup status code.
+                            type: string
+                example:
+                  data:
+                    type: statusCode
+                    id: '156'
+                    attributes:
+                      statusMessage: snapshot error encountered
+        '400':
+          description: The specified NetBackup status code is invalid.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_0
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '401': &ref_1
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_0
+        '404':
+          description: The NetBackup status code was not found.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_0
+  /troubleshooting/error-logs:
+    get:
+      description: >
+        Returns entries from the NetBackup error catalog.
+
+
+        **API Versioned:**\
+
+        A breaking change has been made to this API starting with version 13.0. 
+        Requests made using the previous format will see partial paginated
+        results.\
+
+        See the [Getting Started
+        Guide](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started)
+        for full details on what has changed and general information about API
+        versioning.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|TROUBLESHOOTING|VIEW-LOG|`
+      tags:
+        - Error Logs
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |dateTime|eq le ge|The date and time of error log record.|date-time|
+
+            |mediaServer|eq|The name of a NetBackup media server.|string|
+
+            |client|eq|The name of a NetBackup client.|string|
+
+            |jobId|eq|The NetBackup job ID.|string|
+
+            |severity|eq|The severity of log messages to display. Possible
+            values: ALL, DEBUG, INFO, WARNING, ERROR, CRITICAL|string|
+
+            |errorLogType|eq|The error log record type. Possible values:
+            BACKUP_STATUS, MEDIA_LOG, GENERAL, BACKUP, ARCHIVE, RETRIEVE,
+            SECURITY, TAPE, DISK, BASIC_DISK, NEAR_STORE, SNAP_VAULT,
+            STS_DYNAMIC|string|
+
+            |process|eq contains|The NetBackup process that created the error
+            log record.|string|
+
+            |logMessage|contains|The log message for this error record.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: 'page[limit]'
+          description: The number of records to include in the page.
+          in: query
+          schema:
+            type: integer
+            default: 100
+            minimum: 0
+            maximum: 1000
+        - name: 'page[after]'
+          description: >-
+            The first record in the page in forward direction must be the record
+            that comes directly after this cursor.
+          in: query
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Successfully returned error logs.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_28
+                type: object
+                required:
+                  - data
+                  - meta
+                  - links
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - type
+                        - attributes
+                      properties:
+                        id:
+                          type: string
+                          description: >
+                            Error log record ID. This is a randomly assigned
+                            integer that is valid only within the context of a
+                            single request.
+                        type:
+                          type: string
+                          enum:
+                            - errorLogRecord
+                        attributes:
+                          type: object
+                          properties:
+                            dateTime:
+                              description: >-
+                                Date and time of error log record in ISO 8601
+                                format.
+                              type: string
+                              format: date-time
+                            logVersion:
+                              description: NetBackup error log version.
+                              type: integer
+                            errorLogType:
+                              description: The error log record type.
+                              type: string
+                              enum:
+                                - BACKUP_STATUS
+                                - MEDIA_LOG
+                                - GENERAL
+                                - BACKUP
+                                - ARCHIVE
+                                - RETRIEVE
+                                - SECURITY
+                                - TAPE
+                                - DISK
+                                - BASIC_DISK
+                                - NEAR_STORE
+                                - SNAP_VAULT
+                                - STS_DYNAMIC
+                                - MULTIPLE
+                                - UNKNOWN
+                            severity:
+                              description: Severity of this error log record.
+                              type: string
+                              enum:
+                                - DEBUG
+                                - INFO
+                                - WARNING
+                                - ERROR
+                                - CRITICAL
+                                - UNKNOWN
+                            mediaServer:
+                              description: >
+                                The media server associated with the error log
+                                record.
+                              type: string
+                            jobId:
+                              description: The NetBackup job ID for this error log record.
+                              type: integer
+                            process:
+                              description: >
+                                The NetBackup process that created the error log
+                                record.
+                              type: string
+                            clientName:
+                              description: |
+                                The client associated with the error log record.
+                              type: string
+                            logMessage:
+                              description: The log message for this error log record.
+                              type: string
+                          required:
+                            - dateTime
+                            - errorLogType
+                            - severity
+                            - logMessage
+                  meta:
+                    type: object
+                    properties:
+                      pagination: &ref_29
+                        type: object
+                        properties:
+                          limit:
+                            type: integer
+                            description: The number of records per page.
+                          next:
+                            type: string
+                            description: The cursor the next page is after.
+                  links:
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        description: Link to the current page.
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        description: Link to the first page.
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        description: Link to the last page.
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        description: Link to the next page.
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        description: Link to the previous page.
+                        properties:
+                          href:
+                            type: string
+                example:
+                  type: errorLogRecord
+                  id: 1
+                  attributes:
+                    dateTime: 2016-11-20T23:20:50.000Z
+                    logVersion: 1
+                    errorLogType: GENERAL
+                    severity: ERROR
+                    mediaServer: mediaHost.example.com
+                    jobId: 3
+                    process: bprd
+                    client: clientHost.example.com
+                    logMessage: bprd secure proxy protocol failed
+        '400': &ref_4
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_0
+        '401': *ref_1
+        '406': &ref_2
+          description: >-
+            Invalid `Accept` type. Make sure your `Accept` header matches what
+            this API produces.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_0
+        '500': &ref_3
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_0
+  /troubleshooting/log-records:
+    get:
+      description: >
+        Get the number of records that are in-progress.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|TROUBLESHOOTING|COLLECT-LOG|`
+      tags:
+        - Log Records
+      responses:
+        '200':
+          description: Successfully retrieved the in-progress record count.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_20
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - type
+                      - id
+                      - attributes
+                    properties:
+                      type:
+                        description: The response type.
+                        type: string
+                        enum:
+                          - logRecordsResponse
+                      id:
+                        description: The response type.
+                        type: string
+                        enum:
+                          - logRecordsResponse
+                      attributes:
+                        type: object
+                        required:
+                          - count
+                        properties:
+                          count:
+                            description: The total number of in-progress records.
+                            type: integer
+                      links:
+                        type: object
+                        properties:
+                          self:
+                            type: object
+                            properties:
+                              href:
+                                type: string
+        '401': *ref_1
+        '406': *ref_2
+        '500': *ref_3
+        '503': &ref_5
+          description: The server is busy.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_0
+    post:
+      description: >
+        Create an empty log record.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|TROUBLESHOOTING|COLLECT-LOG|`
+      tags:
+        - Log Records
+      requestBody:
+        description: The JSON body that contains the information for the request.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_21
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      description: The request type.
+                      type: string
+                      enum:
+                        - logRecordCreateRequest
+                    attributes:
+                      type: object
+                      required:
+                        - recordType
+                        - recordEntity
+                      properties:
+                        recordType:
+                          description: The record type.
+                          type: string
+                          enum:
+                            - JOB
+                        recordEntity:
+                          description: The job identifier.
+                          type: string
+      responses:
+        '201':
+          description: Successfully created the new log record.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_22
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - type
+                      - id
+                      - attributes
+                    properties:
+                      type:
+                        description: The response type.
+                        type: string
+                        enum:
+                          - logRecordCreateResponse
+                      id:
+                        description: The record identifier.
+                        type: string
+                      attributes:
+                        type: object
+                        required:
+                          - recordType
+                          - recordEntity
+                          - status
+                        properties:
+                          recordType:
+                            description: The record type.
+                            type: string
+                            enum:
+                              - JOB
+                          recordEntity:
+                            description: The job identifier.
+                            type: string
+                          status:
+                            description: The status of the record creation request.
+                            type: string
+                            enum:
+                              - COMPLETED
+                              - PENDING
+                              - IN-PROGRESS
+                              - FAILED
+                      links:
+                        type: object
+                        properties:
+                          self:
+                            type: object
+                            properties:
+                              href:
+                                type: string
+        '400': *ref_4
+        '401': *ref_1
+        '406': *ref_2
+        '500': *ref_3
+        '503': *ref_5
+  '/troubleshooting/log-records/{recordId}/collect':
+    post:
+      description: >
+        Create a task to gather the logs for the specified record ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|TROUBLESHOOTING|COLLECT-LOG|`
+      tags:
+        - Log Records
+      parameters:
+        - &ref_6
+          in: path
+          description: The record identifier.
+          name: recordId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The JSON body that contains the information for the request.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_23
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      description: The request type.
+                      type: string
+                      enum:
+                        - logCollectRequest
+                    attributes:
+                      type: object
+                      required:
+                        - recordType
+                        - recordEntity
+                      properties:
+                        recordType:
+                          description: The record type.
+                          type: string
+                          enum:
+                            - JOB
+                        recordEntity:
+                          description: The job identifier.
+                          type: string
+      responses:
+        '202':
+          description: Request accepted.
+        '400': *ref_4
+        '401': *ref_1
+        '404': &ref_7
+          description: No entity found.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_0
+        '406': *ref_2
+        '500': *ref_3
+        '503': *ref_5
+  '/troubleshooting/log-records/{recordId}/upload':
+    post:
+      description: >
+        Create a task to upload the logs for the specified record ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|TROUBLESHOOTING|UPLOAD-LOG|`
+      tags:
+        - Log Records
+      parameters:
+        - *ref_6
+      requestBody:
+        description: The JSON body that contains the information for the request.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_24
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      description: The request type.
+                      type: string
+                      enum:
+                        - logUploadRequest
+                    attributes:
+                      type: object
+                      required:
+                        - supportCase
+                        - sftpHost
+                        - sftpPort
+                        - username
+                        - password
+                        - targetFolder
+                        - fingerprint
+                      properties:
+                        supportCase:
+                          description: The identifier of the support case.
+                          type: string
+                        sftpHost:
+                          description: The SFTP host name.
+                          type: string
+                        sftpPort:
+                          description: The SFTP port number.
+                          type: string
+                        username:
+                          description: The SFTP credentials.
+                          type: string
+                        password:
+                          description: The SFTP password.
+                          type: string
+                        targetFolder:
+                          description: The absolute path for the upload.
+                          type: string
+                        fingerprint:
+                          description: >-
+                            The SHA256 fingerprint of the SFTP host key, in
+                            Base64 format.
+                          type: string
+                        alternativeFingerprints:
+                          description: >-
+                            SHA256 fingerprints of alternative SFTP host keys,
+                            in Base64 format.
+                          type: array
+                          items:
+                            type: string
+      responses:
+        '202':
+          description: Request accepted.
+        '400': *ref_4
+        '401': *ref_1
+        '404': *ref_7
+        '406': *ref_2
+        '500': *ref_3
+        '503': *ref_5
+  '/troubleshooting/log-records/{recordId}/settings':
+    post:
+      description: >
+        Update the logging level settings to the host and its components for the
+        specified \
+
+        record ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|TROUBLESHOOTING|COLLECT-LOG|`
+      tags:
+        - Log Records
+      parameters:
+        - *ref_6
+      requestBody:
+        description: The JSON body that contains the information for the request.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_25
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      description: The request type.
+                      type: string
+                      enum:
+                        - logSettingsRequest
+                    attributes:
+                      type: object
+                      required:
+                        - host
+                      properties:
+                        host: &ref_8
+                          type: object
+                          required:
+                            - hostType
+                            - hostName
+                            - components
+                          properties:
+                            hostType:
+                              description: The host type.
+                              type: string
+                              enum:
+                                - PRIMARY
+                                - MEDIA
+                                - CLIENT
+                            hostName:
+                              description: The host name.
+                              type: string
+                            legacyComponents:
+                              type: array
+                              items:
+                                required:
+                                  - componentName
+                                  - loggingLevel
+                                properties:
+                                  componentName:
+                                    description: >-
+                                      The component name. This is case
+                                      sensitive.
+                                    type: string
+                                  loggingLevel:
+                                    description: The component logging level.
+                                    type: string
+                                    enum:
+                                      - SAME_AS_GLOBAL
+                                      - NO_LOGGING
+                                      - MINIMUM_LOGGING
+                                      - '1'
+                                      - '2'
+                                      - '3'
+                                      - '4'
+                                      - '5'
+                            vxulComponents:
+                              type: array
+                              items:
+                                required:
+                                  - componentName
+                                  - debugLevel
+                                  - diagnosticLevel
+                                properties:
+                                  componentName:
+                                    description: >-
+                                      The component name. This is case
+                                      sensitive.
+                                    type: string
+                                  debugLevel:
+                                    description: >
+                                      The component verbosity level for the
+                                      debug log messages.
+
+                                      (Debug logs are intended for Cohesity
+                                      engineers.) Valid values are 0 through 6.
+                                    type: string
+                                    enum:
+                                      - SAME_AS_GLOBAL
+                                      - NO_LOGGING
+                                      - MINIMUM_LOGGING
+                                      - '1'
+                                      - '2'
+                                      - '3'
+                                      - '4'
+                                      - '5'
+                                  diagnosticLevel:
+                                    description: >
+                                      The component verbosity level for the
+                                      diagnostic log messages.
+
+                                      (Diagnostic logs are intended for
+                                      NetBackup administrators and users.)
+
+                                      Valid values are 0 through 6. Zero (0)
+                                      means no debug messages.
+                                    type: string
+                                    enum:
+                                      - SAME_AS_GLOBAL
+                                      - NO_LOGGING
+                                      - MINIMUM_LOGGING
+                                      - '1'
+                                      - '2'
+                                      - '3'
+                                      - '4'
+                                      - '5'
+                            miscellaneousSettings:
+                              type: array
+                              items:
+                                required:
+                                  - settingType
+                                  - settingValue
+                                properties:
+                                  settingType:
+                                    description: >
+                                      The setting type. This is case sensitive.
+                                      Examples of types that are supported:
+
+                                      * Debug_Database
+
+                                      * ENABLE_CRITICAL_PROCESS_LOGGING
+
+                                      * JM_VERBOSE
+
+                                      * PEM_VERBOSE
+
+                                      * RB_VERBOSE
+
+                                      * VERBOSE
+                                    type: string
+                                  settingValue:
+                                    description: The setting value.
+                                    type: string
+                                    enum:
+                                      - 'YES'
+                                      - 'NO'
+                                      - NO_LOGGING
+                                      - MINIMUM_LOGGING
+                                      - '1'
+                                      - '2'
+                                      - '3'
+                                      - '4'
+                                      - '5'
+      responses:
+        '202':
+          description: Request accepted.
+        '400': *ref_4
+        '401': *ref_1
+        '404': *ref_7
+        '406': *ref_2
+        '500': *ref_3
+        '503': *ref_5
+    get:
+      description: >
+        Get the logging level values of the list of hosts and their
+        corresponding components for the specified record \
+
+        ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|TROUBLESHOOTING|COLLECT-LOG|`
+      tags:
+        - Log Records
+      parameters:
+        - *ref_6
+        - name: X-NetBackup-Skip-Component-Details
+          in: header
+          description: >
+            This optional header instructs NetBackup to skip fetching the
+            component details. If set to `true`, NetBackup does not fetch the
+            component details from the hosts. The default setting is `false`,
+            and the component details are fetched from the hosts. This param is
+            mutually exclusive to the filter param.
+          required: false
+          schema:
+            type: boolean
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |hostName|eq contains endswith startswith|The name of the host.
+            Example: `hostName eq 'hostname'` This param is mutually exclusive
+            to the X-NetBackup-Skip-Component-Details param.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Successfully retrieved the logging level information for the
+            specified record ID.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_26
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - type
+                      - id
+                      - attributes
+                    properties:
+                      type:
+                        description: The response type.
+                        type: string
+                        enum:
+                          - logSettingsResponse
+                      id:
+                        description: The record identifier.
+                        type: string
+                      attributes:
+                        type: object
+                        properties:
+                          hosts:
+                            type: array
+                            items: *ref_8
+                      links:
+                        type: object
+                        properties:
+                          self:
+                            type: object
+                            properties:
+                              href:
+                                type: string
+        '401': *ref_1
+        '404': *ref_7
+        '406': *ref_2
+        '500': *ref_3
+        '503': *ref_5
+  '/troubleshooting/log-records/{recordId}':
+    get:
+      description: >
+        Get the details for the specified record ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|TROUBLESHOOTING|COLLECT-LOG|`
+      tags:
+        - Log Records
+      parameters:
+        - *ref_6
+      responses:
+        '200':
+          description: Successfully retrieved the details for the specified record ID.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_27
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - type
+                      - id
+                      - attributes
+                    properties:
+                      type:
+                        description: The response type.
+                        type: string
+                        enum:
+                          - logRecordResponse
+                      id:
+                        description: The record identifier.
+                        type: string
+                      attributes:
+                        type: object
+                        required:
+                          - recordType
+                          - recordEntity
+                          - currentTask
+                          - status
+                          - estimatedSize
+                          - completedSize
+                          - logRecordStart
+                          - logRecordEnd
+                          - stagingDir
+                          - statusCode
+                          - hosts
+                        properties:
+                          recordType:
+                            description: The record type.
+                            type: string
+                            enum:
+                              - JOB
+                          recordEntity:
+                            description: The job identifier.
+                            type: string
+                          currentTask:
+                            description: Current record task.
+                            type: string
+                            enum:
+                              - CHECK
+                              - COLLECT
+                              - UPLOAD
+                          status:
+                            description: The status of the task for the record.
+                            type: string
+                            enum:
+                              - PENDING
+                              - IN-PROGRESS
+                              - COMPLETED
+                              - FAILED
+                              - CREATED
+                              - PARTIAL
+                          estimatedSize:
+                            description: The estimated log record size.
+                            type: number
+                          completedSize:
+                            description: The completed log record size.
+                            type: number
+                          logRecordStart:
+                            description: >-
+                              The start time of the log record, in ISO 8601
+                              format.
+                            type: string
+                            format: date-time
+                          logRecordEnd:
+                            description: >-
+                              The end time of the log record, in ISO 8601
+                              format.
+                            type: string
+                            format: date-time
+                          stagingDir:
+                            description: The base directory of the log record staging area.
+                            type: string
+                          statusCode:
+                            description: The status code of the log record.
+                            type: integer
+                            format: int64
+                          hosts:
+                            type: array
+                            items:
+                              required:
+                                - hostType
+                                - hostName
+                                - status
+                              properties:
+                                hostType:
+                                  description: The host type.
+                                  type: string
+                                  enum:
+                                    - PRIMARY
+                                    - MEDIA
+                                    - CLIENT
+                                hostName:
+                                  description: The host name.
+                                  type: string
+                                status:
+                                  description: The status code of the host.
+                                  type: integer
+                      links:
+                        type: object
+                        properties:
+                          self:
+                            type: object
+                            properties:
+                              href:
+                                type: string
+        '401': *ref_1
+        '404': *ref_7
+        '406': *ref_2
+        '500': *ref_3
+        '503': *ref_5
+    delete:
+      description: >
+        Delete the collected logs for the specified record ID. This action also
+        terminates any in-progress task.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|`\
+
+        Requires Operation: `|OPERATIONS|MANAGE|TROUBLESHOOTING|COLLECT-LOG|`
+      tags:
+        - Log Records
+      parameters:
+        - *ref_6
+        - name: X-NetBackup-Audit-Reason
+          in: header
+          description: >
+            Audit reason for the action being performed. This value must be
+            URL-encoded. Maximum 512 bytes, in UTF-8 encoding. The remaining
+            bytes are truncated.
+          schema:
+            type: string
+          required: false
+      responses:
+        '202':
+          description: Request accepted.
+        '401': *ref_1
+        '404': *ref_7
+        '406': *ref_2
+        '500': *ref_3
+        '503': *ref_5
+  /troubleshooting/async-log-download-requests:
+    x-in-development: false
+    post:
+      description: >
+        **Available only in Cloud Scale deployments.**
+
+
+        Asynchronously create a log download request preparing logs for
+        download.
+
+
+        The Location header points to a status monitor API
+        (`/admin/async-requests/{requestId}`) that can be used to monitor the
+        status of the async request.
+
+        When the asynchronous API call is complete the status monitor API will
+        redirect to `GET
+        /troubleshooting/async-log-download-requests-results/{asyncLogDownloadRequestResultId}`
+        to retrieve the result of the asynchronous create API.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|DOWNLOAD|`
+      tags:
+        - Log Download
+      requestBody:
+        description: The JSON body that contains the information for the request.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_30
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      description: The resource type.
+                      enum:
+                        - logDownloadRequest
+                    attributes:
+                      type: object
+                      properties:
+                        filter: &ref_10
+                          description: >-
+                            The filter to apply to logs. All filters are boolean
+                            ands.
+                          type: object
+                          properties:
+                            globalFilter:
+                              description: Filters to apply to all logs.
+                              type: object
+                              properties:
+                                startTime:
+                                  description: >-
+                                    The time in ISO-8601 format to collect logs
+                                    generated after or equal to.
+                                  type: string
+                                  format: date-time
+                                endTime:
+                                  description: >-
+                                    The time in ISO-8601 format to collect logs
+                                    generated before or equal to.
+                                  type: string
+                                  format: date-time
+                                namespaces:
+                                  description: >-
+                                    The Kubernetes namespaces to collect logs
+                                    for.
+                                  type: array
+                                  items:
+                                    type: string
+                            legacyLogFilter:
+                              description: >-
+                                Filters that only apply to NetBackup legacy
+                                logs.
+                              type: object
+                              properties:
+                                directories:
+                                  description: >-
+                                    The top-level legacy log directories to
+                                    collect logs for.
+                                  type: array
+                                  items:
+                                    type: string
+                            unifiedLogFilter:
+                              description: >-
+                                Filters that only apply to NetBackup unified
+                                logs.
+                              type: object
+                              properties:
+                                fileIds:
+                                  description: >-
+                                    The unified log originator IDs to collect
+                                    logs for at a file level. For example, 116
+                                    (nbpem) would include the entire
+                                    51216-116-2201360136-041029-0000000000.log
+                                    file.
+                                  type: array
+                                  items:
+                                    type: string
+      responses:
+        '202':
+          description: The create log download request has been accepted.
+          headers:
+            Location:
+              description: The status monitor URL that is used to query search status.
+              schema:
+                type: string
+            Retry-After:
+              description: >-
+                The time in ISO-8601 format when the results may be checked
+                next.
+              schema:
+                type: string
+                format: date-time
+        '400': *ref_4
+        '401': *ref_1
+        '415': &ref_9
+          description: >
+            Unsupported Media Type. The media type specified in the
+            `Content-Type` header is not supported by this API.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_0
+        '429':
+          description: >-
+            Too many log download requests are already running. Wait for one to
+            complete before resubmitting.
+        '500': *ref_3
+  '/troubleshooting/async-log-download-requests-results/{asyncLogDownloadRequestResultId}':
+    x-in-development: false
+    get:
+      description: >
+        **Available only in Cloud Scale deployments.**
+
+
+        Get the response from the asynchronous API to create a log download
+        request.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|DOWNLOAD|`
+      tags:
+        - Log Download
+      parameters:
+        - &ref_18
+          in: path
+          description: The ID of asynchronous result for the log download request.
+          name: asyncLogDownloadRequestResultId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: The log download request was successfully created.
+          headers:
+            Location:
+              description: >-
+                The log download request URL that can be used to view the
+                created resource.
+              schema:
+                type: string
+        '400': *ref_4
+        '401': *ref_1
+        '404': *ref_7
+        '415': *ref_9
+        '500': *ref_3
+  /troubleshooting/log-download-requests:
+    x-in-development: false
+    get:
+      description: >
+        **Available only in Cloud Scale deployments.**
+
+
+        Retrieve all the log download requests.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|DOWNLOAD|`
+      tags:
+        - Log Download
+      responses:
+        '200':
+          description: The log download requests.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_31
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items: &ref_11
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: The logDownloadRequest ID.
+                        type:
+                          type: string
+                          description: The resource type.
+                          enum:
+                            - logDownloadRequest
+                        attributes:
+                          type: object
+                          properties:
+                            filter: *ref_10
+                        relationships:
+                          type: object
+                          properties:
+                            archive:
+                              description: >-
+                                The archive containing the requested logs
+                                available for download.
+                              type: object
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    related:
+                                      description: >-
+                                        The URL that can be used to download the
+                                        archive.
+                                      type: string
+                                data:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: string
+                                      description: The resource ID.
+                                    type:
+                                      type: string
+                                      description: The resource type.
+                                      enum:
+                                        - logDownloadRequestArchive
+                        links:
+                          type: object
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+        '401': *ref_1
+        '415': *ref_9
+        '500': *ref_3
+  '/troubleshooting/log-download-requests/{logDownloadRequestId}':
+    x-in-development: false
+    get:
+      description: >
+        **Available only in Cloud Scale deployments.**
+
+
+        Retrieve a log download request by ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|DOWNLOAD|`
+      tags:
+        - Log Download
+      parameters:
+        - &ref_12
+          in: path
+          description: The ID of the log download request.
+          name: logDownloadRequestId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The log download request for the specified ID.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_32
+                type: object
+                required:
+                  - data
+                properties:
+                  data: *ref_11
+        '401': *ref_1
+        '404': *ref_7
+        '415': *ref_9
+        '500': *ref_3
+    delete:
+      description: >
+        **Available only in Cloud Scale deployments.**
+
+
+        Delete a log download request by ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|DOWNLOAD|`
+      tags:
+        - Log Download
+      parameters:
+        - *ref_12
+      responses:
+        '204':
+          description: >-
+            The log download request for the specified ID was successfully
+            deleted.
+        '401': *ref_1
+        '404': *ref_7
+        '415': *ref_9
+        '500': *ref_3
+  '/troubleshooting/log-download-requests/{logDownloadRequestId}/logs/{logDownloadRequestArchiveId}':
+    x-in-development: false
+    get:
+      description: >
+        **Available only in Cloud Scale deployments.**
+
+
+        Download the archive containing the requested logs.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|TROUBLESHOOTING|APPLICATION-LOGS|DOWNLOAD|`
+      tags:
+        - Log Download
+      parameters:
+        - *ref_12
+        - &ref_17
+          in: path
+          description: The ID of the downloadable archive of the log download request.
+          name: logDownloadRequestArchiveId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully downloaded the archive.
+          content:
+            application/vnd.netbackup+octet-stream;version=14.0:
+              schema:
+                type: string
+                format: binary
+        '401': *ref_1
+        '404': *ref_7
+        '415': *ref_9
+        '429':
+          description: >-
+            Too many log download requests are already running. Wait for one to
+            complete before resubmitting.
+        '500': *ref_3
+  /troubleshooting/log-collection-records:
+    get:
+      description: >
+        **Available only in non-Cloud Scale deployments.**
+
+
+        Returns a list of log collection records.
+
+        Log collection records are managed independently of the actual
+        asynchronous collection jobs.
+
+        This API returns a list of the log collection parameter objects.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Enhanced Log Collection
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |id|eq ne and or not () contains endswith startswith tolower
+            toupper|The ID of the log collection record.|string|
+
+            |evidenceCriteriaDetails/jobId|eq ne gt ge lt le and or|The job ID
+            that is associated with this record.|integer|
+
+            |evidenceUploadDetails/supportCaseId|eq ne and or not () contains
+            endswith startswith tolower toupper|The support case ID that is
+            associated with this record.|string|
+
+            |description|eq ne and or not () contains endswith startswith
+            tolower toupper|The description for this log collection
+            record.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: 'page[offset]'
+          description: The number of records to skip before starting the page.
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - in: query
+          name: 'page[limit]'
+          description: The number of records to include in the page.
+          schema:
+            type: integer
+            default: 10
+            minimum: 0
+            maximum: 100
+        - name: sort
+          description: >
+            Sorts in ascending order on the specified property. Prefix with '-'
+            for descending order.
+
+            Sorting is supported on the following attributes:
+
+            |Name|
+
+            |---|
+
+            |id|
+
+            |evidenceCriteriaDetails.jobId|
+
+            |evidenceUploadDetails.supportCaseId|
+
+            |description|
+
+            |lastActivityTime|
+
+            |creationTime|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved the list of log collection records.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_33
+                description: The response schema for log collection records list.
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items: &ref_16
+                      type: object
+                      description: Describes the log collection record item.
+                      properties:
+                        type:
+                          type: string
+                          description: The type of log collection record.
+                          enum:
+                            - logCollectionRecordItem
+                        id:
+                          type: string
+                          description: The ID of the log collection record.
+                        attributes: &ref_15
+                          type: object
+                          description: Describes the log collection record.
+                          properties:
+                            recordId:
+                              type: string
+                              description: The ID for the record.
+                            description:
+                              type: string
+                              description: The description for this log collection record.
+                            creationTime:
+                              type: string
+                              format: datetime
+                              description: The time that the record was created.
+                            lastActivityTime:
+                              type: string
+                              format: datetime
+                              description: >-
+                                The time of the most recent activity for the
+                                record.
+                            evidenceActivityInProgress:
+                              type: boolean
+                              description: >-
+                                Indicates if the activity is in progress for the
+                                log record.
+                            state:
+                              type: integer
+                              description: The state of the log record.
+                            stateErrorCodeString:
+                              type: string
+                              description: The error code string.
+                            stateText:
+                              type: string
+                              description: >-
+                                The text value that represents the state of the
+                                log collection record.
+                            progress:
+                              type: string
+                              description: The short version of the progress text.
+                            progressFileLocation:
+                              type: string
+                              description: The path of the progress log file.
+                            progressFileContent:
+                              type: string
+                              description: The contents of the progress log file.
+                            evidenceCriteriaDetails: &ref_37
+                              type: object
+                              description: >-
+                                The details that are related to the evidence
+                                criteria.
+                              properties:
+                                jobId:
+                                  type: string
+                                  description: >-
+                                    The job ID that is used for the criteria
+                                    selection.
+                                startTime:
+                                  type: string
+                                  format: datetime
+                                  description: >-
+                                    The start date and time for the log
+                                    collection record, as defined by the user or
+                                    the job.
+                                endTime:
+                                  type: string
+                                  format: datetime
+                                  description: >-
+                                    The end date and time for the log collection
+                                    record, as defined by the user or the job.
+                                collectLogs:
+                                  type: boolean
+                                  description: >-
+                                    Indicates if debug logs information is
+                                    collected.
+                                collectForPrimary:
+                                  type: boolean
+                                  description: >-
+                                    Indicates if logs are collected for the
+                                    primary server.
+                                collectNbsu:
+                                  type: boolean
+                                  description: Indicates if NBSU information is collected.
+                                collectSelectiveLogs:
+                                  type: boolean
+                                  description: >-
+                                    Indicates if selective log file or folder
+                                    path based collection is enabled. When true,
+                                    hosts contain logPaths instead of
+                                    categories.
+                                estimatedLogSizeInBytes:
+                                  type: number
+                                  description: >-
+                                    The estimated size of the logs for the log
+                                    collection record, in bytes.
+                                criteriaStatus:
+                                  enum:
+                                    - NOT_STARTED
+                                    - PENDING
+                                    - IN-PROGRESS
+                                    - CANCELLING
+                                    - COMPLETED
+                                    - CANCELLED
+                                    - FAILED
+                                  type: string
+                                  description: >-
+                                    The criteria status for the log collection
+                                    record item.
+                                mediaServers:
+                                  type: array
+                                  items: &ref_13
+                                    type: object
+                                    description: >-
+                                      The details of the host. The categories
+                                      and logPaths fields are mutually exclusive
+                                      - only one should be provided.
+                                    properties:
+                                      hostname:
+                                        type: string
+                                        description: The name of the host.
+                                      categories:
+                                        type: array
+                                        description: >-
+                                          The log categories to collect for this
+                                          host. Mutually exclusive with logPaths.
+                                        items:
+                                          properties:
+                                            categoryName:
+                                              description: The category name.
+                                              type: string
+                                            verbosity:
+                                              description: >-
+                                                The verbosity that is related to the
+                                                category.
+                                              type: number
+                                      logPaths:
+                                        type: array
+                                        description: >-
+                                          The list of specific log file or folder
+                                          paths selected for collection on this
+                                          host. When provided, only these paths
+                                          are collected instead of the default log
+                                          categories. Mutually exclusive with
+                                          categories.
+                                        items:
+                                          type: string
+                                clients:
+                                  type: array
+                                  items: *ref_13
+                                primary: *ref_13
+                            evidenceCollectionDetails: &ref_38
+                              type: object
+                              description: The details related to evidence collection.
+                              properties:
+                                collectionStatus:
+                                  enum:
+                                    - NOT_STARTED
+                                    - PENDING
+                                    - IN-PROGRESS
+                                    - CANCELLING
+                                    - COMPLETED
+                                    - CANCELLED
+                                    - FAILED
+                                  type: string
+                                  description: >-
+                                    The collection status for the log collection
+                                    record item.
+                                startTime:
+                                  type: string
+                                  format: datetime
+                                  description: >-
+                                    The start date and time for the log
+                                    collection.
+                                endTime:
+                                  type: string
+                                  format: datetime
+                                  description: >-
+                                    The end date and time for the log
+                                    collection.
+                                totalSizeInBytes:
+                                  type: integer
+                                  description: >-
+                                    The total size of logs in bytes, in
+                                    numerical format.
+                                files:
+                                  type: array
+                                  items: &ref_14
+                                    type: object
+                                    description: The file item for upload.
+                                    properties:
+                                      fileName:
+                                        type: string
+                                        description: The name of the file.
+                                      fileSizeInBytes:
+                                        type: integer
+                                        description: 'The size of the file, in bytes.'
+                                fileCount:
+                                  type: integer
+                                  description: The count of the files.
+                            evidenceUploadDetails: &ref_39
+                              type: object
+                              description: >-
+                                The details that are related to the evidence
+                                upload.
+                              properties:
+                                supportCaseId:
+                                  type: string
+                                  description: >-
+                                    The support case ID that was provided by the
+                                    user.
+                                sftpFingerprint:
+                                  type: string
+                                  description: The SFTP fingerprint for the upload.
+                                sftpHost:
+                                  type: string
+                                  description: The SFTP host for the upload.
+                                sftpUserId:
+                                  type: string
+                                  description: The SFTP user ID for the upload.
+                                uploadStatus:
+                                  enum:
+                                    - NOT_STARTED
+                                    - PENDING
+                                    - IN-PROGRESS
+                                    - CANCELLING
+                                    - COMPLETED
+                                    - CANCELLED
+                                    - FAILED
+                                  type: string
+                                  description: >-
+                                    The upload status for the log collection
+                                    record.
+                                uploadStatusCode:
+                                  type: integer
+                                  description: 'The status code, as an integer.'
+                                startTime:
+                                  type: string
+                                  format: datetime
+                                  description: The start date and time for the log upload.
+                                endTime:
+                                  type: string
+                                  format: datetime
+                                  description: The end date and time for the log upload.
+                                files:
+                                  type: array
+                                  items: *ref_14
+                                fileCount:
+                                  type: integer
+                                  description: The number of files to upload.
+                                fileCountUploaded:
+                                  type: integer
+                                  description: The number of files that were uploaded.
+                                totalSizeInBytes:
+                                  type: integer
+                                  description: The total number of bytes to upload.
+                                totalSizeInBytesUploaded:
+                                  type: integer
+                                  description: >-
+                                    The total number of bytes that were
+                                    uploaded.
+                      required:
+                        - type
+                        - id
+                        - attributes
+        '400': *ref_4
+        '401': *ref_1
+        '406': *ref_2
+        '500': *ref_3
+    post:
+      description: >
+        **Available only in non-Cloud Scale deployments.**
+
+
+        A log collection record is used to troubleshoot a NetBackup problem. It
+        defines the criteria to use and the type of information to collect for
+        troubleshooting, including the following: nbsu diagnostics, debug logs,
+        the hosts from which to collect information, and the date and time range
+        from which to collect information.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|MANAGE-LOG|`
+      tags:
+        - Enhanced Log Collection
+      requestBody:
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_35
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      description: The request type.
+                      type: string
+                      enum:
+                        - logCollectionRecordCreateEditRequest
+                    attributes:
+                      type: object
+                      required:
+                        - jobId
+                        - description
+                        - collectNbsu
+                        - collectLogs
+                        - collectForPrimary
+                        - startTime
+                        - endTime
+                        - mediaServers
+                        - clients
+                      properties:
+                        jobId:
+                          type: string
+                          description: >-
+                            The job ID that is associated with the log
+                            collection record.
+                        supportCaseId:
+                          type: string
+                          description: The support case ID that was provided by the user.
+                        description:
+                          type: string
+                          description: The description for this log collection record.
+                        startTime:
+                          type: string
+                          format: datetime
+                          description: >-
+                            The start date and time for the log collection
+                            record, as defined by the user or the job.
+                        endTime:
+                          type: string
+                          format: datetime
+                          description: >-
+                            The end date and time for the log collection record,
+                            as defined by the user or the job.
+                        collectLogs:
+                          type: boolean
+                          description: >-
+                            Indicates if debug logs information is collected.
+                            Must be false when collectSelectiveLogs is true.
+                        collectForPrimary:
+                          type: boolean
+                          description: >-
+                            Indicates if logs are collected for the primary
+                            server. Must be false when collectSelectiveLogs is
+                            true.
+                        collectSelectiveLogs:
+                          type: boolean
+                          description: >
+                            Indicates if selective log file or folder path based
+                            collection is enabled. When true, at least one host
+                            (primary, media server, or client) must have
+                            logPaths specified, and collectLogs,
+                            collectForPrimary, and collectNbsu must all be
+                            false. When false or absent, the existing
+                            category-based collection flow is used.
+                        primaryLogPaths:
+                          type: array
+                          description: >-
+                            The list of specific log file or folder paths
+                            selected for collection on the primary server. Only
+                            applicable when collectSelectiveLogs is true.
+                          items:
+                            type: string
+                        collectNbsu:
+                          type: boolean
+                          description: >-
+                            Indicates if NBSU information is collected. Must be
+                            false when collectSelectiveLogs is true.
+                        mediaServers:
+                          type: array
+                          items: *ref_13
+                        clients:
+                          type: array
+                          items: *ref_13
+        description: The JSON body that contains the details of the log collection record.
+        required: true
+      responses:
+        '201':
+          description: Successfully created the log collection record.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_36
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - id
+                      - type
+                      - attributes
+                    properties:
+                      id:
+                        type: string
+                        description: The log record ID.
+                      type:
+                        type: string
+                        enum:
+                          - logCollectionRecordItem
+                      attributes: *ref_15
+        '400': *ref_4
+        '401': *ref_1
+        '406': *ref_2
+        '415': *ref_9
+        '500': *ref_3
+  '/troubleshooting/log-collection-records/{recordId}':
+    parameters:
+      - *ref_6
+    get:
+      description: >
+        **Available only in non-Cloud Scale deployments.**
+
+
+        Get the log collection record details by record ID.
+
+        This request only returns the log collection parameter details that are
+        used to start log collection jobs. It does not return the actual log
+        files that are collected when a log collection job runs.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Enhanced Log Collection
+      responses:
+        '200':
+          description: Successfully returned the details of the log collection record.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_34
+                description: The response schema for log collection record details.
+                type: object
+                required:
+                  - data
+                properties:
+                  data: *ref_16
+        '401': *ref_1
+        '404': *ref_7
+        '406': *ref_2
+        '500': *ref_3
+    delete:
+      description: >
+        **Available only in non-Cloud Scale deployments.**
+
+
+        Deletes the log collection record along with all of its associated data.
+
+        This data includes any evidence files or artifacts that were gathered
+        during the log collection process.
+
+        Use this operation with caution, as the record is deleted permanently
+        and cannot be restored.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|`\
+
+        Requires Operation: `|OPERATIONS|DELETE|`
+      tags:
+        - Enhanced Log Collection
+      responses:
+        '204':
+          description: Successfully deleted the log collection record for the specified ID.
+        '401': *ref_1
+        '404': *ref_7
+        '500': *ref_3
+  '/troubleshooting/log-collection-records/{recordId}/collect':
+    parameters:
+      - *ref_6
+    post:
+      description: >
+        **Available only in non-Cloud Scale deployments.**
+
+
+        Initiates an asynchronous log collection for the specified record ID.
+        NetBackup uses the parameters that are defined in the record to gather
+        the relevant log files.
+
+
+        The Location header in the response points to a status monitor API
+        (`/admin/async-requests/{requestId}`) and that API can be used to
+        monitor the status of the async request.
+
+        When the asynchronous API call is complete the status monitor API
+        redirects to `GET /troubleshooting/log-collection-records/{recordId}` to
+        retrieve the result of the asynchronous collect API.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|MANAGE-LOG|`
+      tags:
+        - Enhanced Log Collection
+      responses:
+        '202':
+          description: >-
+            The log collection request has been accepted for the given record ID
+            and the log collection process has started.
+          headers:
+            Location:
+              description: >-
+                The status monitor URL that is used to query the collection
+                process status.
+              schema:
+                type: string
+            Retry-After:
+              description: >-
+                The time when the results may be checked again, in ISO-8601
+                format.
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_43
+                description: The response schema for log collection record collect action.
+                type: object
+                required:
+                  - data
+                properties:
+                  data: &ref_44
+                    type: object
+                    description: Describes the log collection record collection response.
+                    properties:
+                      type:
+                        type: string
+                        description: The resource type.
+                        enum:
+                          - logCollectionCollectResponseInfo
+                      id:
+                        type: string
+                        description: The record ID of the log collection record.
+                      attributes: &ref_45
+                        type: object
+                        description: >-
+                          Details about the current state of the log collection
+                          process, including status code and message.
+                        properties:
+                          state:
+                            type: integer
+                            description: The state value returned from the collect action.
+                          status:
+                            description: The status of the current log collection process.
+                            type: string
+                            enum:
+                              - IN-PROGRESS
+                              - COMPLETED
+                              - FAILED
+                              - CREATED
+                              - PARTIAL
+                              - UNKNOWN
+                          message:
+                            type: string
+                            description: >-
+                              The status message that describes the current
+                              state that was returned from the collect action.
+                    required:
+                      - type
+                      - id
+                      - attributes
+        '401': *ref_1
+        '404': *ref_7
+        '406': *ref_2
+        '409':
+          description: Evidence was already collected for this log record.
+          content:
+            'application/vnd:netbackup+json;version=14.0':
+              schema: *ref_0
+        '429':
+          description: A log collection is already active. Please try again later.
+        '500': *ref_3
+  '/troubleshooting/log-collection-records/{recordId}/progress-logs':
+    parameters:
+      - *ref_6
+    get:
+      description: >
+        **Available only in non-Cloud Scale deployments.**
+
+
+        Get the progress information for a log collection that is in process,
+        for the specified record ID.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Enhanced Log Collection
+      responses:
+        '200':
+          description: >-
+            Retrieves the progress information for the active log collection
+            process, for the specified record ID.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_46
+                description: >-
+                  The response schema that represents the progress details of
+                  the log collection process for a specific log collection
+                  record.
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items: &ref_47
+                      type: object
+                      description: >-
+                        The progress logs of the log collection process for a
+                        specific log collection record.
+                      properties:
+                        type:
+                          type: string
+                          description: The resource type.
+                          enum:
+                            - logCollectionProgressFile
+                        id:
+                          type: string
+                          description: >-
+                            The absolute path of the progress logs file for the
+                            log collection process.
+                        attributes: &ref_48
+                          type: object
+                          description: >-
+                            Provides progress information of an active
+                            asynchronous log collection process.
+                          properties:
+                            logCollectionStatus:
+                              type: string
+                              description: >-
+                                The status of the current log collection
+                                process.
+                              enum:
+                                - NOT_STARTED
+                                - PENDING
+                                - IN-PROGRESS
+                                - CANCELLING
+                                - COMPLETED
+                                - CANCELLED
+                                - FAILED
+                            recordId:
+                              type: string
+                              description: The record ID of the log collection record.
+                            contents:
+                              type: string
+                              description: The progress file contents.
+                      required:
+                        - type
+                        - id
+                        - attributes
+        '401': *ref_1
+        '404': *ref_7
+        '406': *ref_2
+        '500': *ref_3
+  '/troubleshooting/log-collection-records/{recordId}/evidence-files/download':
+    parameters:
+      - *ref_6
+    get:
+      description: >
+        **Available only in non-Cloud Scale deployments.**
+
+
+        Downloads the evidence files that were gathered by the asynchronous log
+        collection request.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Enhanced Log Collection
+      responses:
+        '200':
+          description: >-
+            Successfully downloaded the evidence files for the specified record
+            ID.
+          content:
+            application/vnd.netbackup+octet-stream;version=14.0:
+              schema:
+                type: string
+                format: binary
+        '401': *ref_1
+        '404': *ref_7
+        '406': *ref_2
+        '500': *ref_3
+  /troubleshooting/log-collection-evidence-mount-points:
+    get:
+      description: >
+        **Available only in non-Cloud Scale deployments.**
+
+
+        Returns the mount point data that is associated with the evidence path
+        on the primary server.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Enhanced Log Collection
+      responses:
+        '200':
+          description: Successfully retrieved the mount point list information.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_40
+                description: The response schema for mount point detail.
+                type: object
+                properties:
+                  data: &ref_41
+                    type: object
+                    properties:
+                      links:
+                        type: object
+                        properties:
+                          self:
+                            type: object
+                            description: Link to the resource.
+                            properties:
+                              href:
+                                type: string
+                      type:
+                        type: string
+                        description: The resource definition returned for the mount point.
+                        enum:
+                          - mountPoint
+                      id:
+                        type: string
+                        description: The unique mount point.
+                      attributes: &ref_42
+                        type: object
+                        properties:
+                          evidencePath:
+                            type: string
+                            description: The file path of the evidence location.
+                          mountPoint:
+                            type: string
+                            description: The name of the mount point.
+                          freeSpaceInBytes:
+                            type: number
+                            description: >-
+                              The free space available on the mount point, in
+                              bytes.
+                          totalSpaceInBytes:
+                            type: number
+                            description: >-
+                              The total space available on the mount point, in
+                              bytes.
+                    required:
+                      - links
+                      - type
+                      - id
+                      - attributes
+        '401': *ref_1
+        '406': *ref_2
+        '500': *ref_3
+  '/troubleshooting/log-collection-records/{hostName}/log-files':
+    x-in-development: false
+    parameters:
+      - in: path
+        description: The name of the host to browse log directories on.
+        name: hostName
+        required: true
+        schema:
+          type: string
+    get:
+      description: >
+        **Available only in non-Cloud Scale deployments.**
+
+
+        Browse log directories on the specified host. Returns the files and
+        directories at the specified path. Only whitelisted log paths under the
+        NetBackup install directory are allowed.
+
+
+        The path to browse is extracted from the filter query parameter using
+        OData syntax, for example: `filter=(path eq
+        '/usr/openv/netbackup/logs')`
+
+
+        When no filter is provided, returns the predefined whitelisted base log
+        directories.
+
+
+        This API is restricted to the built-in Administrator role only. It is
+        not available for custom roles.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|`\
+
+        Requires Operation:
+        `|OPERATIONS|MANAGE|TROUBLESHOOTING|LOG_COLLECTION|BROWSE-LOG-DIRECTORY|`
+      tags:
+        - Enhanced Log Collection
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |path|eq|The absolute path of the directory to browse on the
+            host.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >-
+            Successfully returned the list of files and directories at the
+            specified path on the host.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: array
+                    items: &ref_49
+                      type: object
+                      description: >-
+                        A file or directory entry returned from browsing log
+                        directories on a host.
+                      properties:
+                        type:
+                          type: string
+                          description: The resource type.
+                          enum:
+                            - logCollectionFileDetails
+                        id:
+                          type: string
+                          description: The resource identifier.
+                        attributes:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: The name of the file or directory.
+                            size:
+                              type: integer
+                              format: int64
+                              description: >-
+                                The size of the file in bytes. Zero for
+                                directories.
+                            modifiedDateInUTC:
+                              type: string
+                              format: date-time
+                              description: >-
+                                The last modification date and time of the file
+                                or directory, in ISO 8601 format.
+                            fileType:
+                              type: string
+                              description: The type of the entry.
+                              enum:
+                                - FILE
+                                - FOLDER
+                            isDisabled:
+                              type: boolean
+                              description: >-
+                                Indicates whether the entry is disabled for
+                                selection. When true, the entry is a
+                                navigation-only container and cannot be selected
+                                for log collection.
+                      required:
+                        - type
+                        - id
+                        - attributes
+        '400':
+          description: >
+            The request is invalid. Possible reasons include: the specified host
+            is not a known NetBackup primary, media server, or client; the
+            filter expression is malformed; or the specified path is not under a
+            whitelisted log directory.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_0
+        '401': *ref_1
+        '415': *ref_9
+        '500': *ref_3
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    recordId: *ref_6
+    logDownloadRequestId: *ref_12
+    logDownloadRequestArchiveId: *ref_17
+    asyncLogDownloadRequestResultId: *ref_18
+  schemas:
+    getStatusCodeResponse: *ref_19
+    logRecordsGetResponse: *ref_20
+    logRecordPostRequest: *ref_21
+    logRecordPostResponse: *ref_22
+    logCheckByIdPostRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              description: The request type.
+              type: string
+              enum:
+                - logCheckRequest
+            attributes:
+              type: object
+              required:
+                - recordType
+                - recordEntity
+              properties:
+                recordType:
+                  description: The record type.
+                  type: string
+                  enum:
+                    - JOB
+                recordEntity:
+                  description: The job identifier.
+                  type: string
+    logCollectByIdPostRequest: *ref_23
+    logUploadByIdPostRequest: *ref_24
+    logSettingsByIdPostRequest: *ref_25
+    logSettingsByIdGetResponse: *ref_26
+    logSettingsAttributes: *ref_8
+    logRecordByIdGetResponse: *ref_27
+    errorLogList: *ref_28
+    cursorPaginationAttributes: *ref_29
+    postLogDownloadRequest: *ref_30
+    getAllLogDownloadRequests: *ref_31
+    getLogDownloadRequest: *ref_32
+    logDownloadRequestResource: *ref_11
+    logDownloadRequestFilter: *ref_10
+    logCollectionRecordsGetResponse: *ref_33
+    logCollectionRecordInfoGetResponse: *ref_34
+    logCollectionRecordItem: *ref_16
+    logCollectionRecordPostRequest: *ref_35
+    logCollectionRecordPostResponse: *ref_36
+    logCollectionRecordAttributes: *ref_15
+    evidenceCriteriaDetails: *ref_37
+    evidenceCollectionDetails: *ref_38
+    evidenceUploadDetails: *ref_39
+    evidenceFileItem: *ref_14
+    evidenceHostDetailsItem: *ref_13
+    logCollectionRecordMountPointResponse: *ref_40
+    logCollectionRecordMountPointsResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items: *ref_41
+    logCollectionRecordMountPointList: *ref_41
+    logCollectionMountPointData: *ref_42
+    logCollectionRecordCollectResponse: *ref_43
+    logCollectionRecordCollectResponseItem: *ref_44
+    logCollectionRecordCollectResponseAttributes: *ref_45
+    logCollectionRecordProgressGetResponse: *ref_46
+    logCollectionProgressInfo: *ref_47
+    logCollectionProgressFileAttributes: *ref_48
+    logDirectoryEntryItem: *ref_49
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []

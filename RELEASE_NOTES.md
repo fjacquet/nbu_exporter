@@ -37,6 +37,7 @@ The exporter now automatically detects the highest supported API version availab
 #### Configuration Changes
 
 **Optional API Version** (Recommended for most deployments):
+
 ```yaml
 nbuserver:
     # apiVersion omitted - automatic detection enabled
@@ -46,6 +47,7 @@ nbuserver:
 ```
 
 **Explicit API Version** (For specific version requirements):
+
 ```yaml
 nbuserver:
     apiVersion: "13.0"  # or "12.0" or "3.0"
@@ -75,44 +77,49 @@ nbuserver:
 #### Recommended Migration Steps
 
 1. **Backup Configuration**
+
    ```bash
    cp config.yaml config.yaml.backup
    ```
 
 2. **Update Configuration** (Optional)
+
    ```bash
    # Fix typo if present
    sed -i 's/scrappingInterval/scrapingInterval/g' config.yaml
-   
+
    # Enable auto-detection (optional)
    # Remove or comment out apiVersion line
    ```
 
 3. **Test New Version**
+
    ```bash
    # Stop existing exporter
    systemctl stop nbu_exporter  # or docker stop nbu_exporter
-   
+
    # Start new version
    ./bin/nbu_exporter --config config.yaml --debug
-   
+
    # Verify version detection in logs
    tail -f log/nbu-exporter.log | grep "API version"
    ```
 
 4. **Verify Metrics**
+
    ```bash
    # Check health
    curl http://localhost:2112/health
-   
+
    # Check API version metric
    curl http://localhost:2112/metrics | grep nbu_api_version
-   
+
    # Verify existing metrics still work
    curl http://localhost:2112/metrics | grep nbu_jobs_count
    ```
 
 5. **Deploy to Production**
+
    ```bash
    # If tests pass, deploy
    systemctl start nbu_exporter  # or docker start nbu_exporter
@@ -208,6 +215,7 @@ See `docs/config-examples/` for complete examples:
 **Problem**: Exporter fails to detect API version
 
 **Solution**:
+
 ```bash
 # Check NetBackup server version
 bpgetconfig -g | grep VERSION
@@ -229,6 +237,7 @@ nbuserver:
 **Problem**: HTTP 401 errors during version detection
 
 **Solution**:
+
 ```bash
 # Verify API key is valid
 # Check NetBackup UI: Security > API Keys
@@ -247,6 +256,7 @@ curl -k -H "Authorization: YOUR_API_KEY" \
 **Problem**: Metrics show stale data
 
 **Solution**:
+
 ```bash
 # Check scraping interval
 grep scrapingInterval config.yaml
@@ -275,15 +285,15 @@ This release includes contributions and testing from the NetBackup community. Sp
 
 ### 📞 Support
 
-- **Issues**: https://github.com/fjacquet/nbu_exporter/issues
-- **Discussions**: https://github.com/fjacquet/nbu_exporter/discussions
-- **Documentation**: https://github.com/fjacquet/nbu_exporter/tree/main/docs
+- **Issues**: <https://github.com/fjacquet/nbu_exporter/issues>
+- **Discussions**: <https://github.com/fjacquet/nbu_exporter/discussions>
+- **Documentation**: <https://github.com/fjacquet/nbu_exporter/tree/main/docs>
 
 ### 🔗 Links
 
-- **GitHub Repository**: https://github.com/fjacquet/nbu_exporter
+- **GitHub Repository**: <https://github.com/fjacquet/nbu_exporter>
 - **Docker Hub**: (Coming soon)
-- **Release Assets**: https://github.com/fjacquet/nbu_exporter/releases/tag/v2.0.0
+- **Release Assets**: <https://github.com/fjacquet/nbu_exporter/releases/tag/v2.0.0>
 
 ---
 
@@ -309,4 +319,4 @@ This release includes contributions and testing from the NetBackup community. Sp
 
 ---
 
-**Full Changelog**: https://github.com/fjacquet/nbu_exporter/blob/main/CHANGELOG.md
+**Full Changelog**: <https://github.com/fjacquet/nbu_exporter/blob/main/CHANGELOG.md>
