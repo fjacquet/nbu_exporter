@@ -5,6 +5,7 @@ import (
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 )
 
 const catalogPath = "/catalog/images"
@@ -38,7 +39,6 @@ func newCatalogCollector(client NetBackupClient, cfg models.Config) *catalogColl
 func (c *catalogCollector) Name() string { return "catalog" }
 
 func (c *catalogCollector) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
-	var firstErr error
 	for _, mw := range catalogMalwareStatuses {
 		for _, an := range catalogAnomalyStatuses {
 			url := c.cfg.BuildURL(catalogPath, map[string]string{
@@ -47,9 +47,12 @@ func (c *catalogCollector) Collect(ctx context.Context, ch chan<- prometheus.Met
 			})
 			var resp models.CatalogImagesCount
 			if err := c.client.FetchData(ctx, url, &resp); err != nil {
-				if firstErr == nil {
-					firstErr = err
-				}
+				// Per-combination graceful degradation: log and skip this
+				// combination so successful combinations are still emitted.
+				log.WithError(err).
+					WithField("malware_status", mw).
+					WithField("anomaly_status", an).
+					Warn("catalog count fetch failed; skipping combination")
 				continue
 			}
 			ch <- prometheus.MustNewConstMetric(
@@ -58,5 +61,5 @@ func (c *catalogCollector) Collect(ctx context.Context, ch chan<- prometheus.Met
 			)
 		}
 	}
-	return firstErr
+	return nil
 }

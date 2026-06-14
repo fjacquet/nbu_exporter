@@ -113,7 +113,7 @@ type NbuCollector struct {
 //
 // Version Detection:
 //   - If apiVersion is not configured, automatic detection is performed
-//   - Detection tries versions in descending order: 13.0 → 12.0 → 3.0
+//   - Detection tries versions in descending order: 14.0 → 13.0 → 12.0 → 3.0
 //   - If detection fails, an error is returned and collector creation fails
 //   - If apiVersion is explicitly configured, detection is bypassed
 //

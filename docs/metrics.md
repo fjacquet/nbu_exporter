@@ -90,7 +90,7 @@ collectors:
 | Metric | Labels | Description |
 |--------|--------|-------------|
 | `nbu_up` | — | `1` if any collection succeeded, `0` if all collections failed |
-| `nbu_api_version` | `version` | Currently active NetBackup API version (13.0, 12.0, or 3.0) |
+| `nbu_api_version` | `version` | Currently active NetBackup API version (14.0, 13.0, 12.0, or 3.0) |
 | `nbu_response_time_ms` | — | NetBackup API response time in milliseconds |
 | `nbu_last_scrape_timestamp_seconds` | `source` | Unix timestamp of the last successful collection (`source`: `storage` or `jobs`) |
 

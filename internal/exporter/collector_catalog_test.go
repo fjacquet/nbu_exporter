@@ -28,3 +28,14 @@ func TestCatalogCollector(t *testing.T) {
 	// One series per curated (malware_status, anomaly_status) combination.
 	require.Equal(t, len(catalogMalwareStatuses)*len(catalogAnomalyStatuses), emitted)
 }
+
+func TestCatalogCollectorError(t *testing.T) {
+	// After per-combination graceful degradation, every sub-call failing leaves
+	// Collect returning nil while emitting no metrics.
+	client := &errClient{}
+	c := newCatalogCollector(client, testConfig())
+	ch := make(chan prometheus.Metric, 64)
+	require.NoError(t, c.Collect(context.Background(), ch))
+	close(ch)
+	require.Empty(t, ch)
+}
