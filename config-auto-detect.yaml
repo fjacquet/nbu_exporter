@@ -28,3 +28,10 @@ nbuserver:
 #     endpoint: "localhost:4317"
 #     insecure: true
 #     samplingRate: 0.1
+
+# Optional: opt-in NetBackup 11.2 metric collectors (all default to disabled)
+collectors:
+  alerts:  { enabled: false }
+  malware: { enabled: false }
+  catalog: { enabled: false }
+  slo:     { enabled: false }
