@@ -26,3 +26,12 @@ func TestAlertsCollector(t *testing.T) {
 	require.Equal(t, float64(2), counts["ERROR/JOB"])
 	require.Equal(t, float64(1), counts["WARNING/JOB"])
 }
+
+func TestAlertsCollectorError(t *testing.T) {
+	client := &errClient{}
+	c := newAlertsCollector(client, testConfig())
+	ch := make(chan prometheus.Metric, 4)
+	require.Error(t, c.Collect(context.Background(), ch))
+	close(ch)
+	require.Empty(t, ch)
+}
