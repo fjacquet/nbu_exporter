@@ -12,3 +12,4 @@ superseding decision gets a new ADR that references the old one.
 | ADR | Title | Status | Date |
 |-----|-------|--------|------|
 | [0001](0001-tooling-baseline-sync-with-pflex.md) | Sync the tooling/CI/security baseline with pflex_exporter | Accepted | 2026-06-05 |
+| [0002](0002-opt-in-sub-collector-framework.md) | Pluggable opt-in sub-collector framework | Accepted | 2026-06-14 |
