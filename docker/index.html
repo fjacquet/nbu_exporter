@@ -941,6 +941,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#host-ports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host ports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#auto-provisioning" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1309,6 +1331,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#host-ports" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Host ports
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#auto-provisioning" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1461,6 +1505,16 @@ files are otherwise identical.</p>
 </table>
 <p>Override the Grafana credentials with the <code>GF_ADMIN_USER</code> and <code>GF_ADMIN_PASSWORD</code> environment
 variables (for example in a gitignored <code>.env</code> file).</p>
+<h3 id="host-ports">Host ports</h3>
+<p>If a host port is already in use (for example another Prometheus on <code>9090</code>), override the published
+port without editing the compose files:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">NBU_EXPORTER_PORT</span><span class="o">=</span><span class="m">12112</span><span class="w"> </span><span class="nv">PROMETHEUS_PORT</span><span class="o">=</span><span class="m">19090</span><span class="w"> </span><span class="nv">GRAFANA_PORT</span><span class="o">=</span><span class="m">13000</span><span class="w"> </span>docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+</code></pre></div>
+<p>The defaults are <code>2112</code> (exporter), <code>9090</code> (Prometheus), and <code>3000</code> (Grafana).</p>
+<h3 id="logs">Logs</h3>
+<p>The exporter logs to stdout (<code>logName: "stdout"</code> in <code>config.yaml</code>), so view logs with
+<code>docker compose logs -f nbu_exporter</code>. No log directory or bind mount is required; set <code>logName</code> to a
+file path in <code>config.yaml</code> if you also want a log file.</p>
 <h3 id="auto-provisioning">Auto-provisioning</h3>
 <p>The Grafana datasource and the NetBackup dashboards are provisioned automatically — no manual import
 is needed. See <a href="../dashboards/">Dashboards</a> for what is included. Prometheus loads the alerting rules
@@ -1470,13 +1524,13 @@ from <code>deploy/prometheus/nbu.rules.yml</code>.</p>
 the single-target quickstart, set <code>NBU1_HOSTNAME</code> and <code>NBU1_APIKEY</code> (for example in a gitignored
 <code>.env</code> file) so the exporter knows which NetBackup master to query.</p>
 <h3 id="tear-down">Tear down</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Stop the stack and remove the named volumes (Prometheus + Grafana data)</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>down<span class="w"> </span>-v
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Stop the stack and remove the named volumes (Prometheus + Grafana data)</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>docker<span class="w"> </span>compose<span class="w"> </span>down<span class="w"> </span>-v
 </code></pre></div>
 <h2 id="verify-container">Verify Container</h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>nbu_exporter
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>curl<span class="w"> </span>http://localhost:2112/metrics
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>curl<span class="w"> </span>http://localhost:2112/health
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>nbu_exporter
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>curl<span class="w"> </span>http://localhost:2112/metrics
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>curl<span class="w"> </span>http://localhost:2112/health
 </code></pre></div>
 
 
