@@ -53,6 +53,55 @@ services:
 
 See the [OpenTelemetry Setup Guide](opentelemetry-example.md) for a complete Docker Compose stack with OpenTelemetry Collector and Jaeger.
 
+## Quickstart demo stack (Docker Compose)
+
+The repository ships a self-contained demo stack — the exporter plus Prometheus and Grafana — so you
+can see metrics, alerts, and dashboards end to end with a single command.
+
+### Start the stack
+
+```bash
+# Build the exporter locally, then start exporter + Prometheus + Grafana
+docker compose up -d
+
+# Or pull the published image instead of building
+docker compose -f docker-compose.ghcr.yml up -d
+```
+
+The build variant uses `docker-compose.yml` and builds the exporter from the local source. The ghcr
+variant uses `docker-compose.ghcr.yml`, which pulls `ghcr.io/fjacquet/nbu_exporter:latest`; the two
+files are otherwise identical.
+
+### Service URLs
+
+| Service | URL | Notes |
+|---|---|---|
+| Exporter metrics | <http://localhost:2112/metrics> | Scraped by the in-stack Prometheus |
+| Prometheus | <http://localhost:9090> | Loads alerting rules from `deploy/prometheus/nbu.rules.yml` |
+| Grafana | <http://localhost:3000> | Default login `admin` / `admin` |
+
+Override the Grafana credentials with the `GF_ADMIN_USER` and `GF_ADMIN_PASSWORD` environment
+variables (for example in a gitignored `.env` file).
+
+### Auto-provisioning
+
+The Grafana datasource and the NetBackup dashboards are provisioned automatically — no manual import
+is needed. See [Dashboards](dashboards.md) for what is included. Prometheus loads the alerting rules
+from `deploy/prometheus/nbu.rules.yml`.
+
+### Configuration
+
+`config.yaml` is the source of truth for the exporter; it is mounted read-only into the container. For
+the single-target quickstart, set `NBU1_HOSTNAME` and `NBU1_APIKEY` (for example in a gitignored
+`.env` file) so the exporter knows which NetBackup master to query.
+
+### Tear down
+
+```bash
+# Stop the stack and remove the named volumes (Prometheus + Grafana data)
+docker compose down -v
+```
+
 ## Verify Container
 
 ```bash

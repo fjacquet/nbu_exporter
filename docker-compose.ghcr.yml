@@ -1,16 +1,13 @@
 services:
   nbu_exporter: # nosemgrep
-    build: .
-    image: nbu_exporter:latest
+    image: ghcr.io/fjacquet/nbu_exporter:latest
     container_name: nbu_exporter
     security_opt:
       - no-new-privileges:true
     ports:
       - "2112:2112"
     volumes:
-      # Mount configuration file (read-only)
       - ./config.yaml:/etc/nbu_exporter/config.yaml:ro
-      # Mount log directory for persistent logs
       - ./log:/var/log/nbu_exporter
     restart: unless-stopped
     healthcheck:
@@ -19,21 +16,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    # Optional: Set resource limits
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-        reservations:
-          cpus: "0.25"
-          memory: 128M
     environment:
-      # Single-server quickstart: set these in a .env file (gitignored).
-      # config.yaml is the source of truth — these vars are only consumed
-      # when config.yaml references them as ${NBU1_HOSTNAME} / ${NBU1_APIKEY}.
-      # For multiple servers add more entries in config.yaml (literal values
-      # or your own env references) rather than extending this block.
       - NBU1_HOSTNAME=${NBU1_HOSTNAME:-master.my.domain}
       - NBU1_APIKEY=${NBU1_APIKEY:-}
     networks:
