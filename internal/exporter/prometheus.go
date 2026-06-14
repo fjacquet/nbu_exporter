@@ -70,7 +70,8 @@ type NbuCollector struct {
 	cfg                models.Config
 	client             *NbuClient
 	tracing            *TracerWrapper
-	storageCache       *StorageCache // TTL cache for storage metrics
+	storageCache       *StorageCache  // TTL cache for storage metrics
+	subCollectors      []subCollector // Enabled opt-in metric collectors
 	nbuDiskSize        *prometheus.Desc
 	nbuResponseTime    *prometheus.Desc
 	nbuJobsSize        *prometheus.Desc
@@ -148,7 +149,7 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 	// Create storage cache with configured TTL
 	storageCache := NewStorageCache(cfg.GetCacheTTL())
 
-	return &NbuCollector{
+	c := &NbuCollector{
 		cfg:          cfg,
 		client:       client,
 		tracing:      tracing,
@@ -238,7 +239,18 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 			"Histogram of completed job durations in seconds",
 			[]string{"action", "policy_type"}, nil,
 		),
-	}, nil
+	}
+
+	// Populate enabled opt-in collectors from config (empty until Phase 4).
+	c.subCollectors = buildSubCollectors(c)
+
+	return c, nil
+}
+
+// buildSubCollectors returns the enabled optional collectors based on config.
+func buildSubCollectors(c *NbuCollector) []subCollector {
+	var subs []subCollector
+	return subs
 }
 
 // Describe sends the descriptors of each metric to the provided channel.
@@ -327,6 +339,9 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 
 	// Expose all collected metrics (pass errors for nbu_up calculation)
 	c.exposeMetrics(ch, storageMetrics, storageUnits, jobAgg, storageErr, jobsErr)
+
+	// Run enabled opt-in sub-collectors (graceful degradation: errors logged, never propagated).
+	runSubCollectors(ctx, c.subCollectors, ch, c.tracing)
 
 	log.Debugf("Collected %d storage, %d storage units, %d job metric keys",
 		len(storageMetrics), len(storageUnits), jobMetricCount)
