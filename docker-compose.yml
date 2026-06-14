@@ -75,7 +75,9 @@ services:
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/nbu-overview.json:/var/lib/grafana/dashboards/nbu-overview.json:ro
-      - ./grafana/NBU Statistics-1629904585394.json:/var/lib/grafana/dashboards/nbu-statistics.json:ro
+      - ./grafana/nbu-jobs.json:/var/lib/grafana/dashboards/nbu-jobs.json:ro
+      - ./grafana/nbu-storage.json:/var/lib/grafana/dashboards/nbu-storage.json:ro
+      - ./grafana/nbu-dataprotection.json:/var/lib/grafana/dashboards/nbu-dataprotection.json:ro
       - grafana-storage:/var/lib/grafana
     restart: unless-stopped
     depends_on:
