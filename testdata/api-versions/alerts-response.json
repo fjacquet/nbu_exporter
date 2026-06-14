@@ -1,0 +1,7 @@
+{
+  "data": [
+    { "attributes": { "severity": "ERROR",   "category": "JOB", "subCategory": "STANDARD" } },
+    { "attributes": { "severity": "ERROR",   "category": "JOB", "subCategory": "ORACLE" } },
+    { "attributes": { "severity": "WARNING", "category": "JOB", "subCategory": "ANY" } }
+  ]
+}
