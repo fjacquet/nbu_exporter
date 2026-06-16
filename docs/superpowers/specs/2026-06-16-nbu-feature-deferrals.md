@@ -33,7 +33,8 @@ Three things drive the order, in priority:
 ```
 Feature 5 (auto-detect)            ← PR #1, no dependencies, unblocks everything
    │
-   ├─► operator v3.0 fixes PR      ← their guard must key off the DETECTED version
+   ├─► NBU 10.x support PR         ← API version=10.0 + jobs cursor pagination
+   │                                  (supersedes the operator's mistaken "v3.0 fixes")
    │
    └─► Feature 1 (snapshot model + nbuservers[] + `site` label)   ← keystone refactor
             │
@@ -43,14 +44,17 @@ Feature 5 (auto-detect)            ← PR #1, no dependencies, unblocks everythi
 
 ## Per-feature direction
 
-### v3.0 validation fixes (operator's "done" work) — welcome, after Feature 5
+### "v3.0 validation fixes" (operator's "done" work) — DO NOT accept; premise was false
 
-Version-guarding the 11.2 sub-collectors, suppressing `nbu_jobs_dedup_ratio` on v3.0, and a
-startup warning are all sound and fit the existing opt-in sub-collector framework
-(ADR-0002, which already mandates per-collector graceful degradation and keeps `nbu_up`
-tied to storage/jobs only). **Deferred from PR #1** because the guard should branch on the
-**detected** version — which only becomes reliable once Feature 5 lands. Accept their PR
-once Feature 5 is merged; no need for the maintainer to re-implement it.
+The operator proposed version-guarding the opt-in collectors, suppressing
+`nbu_jobs_dedup_ratio`, and a startup warning, on the belief that NBU 10.x lacks those
+endpoints/fields. Validated against the real NBU 10.3 spec (`docs/veritas-10.3/`), that
+premise is **false**: at API `version=10.0` the opt-in endpoints all exist and the jobs
+schema includes both `dedupRatio` and `jobQueueReason`. His symptoms come from the exporter
+requesting a bogus/legacy version (`3.0`) and from **broken jobs cursor pagination** — not
+from missing features. **Do not merge those fixes.** The correct, grounded fix is the
+**NBU 10.x support** work: negotiate `version=10.0` and switch jobs to cursor pagination —
+see [`2026-06-16-nbu-10x-support-design.md`](2026-06-16-nbu-10x-support-design.md).
 
 ### Feature 1 — Multi-master / multi-site — keystone, deferred
 
@@ -88,13 +92,10 @@ sub-collector per ADR-0002.
 the exporter to run *on* a master/media server with the binaries installed, breaking the
 remote HTTP-only model the whole project is built on.
 
-**Open item (needs the requester):** we do not have a 10.3 / API-v3.0 spec checked in.
-Confirm the endpoints exist on their appliance, e.g.:
-
-```
-curl -sk -H "Authorization: <api-key>" \
-  "https://<master>:1556/netbackup/storage/drives?page%5Blimit%5D=1"
-```
+**No longer blocked on the requester:** the NBU 10.3 spec is now checked in
+(`docs/veritas-10.3/`, API `version=10.0`). `/storage/drives` is confirmed present;
+`/storage/tape-media` and the robot endpoints still need a closer read of
+`docs/veritas-10.3/storage.yaml` — but that is our-side spec work now, not an appliance `curl`.
 
 ### Feature 3 — Per-client metrics — opt-in + allowlist, deferred
 
@@ -114,7 +115,11 @@ alerts depend on Feature 2; generic alerting improvements can land independently
 ## What the requester should hear
 
 - **Yes** to all five directions; the only "no" is CLI-based tape (REST instead).
-- Their v3.0 fixes PR is welcome **after** Feature 5 merges.
-- One concrete ask back: the `curl` confirmation that tape endpoints exist on API v3.0.
-- The order is set by dependencies, not by priority disagreement — Feature 1 is the
-  keystone and is being done to the family standard so it lands once, correctly.
+- His "v3.0 fixes" are **not** needed or merged — the premise was false (see above). The real
+  fix is the NBU 10.x support work (API `version=10.0` + jobs cursor pagination), which we are
+  doing ourselves.
+- His "v3.0" was the exporter's Helm/release version, not the NetBackup API; NBU 10.3 actually
+  speaks API `version=10.0`. No ask-back required — we verified everything against the 10.3
+  spec he is running.
+- The order is set by dependencies — Feature 1 (multi-site) is the keystone, done to the
+  family standard so it lands once, correctly.
