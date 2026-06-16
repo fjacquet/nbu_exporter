@@ -1,0 +1,136 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Diagnostics API
+  version: '10.0'
+  description: >
+    The NetBackup Diagnostics API provides diagnostic information about the
+    NetBackup Web Management Console.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/10.3/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+paths:
+  /diagnostics/thread-dump:
+    post:
+      description: >
+        Takes a thread dump and writes it to a file.  Returns the file path to
+        the created thread dump file on the server.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.3/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|DIAGNOSTICS|WMC|`\
+
+        Requires Operation: `|OPERATIONS|DUMP|`
+      tags:
+        - Thread Management
+      responses:
+        '201':
+          description: >-
+            Successfully created the thread dump log file and returned the path
+            of the created file.
+          content:
+            text/vnd.netbackup+plain;version=10.0:
+              schema:
+                type: string
+                example: >-
+                  /usr/openv/wmc/webserver/logs/nbwmc-thread-dump-2020-06-29T14:13:00Z.log
+        '401': &ref_1
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=10.0:
+              schema: &ref_0
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '500': &ref_2
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=10.0:
+              schema: *ref_0
+  /diagnostics/heap-dump:
+    post:
+      description: >
+        Takes a heap dump and writes it to a file.  Returns the file path to the
+        created heap dump file on the server.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/10.3/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|DIAGNOSTICS|WMC|`\
+
+        Requires Operation: `|OPERATIONS|DUMP|`
+      tags:
+        - Memory Management
+      responses:
+        '201':
+          description: >-
+            Successfully created the heap dump log file and returned the path of
+            the created file.
+          content:
+            text/vnd.netbackup+plain;version=10.0:
+              schema:
+                type: string
+                example: >-
+                  /usr/openv/wmc/webserver/logs/nbwmc-heap-dump-2020-06-29T14:13:00Z.log
+        '401': *ref_1
+        '500': *ref_2
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []
