@@ -6,7 +6,7 @@ coverage.out
 coverage.html
 *.coverprofile
 /nbu_exporter
-nbu-exporter
+/nbu-exporter
 
 # Logs
 log/
