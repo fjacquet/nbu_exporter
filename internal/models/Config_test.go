@@ -67,9 +67,9 @@ func TestConfigSetDefaults(t *testing.T) {
 }
 
 // TestSetDefaults_PreservesEmptyAPIVersionForAutoDetection is a regression guard for
-// NBU 10.x / API v3.0 support: omitting apiVersion must leave it empty through both
+// NBU 10.x / API v10.0 support: omitting apiVersion must leave it empty through both
 // SetDefaults() and Validate() so the client performs automatic version detection
-// (14.0 -> 13.0 -> 12.0 -> 3.0). Forcing a default here silently disables auto-detect
+// (14.0 -> 13.0 -> 12.0 -> 10.0). Forcing a default here silently disables auto-detect
 // and hard-fails the exporter against NetBackup < 11.2.
 func TestSetDefaults_PreservesEmptyAPIVersionForAutoDetection(t *testing.T) {
 	cfg := createConfigWithAPIVersion("")
@@ -140,7 +140,7 @@ func assertAPIVersionValidation(t *testing.T, config *Config, err error, apiVers
 		if err != nil {
 			t.Errorf(testErrorValidateUnexpected, err)
 		}
-		// Empty version is preserved so the client can auto-detect it (NBU 10.x / API v3.0).
+		// Empty version is preserved so the client can auto-detect it (NBU 10.x / API v10.0).
 		if apiVersion == "" && config.NbuServer.APIVersion != "" {
 			t.Errorf("Validate() APIVersion = %v, want empty (auto-detect)", config.NbuServer.APIVersion)
 		}
@@ -165,8 +165,8 @@ func TestConfigValidateAPIVersion(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name:       "valid API version 3.0",
-			apiVersion: "3.0",
+			name:       "valid API version 10.0",
+			apiVersion: "10.0",
 			wantErr:    false,
 		},
 		{
@@ -389,7 +389,7 @@ nbuserver:
 
 func TestSupportedAPIVersions(t *testing.T) {
 	// Test that the supported versions list contains expected versions
-	expectedVersions := []string{"14.0", "13.0", "12.0", "3.0"}
+	expectedVersions := []string{"14.0", "13.0", "12.0", "10.0"}
 
 	if len(SupportedAPIVersions) != len(expectedVersions) {
 		t.Errorf("SupportedAPIVersions length = %d, want %d", len(SupportedAPIVersions), len(expectedVersions))
@@ -409,9 +409,9 @@ func TestAPIVersionConstants(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "APIVersion30 constant",
-			constant: APIVersion30,
-			expected: "3.0",
+			name:     "APIVersion100 constant",
+			constant: APIVersion100,
+			expected: "10.0",
 		},
 		{
 			name:     "APIVersion120 constant",
@@ -984,8 +984,8 @@ func TestConfigValidateSupportedVersions(t *testing.T) {
 			wantErr:    false,
 		},
 		{
-			name:       "supported version 3.0",
-			apiVersion: "3.0",
+			name:       "supported version 10.0",
+			apiVersion: "10.0",
 			wantErr:    false,
 		},
 		{
