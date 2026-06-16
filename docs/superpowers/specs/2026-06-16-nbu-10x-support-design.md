@@ -33,8 +33,8 @@ NBU 10.3 OpenAPI bundle (`docs/veritas-10.3/`, added for this work) overturned t
 
 3. **Jobs pagination is cursor-based and the exporter breaks on it.** `GET /admin/jobs` uses
    `page[after]`/`page[before]` string cursors and returns `meta.pagination.next`/`prev` as
-   **strings** plus `rangeTruncated` (bool) — confirmed in the 10.3, 10.5 **and** 11.0
-   bundles, where the endpoint description notes *"a breaking change… starting with version
+   **strings** plus `rangeTruncated` (bool) — confirmed in the 10.3, 10.5, 11.0 **and 11.2**
+   bundles (API `10.0`/`12.0`/`13.0`/`14.0`), where the endpoint description notes *"a breaking change… starting with version
    9.0."* The exporter declares `Next int`/`Offset int`/`Last int`/… (`models/Jobs.go`) and
    sends `page[offset]` (`exporter/netbackup.go`). Consequences:
    - `next` (string) unmarshalled into `Next int` **fails** → the whole jobs fetch errors →

@@ -491,7 +491,7 @@ rtk git commit -m "chore(nbu10x): make ci green (lint/coverage tidy-ups)"
 - Against a mock cursor-paginated `/admin/jobs`, the exporter follows `next` across pages and emits `nbu_jobs_*` for all jobs (Task B3 test proves this).
 - `apiVersion` omitted on NBU 10.x → detection resolves `10.0`; jobs via cursor, storage via offset; full metrics.
 - No `3.0` remains in `SupportedAPIVersions`, the detection ladder, or shipped config examples.
-- **14.0 (NBU 11.2) still works:** it is in the cross-version test matrix and its jobs fixture uses cursor pagination — proving the fix repairs (not breaks) 14.0, which was already offset-broken before. Real-appliance confirmation on NBU 11.2 is the only step beyond local verification.
+- **14.0 (NBU 11.2) still works — spec-confirmed:** `docs/veritas-11.2/admin.yaml` (API `version=14.0`) shows `/admin/jobs` uses the identical cursor contract (`page[after]`/`page[before]`, string `next`/`prev`, `rangeTruncated`). 14.0 is in the cross-version test matrix with a cursor jobs fixture, proving the fix repairs (not breaks) 14.0 — which was already offset-broken before.
 - No change to emitted metric names or labels; storage pagination untouched.
 
 ## Out of scope (do not do here)
