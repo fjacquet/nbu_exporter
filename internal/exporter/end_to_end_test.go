@@ -217,14 +217,14 @@ func TestEndToEndWorkflowAPI120(t *testing.T) {
 	assert.Greater(t, metricCount, 0, "Should collect metrics for API 12.0")
 }
 
-// TestEndToEndFallbackScenario tests the fallback logic (13.0 → 12.0 → 3.0)
+// TestEndToEndFallbackScenario tests the fallback logic (13.0 → 12.0 → 10.0)
 func TestEndToEndFallbackScenario(t *testing.T) {
 	t.Skip("Skipping slow end-to-end test - functionality covered by unit tests")
-	// Create mock server that only supports API 3.0
+	// Create mock server that only supports API 10.0
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		acceptHeader := r.Header.Get("Accept")
 
-		// Only accept API 3.0
+		// Only accept API 10.0
 		if strings.Contains(acceptHeader, apiVersion130) || strings.Contains(acceptHeader, apiVersion120) {
 			w.WriteHeader(http.StatusNotAcceptable)
 			_ = json.NewEncoder(w).Encode(map[string]string{
@@ -234,7 +234,7 @@ func TestEndToEndFallbackScenario(t *testing.T) {
 			return
 		}
 
-		if strings.Contains(acceptHeader, "version=3.0") {
+		if strings.Contains(acceptHeader, "version=10.0") {
 			// Handle API 3.0 requests
 			switch {
 			case strings.Contains(r.URL.Path, testPathAdminJobs):
@@ -300,13 +300,13 @@ func TestEndToEndFallbackScenario(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, client)
 
-	// Verify fallback to API 3.0
-	assert.Equal(t, "3.0", cfg.NbuServer.APIVersion, "Should fallback to API 3.0")
+	// Verify fallback to API 10.0
+	assert.Equal(t, "10.0", cfg.NbuServer.APIVersion, "Should fallback to API 10.0")
 
-	// Verify metrics can be collected with API 3.0
+	// Verify metrics can be collected with API 10.0
 	storageMetrics, err := FetchStorage(ctx, client)
 	require.NoError(t, err)
-	assert.NotEmpty(t, storageMetrics, "Should collect storage metrics with API 3.0")
+	assert.NotEmpty(t, storageMetrics, "Should collect storage metrics with API 10.0")
 	assert.Greater(t, len(storageMetrics), 0, "Should have at least one storage metric")
 }
 
@@ -393,7 +393,7 @@ func TestEndToEndErrorScenarios(t *testing.T) {
 // TestEndToEndMetricsConsistency verifies metrics are consistent across API versions
 func TestEndToEndMetricsConsistency(t *testing.T) {
 	t.Skip("Skipping slow end-to-end test - functionality covered by unit tests")
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0"}
 
 	for _, version := range versions {
 		t.Run(fmt.Sprintf("API_%s", strings.ReplaceAll(version, ".", "_")), func(t *testing.T) {

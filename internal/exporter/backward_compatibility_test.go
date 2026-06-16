@@ -65,14 +65,14 @@ func TestBackwardCompatibilityExplicitVersion120(t *testing.T) {
 	assert.NotNil(t, result["data"], testErrorResponseShouldContain)
 }
 
-// TestBackwardCompatibility_ExplicitVersion30 verifies that configurations with
-// explicitly set apiVersion: "3.0" continue to work for NetBackup 10.0-10.4 deployments.
-func TestBackwardCompatibilityExplicitVersion30(t *testing.T) {
-	// Create a mock server that responds to API version 3.0 requests
+// TestBackwardCompatibility_ExplicitVersion100 verifies that configurations with
+// explicitly set apiVersion: "10.0" continue to work for NetBackup 10.0-10.4 deployments.
+func TestBackwardCompatibilityExplicitVersion100(t *testing.T) {
+	// Create a mock server that responds to API version 10.0 requests
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Verify the Accept header contains version 3.0
+		// Verify the Accept header contains version 10.0
 		acceptHeader := r.Header.Get("Accept")
-		assert.Contains(t, acceptHeader, "version=3.0", "Expected API version 3.0 in Accept header")
+		assert.Contains(t, acceptHeader, "version=10.0", "Expected API version 10.0 in Accept header")
 
 		// Return a successful response
 		response := map[string]interface{}{
@@ -94,21 +94,21 @@ func TestBackwardCompatibilityExplicitVersion30(t *testing.T) {
 	}))
 	defer server.Close()
 
-	// Create configuration with explicit API version 3.0
+	// Create configuration with explicit API version 10.0
 	// Extract host:port from server URL (format: https://127.0.0.1:12345)
 	serverAddr := strings.TrimPrefix(server.URL, testSchemeHTTPS)
-	cfg := createTestConfig(serverAddr, "3.0")
+	cfg := createTestConfig(serverAddr, "10.0")
 	cfg.NbuServer.Scheme = "https"
 
 	// Create client - should NOT perform version detection
 	client := NewNbuClient(cfg)
-	assert.Equal(t, "3.0", client.cfg.NbuServer.APIVersion, "API version should remain 3.0")
+	assert.Equal(t, "10.0", client.cfg.NbuServer.APIVersion, "API version should remain 10.0")
 
 	// Test that API calls work correctly
 	ctx := context.Background()
 	var result map[string]interface{}
 	err := client.FetchData(ctx, server.URL+testPathAdminJobs, &result)
-	require.NoError(t, err, "API call with version 3.0 should succeed")
+	require.NoError(t, err, "API call with version 10.0 should succeed")
 	assert.NotNil(t, result["data"], testErrorResponseShouldContain)
 }
 
@@ -148,9 +148,9 @@ func TestBackwardCompatibilityMissingVersion(t *testing.T) {
 			w.Header().Set(contentTypeHeader, contentTypeJSON)
 			_ = json.NewEncoder(w).Encode(response)
 			return
-		} else if contains(acceptHeader, "version=3.0") {
-			attemptedVersions = append(attemptedVersions, "3.0")
-			// Return 406 for version 3.0
+		} else if contains(acceptHeader, "version=10.0") {
+			attemptedVersions = append(attemptedVersions, "10.0")
+			// Return 406 for version 10.0
 			w.WriteHeader(http.StatusNotAcceptable)
 			return
 		}

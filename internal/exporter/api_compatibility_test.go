@@ -29,7 +29,7 @@ func TestJobsAPICompatibilityAcrossVersions(t *testing.T) {
 		version  string
 		filename string
 	}{
-		{"3.0", "../../testdata/api-versions/jobs-response-v3.json"},
+		{"10.0", "../../testdata/api-versions/jobs-response-v3.json"},
 		{"12.0", "../../testdata/api-versions/jobs-response-v12.json"},
 		{"13.0", "../../testdata/api-versions/jobs-response-v13.json"},
 	}
@@ -110,7 +110,7 @@ func TestStorageAPICompatibilityAcrossVersions(t *testing.T) {
 		version  string
 		filename string
 	}{
-		{"3.0", "../../testdata/api-versions/storage-response-v3.json"},
+		{"10.0", "../../testdata/api-versions/storage-response-v3.json"},
 		{"12.0", "../../testdata/api-versions/storage-response-v12.json"},
 		{"13.0", "../../testdata/api-versions/storage-response-v13.json"},
 	}
@@ -169,7 +169,7 @@ func verifyStorageMetrics(t *testing.T, storageMetrics map[string]float64, versi
 
 // TestMetricsConsistencyAcrossVersions verifies that metric names and labels remain consistent
 func TestMetricsConsistencyAcrossVersions(t *testing.T) {
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0"}
 
 	allJobMetrics := collectJobMetricsForAllVersions(t, versions)
 	allStorageMetrics := collectStorageMetricsForAllVersions(t, versions)
@@ -233,7 +233,7 @@ func collectStorageMetricsForAllVersions(t *testing.T, versions []string) map[st
 // getVersionSuffix extracts the major version number from a version string
 func getVersionSuffix(version string) string {
 	switch version {
-	case "3.0":
+	case "10.0":
 		return "3"
 	case "12.0":
 		return "12"
@@ -249,12 +249,12 @@ func verifyJobMetricConsistency(t *testing.T, allJobMetrics map[string]map[strin
 	t.Helper()
 
 	baseJobKeys := make(map[string]bool)
-	for key := range allJobMetrics["3.0"] {
+	for key := range allJobMetrics["10.0"] {
 		baseJobKeys[key] = true
 	}
 
 	for version, metrics := range allJobMetrics {
-		if version == "3.0" {
+		if version == "10.0" {
 			continue
 		}
 		for key := range baseJobKeys {
@@ -270,12 +270,12 @@ func verifyStorageMetricConsistency(t *testing.T, allStorageMetrics map[string]m
 	t.Helper()
 
 	baseStorageKeys := make(map[string]bool)
-	for key := range allStorageMetrics["3.0"] {
+	for key := range allStorageMetrics["10.0"] {
 		baseStorageKeys[key] = true
 	}
 
 	for version, metrics := range allStorageMetrics {
-		if version == "3.0" {
+		if version == "10.0" {
 			continue
 		}
 		for key := range baseStorageKeys {
@@ -288,7 +288,7 @@ func verifyStorageMetricConsistency(t *testing.T, allStorageMetrics map[string]m
 
 // TestAuthenticationWithAllVersions tests that authentication works with all API versions
 func TestAuthenticationWithAllVersions(t *testing.T) {
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0"}
 
 	for _, version := range versions {
 		t.Run(fmt.Sprintf(testAPIVersionFormat, version), func(t *testing.T) {
@@ -338,8 +338,8 @@ func TestParsingWithRealResponseFiles(t *testing.T) {
 		storageFile string
 	}{
 		{
-			name:        "NetBackup 10.0 (API v3.0)",
-			version:     "3.0",
+			name:        "NetBackup 10.0 (API v10.0)",
+			version:     "10.0",
 			jobsFile:    "../../testdata/api-versions/jobs-response-v3.json",
 			storageFile: "../../testdata/api-versions/storage-response-v3.json",
 		},
@@ -463,7 +463,7 @@ func verifyStorageFields(t *testing.T, storage models.Storages) {
 // TestErrorHandlingAcrossVersions tests error handling with different API versions
 // Note: Disables retries to avoid slow exponential backoff on 500 errors
 func TestErrorHandlingAcrossVersions(t *testing.T) {
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0"}
 
 	for _, version := range versions {
 		t.Run(fmt.Sprintf("API_v%s", version), func(t *testing.T) {

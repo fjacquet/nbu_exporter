@@ -459,11 +459,11 @@ func TestNbuClientVersionFailureErrorMessages(t *testing.T) {
 			},
 		},
 		{
-			name:       "406 error for version 3.0",
-			apiVersion: "3.0",
+			name:       "406 error for version 10.0",
+			apiVersion: "10.0",
 			statusCode: 406,
 			wantErrorContains: []string{
-				"API version 3.0 is not supported",
+				"API version 10.0 is not supported",
 				errMsgHTTP406,
 			},
 		},
@@ -631,9 +631,9 @@ func TestNbuClientConfigurationOverride(t *testing.T) {
 		wantVersion       string
 	}{
 		{
-			name:              "configured version 3.0 is preserved",
-			configuredVersion: "3.0",
-			wantVersion:       "3.0",
+			name:              "configured version 10.0 is preserved",
+			configuredVersion: "10.0",
+			wantVersion:       "10.0",
 		},
 		{
 			name:              "configured version 12.0 is preserved",

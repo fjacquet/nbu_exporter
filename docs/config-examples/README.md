@@ -15,8 +15,8 @@ This directory contains example configuration files for different NetBackup depl
 
 **Features:**
 - No `apiVersion` field specified
-- Automatically detects highest supported version (13.0 → 12.0 → 3.0)
-- Works with NetBackup 10.0, 10.5, and 11.0 without changes
+- Automatically detects highest supported version (14.0 → 13.0 → 12.0 → 10.0)
+- Works with NetBackup 10.0, 10.5, 11.0, and 11.2 without changes
 - Adds 1-3 seconds to startup for version detection
 
 **Best for:** Mixed environments, future-proof deployments
@@ -65,11 +65,11 @@ This directory contains example configuration files for different NetBackup depl
 
 **Use when:**
 - Running NetBackup 10.0, 10.1, 10.2, 10.3, or 10.4
-- You want to explicitly use API version 3.0
+- You want to explicitly use API version 10.0
 - Maintaining legacy NetBackup environments
 
 **Features:**
-- `apiVersion: "3.0"` explicitly configured
+- `apiVersion: "10.0"` explicitly configured
 - Legacy API support
 - Core metrics (jobs, storage) fully functional
 
@@ -87,7 +87,7 @@ Select the configuration file that matches your NetBackup version:
 |-------------------|------------------|-------------|
 | 11.0+             | `config-netbackup-11.yaml` | 13.0 |
 | 10.5              | `config-netbackup-10.5.yaml` | 12.0 |
-| 10.0-10.4         | `config-netbackup-10.0.yaml` | 3.0 |
+| 10.0-10.4         | `config-netbackup-10.0.yaml` | 10.0 |
 | Any/Mixed         | `config-auto-detect.yaml` | Auto |
 
 ### Step 2: Copy and Customize
@@ -140,7 +140,7 @@ nbuserver:
 | `domainType` | string | Yes | - | Domain type (e.g., "NT", "vx") |
 | `host` | string | Yes | - | NetBackup master server hostname |
 | `port` | string | Yes | - | API port (typically "1556") |
-| `apiVersion` | string | No | Auto-detect | API version ("13.0", "12.0", "3.0", or omit for auto-detection) |
+| `apiVersion` | string | No | Auto-detect | API version ("13.0", "12.0", "10.0", or omit for auto-detection) |
 | `apiKey` | string | Yes | - | NetBackup API key (generate from NetBackup UI) |
 | `contentType` | string | Yes | - | API content type header |
 | `insecureSkipVerify` | bool | No | false | Skip TLS verification (not recommended for production) |
@@ -171,9 +171,9 @@ that responds successfully:
    - If successful (HTTP 200), uses version 12.0
    - If not supported (HTTP 406), tries next version
 
-4. **Try API 3.0** (NetBackup 10.0-10.4)
-   - Makes lightweight API call with version 3.0
-   - If successful (HTTP 200), uses version 3.0
+4. **Try API 10.0** (NetBackup 10.0-10.4)
+   - Makes lightweight API call with version 10.0
+   - If successful (HTTP 200), uses version 10.0
    - If not supported, reports error
 
 ### Detection Characteristics
@@ -330,7 +330,7 @@ Error: config file not found: config.yaml
 Error: invalid configuration: apiVersion must match format X.Y
 ```
 
-**Solution:** Use valid API versions: "3.0", "12.0", or "13.0"
+**Solution:** Use valid API versions: "10.0", "12.0", or "13.0"
 
 ---
 

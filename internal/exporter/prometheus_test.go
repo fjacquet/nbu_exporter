@@ -80,7 +80,7 @@ func createVersionMockServer(t *testing.T, responses map[string]int) *httptest.S
 
 // extractVersionFromHeader extracts the API version from the Accept header
 func extractVersionFromHeader(acceptHeader string) string {
-	for _, v := range []string{"13.0", "12.0", "3.0"} {
+	for _, v := range []string{"13.0", "12.0", "10.0"} {
 		if fmt.Sprintf("application/vnd.netbackup+json;version=%s", v) == acceptHeader {
 			return v
 		}

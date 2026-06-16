@@ -169,7 +169,7 @@ func handleStorageRequest(w http.ResponseWriter) {
 // (metric collection) is not degraded by multi-version support.
 func TestPerformanceRuntimePerformance(t *testing.T) {
 	t.Skip("Skipping slow performance test - run with: go test -run TestPerformance -timeout 5m")
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0"}
 	runtimeDurations := make(map[string]time.Duration)
 
 	for _, version := range versions {
@@ -292,7 +292,7 @@ func TestPerformanceMemoryUsage(t *testing.T) {
 	// This is a simplified test - in production, you'd use runtime.MemStats
 	// to measure actual memory allocation
 
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0"}
 
 	for _, version := range versions {
 		// Create mock server
@@ -420,7 +420,7 @@ func BenchmarkCollectorCreation(b *testing.B) {
 // BenchmarkMetricCollection benchmarks the metric collection process
 // for different API versions.
 func BenchmarkMetricCollection(b *testing.B) {
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0"}
 
 	for _, version := range versions {
 		b.Run("Version_"+strings.ReplaceAll(version, ".", "_"), func(b *testing.B) {

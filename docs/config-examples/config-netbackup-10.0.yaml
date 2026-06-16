@@ -1,14 +1,14 @@
 ---
-# Configuration Example: NetBackup 10.0-10.4 with Explicit API Version 3.0
+# Configuration Example: NetBackup 10.0-10.4 with Explicit API Version 10.0
 #
 # Use this configuration when:
 # - Running NetBackup 10.0, 10.1, 10.2, 10.3, or 10.4
-# - You want to explicitly specify API version 3.0
+# - You want to explicitly specify API version 10.0
 # - You're maintaining legacy NetBackup environments
 # - You want to skip automatic version detection for faster startup
 #
 # NetBackup Version: 10.0 - 10.4
-# API Version: 3.0
+# API Version: 10.0
 # Detection: Disabled (explicit version)
 
 server:
@@ -25,13 +25,13 @@ nbuserver:
     domainType: "NT"
     host: "nbu10-legacy.my.domain"  # NetBackup 10.0-10.4 master server
     port: "1556"
-    apiVersion: "3.0"  # Explicit API version for NetBackup 10.0-10.4
+    apiVersion: "10.0"  # Explicit API version for NetBackup 10.0-10.4
     apiKey: "your-api-key-here"  # Generate from NetBackup UI
-    contentType: "application/vnd.netbackup+json; version=3.0"
+    contentType: "application/vnd.netbackup+json; version=10.0"
     insecureSkipVerify: false  # Set to true only for testing environments
 
 # Legacy Support:
-# - API version 3.0 is supported for backward compatibility
+# - API version 10.0 is supported for NetBackup 10.0-10.4 environments
 # - Core metrics (jobs, storage) work the same across all API versions
 # - Some advanced features may not be available in older API versions
 # - Consider upgrading to NetBackup 10.5+ for latest features
