@@ -62,7 +62,7 @@ make clean
 - `prometheus.go` - `NbuCollector` implementing `prometheus.Collector`. Metrics: `nbu_disk_bytes`, `nbu_jobs_bytes`, `nbu_jobs_count`, `nbu_status_count`, `nbu_api_version`
 - `netbackup.go` - `FetchStorage()` and `FetchAllJobs()` for NBU API calls with pagination via `handlePagination()`
 - `client.go` - Reusable HTTP client with connection pooling, TLS config, 2-minute timeout
-- `version_detector.go` - Auto-detects API version (13.0 → 12.0 → 3.0 fallback)
+- `version_detector.go` - Auto-detects API version (14.0 → 13.0 → 12.0 → 3.0 fallback)
 - `cache.go` - TTL-based storage metrics cache (5min default) to reduce API load
 - `health.go` - `TestConnectivity()` health check against NBU API
 - `metrics.go` - `StorageMetricKey` and `JobMetricKey` composite key structs

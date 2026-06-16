@@ -230,12 +230,16 @@ func TestBackwardCompatibilityNoBreakingChanges(t *testing.T) {
 	})
 
 	t.Run("DefaultValues", func(t *testing.T) {
-		// Verify that default API version is set correctly
+		// Verify SetDefaults applies the optional-field defaults it owns.
 		cfg := models.Config{}
 		cfg.SetDefaults()
 
-		// Default should be 14.0 for new deployments
-		assert.Equal(t, "14.0", cfg.NbuServer.APIVersion, "Default API version should be 14.0")
+		// APIVersion is intentionally NOT defaulted: an omitted version must stay
+		// empty so the client auto-detects it (NBU 10.x / API v3.0). Defaulting it
+		// would silently disable auto-detect and hard-fail against NetBackup < 11.2.
+		assert.Equal(t, "", cfg.NbuServer.APIVersion, "Omitted API version must stay empty to trigger auto-detection")
+		assert.Equal(t, "/netbackup", cfg.NbuServer.URI, "Default NBU server URI should be set")
+		assert.Equal(t, "5m", cfg.Server.CacheTTL, "Default storage cache TTL should be set")
 	})
 }
 

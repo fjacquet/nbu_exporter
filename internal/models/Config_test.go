@@ -15,7 +15,7 @@ func TestConfigSetDefaults(t *testing.T) {
 		expectedAPIVer string
 	}{
 		{
-			name: "sets default API version when empty",
+			name: "preserves empty API version for auto-detection",
 			config: Config{
 				NbuServer: struct {
 					Port               string `yaml:"port"`
@@ -32,7 +32,7 @@ func TestConfigSetDefaults(t *testing.T) {
 					APIVersion: "",
 				},
 			},
-			expectedAPIVer: "14.0",
+			expectedAPIVer: "",
 		},
 		{
 			name: "preserves existing API version",
@@ -63,6 +63,27 @@ func TestConfigSetDefaults(t *testing.T) {
 				t.Errorf("SetDefaults() APIVersion = %v, want %v", tt.config.NbuServer.APIVersion, tt.expectedAPIVer)
 			}
 		})
+	}
+}
+
+// TestSetDefaults_PreservesEmptyAPIVersionForAutoDetection is a regression guard for
+// NBU 10.x / API v3.0 support: omitting apiVersion must leave it empty through both
+// SetDefaults() and Validate() so the client performs automatic version detection
+// (14.0 -> 13.0 -> 12.0 -> 3.0). Forcing a default here silently disables auto-detect
+// and hard-fails the exporter against NetBackup < 11.2.
+func TestSetDefaults_PreservesEmptyAPIVersionForAutoDetection(t *testing.T) {
+	cfg := createConfigWithAPIVersion("")
+
+	cfg.SetDefaults()
+	if cfg.NbuServer.APIVersion != "" {
+		t.Errorf("SetDefaults() APIVersion = %q, want empty (auto-detect)", cfg.NbuServer.APIVersion)
+	}
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate() with empty apiVersion: unexpected error %v", err)
+	}
+	if cfg.NbuServer.APIVersion != "" {
+		t.Errorf("Validate() APIVersion = %q, want empty (auto-detect)", cfg.NbuServer.APIVersion)
 	}
 }
 
@@ -119,9 +140,9 @@ func assertAPIVersionValidation(t *testing.T, config *Config, err error, apiVers
 		if err != nil {
 			t.Errorf(testErrorValidateUnexpected, err)
 		}
-		// Verify default was set if empty
-		if apiVersion == "" && config.NbuServer.APIVersion != "14.0" {
-			t.Errorf("Validate() APIVersion = %v, want default 14.0", config.NbuServer.APIVersion)
+		// Empty version is preserved so the client can auto-detect it (NBU 10.x / API v3.0).
+		if apiVersion == "" && config.NbuServer.APIVersion != "" {
+			t.Errorf("Validate() APIVersion = %v, want empty (auto-detect)", config.NbuServer.APIVersion)
 		}
 	}
 }
@@ -161,7 +182,7 @@ func TestConfigValidateAPIVersion(t *testing.T) {
 			errMsg:     "unsupported API version",
 		},
 		{
-			name:       "empty API version gets default",
+			name:       "empty API version is preserved for auto-detection",
 			apiVersion: "",
 			wantErr:    false,
 		},
@@ -314,7 +335,7 @@ func TestConfigBackwardCompatibility(t *testing.T) {
 		shouldValidate bool
 	}{
 		{
-			name: "config without API version field validates with default",
+			name: "config without API version field validates and stays empty for auto-detect",
 			yaml: `
 server:
   host: "localhost"
@@ -330,7 +351,7 @@ nbuserver:
   apiKey: "test-key"
   contentType: "application/json"
 `,
-			expectedAPIVer: "14.0",
+			expectedAPIVer: "",
 			shouldValidate: true,
 		},
 		{
@@ -353,7 +374,7 @@ nbuserver:
   contentType: "application/json"
   insecureSkipVerify: false
 `,
-			expectedAPIVer: "14.0",
+			expectedAPIVer: "",
 			shouldValidate: true,
 		},
 	}
@@ -644,7 +665,7 @@ func TestConfigMaskAPIKey(t *testing.T) {
 		},
 		{
 			name:     "very long key",
-			apiKey:   "abcdefghijklmnopqrstuvwxyz0123456789",
+			apiKey:   "abcd" + strings.Repeat("x", 28) + "6789",
 			expected: "abcd****6789",
 		},
 	}

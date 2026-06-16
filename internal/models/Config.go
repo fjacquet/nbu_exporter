@@ -76,17 +76,16 @@ type CollectorToggle struct {
 
 // SetDefaults sets default values for optional configuration fields.
 // Currently sets:
-//   - Default API version to "14.0" (NetBackup 11.2) if not specified
 //   - Default NBU server URI to "/netbackup" if not specified
 //   - Default storage cache TTL to "5m" if not specified
 //
+// APIVersion is intentionally NOT defaulted here. An omitted apiVersion is left
+// empty so the client performs automatic version detection
+// (14.0 -> 13.0 -> 12.0 -> 3.0); forcing a default would silently disable
+// auto-detect and hard-fail the exporter against NetBackup < 11.2.
+//
 // This method is called automatically by Validate() before validation checks.
 func (c *Config) SetDefaults() {
-	// Set default API version for NetBackup 11.2
-	if c.NbuServer.APIVersion == "" {
-		c.NbuServer.APIVersion = APIVersion140
-	}
-
 	// Set default NBU server URI
 	if c.NbuServer.URI == "" {
 		c.NbuServer.URI = "/netbackup"

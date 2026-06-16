@@ -153,17 +153,25 @@ When `apiVersion` is **not specified**, the exporter performs automatic detectio
 
 ### Detection Process
 
-1. **Try API 13.0** (NetBackup 11.0+)
+The exporter tries supported API versions in descending order and uses the first
+that responds successfully:
+
+1. **Try API 14.0** (NetBackup 11.2+)
+   - Makes lightweight API call with version 14.0
+   - If successful (HTTP 200), uses version 14.0
+   - If not supported (HTTP 406), tries next version
+
+2. **Try API 13.0** (NetBackup 11.0+)
    - Makes lightweight API call with version 13.0
    - If successful (HTTP 200), uses version 13.0
    - If not supported (HTTP 406), tries next version
 
-2. **Try API 12.0** (NetBackup 10.5)
+3. **Try API 12.0** (NetBackup 10.5)
    - Makes lightweight API call with version 12.0
    - If successful (HTTP 200), uses version 12.0
    - If not supported (HTTP 406), tries next version
 
-3. **Try API 3.0** (NetBackup 10.0-10.4)
+4. **Try API 3.0** (NetBackup 10.0-10.4)
    - Makes lightweight API call with version 3.0
    - If successful (HTTP 200), uses version 3.0
    - If not supported, reports error
@@ -174,6 +182,10 @@ When `apiVersion` is **not specified**, the exporter performs automatic detectio
 - **Retry Logic:** Automatically retries transient failures with exponential backoff
 - **Error Handling:** Distinguishes version incompatibility from network/auth errors
 - **Logging:** Each attempt is logged for troubleshooting
+- **Reachability:** Detection runs at startup and contacts the appliance. When
+  `apiVersion` is omitted and the appliance is unreachable, startup **fails fast**
+  rather than starting and failing on every scrape. Set an explicit `apiVersion` to
+  start without contacting the appliance first.
 
 ### Startup Log Example
 
