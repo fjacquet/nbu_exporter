@@ -18,7 +18,7 @@ const (
 	contentTypeNetBackupJSONFormat = testutil.ContentTypeNetBackupJSONFormat
 
 	// API version strings
-	apiVersion30  = testutil.APIVersion30
+	apiVersion100 = testutil.APIVersion100
 	apiVersion120 = testutil.APIVersion120
 	apiVersion130 = testutil.APIVersion130
 

@@ -55,7 +55,7 @@ const (
 
 // API version strings
 const (
-	APIVersion30  = "version=3.0"
+	APIVersion100 = "version=10.0"
 	APIVersion120 = "version=12.0"
 	APIVersion130 = "version=13.0"
 	APIVersion140 = "version=14.0"
