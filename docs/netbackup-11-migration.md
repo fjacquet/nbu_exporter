@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide provides step-by-step instructions for upgrading the NBU Exporter to support NetBackup 11.0 (API version 13.0) while maintaining backward compatibility with NetBackup 10.5 (API 12.0) and NetBackup 10.0-10.4 (API 3.0).
+This guide provides step-by-step instructions for upgrading the NBU Exporter to support NetBackup 11.0 (API version 13.0) while maintaining backward compatibility with NetBackup 10.5 (API 12.0) and NetBackup 10.0-10.4 (API 10.0).
 
 ## What's New
 
@@ -14,7 +14,7 @@ The exporter now supports three NetBackup API versions:
 |-------------------|-------------|----------------|
 | 11.0+             | 13.0        | ✅ Fully Supported |
 | 10.5              | 12.0        | ✅ Fully Supported |
-| 10.0 - 10.4       | 3.0         | ✅ Legacy Support |
+| 10.0 - 10.4       | 10.0        | ✅ Fully Supported |
 
 ### Automatic Version Detection
 
@@ -23,7 +23,7 @@ The exporter can automatically detect the highest supported API version availabl
 **Detection Process:**
 1. Attempts API version 13.0 (NetBackup 11.0+)
 2. Falls back to API version 12.0 (NetBackup 10.5)
-3. Falls back to API version 3.0 (NetBackup 10.0-10.4)
+3. Falls back to API version 10.0 (NetBackup 10.0-10.4)
 4. Uses the first version that responds successfully
 
 ### Key Benefits
@@ -67,7 +67,7 @@ The exporter can automatically detect the highest supported API version availabl
        port: "1556"
        # apiVersion not specified - will auto-detect 13.0
        apiKey: "your-api-key-here"
-       contentType: "application/vnd.netbackup+json; version=3.0"
+       contentType: "application/vnd.netbackup+json; version=13.0"
        insecureSkipVerify: false
    ```
 
@@ -207,7 +207,7 @@ nbuserver:
    # config-nbu10-legacy.yaml
    nbuserver:
        host: "nbu10-legacy.my.domain"
-       # apiVersion omitted - will detect 3.0
+       # apiVersion omitted - will detect 10.0
    ```
 
 3. **Each exporter automatically detects the correct version**
@@ -304,7 +304,7 @@ nbuserver:
          port: "1556"
          # apiVersion omitted for auto-detection
          apiKey: "${NBU_API_KEY}"
-         contentType: "application/vnd.netbackup+json; version=3.0"
+         contentType: "application/vnd.netbackup+json; version=13.0"
          insecureSkipVerify: false
    ```
 
@@ -453,7 +453,7 @@ nbuserver:
 **Symptoms:**
 ```
 ERROR: Failed to detect compatible NetBackup API version.
-Attempted versions: 13.0, 12.0, 3.0
+Attempted versions: 13.0, 12.0, 10.0
 ```
 
 **Diagnosis:**
@@ -675,9 +675,9 @@ Always have a rollback plan:
 
 ### Documentation
 
-- [README.md](../README.md) - Main documentation
+- [Home](index.md) - Main documentation
 - [API 10.5 Migration Guide](api-10.5-migration.md) - Previous migration guide
-- [CHANGELOG.md](../CHANGELOG.md) - Version history
+- [Changelog](changelog.md) - Version history
 
 ### NetBackup API Documentation
 
@@ -712,7 +712,7 @@ Always have a rollback plan:
 
 **Backward Compatibility:**
 - NetBackup 11.0 supports API 12.0
-- NetBackup 11.0 supports API 3.0
+- NetBackup 11.0 supports API 10.0
 - Smooth upgrade path
 
 ---

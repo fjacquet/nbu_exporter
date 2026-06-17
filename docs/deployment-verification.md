@@ -1049,5 +1049,5 @@ For issues during deployment:
 ## Related Documentation
 
 - [API 10.5 Migration Guide](api-10.5-migration.md) - Detailed upgrade instructions
-- [README.md](../README.md) - General usage and configuration
-- [CHANGELOG.md](../CHANGELOG.md) - Version history and changes
+- [Home](index.md) - General usage and configuration
+- [Changelog](changelog.md) - Version history and changes
