@@ -68,7 +68,18 @@ func driveState(s string) string { return strings.TrimPrefix(s, "DRIVE_STATUS_")
 func (c *tapeCollector) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
 	c.collectDrives(ctx, ch)
 	c.collectMedia(ctx, ch)
+	c.collectRobotHosts(ctx, ch)
 	return nil
+}
+
+func (c *tapeCollector) collectRobotHosts(ctx context.Context, ch chan<- prometheus.Metric) {
+	url := c.cfg.BuildURL(robotHostPath, map[string]string{QueryParamLimit: pageLimit})
+	var resp models.RobotDeviceHosts
+	if err := c.client.FetchData(ctx, url, &resp); err != nil {
+		log.WithError(err).WithField("site", c.site).Warn("tape: robots-device-hosts fetch failed; skipping")
+		return
+	}
+	ch <- prometheus.MustNewConstMetric(c.robotHostsCount, prometheus.GaugeValue, float64(len(resp.Data)), c.site)
 }
 
 func (c *tapeCollector) collectMedia(ctx context.Context, ch chan<- prometheus.Metric) {

@@ -1,0 +1,6 @@
+{
+  "data": [
+    {"id": "host1.example.com", "type": "deviceHost"},
+    {"id": "host2.example.com", "type": "deviceHost"}
+  ]
+}

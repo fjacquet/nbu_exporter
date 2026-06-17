@@ -125,3 +125,57 @@ func TestTapeCollector_MediaPaginated(t *testing.T) {
 	require.Equal(t, float64(2), media["HCART|ACTIVE"], "both pages aggregated")
 	require.Equal(t, float64(1), media["HCART|FROZEN"])
 }
+
+func TestTapeCollector_RobotHostsAndRegistration(t *testing.T) {
+	client := &tapeRoutedClient{t: t, byPath: map[string]string{
+		"/storage/drives":              "",
+		"/storage/tape-media":          "",
+		"/storage/robots-device-hosts": "../../testdata/api-versions/robots-device-hosts-response.json",
+	}}
+	c := newTapeCollector(client, testConfig(), "site1")
+	ch := make(chan prometheus.Metric, 16)
+	require.NoError(t, c.Collect(context.Background(), ch))
+	close(ch)
+
+	var got float64
+	found := false
+	for m := range ch {
+		var d dto.Metric
+		require.NoError(t, m.Write(&d))
+		if strings.Contains(m.Desc().String(), "nbu_tape_robot_device_hosts") {
+			require.Equal(t, "site1", labelValue(&d, "site"))
+			got = d.GetGauge().GetValue()
+			found = true
+		}
+	}
+	require.True(t, found, "nbu_tape_robot_device_hosts must be emitted")
+	require.Equal(t, float64(2), got)
+}
+
+// All endpoints fail -> Collect returns nil and emits nothing (graceful degradation).
+func TestTapeCollector_GracefulDegradation(t *testing.T) {
+	client := &tapeRoutedClient{t: t, byPath: map[string]string{
+		"/storage/drives":              "",
+		"/storage/tape-media":          "",
+		"/storage/robots-device-hosts": "",
+	}}
+	c := newTapeCollector(client, testConfig(), "site1")
+	ch := make(chan prometheus.Metric, 4)
+	require.NoError(t, c.Collect(context.Background(), ch))
+	close(ch)
+	require.Empty(t, ch)
+}
+
+// The tape collector is built only when collectors.tape is enabled.
+func TestBuildSubCollectorsFor_Tape(t *testing.T) {
+	cfg := testConfig()
+	cfg.Collectors.Tape.Enabled = true
+	subs := buildSubCollectorsFor(&errClient{}, cfg, "site1")
+	found := false
+	for _, s := range subs {
+		if s.Name() == "tape" {
+			found = true
+		}
+	}
+	require.True(t, found, "tape collector should be built when collectors.tape.enabled")
+}
