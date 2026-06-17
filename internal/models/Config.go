@@ -121,11 +121,12 @@ type Config struct {
 	} `yaml:"opentelemetry"`
 
 	Collectors struct {
-		Alerts  CollectorToggle `yaml:"alerts"`
-		Malware CollectorToggle `yaml:"malware"`
-		Catalog CollectorToggle `yaml:"catalog"`
-		SLO     CollectorToggle `yaml:"slo"`
-		Tape    CollectorToggle `yaml:"tape"`
+		Alerts    CollectorToggle `yaml:"alerts"`
+		Malware   CollectorToggle `yaml:"malware"`
+		Catalog   CollectorToggle `yaml:"catalog"`
+		SLO       CollectorToggle `yaml:"slo"`
+		Tape      CollectorToggle `yaml:"tape"`
+		PerClient PerClientConfig `yaml:"perClient"`
 	} `yaml:"collectors"`
 }
 
@@ -133,6 +134,14 @@ type Config struct {
 // to disabled so existing deployments and older NetBackup versions are unaffected.
 type CollectorToggle struct {
 	Enabled bool `yaml:"enabled"`
+}
+
+// PerClientConfig is the opt-in per-client metrics toggle. Unlike CollectorToggle it
+// carries an allowlist that bounds the high-cardinality client label; an empty
+// allowlist emits no per-client series.
+type PerClientConfig struct {
+	Enabled   bool     `yaml:"enabled"`
+	Allowlist []string `yaml:"allowlist"`
 }
 
 // SetDefaults sets default values for optional configuration fields.
