@@ -1,0 +1,25 @@
+# promtool test rules deploy/prometheus/rules-tape_test.yml
+rule_files:
+  - rules-tape.yml
+tests:
+  - interval: 1m
+    input_series:
+      - series: 'nbu_tape_drives_count{site="paris",state="DOWN",drive_type="DT_HCART",robot_type="TLD"}'
+        values: '1x60'
+      - series: 'nbu_tape_drives_count{site="paris",state="UP",drive_type="DT_HCART",robot_type="TLD"}'
+        values: '3x60'
+    alert_rule_test:
+      # One DOWN drive, true > for:15m -> warning fires (sum by site drops drive_type/robot_type).
+      - eval_time: 20m
+        alertname: NbuTapeDriveDown
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              site: paris
+            exp_annotations:
+              summary: "Tape drive(s) DOWN on site paris"
+              description: "One or more tape drives are DOWN on site paris."
+      # No DISABLED series -> no alert.
+      - eval_time: 40m
+        alertname: NbuTapeDriveDisabled
+        exp_alerts: []
