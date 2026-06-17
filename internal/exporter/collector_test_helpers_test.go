@@ -5,12 +5,24 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 )
+
+// splitTestServerURL splits an "http://host:port" httptest server URL into its
+// host and port. Shared by the test config builders.
+func splitTestServerURL(serverURL string) (host, port string) {
+	parts := strings.SplitN(strings.TrimPrefix(serverURL, "http://"), ":", 2)
+	host = parts[0]
+	if len(parts) == 2 {
+		port = parts[1]
+	}
+	return host, port
+}
 
 // fixtureClient is a minimal NetBackupClient mock whose FetchData reads a JSON
 // fixture from disk and unmarshals it into the supplied target. It is shared by

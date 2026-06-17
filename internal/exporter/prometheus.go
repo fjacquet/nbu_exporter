@@ -69,6 +69,7 @@ func WithCollectorAPITrace(enabled bool) CollectorOption {
 type NbuCollector struct {
 	cfg     models.Config
 	tracing *TracerWrapper
+	site    string // identity label value for live mode (snapshot mode uses per-site snapshot keys)
 
 	// store is set for the multi-site snapshot-reading collector (the registered
 	// collector). When non-nil, Collect reads the latest Snapshot and emits each
@@ -163,11 +164,22 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 	c := newBaseCollector(cfg, tracing)
 	c.client = client
 	c.storageCache = NewStorageCache(cfg.GetCacheTTL())
+	c.site = primarySite(cfg)
 
 	// Populate enabled opt-in collectors from config (empty unless configured).
 	c.subCollectors = buildSubCollectors(c)
 
 	return c, nil
+}
+
+// primarySite returns the identity label value for a single-target (live-mode)
+// collector: the configured primary site, falling back to the legacy host for
+// configs/tests that bypass SetDefaults.
+func primarySite(cfg models.Config) string {
+	if len(cfg.NbuServers) > 0 {
+		return cfg.NbuServers[0].Site
+	}
+	return cfg.NbuServer.Host
 }
 
 // NewSnapshotCollector creates the multi-site collector that exposes metrics from
@@ -285,11 +297,7 @@ func newBaseCollector(cfg models.Config, tracing *TracerWrapper) *NbuCollector {
 
 // buildSubCollectors returns the enabled optional collectors based on config.
 func buildSubCollectors(c *NbuCollector) []subCollector {
-	site := c.cfg.NbuServer.Host
-	if len(c.cfg.NbuServers) > 0 {
-		site = c.cfg.NbuServers[0].Site
-	}
-	return buildSubCollectorsFor(c.client, c.cfg, site)
+	return buildSubCollectorsFor(c.client, c.cfg, c.site)
 }
 
 // Describe sends the descriptors of each metric to the provided channel.
@@ -382,14 +390,8 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 	// Update span with scrape results
 	c.updateScrapeSpan(span, scrapeStart, storageMetrics, jobMetricCount, storageErr, jobsErr)
 
-	// Determine site label value (fallback to NbuServer.Host for tests that bypass SetDefaults)
-	site := c.cfg.NbuServer.Host
-	if len(c.cfg.NbuServers) > 0 {
-		site = c.cfg.NbuServers[0].Site
-	}
-
 	// Expose all collected metrics (pass errors for nbu_up calculation)
-	c.exposeMetrics(ch, site, storageMetrics, storageUnits, jobAgg, storageErr, jobsErr)
+	c.exposeMetrics(ch, c.site, storageMetrics, storageUnits, jobAgg, storageErr, jobsErr)
 
 	// Run enabled opt-in sub-collectors (graceful degradation: errors logged, never propagated).
 	runSubCollectors(ctx, c.subCollectors, ch, c.tracing)

@@ -55,14 +55,7 @@ func nbuErrorHandler(w http.ResponseWriter, _ *http.Request) {
 
 // newNbuServerConfig builds a NbuServerConfig for a plain-http httptest.Server.
 func newNbuServerConfig(site, serverURL, apiVersion string) models.NbuServerConfig {
-	// serverURL is "http://127.0.0.1:<port>" — strip scheme to get host:port.
-	hostPort := strings.TrimPrefix(serverURL, "http://")
-	parts := strings.SplitN(hostPort, ":", 2)
-	host := parts[0]
-	port := ""
-	if len(parts) == 2 {
-		port = parts[1]
-	}
+	host, port := splitTestServerURL(serverURL)
 	return models.NbuServerConfig{
 		Site:               site,
 		Host:               host,

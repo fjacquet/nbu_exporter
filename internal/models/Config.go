@@ -46,6 +46,40 @@ type NbuServerConfig struct {
 	InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 }
 
+// ApplyTo copies this server's connection settings into cfg's legacy NbuServer
+// block. Site is the multi-site identity, tracked separately, so it is not copied.
+// Shared by the reverse-map (Config.SetDefaults) and the per-site collector view.
+func (s NbuServerConfig) ApplyTo(cfg *Config) {
+	cfg.NbuServer.Port = s.Port
+	cfg.NbuServer.Scheme = s.Scheme
+	cfg.NbuServer.URI = s.URI
+	cfg.NbuServer.Domain = s.Domain
+	cfg.NbuServer.DomainType = s.DomainType
+	cfg.NbuServer.Host = s.Host
+	cfg.NbuServer.APIKey = s.APIKey
+	cfg.NbuServer.APIVersion = s.APIVersion
+	cfg.NbuServer.ContentType = s.ContentType
+	cfg.NbuServer.InsecureSkipVerify = s.InsecureSkipVerify
+}
+
+// legacyServerConfig returns the legacy NbuServer block as an NbuServerConfig,
+// defaulting Site to the host. Used when auto-mapping the deprecated single block.
+func (c *Config) legacyServerConfig() NbuServerConfig {
+	return NbuServerConfig{
+		Site:               c.NbuServer.Host,
+		Port:               c.NbuServer.Port,
+		Scheme:             c.NbuServer.Scheme,
+		URI:                c.NbuServer.URI,
+		Domain:             c.NbuServer.Domain,
+		DomainType:         c.NbuServer.DomainType,
+		Host:               c.NbuServer.Host,
+		APIKey:             c.NbuServer.APIKey,
+		APIVersion:         c.NbuServer.APIVersion,
+		ContentType:        c.NbuServer.ContentType,
+		InsecureSkipVerify: c.NbuServer.InsecureSkipVerify,
+	}
+}
+
 // Config represents the complete application configuration for the NBU exporter.
 // It includes settings for the server and the NBU server.
 type Config struct {
@@ -127,24 +161,10 @@ func (c *Config) SetDefaults() {
 		c.Server.CollectionInterval = "5m"
 	}
 
-	// Auto-map legacy single nbuserver: block into NbuServers when the list is empty.
-	// deprecated single nbuserver auto-mapped
+	// Auto-map a deprecated single nbuserver: block into NbuServers when the list
+	// is empty (site defaults to the host).
 	if len(c.NbuServers) == 0 && c.NbuServer.Host != "" {
-		c.NbuServers = []NbuServerConfig{
-			{
-				Site:               c.NbuServer.Host,
-				Port:               c.NbuServer.Port,
-				Scheme:             c.NbuServer.Scheme,
-				URI:                c.NbuServer.URI,
-				Domain:             c.NbuServer.Domain,
-				DomainType:         c.NbuServer.DomainType,
-				Host:               c.NbuServer.Host,
-				APIKey:             c.NbuServer.APIKey,
-				APIVersion:         c.NbuServer.APIVersion,
-				ContentType:        c.NbuServer.ContentType,
-				InsecureSkipVerify: c.NbuServer.InsecureSkipVerify,
-			},
-		}
+		c.NbuServers = []NbuServerConfig{c.legacyServerConfig()}
 	}
 
 	// Default each multi-site entry's URI so an omitted uri inherits "/netbackup",
@@ -162,17 +182,7 @@ func (c *Config) SetDefaults() {
 	// single-server code paths (validation, GetNBUBaseURL, telemetry, MaskAPIKey)
 	// operate on the primary site.
 	if c.NbuServer.Host == "" && len(c.NbuServers) > 0 {
-		first := c.NbuServers[0]
-		c.NbuServer.Port = first.Port
-		c.NbuServer.Scheme = first.Scheme
-		c.NbuServer.URI = first.URI
-		c.NbuServer.Domain = first.Domain
-		c.NbuServer.DomainType = first.DomainType
-		c.NbuServer.Host = first.Host
-		c.NbuServer.APIKey = first.APIKey
-		c.NbuServer.APIVersion = first.APIVersion
-		c.NbuServer.ContentType = first.ContentType
-		c.NbuServer.InsecureSkipVerify = first.InsecureSkipVerify
+		c.NbuServers[0].ApplyTo(c)
 	}
 }
 

@@ -70,6 +70,11 @@ func (c *NbuCollector) snapshotHealth() error {
 // This method is useful for lightweight health checks that don't need to
 // verify current connectivity, only whether recent scrapes succeeded.
 func (c *NbuCollector) IsHealthy() bool {
+	// Multi-site mode: derive health from the latest snapshot (mirrors
+	// TestConnectivity), since the live scrape-time fields are never written.
+	if c.store != nil {
+		return c.snapshotHealth() == nil
+	}
 	c.scrapeMu.RLock()
 	defer c.scrapeMu.RUnlock()
 	// Healthy if we've had at least one successful scrape

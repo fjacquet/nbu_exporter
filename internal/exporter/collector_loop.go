@@ -44,16 +44,7 @@ func WithTargetAPITrace(enabled bool) TargetOption {
 // entry supplies this site's NetBackup server fields.
 func NewTargetCollector(base models.Config, entry models.NbuServerConfig, opts ...TargetOption) *TargetCollector {
 	cfg := base
-	cfg.NbuServer.Host = entry.Host
-	cfg.NbuServer.Port = entry.Port
-	cfg.NbuServer.Scheme = entry.Scheme
-	cfg.NbuServer.URI = entry.URI
-	cfg.NbuServer.Domain = entry.Domain
-	cfg.NbuServer.DomainType = entry.DomainType
-	cfg.NbuServer.APIKey = entry.APIKey
-	cfg.NbuServer.APIVersion = entry.APIVersion
-	cfg.NbuServer.ContentType = entry.ContentType
-	cfg.NbuServer.InsecureSkipVerify = entry.InsecureSkipVerify
+	entry.ApplyTo(&cfg) // single-server view of this site (Site tracked separately below)
 	tc := &TargetCollector{
 		site:    entry.Site,
 		cfg:     cfg,
