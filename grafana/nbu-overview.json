@@ -1,6 +1,6 @@
 {
   "uid": "nbu-overview",
-  "title": "NetBackup \u2014 Vue d'ensemble / Overview",
+  "title": "NetBackup \u2014 Overview / Vue d'ensemble",
   "tags": [
     "netbackup",
     "nbu",
@@ -41,6 +41,28 @@
         "current": {},
         "hide": 0,
         "refresh": 1
+      },
+      {
+        "name": "site",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "label": "Site",
+        "query": {
+          "query": "label_values(nbu_up, site)",
+          "refId": "StandardVariableQuery"
+        },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "refresh": 2,
+        "sort": 1
       }
     ]
   },
@@ -62,7 +84,7 @@
     {
       "type": "row",
       "id": 1,
-      "title": "Sant\u00e9 / Health",
+      "title": "Sites",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -75,7 +97,7 @@
     {
       "type": "stat",
       "id": 2,
-      "title": "Disponibilit\u00e9 / Availability",
+      "title": "$site",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -83,7 +105,7 @@
       "gridPos": {
         "x": 0,
         "y": 1,
-        "w": 5,
+        "w": 4,
         "h": 4
       },
       "fieldConfig": {
@@ -143,26 +165,41 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "nbu_up",
-          "legendFormat": "",
+          "expr": "nbu_up{site=~\"$site\"}",
+          "legendFormat": "{{site}}",
           "range": false,
           "instant": true,
           "refId": "A"
         }
-      ]
+      ],
+      "repeat": "site",
+      "repeatDirection": "h"
+    },
+    {
+      "type": "row",
+      "id": 3,
+      "title": "Health / Sant\u00e9",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 24,
+        "h": 1
+      },
+      "panels": []
     },
     {
       "type": "stat",
-      "id": 3,
-      "title": "Version API / API version",
+      "id": 4,
+      "title": "API version / Version API",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
       "gridPos": {
-        "x": 5,
-        "y": 1,
-        "w": 4,
+        "x": 0,
+        "y": 6,
+        "w": 6,
         "h": 4
       },
       "fieldConfig": {
@@ -204,8 +241,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "nbu_api_version",
-          "legendFormat": "{{version}}",
+          "expr": "nbu_api_version{site=~\"$site\"}",
+          "legendFormat": "{{site}} / {{version}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -214,16 +251,16 @@
     },
     {
       "type": "stat",
-      "id": 4,
-      "title": "Fra\u00eecheur scrape / Scrape staleness",
+      "id": 5,
+      "title": "Scrape staleness / Fra\u00eecheur scrape",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
       "gridPos": {
-        "x": 9,
-        "y": 1,
-        "w": 6,
+        "x": 6,
+        "y": 6,
+        "w": 8,
         "h": 4
       },
       "fieldConfig": {
@@ -273,8 +310,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "time() - nbu_last_scrape_timestamp_seconds",
-          "legendFormat": "{{source}}",
+          "expr": "time() - nbu_last_scrape_timestamp_seconds{site=~\"$site\"}",
+          "legendFormat": "{{site}} / {{source}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -283,16 +320,16 @@
     },
     {
       "type": "timeseries",
-      "id": 5,
-      "title": "Latence API / API latency",
+      "id": 6,
+      "title": "API latency / Latence API",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
       "gridPos": {
-        "x": 15,
-        "y": 1,
-        "w": 9,
+        "x": 14,
+        "y": 6,
+        "w": 10,
         "h": 4
       },
       "fieldConfig": {
@@ -334,8 +371,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "nbu_response_time_ms",
-          "legendFormat": "r\u00e9ponse / response",
+          "expr": "nbu_response_time_ms{site=~\"$site\"}",
+          "legendFormat": "{{site}} / response / r\u00e9ponse",
           "range": true,
           "instant": false,
           "refId": "A"
@@ -344,12 +381,12 @@
     },
     {
       "type": "row",
-      "id": 6,
-      "title": "Indicateurs cl\u00e9s / Key indicators",
+      "id": 7,
+      "title": "Key indicators / Indicateurs cl\u00e9s",
       "collapsed": false,
       "gridPos": {
         "x": 0,
-        "y": 5,
+        "y": 10,
         "w": 24,
         "h": 1
       },
@@ -357,15 +394,15 @@
     },
     {
       "type": "stat",
-      "id": 7,
-      "title": "Taux succ\u00e8s BACKUP / Backup success rate",
+      "id": 8,
+      "title": "Backup success rate / Taux succ\u00e8s BACKUP",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
       "gridPos": {
         "x": 0,
-        "y": 6,
+        "y": 11,
         "w": 5,
         "h": 5
       },
@@ -416,7 +453,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(nbu_status_count{action=\"BACKUP\",status=\"0\"}) / clamp_min(sum(nbu_status_count{action=\"BACKUP\"}), 1) * 100",
+          "expr": "sum(nbu_status_count{action=\"BACKUP\",status=\"0\",site=~\"$site\"}) / clamp_min(sum(nbu_status_count{action=\"BACKUP\",site=~\"$site\"}), 1) * 100",
           "legendFormat": "",
           "range": false,
           "instant": true,
@@ -426,15 +463,15 @@
     },
     {
       "type": "stat",
-      "id": 8,
-      "title": "\u00c9checs BACKUP / Failed backups",
+      "id": 9,
+      "title": "Failed backups / \u00c9checs BACKUP",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
       "gridPos": {
         "x": 5,
-        "y": 6,
+        "y": 11,
         "w": 5,
         "h": 5
       },
@@ -481,7 +518,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(nbu_status_count{action=\"BACKUP\"}) - sum(nbu_status_count{action=\"BACKUP\",status=\"0\"})",
+          "expr": "sum(nbu_status_count{action=\"BACKUP\",site=~\"$site\"}) - sum(nbu_status_count{action=\"BACKUP\",status=\"0\",site=~\"$site\"})",
           "legendFormat": "",
           "range": false,
           "instant": true,
@@ -491,15 +528,15 @@
     },
     {
       "type": "stat",
-      "id": 9,
-      "title": "Stockage % utilis\u00e9 / Storage % used",
+      "id": 10,
+      "title": "Storage % used / Stockage % utilis\u00e9",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
       "gridPos": {
         "x": 10,
-        "y": 6,
+        "y": 11,
         "w": 4,
         "h": 5
       },
@@ -550,7 +587,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(nbu_disk_bytes{size=\"used\"}) / clamp_min(sum(nbu_disk_bytes), 1) * 100",
+          "expr": "sum(nbu_disk_bytes{size=\"used\",site=~\"$site\"}) / clamp_min(sum(nbu_disk_bytes{site=~\"$site\"}), 1) * 100",
           "legendFormat": "",
           "range": false,
           "instant": true,
@@ -560,15 +597,15 @@
     },
     {
       "type": "stat",
-      "id": 10,
-      "title": "Fichiers infect\u00e9s / Infected files",
+      "id": 11,
+      "title": "Infected files / Fichiers infect\u00e9s",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
       "gridPos": {
         "x": 14,
-        "y": 6,
+        "y": 11,
         "w": 5,
         "h": 5
       },
@@ -615,7 +652,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(nbu_malware_files_infected)",
+          "expr": "sum(nbu_malware_files_infected{site=~\"$site\"})",
           "legendFormat": "",
           "range": false,
           "instant": true,
@@ -625,15 +662,15 @@
     },
     {
       "type": "barchart",
-      "id": 11,
-      "title": "Alertes par s\u00e9v\u00e9rit\u00e9 / Alerts by severity",
+      "id": 12,
+      "title": "Alerts by severity / Alertes par s\u00e9v\u00e9rit\u00e9",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
       "gridPos": {
         "x": 19,
-        "y": 6,
+        "y": 11,
         "w": 5,
         "h": 5
       },
@@ -660,8 +697,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (severity) (nbu_alerts_count)",
-          "legendFormat": "{{severity}}",
+          "expr": "sum by (site, severity) (nbu_alerts_count{site=~\"$site\"})",
+          "legendFormat": "{{site}} / {{severity}}",
           "range": false,
           "instant": true,
           "refId": "A"

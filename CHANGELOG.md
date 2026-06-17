@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Multi-site Grafana dashboards**: every generated dashboard now carries a `site` template
+  variable (multi-value + "All", sourced from `label_values(nbu_up, site)`) as the first selector,
+  and every panel query is filtered by `site=~"$site"` with `site` threaded into each `by (…)`
+  grouping and legend — so series from multiple NetBackup primaries no longer collapse together or
+  double-count. The Overview gains a per-site availability row (one UP/DOWN tile per primary,
+  repeated over `$site`) so a down master is obvious. The filter/grouping is centralized in the
+  `grafana/gen/` generator (`panels.with_site`), and `build_dashboards.py` now fails the build if any
+  dashboard is missing the `site` selector or leaves a query unfiltered. See the Multi-Site
+  Dashboards design spec.
 - **Alerting rules** (`deploy/prometheus/`): two optional, site-aware Prometheus rule files —
   `rules-perclient.yml` (`NbuClientBackupStale` >25h warning, `NbuClientBackupCritical` >48h
   critical) and `rules-tape.yml` (`NbuTapeDriveDown` / `NbuTapeDriveDisabled` per site) — each with

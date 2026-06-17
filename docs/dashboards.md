@@ -21,15 +21,29 @@ compose files mount the JSON read-only into `/var/lib/grafana/dashboards`; Grafa
 folder every 30 seconds, so regenerating the JSON updates the dashboards in place. Edits made in the
 Grafana UI are allowed (`allowUiUpdates: true`) but are not written back to the JSON files.
 
-Panel titles are bilingual (French / English). Every dashboard uses the `${datasource}` template
+Panel titles are bilingual (English / French). Every dashboard uses the `${datasource}` template
 variable (defaulting to the provisioned **Prometheus**), so it keeps working if re-pointed at another
 Prometheus.
 
+### The `$site` selector (multi-site)
+
+Every dashboard also carries a **`$site`** template variable — the first selector after the
+datasource — populated from `label_values(nbu_up, site)` and configured as multi-value with an
+**All** option. Each panel query is filtered by `site=~"$site"`, and per-series panels add `site`
+to their grouping and legend, so when one exporter scrapes several NetBackup primaries (see
+multi-site support) the series neither collapse together nor double-count. Selecting one or more
+sites filters the whole dashboard; "All" shows every site. The Overview's **Sites** row shows one
+UP/DOWN availability tile per primary (repeated over `$site`), so a down master stands out at a
+glance.
+
 ## The four dashboards
+
+All four dashboards share the `$site` selector (above); the table below lists each one's
+**additional** variables.
 
 | Dashboard | File / UID | Focus | Extra variables |
 |-----------|------------|-------|-----------------|
-| **Overview** | `nbu-overview.json` / `nbu-overview` | One-screen health and headline KPIs (success rate, failed backups, storage % used, infected files, alerts) that link out to the domain dashboards | — |
+| **Overview** | `nbu-overview.json` / `nbu-overview` | One-screen health and headline KPIs (per-site availability, success rate, failed backups, storage % used, infected files, alerts) that link out to the domain dashboards | — |
 | **Jobs** | `nbu-jobs.json` / `nbu-jobs` | Backup outcomes, job states, jobs by policy, backup volume, queued jobs, duration p50/p95, files, deduplication | `$policy_type` |
 | **Storage** | `nbu-storage.json` / `nbu-storage` | Capacity utilization, used-vs-total trend, per-unit table, max concurrent jobs, max fragment size | `$storage_unit` |
 | **Data Protection** | `nbu-dataprotection.json` / `nbu-dataprotection` | NetBackup 11.2 collectors: alerts by severity/category, malware scanned vs infected and scan status, catalog malware/anomaly posture, configured SLOs | — |
