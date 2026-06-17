@@ -2101,7 +2101,7 @@
 
 <h1 id="netbackup-110-api-migration-guide">NetBackup 11.0 API Migration Guide</h1>
 <h2 id="overview">Overview</h2>
-<p>This guide provides step-by-step instructions for upgrading the NBU Exporter to support NetBackup 11.0 (API version 13.0) while maintaining backward compatibility with NetBackup 10.5 (API 12.0) and NetBackup 10.0-10.4 (API 3.0).</p>
+<p>This guide provides step-by-step instructions for upgrading the NBU Exporter to support NetBackup 11.0 (API version 13.0) while maintaining backward compatibility with NetBackup 10.5 (API 12.0) and NetBackup 10.0-10.4 (API 10.0).</p>
 <h2 id="whats-new">What's New</h2>
 <h3 id="multi-version-api-support">Multi-Version API Support</h3>
 <p>The exporter now supports three NetBackup API versions:</p>
@@ -2126,8 +2126,8 @@
 </tr>
 <tr>
 <td>10.0 - 10.4</td>
-<td>3.0</td>
-<td>✅ Legacy Support</td>
+<td>10.0</td>
+<td>✅ Fully Supported</td>
 </tr>
 </tbody>
 </table>
@@ -2136,7 +2136,7 @@
 <p><strong>Detection Process:</strong>
 1. Attempts API version 13.0 (NetBackup 11.0+)
 2. Falls back to API version 12.0 (NetBackup 10.5)
-3. Falls back to API version 3.0 (NetBackup 10.0-10.4)
+3. Falls back to API version 10.0 (NetBackup 10.0-10.4)
 4. Uses the first version that responds successfully</p>
 <h3 id="key-benefits">Key Benefits</h3>
 <ul>
@@ -2176,7 +2176,7 @@
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1556&quot;</span>
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="c1"># apiVersion not specified - will auto-detect 13.0</span>
 <a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;your-api-key-here&quot;</span>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="nt">contentType</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;application/vnd.netbackup+json;</span><span class="nv"> </span><span class="s">version=3.0&quot;</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="nt">contentType</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;application/vnd.netbackup+json;</span><span class="nv"> </span><span class="s">version=13.0&quot;</span>
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="nt">insecureSkipVerify</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 </code></pre></div></p>
 </li>
@@ -2305,7 +2305,7 @@
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="c1"># config-nbu10-legacy.yaml</span>
 <a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="nt">nbuserver</span><span class="p">:</span>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a><span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;nbu10-legacy.my.domain&quot;</span>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">    </span><span class="c1"># apiVersion omitted - will detect 3.0</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="w">    </span><span class="c1"># apiVersion omitted - will detect 10.0</span>
 </code></pre></div></p>
 </li>
 <li>
@@ -2396,7 +2396,7 @@
 <a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a><span class="w">      </span><span class="no">port: &quot;1556&quot;</span>
 <a id="__codelineno-20-20" name="__codelineno-20-20" href="#__codelineno-20-20"></a><span class="w">      </span><span class="no"># apiVersion omitted for auto-detection</span>
 <a id="__codelineno-20-21" name="__codelineno-20-21" href="#__codelineno-20-21"></a><span class="w">      </span><span class="no">apiKey: &quot;${NBU_API_KEY}&quot;</span>
-<a id="__codelineno-20-22" name="__codelineno-20-22" href="#__codelineno-20-22"></a><span class="w">      </span><span class="no">contentType: &quot;application/vnd.netbackup+json; version=3.0&quot;</span>
+<a id="__codelineno-20-22" name="__codelineno-20-22" href="#__codelineno-20-22"></a><span class="w">      </span><span class="no">contentType: &quot;application/vnd.netbackup+json; version=13.0&quot;</span>
 <a id="__codelineno-20-23" name="__codelineno-20-23" href="#__codelineno-20-23"></a><span class="w">      </span><span class="no">insecureSkipVerify: false</span>
 </code></pre></div></p>
 </li>
@@ -2536,7 +2536,7 @@
 <h3 id="issue-1-version-detection-fails">Issue 1: Version Detection Fails</h3>
 <p><strong>Symptoms:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>ERROR: Failed to detect compatible NetBackup API version.
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>Attempted versions: 13.0, 12.0, 3.0
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>Attempted versions: 13.0, 12.0, 10.0
 </code></pre></div></p>
 <p><strong>Diagnosis:</strong></p>
 <ol>
@@ -2712,9 +2712,9 @@
 <h2 id="support-and-resources">Support and Resources</h2>
 <h3 id="documentation">Documentation</h3>
 <ul>
-<li><a href="../README.md">README.md</a> - Main documentation</li>
+<li><a href="../">Home</a> - Main documentation</li>
 <li><a href="../api-10.5-migration/">API 10.5 Migration Guide</a> - Previous migration guide</li>
-<li><a href="../CHANGELOG.md">CHANGELOG.md</a> - Version history</li>
+<li><a href="../changelog/">Changelog</a> - Version history</li>
 </ul>
 <h3 id="netbackup-api-documentation">NetBackup API Documentation</h3>
 <ul>
@@ -2743,7 +2743,7 @@
 - No changes required</p>
 <p><strong>Backward Compatibility:</strong>
 - NetBackup 11.0 supports API 12.0
-- NetBackup 11.0 supports API 3.0
+- NetBackup 11.0 supports API 10.0
 - Smooth upgrade path</p>
 <hr />
 <p><strong>Document Version:</strong> 1.0<br />

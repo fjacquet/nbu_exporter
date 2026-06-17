@@ -2607,7 +2607,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
   the others. A legacy single <code>nbuserver:</code> block is auto-mapped to a one-entry list (<code>site</code>
   defaults to the host), so existing configs keep working unchanged. Opt-in sub-collectors
   (alerts/malware/catalog/SLO) are per-site and carry the <code>site</code> label too. See
-  <a href="docs/adr/0004-multisite-snapshot-collection-model.md">ADR-0004</a> and
+  <a href="https://github.com/fjacquet/nbu_exporter/blob/main/docs/adr/0004-multisite-snapshot-collection-model.md">ADR-0004</a> and
   <code>docs/config-examples/config-multisite.yaml</code>.</li>
 <li><strong>NetBackup 10.x support</strong>: the exporter negotiates API media-type <code>version=10.0</code> for
   NetBackup 10.0–10.4 (replacing the never-valid <code>3.0</code>); the auto-detect ladder is now
@@ -2671,7 +2671,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <ul>
 <li><strong>NetBackup 11.2 (API version 14.0) support</strong>: auto-detection probes <code>14.0</code> first
   (<code>14.0 → 13.0 → 12.0 → 3.0</code>), with v14 response fixtures.</li>
-<li><strong>Opt-in sub-collector framework</strong> (<a href="docs/adr/0002-opt-in-sub-collector-framework.md">ADR-0002</a>)
+<li><strong>Opt-in sub-collector framework</strong> (<a href="https://github.com/fjacquet/nbu_exporter/blob/main/docs/adr/0002-opt-in-sub-collector-framework.md">ADR-0002</a>)
   with four collectors, all <strong>default-off</strong> via a new <code>collectors:</code> config section: alerts
   (<code>nbu_alerts_count</code>), malware scan results, catalog posture, and SLO compliance
   (<code>nbu_slo_count</code>). Each degrades gracefully and never affects <code>nbu_up</code>.</li>
@@ -2737,7 +2737,7 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 </ul>
 <h2 id="250-2026-06-05">[2.5.0] - 2026-06-05</h2>
 <p>Tooling/CI/security baseline sync with the sibling <code>pflex_exporter</code> (see
-<a href="docs/adr/0001-tooling-baseline-sync-with-pflex.md">ADR-0001</a>, <a href="https://github.com/fjacquet/nbu_exporter/pull/19">#19</a>).</p>
+<a href="https://github.com/fjacquet/nbu_exporter/blob/main/docs/adr/0001-tooling-baseline-sync-with-pflex.md">ADR-0001</a>, <a href="https://github.com/fjacquet/nbu_exporter/pull/19">#19</a>).</p>
 <h3 id="added_9">Added</h3>
 <ul>
 <li><strong>CycloneDX SBOMs and signed releases</strong>: each release archive now ships a
@@ -2972,9 +2972,9 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <li>Correlate logs with traces for troubleshooting</li>
 <li>Monitor API version detection performance</li>
 </ul>
-<p>See <a href="docs/opentelemetry-example.md">docs/opentelemetry-example.md</a> for complete setup guide and <a href="docs/trace-analysis-guide.md">docs/trace-analysis-guide.md</a> for trace analysis examples.</p>
+<p>See <a href="https://github.com/fjacquet/nbu_exporter/blob/main/docs/opentelemetry-example.md">docs/opentelemetry-example.md</a> for complete setup guide and <a href="https://github.com/fjacquet/nbu_exporter/blob/main/docs/trace-analysis-guide.md">docs/trace-analysis-guide.md</a> for trace analysis examples.</p>
 <h3 id="multi-version-api-support">Multi-Version API Support</h3>
-<p><strong>Important</strong>: This version adds support for NetBackup 10.0, 10.5, and 11.0 with automatic version detection. See <a href="docs/netbackup-11-migration.md">docs/netbackup-11-migration.md</a> for complete migration guide.</p>
+<p><strong>Important</strong>: This version adds support for NetBackup 10.0, 10.5, and 11.0 with automatic version detection. See <a href="https://github.com/fjacquet/nbu_exporter/blob/main/docs/netbackup-11-migration.md">docs/netbackup-11-migration.md</a> for complete migration guide.</p>
 <p><strong>Quick Start:</strong></p>
 <ol>
 <li>Ensure NetBackup server is version 10.0 or later</li>
