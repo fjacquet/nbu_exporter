@@ -981,6 +981,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#5-multi-site-multiple-primary-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Multi-Site (multiple primary servers)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1075,6 +1086,17 @@
     <span class="md-ellipsis">
       
         NBU Server Section
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nbu-servers-section-multi-site" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NBU Servers Section (multi-site)
       
     </span>
   </a>
@@ -1581,6 +1603,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#5-multi-site-multiple-primary-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Multi-Site (multiple primary servers)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1675,6 +1708,17 @@
     <span class="md-ellipsis">
       
         NBU Server Section
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nbu-servers-section-multi-site" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NBU Servers Section (multi-site)
       
     </span>
   </a>
@@ -2019,6 +2063,23 @@
 - Core metrics (jobs, storage) fully functional</p>
 <p><strong>Best for:</strong> Legacy NetBackup 10.0-10.4 environments</p>
 <hr />
+<h3 id="5-multi-site-multiple-primary-servers">5. Multi-Site (multiple primary servers)</h3>
+<p><strong>File:</strong> <code>config-multisite.yaml</code></p>
+<p><strong>Use when:</strong>
+- You run more than one NetBackup primary server (typically one per site)
+- You want a single exporter instance to scrape them all
+- You want every metric labelled with its <code>site</code></p>
+<p><strong>Features:</strong>
+- A <code>nbuservers:</code> list with one entry per server, each with a unique <code>site</code>
+- A background collection loop polls every site on <code>collectionInterval</code>
+  (default 5m); scrapes read the latest snapshot, so backend API load is
+  decoupled from scrape frequency
+- Every metric series carries a <code>site</code> label (first label)
+- A down site shows only <code>nbu_up{site="..."}=0</code> and never affects the others
+- The legacy single <code>nbuserver:</code> block still works (auto-mapped to a one-entry
+  list whose <code>site</code> defaults to the host)</p>
+<p><strong>Best for:</strong> Two-or-more-primary deployments; per-site dashboards and alerts</p>
+<hr />
 <h2 id="quick-start">Quick Start</h2>
 <h3 id="step-1-choose-your-configuration">Step 1: Choose Your Configuration</h3>
 <p>Select the configuration file that matches your NetBackup version:</p>
@@ -2050,6 +2111,11 @@
 <td>Any/Mixed</td>
 <td><code>config-auto-detect.yaml</code></td>
 <td>Auto</td>
+</tr>
+<tr>
+<td>Multiple servers</td>
+<td><code>config-multisite.yaml</code></td>
+<td>Per-site</td>
 </tr>
 </tbody>
 </table>
@@ -2109,7 +2175,14 @@
 <td>duration</td>
 <td>Yes</td>
 <td>-</td>
-<td>Time window for job collection (e.g., "30m", "1h", "2h")</td>
+<td>Job lookback window per collection (e.g., "30m", "1h", "2h")</td>
+</tr>
+<tr>
+<td><code>collectionInterval</code></td>
+<td>duration</td>
+<td>No</td>
+<td>"5m"</td>
+<td>How often the background loop polls every site. Backend API load is driven by this, not by scrape frequency. The effective job lookback window is <code>max(scrapingInterval, collectionInterval)</code>.</td>
 </tr>
 <tr>
 <td><code>logName</code></td>
@@ -2204,6 +2277,40 @@
 </tr>
 </tbody>
 </table>
+<h3 id="nbu-servers-section-multi-site">NBU Servers Section (multi-site)</h3>
+<p>For multiple primary servers, use a <code>nbuservers:</code> list <strong>instead of</strong> the single
+<code>nbuserver:</code> block. Each entry takes the same fields as the NBU Server section
+above, plus a required, unique <code>site</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>site</code></td>
+<td>string</td>
+<td>Yes</td>
+<td>-</td>
+<td>Unique site identifier; emitted as the <code>site</code> label on every metric from this server</td>
+</tr>
+<tr>
+<td><em>(all NBU Server fields)</em></td>
+<td>-</td>
+<td>-</td>
+<td>-</td>
+<td>Same as the single-server section above</td>
+</tr>
+</tbody>
+</table>
+<p>A legacy single <code>nbuserver:</code> block is automatically promoted to a one-entry
+<code>nbuservers:</code> list whose <code>site</code> defaults to the host, so existing single-site
+configurations keep working unchanged. See <code>config-multisite.yaml</code>.</p>
 <hr />
 <h2 id="version-detection-behavior">Version Detection Behavior</h2>
 <p>When <code>apiVersion</code> is <strong>not specified</strong>, the exporter performs automatic detection:</p>

@@ -2598,6 +2598,17 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h2 id="unreleased">[Unreleased]</h2>
 <h3 id="added">Added</h3>
 <ul>
+<li><strong>Multi-site support</strong>: a single exporter can scrape multiple NetBackup primary servers via
+  a <code>nbuservers:</code> list, each with a unique <code>site</code>; every metric series carries a <code>site</code> label
+  (first label). Collection adopts the family <strong>snapshot model</strong> — a background loop polls
+  every site on <code>server.collectionInterval</code> (default 5m) and publishes an immutable snapshot,
+  decoupling backend API load from Prometheus scrape frequency. <code>/metrics</code> serves immediately
+  (empty until the first cycle); a down site reports only <code>nbu_up{site=…}=0</code> without affecting
+  the others. A legacy single <code>nbuserver:</code> block is auto-mapped to a one-entry list (<code>site</code>
+  defaults to the host), so existing configs keep working unchanged. Opt-in sub-collectors
+  (alerts/malware/catalog/SLO) are per-site and carry the <code>site</code> label too. See
+  <a href="docs/adr/0004-multisite-snapshot-collection-model.md">ADR-0004</a> and
+  <code>docs/config-examples/config-multisite.yaml</code>.</li>
 <li><strong>NetBackup 10.x support</strong>: the exporter negotiates API media-type <code>version=10.0</code> for
   NetBackup 10.0–10.4 (replacing the never-valid <code>3.0</code>); the auto-detect ladder is now
   <code>14.0 → 13.0 → 12.0 → 10.0</code>. Includes the NBU 10.3 and 11.2 OpenAPI bundles used for

@@ -73,6 +73,14 @@
          <lastmod>2026-06-17</lastmod>
     </url>
     <url>
+         <loc>https://fjacquet.github.io/nbu_exporter/adr/0003-api-version-model-and-jobs-cursor-pagination/</loc>
+         <lastmod>2026-06-17</lastmod>
+    </url>
+    <url>
+         <loc>https://fjacquet.github.io/nbu_exporter/adr/0004-multisite-snapshot-collection-model/</loc>
+         <lastmod>2026-06-17</lastmod>
+    </url>
+    <url>
          <loc>https://fjacquet.github.io/nbu_exporter/config-examples/</loc>
          <lastmod>2026-06-17</lastmod>
     </url>
@@ -106,6 +114,10 @@
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-16-nbu-10x-support/</loc>
+         <lastmod>2026-06-17</lastmod>
+    </url>
+    <url>
+         <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-17-feature1-multisite/</loc>
          <lastmod>2026-06-17</lastmod>
     </url>
     <url>

@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-17-feature1-multisite-design/">
+        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/adr/0003-api-version-model-and-jobs-cursor-pagination/">
       
       
       
@@ -18,19 +18,19 @@
         
       
       
-      <link rel="icon" href="../../../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Feature 1 — Multi-Site / Multi-Master Support — Design - NBU Exporter</title>
+        <title>ADR-0003: NetBackup API version model and jobs cursor pagination - NBU Exporter</title>
       
     
     
-      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -49,7 +49,7 @@
       
     
     
-    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#feature-1-multi-site-multi-master-support-design" class="md-skip">
+        <a href="#adr-0003-netbackup-api-version-model-and-jobs-cursor-pagination" class="md-skip">
           Skip to content
         </a>
       
@@ -90,7 +90,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../.." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+    <a href="../.." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Feature 1 — Multi-Site / Multi-Master Support — Design
+              ADR-0003: NetBackup API version model and jobs cursor pagination
             
           </span>
         </div>
@@ -226,7 +226,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../.." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+    <a href="../.." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -256,7 +256,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../.." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -337,7 +337,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../getting-started/installation/" class="md-nav__link">
+      <a href="../../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -365,7 +365,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../getting-started/configuration/" class="md-nav__link">
+      <a href="../../getting-started/configuration/" class="md-nav__link">
         
   
   
@@ -393,7 +393,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../getting-started/quickstart/" class="md-nav__link">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
         
   
   
@@ -428,7 +428,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../metrics/" class="md-nav__link">
+      <a href="../../metrics/" class="md-nav__link">
         
   
   
@@ -509,7 +509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../opentelemetry-example/" class="md-nav__link">
+      <a href="../../opentelemetry-example/" class="md-nav__link">
         
   
   
@@ -537,7 +537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../trace-analysis-guide/" class="md-nav__link">
+      <a href="../../trace-analysis-guide/" class="md-nav__link">
         
   
   
@@ -626,7 +626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../netbackup-11-migration/" class="md-nav__link">
+      <a href="../../netbackup-11-migration/" class="md-nav__link">
         
   
   
@@ -654,7 +654,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-10.5-migration/" class="md-nav__link">
+      <a href="../../api-10.5-migration/" class="md-nav__link">
         
   
   
@@ -743,7 +743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../deployment-verification/" class="md-nav__link">
+      <a href="../../deployment-verification/" class="md-nav__link">
         
   
   
@@ -771,7 +771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../deployment-quick-reference/" class="md-nav__link">
+      <a href="../../deployment-quick-reference/" class="md-nav__link">
         
   
   
@@ -799,7 +799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../docker/" class="md-nav__link">
+      <a href="../../docker/" class="md-nav__link">
         
   
   
@@ -827,7 +827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../dashboards/" class="md-nav__link">
+      <a href="../../dashboards/" class="md-nav__link">
         
   
   
@@ -862,7 +862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../config-examples/" class="md-nav__link">
+      <a href="../../config-examples/" class="md-nav__link">
         
   
   
@@ -943,7 +943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/" class="md-nav__link">
+      <a href="../" class="md-nav__link">
         
   
   
@@ -971,7 +971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../adr/0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
+      <a href="../0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
         
   
   
@@ -1006,7 +1006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../changelog/" class="md-nav__link">
+      <a href="../../changelog/" class="md-nav__link">
         
   
   
@@ -1053,10 +1053,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#background-why-this-is-a-refactor-not-a-label" class="md-nav__link">
+  <a href="#context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Background — why this is a refactor, not a label
+        Context
       
     </span>
   </a>
@@ -1064,10 +1064,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#goals" class="md-nav__link">
+  <a href="#decision" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Goals
+        Decision
       
     </span>
   </a>
@@ -1075,115 +1075,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#non-goals" class="md-nav__link">
+  <a href="#consequences" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Non-goals
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#design" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Design
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Design">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#config-schema-internalmodelsconfiggo" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Config schema (internal/models/Config.go)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#snapshot-collection-model-new-internalexportersnapshotgo" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Snapshot collection model (new: internal/exporter/snapshot.go)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#prometheus-collector-prometheusgo" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prometheus collector (prometheus.go)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#maingo-lifecycle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        main.go lifecycle
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#migration-cardinality" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Migration &amp; cardinality
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing-tdd" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Testing (TDD)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#acceptance-criteria" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Acceptance criteria
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decisions-resolved-2026-06-17" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decisions (resolved 2026-06-17)
+        Consequences
       
     </span>
   </a>
@@ -1210,139 +1105,75 @@
   
 
 
-<h1 id="feature-1-multi-site-multi-master-support-design">Feature 1 — Multi-Site / Multi-Master Support — Design</h1>
-<p><strong>Date:</strong> 2026-06-17
-<strong>Status:</strong> Draft for review (direction approved; see deferrals doc)
-<strong>Scope:</strong> Let one exporter instance scrape multiple NetBackup primary servers (one per
-site), labelling every metric with a <code>site</code> identity — by adopting the family <strong>snapshot
-collection model</strong>. Keystone for the multi-site request; per-client (Feature 3) and tape
-(Feature 2) layer on top.
-<strong>Direction source:</strong> <a href="../2026-06-16-nbu-feature-deferrals/"><code>2026-06-16-nbu-feature-deferrals.md</code></a>
-(option (b), family standard) and the <code>exporter-standards</code> skill (<code>architecture.md</code>:
-"one process, many backends" + identity label; snapshot model — <code>pstore</code> ADR-0005,
-<code>ppdd</code> ADR-0001 / <code>pstore</code> ADR-0002).</p>
-<h2 id="background-why-this-is-a-refactor-not-a-label">Background — why this is a refactor, not a label</h2>
-<p>Today <code>NbuCollector</code> is a <strong>fetch-on-scrape</strong> collector: one <code>client</code>, one <code>cfg</code>, one
-<code>storageCache</code>; <code>Collect</code> calls <code>collectAllMetrics</code> (errgroup, live storage+jobs fetch) on
-every Prometheus scrape (<code>internal/exporter/prometheus.go</code>). <code>main.go</code> registers exactly one
-collector against one registry and serves it via <code>promhttp</code>. The config exposes a single
-<code>nbuserver:</code> block.</p>
-<p>The family standard says multi-backend support is <strong>one process, many backends + an identity
-label</strong>, driven by a background <strong>snapshot loop</strong> (not fetch-on-scrape). nbu is the only
-family member still on fetch-on-scrape (<code>architecture.md</code> flags this). So Feature 1 = bring
-nbu onto that architecture, which also fixes a latent problem: with N masters, fetch-on-scrape
-would multiply backend API load by the scrape frequency and let one slow master stall the
-whole <code>/metrics</code> response.</p>
-<h2 id="goals">Goals</h2>
+<h1 id="adr-0003-netbackup-api-version-model-and-jobs-cursor-pagination">ADR-0003: NetBackup API version model and jobs cursor pagination</h1>
 <ul>
-<li><code>nbuservers:</code> — a list of primary servers, each with a required <code>site</code> identity.</li>
-<li>A single background collection loop polls <strong>every</strong> server on <code>server.collectionInterval</code> and
-  publishes an <strong>immutable snapshot</strong>; <code>Collect</code> reads the latest snapshot (no live fetch).</li>
-<li>Every metric carries a <code>site</code> label (constant per target, emitted on every series).</li>
-<li>Per-target graceful degradation: a failed target emits <code>nbu_up{site=…}=0</code> and does not
-  affect other targets or fail the scrape.</li>
-<li>Per-target API-version detection and storage cache (the snapshot store subsumes the cache).</li>
-<li>Serve <code>/metrics</code> before the first collection completes (<code>pstore</code> ADR-0007).</li>
+<li><strong>Status:</strong> Accepted</li>
+<li><strong>Date:</strong> 2026-06-17</li>
+<li><strong>Deciders:</strong> Frederic Jacquet</li>
+<li><strong>Related:</strong> <a href="https://github.com/fjacquet/nbu_exporter/pull/34">#34</a>,
+  <code>docs/superpowers/specs/2026-06-16-nbu-10x-support-design.md</code>, ADR-0002,
+  <code>exporter-standards</code> (version/generation detection; "absent, never zero" defensive parsing)</li>
 </ul>
-<h2 id="non-goals">Non-goals</h2>
-<ul>
-<li>No new business metrics (tape/per-client are Features 2/3).</li>
-<li>No change to existing metric <strong>names</strong> or their non-<code>site</code> labels (only the <code>site</code> label is
-  added — see Migration for the label-cardinality note).</li>
-</ul>
-<h2 id="design">Design</h2>
-<h3 id="config-schema-internalmodelsconfiggo">Config schema (<code>internal/models/Config.go</code>)</h3>
-<p>Replace the single <code>nbuserver:</code> block with a list, and add a top-level collection interval:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">server</span><span class="p">:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">collectionInterval</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;5m&quot;</span><span class="w">   </span><span class="c1"># how often the loop polls every target (new; default 5m, matches today&#39;s storage-cache TTL)</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">nbuservers</span><span class="p">:</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">site</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;paris&quot;</span><span class="w">            </span><span class="c1"># required identity, unique across the list</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;nbu-par.example.com&quot;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1556&quot;</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">    </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https&quot;</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;...&quot;</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="c1"># apiVersion optional -&gt; per-target auto-detect (14.0-&gt;13.0-&gt;12.0-&gt;10.0)</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">site</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;lyon&quot;</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;nbu-lyon.example.com&quot;</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">...</span>
-</code></pre></div>
-<ul>
-<li><code>Validate()</code> enforces: ≥1 entry, each with non-empty unique <code>site</code>, and the existing
-  per-server checks (host/port/scheme/apiKey, apiVersion format if set).</li>
-<li><strong>Back-compat:</strong> if a legacy single <code>nbuserver:</code> block is present and <code>nbuservers:</code> is
-  absent, map it to a one-element list with <code>site</code> defaulting to the server <code>host</code>. Log a
-  deprecation warning. (Keeps existing single-site configs working; removes the breaking edge
-  for the common case.)</li>
-</ul>
-<h3 id="snapshot-collection-model-new-internalexportersnapshotgo">Snapshot collection model (new: <code>internal/exporter/snapshot.go</code>)</h3>
-<ul>
-<li><code>Snapshot</code> — an immutable value holding, per site, the already-aggregated results
-  (<code>[]StorageMetricValue</code>, <code>[]StorageUnitInfo</code>, <code>*JobAggregator</code>, sub-collector results) plus
-  per-site <code>up</code>/error state and the detected API version.</li>
-<li><code>SnapshotStore</code> — an <code>atomic.Pointer[Snapshot]</code> (RWMutex-free pointer swap); <code>Load()</code> for
-  readers, <code>Store()</code> for the loop.</li>
-<li><code>Collector</code> (background): owns one <code>targetCollector</code> per site, each with its own
-  <code>*NbuClient</code>, version detector, and cache. On each tick it fans out across targets with an
-  <code>errgroup</code> + <code>SetLimit(min(len, NumCPU))</code>, builds a fresh <code>Snapshot</code>, and swaps it in.
-  Per-target panics/errors are captured into that site's <code>up=0</code> + error, never aborting the
-  cycle.</li>
-</ul>
-<h3 id="prometheus-collector-prometheusgo">Prometheus collector (<code>prometheus.go</code>)</h3>
-<ul>
-<li><code>NbuCollector</code> becomes a thin <strong>snapshot reader</strong>: <code>Collect</code> does <code>snap := store.Load()</code>
-  then, for each site in <code>snap</code>, emits the existing const metrics with the site's label set.</li>
-<li>Every <code>MustNewConstMetric</code> call gains the <code>site</code> label value; every <code>prometheus.NewDesc</code>
-  variable-label list gains <code>"site"</code> as the <strong>first</strong> label (label-key consistency invariant,
-  <code>ppdd</code> ADR-0006 — <code>site</code> present on every series of every family). Shared label assembly
-  stays centralized (the metric-key <code>.Labels()</code> helpers in <code>metrics.go</code> prepend <code>site</code>).</li>
-<li><code>nbu_up</code> / <code>nbu_last_scrape_timestamp_seconds</code> become per-site.</li>
-</ul>
-<h3 id="maingo-lifecycle">main.go lifecycle</h3>
-<ul>
-<li>Build the background <code>Collector</code> from <code>nbuservers</code>, start its loop in a goroutine, and
-  register a snapshot-reading <code>NbuCollector</code>. <strong>Serve HTTP immediately</strong> — before the first
-  cycle finishes — so <code>/metrics</code> is up at once (returns only <code>nbu_up{site}=0</code>/nothing until the
-  first snapshot lands). Hot-reload (SIGHUP/fsnotify) rebuilds the target set and swaps.</li>
-</ul>
-<h2 id="migration-cardinality">Migration &amp; cardinality</h2>
-<ul>
-<li><code>site</code> multiplies every series by the number of sites — bounded and intended (2 here).</li>
-<li>Dashboards/alerts gain a <code>site</code> template variable (separate dashboard spec:
-  <a href="../2026-06-17-multisite-dashboards-design/"><code>2026-06-17-multisite-dashboards-design.md</code></a>).</li>
-<li>A new ADR records the snapshot-model adoption + identity label (mirrors <code>pstore</code> 0002/0005).</li>
-</ul>
-<h2 id="testing-tdd">Testing (TDD)</h2>
-<ul>
-<li><code>SnapshotStore</code> load/store concurrency (race test); <code>Snapshot</code> immutability.</li>
-<li>Collection loop: 2 mock targets → snapshot has both sites; one target failing → that
-  site <code>up=0</code>, the other still present (graceful degradation).</li>
-<li><code>Collect</code> emits every metric with a <code>site</code> label; label-key consistency test (every series
-  of a family carries <code>site</code>).</li>
-<li>Back-compat: legacy <code>nbuserver:</code> config maps to one site (<code>site=host</code>) with a deprecation
-  warning.</li>
-<li>"Serve before first collect": HTTP <code>/metrics</code> responds before the loop's first tick.</li>
-<li><code>make ci</code> green (incl. the 70% coverage gate).</li>
-</ul>
-<h2 id="acceptance-criteria">Acceptance criteria</h2>
-<ul>
-<li>One exporter, <code>nbuservers:</code> with two entries → <code>/metrics</code> shows every series twice, once per
-  <code>site</code>, and a down master shows only <code>nbu_up{site=…}=0</code> without affecting the other site.</li>
-<li>Backend API load is independent of scrape frequency (driven by <code>collectionInterval</code>).</li>
-<li>Existing single-site configs keep working (legacy block → one site).</li>
-<li>No metric renamed; only <code>site</code> added.</li>
-</ul>
-<h2 id="decisions-resolved-2026-06-17">Decisions (resolved 2026-06-17)</h2>
+<h2 id="context">Context</h2>
+<p>Two latent defects surfaced when validating the exporter against the <strong>real NetBackup
+OpenAPI specs</strong> (the 10.3 / 10.5 / 11.0 / 11.2 bundles under <code>docs/veritas-*</code>) rather than
+against assumptions:</p>
 <ol>
-<li><strong>Config back-compat:</strong> <strong>auto-map</strong> the legacy single <code>nbuserver:</code> block — when present
-   and <code>nbuservers:</code> is absent, treat it as a one-entry list with <code>site</code> defaulting to the
-   server <code>host</code>, and log a deprecation warning. Existing single-site configs keep working;
-   no forced migration. New configs use <code>nbuservers:</code> with an explicit <code>site</code>.</li>
-<li><strong><code>collectionInterval</code> default:</strong> <strong><code>5m</code></strong>, matching today's storage-cache TTL so per-master
-   API load stays close to current behaviour. Operators can tune it; metrics may be up to one
-   interval stale (expected for the snapshot model).</li>
-<li><strong>Identity label:</strong> <strong><code>site</code></strong> (1 master per site is the NetBackup reality), on every
-   series, first in the label set.</li>
+<li>
+<p><strong>Wrong API version for NBU 10.x.</strong> The exporter mapped NetBackup 10.0–10.4 to API
+   media-type <code>version=3.0</code>. No NetBackup REST API has ever used <code>3.0</code> — the 10.3 bundle
+   declares <code>version=10.0</code> for <code>/admin/jobs</code> and <code>/storage/storage-units</code>. Requesting <code>3.0</code>
+   against a 10.x appliance returns a legacy/reduced representation (missing fields), which
+   looked like "NBU 10.x lacks these features" but was really "we asked for the wrong
+   version." (A reporter's "API v3.0" turned out to be the exporter's <em>Helm</em> release version,
+   not a NetBackup API version.)</p>
+</li>
+<li>
+<p><strong>Jobs pagination was offset-based, but the API is cursor-based.</strong> <code>GET /admin/jobs</code> has
+   been <strong>cursor-paginated since API version 9.0</strong> (<code>page[after]</code>/<code>page[before]</code> request
+   params; <code>meta.pagination.next</code>/<code>prev</code> as opaque <strong>string</strong> cursors; <code>rangeTruncated</code>) —
+   confirmed identical across the 10.3, 10.5, 11.0 <strong>and</strong> 11.2 specs. The exporter sent
+   <code>page[offset]</code> and declared <code>Next int</code>, so the response failed to unmarshal (string cursor
+   into an int) and <strong>every <code>nbu_jobs_*</code> metric was silently dropped</strong> on all modern
+   NetBackup — the root cause of issue #13 (storage metrics present, jobs empty on NBU 11.0).
+   <code>/storage/storage-units</code> remains <strong>offset</strong>-paginated.</p>
+</li>
 </ol>
+<h2 id="decision">Decision</h2>
+<ul>
+<li><strong>Version model:</strong> support <code>10.0</code> (NBU 10.0–10.4), <code>12.0</code> (10.5), <code>13.0</code> (11.0), <code>14.0</code>
+  (11.2); <strong>drop <code>3.0</code></strong>. Auto-detection probes <code>models.SupportedAPIVersions</code> in descending
+  order (<code>14.0 → 13.0 → 12.0 → 10.0</code>) and the first to respond wins. A single
+  <code>Accept: application/vnd.netbackup+json;version=X</code> header is used for all endpoints — verified
+  that <code>/admin/jobs</code> and <code>/storage/storage-units</code> answer at the same version per release.</li>
+<li><strong>Jobs pagination is cursor-based.</strong> <code>Jobs.Meta.Pagination</code> carries
+  <code>{Limit int, Next string, Prev string, RangeTruncated bool}</code>; <code>FetchJobDetails</code> omits
+  <code>page[after]</code> on the first page and then sends <code>page[after]=&lt;next&gt;</code>, following
+  <code>meta.pagination.next</code> until it is empty. <code>HandlePagination</code> is a generic cursor loop.</li>
+<li><strong>Storage pagination is left offset-based</strong> — the two endpoints genuinely differ; they are
+  deliberately <em>not</em> unified.</li>
+<li><strong>Validation is grounded in the checked-in OpenAPI bundles</strong>, not in third-party
+  assumptions; the 10.3 and 11.2 bundles were added to the repo as that source of truth.</li>
+</ul>
+<h2 id="consequences">Consequences</h2>
+<p><strong>Positive</strong></p>
+<ul>
+<li><code>nbu_jobs_*</code> metrics work across <strong>all modern NetBackup</strong> (10.x / 10.5 / 11.0 / 11.2),
+  fixing the silent data-loss behind issue #13.</li>
+<li>NBU 10.x auto-detects with no manual <code>apiVersion</code>; the shipped config example for 10.x uses
+  <code>10.0</code>.</li>
+<li>Architectural claims are backed by authoritative vendor specs rather than report wording.</li>
+</ul>
+<p><strong>Negative / trade-offs</strong></p>
+<ul>
+<li><strong>Two pagination styles coexist</strong> (jobs = cursor, storage = offset). This is intentional and
+  matches the API; the code and this ADR guard against a well-meaning "unify pagination"
+  refactor that would re-break jobs.</li>
+<li>The single <code>Accept</code>-version header assumes jobs and storage share one version per release
+  (true across 10.0–14.0); revisit if NetBackup ever versions those endpoints independently.</li>
+<li>The OpenAPI bundles add ~10 MB to the repository, accepted as the validation source of
+  truth (mirrors keeping vendor specs for the other family exporters).</li>
+</ul>
 
 
 
@@ -1398,10 +1229,10 @@ whole <code>/metrics</code> response.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>

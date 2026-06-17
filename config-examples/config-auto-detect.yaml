@@ -8,7 +8,7 @@
 # - You're upgrading NetBackup and want the exporter to adapt automatically
 #
 # NetBackup Version: 10.0+ (any supported version)
-# API Version: Auto-detected (13.0 → 12.0 → 3.0)
+# API Version: Auto-detected (14.0 → 13.0 → 12.0 → 10.0)
 # Detection: Enabled (no apiVersion specified)
 
 server:
@@ -26,17 +26,19 @@ nbuserver:
     host: "nbu-master.my.domain"  # NetBackup master server (any version 10.0+)
     port: "1556"
     # apiVersion: NOT SPECIFIED - Will auto-detect highest supported version
-    # Detection order: 13.0 (NBU 11.0) → 12.0 (NBU 10.5) → 3.0 (NBU 10.0-10.4)
+    # Detection order: 14.0 (NBU 11.2) → 13.0 (NBU 11.0) → 12.0 (NBU 10.5) → 10.0 (NBU 10.0-10.4)
     apiKey: "your-api-key-here"  # Generate from NetBackup UI
-    contentType: "application/vnd.netbackup+json; version=3.0"
+    # contentType is intentionally omitted: with auto-detect, the Accept header is
+    # built dynamically from the detected apiVersion (the field is otherwise ignored).
     insecureSkipVerify: false  # Set to true only for testing environments
 
 # Version Detection Behavior:
 # 
 # The exporter will attempt to connect using API versions in this order:
-# 1. API 13.0 (NetBackup 11.0+)
-# 2. API 12.0 (NetBackup 10.5)
-# 3. API 3.0 (NetBackup 10.0-10.4)
+# 1. API 14.0 (NetBackup 11.2+)
+# 2. API 13.0 (NetBackup 11.0+)
+# 3. API 12.0 (NetBackup 10.5)
+# 4. API 10.0 (NetBackup 10.0-10.4)
 #
 # The first version that responds successfully will be used for all subsequent requests.
 #
