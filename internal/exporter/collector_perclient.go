@@ -3,6 +3,7 @@ package exporter
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
@@ -36,6 +37,10 @@ func newPerClientCollector(client NetBackupClient, cfg models.Config, site strin
 func (c *perClientCollector) Name() string { return "perclient" }
 
 func (c *perClientCollector) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
+	if len(c.allowlist) == 0 {
+		log.WithField("site", c.site).Info("perClient enabled but allowlist empty; no per-client series emitted")
+		return nil
+	}
 	for _, name := range c.allowlist {
 		c.collectClient(ctx, ch, name)
 	}
@@ -45,6 +50,11 @@ func (c *perClientCollector) Collect(ctx context.Context, ch chan<- prometheus.M
 // collectClient queries the single most recent successful backup for one client and
 // emits its endTime. A fetch error / no result is logged-and-skipped for that client.
 func (c *perClientCollector) collectClient(ctx context.Context, ch chan<- prometheus.Metric, name string) {
+	if strings.ContainsRune(name, '\'') {
+		log.WithField("site", c.site).WithField("client", name).
+			Warn("perClient: client name contains a single quote; skipping (cannot build a safe filter)")
+		return
+	}
 	filter := fmt.Sprintf("clientName eq '%s' and jobType eq 'BACKUP' and status eq 0", name)
 	url := c.cfg.BuildURL(jobsPath, map[string]string{
 		QueryParamFilter: filter,

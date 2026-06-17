@@ -81,3 +81,31 @@ func TestPerClient_NoSuccessNoSeries(t *testing.T) {
 	close(ch)
 	require.Empty(t, ch, "a client with no successful backup emits no series")
 }
+
+func TestPerClient_EmptyAllowlistEmitsNothing(t *testing.T) {
+	mock := &perClientMock{response: `{"data":[]}`}
+	c := newPerClientCollector(mock, perClientConfig(), "site1") // no clients
+	ch := make(chan prometheus.Metric, 4)
+	require.NoError(t, c.Collect(context.Background(), ch))
+	close(ch)
+	require.Empty(t, ch)
+	require.Empty(t, mock.urls, "no queries when the allowlist is empty")
+}
+
+func TestPerClient_QuotedNameSkipped(t *testing.T) {
+	mock := &perClientMock{response: `{"data":[]}`}
+	c := newPerClientCollector(mock, perClientConfig("bad'name"), "site1")
+	ch := make(chan prometheus.Metric, 4)
+	require.NoError(t, c.Collect(context.Background(), ch))
+	close(ch)
+	require.Empty(t, mock.urls, "a name with a single quote is skipped (no unsafe filter)")
+}
+
+func TestPerClient_FetchErrorDegrades(t *testing.T) {
+	mock := &perClientMock{response: ""} // FetchData returns an error
+	c := newPerClientCollector(mock, perClientConfig("clientA"), "site1")
+	ch := make(chan prometheus.Metric, 4)
+	require.NoError(t, c.Collect(context.Background(), ch), "Collect never propagates a per-client error")
+	close(ch)
+	require.Empty(t, ch)
+}
