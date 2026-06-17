@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Alerting rules** (`deploy/prometheus/`): two optional, site-aware Prometheus rule files —
+  `rules-perclient.yml` (`NbuClientBackupStale` >25h warning, `NbuClientBackupCritical` >48h
+  critical) and `rules-tape.yml` (`NbuTapeDriveDown` / `NbuTapeDriveDisabled` per site) — each with
+  promtool unit tests, plus a `make check-rules` target. The generic `nbu.rules.yml` is unchanged.
 - **Per-client last-successful-backup metric** (opt-in `collectors.perClient`, default off):
   `nbu_client_last_successful_backup_timestamp_seconds{site,client}` for each allowlisted client,
   from a targeted `/admin/jobs` query (latest `status=0` BACKUP, `sort=-endTime`, `page[limit]=1`).

@@ -146,7 +146,11 @@ scrape_configs:
     scrape_timeout: 30s
 ```
 
-Alerting rules are provided in `grafana/alerts.yml` (load via `rule_files`).
+Alerting rules live in `deploy/prometheus/`: the generic `nbu.rules.yml` (availability,
+staleness, backup-success-rate, storage) plus two **optional** files loaded only if you enabled
+the matching opt-in collector — `rules-perclient.yml` (per-client backup staleness;
+needs `collectors.perClient`) and `rules-tape.yml` (tape drive DOWN/DISABLED; needs
+`collectors.tape`). Load them via `rule_files` and validate with `make check-rules`.
 
 ## Dashboards
 
