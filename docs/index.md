@@ -10,9 +10,10 @@ A production-ready Prometheus exporter that collects backup job statistics and s
 
 - **Job Metrics Collection** - Aggregates backup job statistics by type, policy, and status
 - **Storage Monitoring** - Tracks storage unit capacity (free/used bytes) for disk-based storage
+- **Multi-Site** - Scrape multiple NetBackup primary servers from one exporter, with every metric labelled by `site` (background snapshot collection)
 - **Prometheus Integration** - Native Prometheus metrics exposition via HTTP endpoint
 - **OpenTelemetry Tracing** - Optional distributed tracing for performance analysis and troubleshooting
-- **Multi-Version API Support** - Automatic detection of NetBackup API versions (3.0, 12.0, 13.0)
+- **Multi-Version API Support** - Automatic detection of NetBackup API versions (14.0, 13.0, 12.0, 10.0)
 - **Health Checks** - Built-in `/health` endpoint for monitoring exporter status
 - **Graceful Shutdown** - Proper signal handling with configurable shutdown timeout
 - **Security** - Configurable TLS verification, API key masking in logs
@@ -35,11 +36,12 @@ See the [Installation guide](getting-started/installation.md) for full details.
 
 | NetBackup Version | API Version | Support Status |
 |-------------------|-------------|----------------|
-| 11.0+             | 13.0        | Fully Supported |
+| 11.2              | 14.0        | Fully Supported |
+| 11.0 - 11.1       | 13.0        | Fully Supported |
 | 10.5              | 12.0        | Fully Supported |
-| 10.0 - 10.4       | 3.0         | Legacy Support |
+| 10.0 - 10.4       | 10.0        | Fully Supported |
 
-The exporter automatically detects the highest supported API version (13.0 -> 12.0 -> 3.0).
+The exporter automatically detects the highest supported API version (14.0 -> 13.0 -> 12.0 -> 10.0).
 
 ## Metrics at a Glance
 
