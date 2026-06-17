@@ -2598,6 +2598,11 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h2 id="unreleased">[Unreleased]</h2>
 <h3 id="added">Added</h3>
 <ul>
+<li><strong>Tape / drive metrics</strong> (opt-in <code>collectors.tape</code>, default off): <code>nbu_tape_drives_count</code>
+  (by state/drive_type/robot_type), <code>nbu_tape_drive_info</code> (per drive), <code>nbu_tape_media_count</code>
+  (by media_type/status), and <code>nbu_tape_robot_device_hosts</code>, collected over REST — drives on
+  NBU 10.0+, tape-media + robot device hosts on 10.5+ — with per-endpoint graceful degradation
+  and the <code>site</code> label. No CLI shell-out. See the Feature 2 design spec.</li>
 <li><strong>Multi-site support</strong>: a single exporter can scrape multiple NetBackup primary servers via
   a <code>nbuservers:</code> list, each with a unique <code>site</code>; every metric series carries a <code>site</code> label
   (first label). Collection adopts the family <strong>snapshot model</strong> — a background loop polls

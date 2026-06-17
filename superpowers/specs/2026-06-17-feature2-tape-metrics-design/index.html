@@ -10,31 +10,27 @@
       
       
       
-        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/metrics/">
+        <link rel="canonical" href="https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-17-feature2-tape-metrics-design/">
       
       
-        <link rel="prev" href="../getting-started/quickstart/">
-      
-      
-        <link rel="next" href="../opentelemetry-example/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
-        <title>Metrics Reference - NBU Exporter</title>
+        <title>Feature 2 — Tape / Drive / Robot Metrics (opt-in sub-collector) - NBU Exporter</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,7 +49,7 @@
       
     
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#metrics-reference" class="md-skip">
+        <a href="#feature-2-tape-drive-robot-metrics-opt-in-sub-collector" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +90,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+    <a href="../../.." title="NBU Exporter" class="md-header__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Metrics Reference
+              Feature 2 — Tape / Drive / Robot Metrics (opt-in sub-collector)
             
           </span>
         </div>
@@ -230,7 +226,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
+    <a href="../../.." title="NBU Exporter" class="md-nav__button md-logo" aria-label="NBU Exporter" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -260,7 +256,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../../.." class="md-nav__link">
         
   
   
@@ -341,7 +337,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/installation/" class="md-nav__link">
+      <a href="../../../getting-started/installation/" class="md-nav__link">
         
   
   
@@ -369,7 +365,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/configuration/" class="md-nav__link">
+      <a href="../../../getting-started/configuration/" class="md-nav__link">
         
   
   
@@ -397,7 +393,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/quickstart/" class="md-nav__link">
+      <a href="../../../getting-started/quickstart/" class="md-nav__link">
         
   
   
@@ -429,37 +425,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Metrics Reference
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../../metrics/" class="md-nav__link">
         
   
   
@@ -475,120 +444,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#job-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Job Metrics
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#storage-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Storage Metrics
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#opt-in-collectors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Opt-in collectors
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Opt-in collectors">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-the-collectors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling the collectors
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#system-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System Metrics
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#label-encoding" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Label Encoding
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prometheus-configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Prometheus Configuration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dashboards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dashboards
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -654,7 +509,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../opentelemetry-example/" class="md-nav__link">
+      <a href="../../../opentelemetry-example/" class="md-nav__link">
         
   
   
@@ -682,7 +537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../trace-analysis-guide/" class="md-nav__link">
+      <a href="../../../trace-analysis-guide/" class="md-nav__link">
         
   
   
@@ -771,7 +626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../netbackup-11-migration/" class="md-nav__link">
+      <a href="../../../netbackup-11-migration/" class="md-nav__link">
         
   
   
@@ -799,7 +654,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-10.5-migration/" class="md-nav__link">
+      <a href="../../../api-10.5-migration/" class="md-nav__link">
         
   
   
@@ -888,7 +743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment-verification/" class="md-nav__link">
+      <a href="../../../deployment-verification/" class="md-nav__link">
         
   
   
@@ -916,7 +771,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment-quick-reference/" class="md-nav__link">
+      <a href="../../../deployment-quick-reference/" class="md-nav__link">
         
   
   
@@ -944,7 +799,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../docker/" class="md-nav__link">
+      <a href="../../../docker/" class="md-nav__link">
         
   
   
@@ -972,7 +827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../dashboards/" class="md-nav__link">
+      <a href="../../../dashboards/" class="md-nav__link">
         
   
   
@@ -1007,7 +862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../config-examples/" class="md-nav__link">
+      <a href="../../../config-examples/" class="md-nav__link">
         
   
   
@@ -1088,7 +943,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/" class="md-nav__link">
+      <a href="../../../adr/" class="md-nav__link">
         
   
   
@@ -1116,7 +971,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../adr/0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
+      <a href="../../../adr/0001-tooling-baseline-sync-with-pflex/" class="md-nav__link">
         
   
   
@@ -1151,7 +1006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../changelog/" class="md-nav__link">
+      <a href="../../../changelog/" class="md-nav__link">
         
   
   
@@ -1198,10 +1053,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#job-metrics" class="md-nav__link">
+  <a href="#context-goal" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Job Metrics
+        Context &amp; Goal
       
     </span>
   </a>
@@ -1209,10 +1064,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#storage-metrics" class="md-nav__link">
+  <a href="#scope" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Storage Metrics
+        Scope
       
     </span>
   </a>
@@ -1220,38 +1075,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#opt-in-collectors" class="md-nav__link">
+  <a href="#metrics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Opt-in collectors
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Opt-in collectors">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#enabling-the-collectors" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Enabling the collectors
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#system-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        System Metrics
+        Metrics
       
     </span>
   </a>
@@ -1259,10 +1086,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#label-encoding" class="md-nav__link">
+  <a href="#collection-pagination-degradation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Label Encoding
+        Collection, pagination &amp; degradation
       
     </span>
   </a>
@@ -1270,10 +1097,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#prometheus-configuration" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Prometheus Configuration
+        Configuration
       
     </span>
   </a>
@@ -1281,10 +1108,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#dashboards" class="md-nav__link">
+  <a href="#testing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Dashboards
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#confirmed-field-names-validated-against-docsveritas-105storageyaml" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Confirmed field names (validated against docs/veritas-10.5/storage.yaml)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#open-items-verify-at-implementation-time-do-not-change-the-shape-above" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Open items (verify at implementation time — do not change the shape above)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
       
     </span>
   </a>
@@ -1311,335 +1171,180 @@
   
 
 
-<h1 id="metrics-reference">Metrics Reference</h1>
-<div class="admonition info">
-<p class="admonition-title">The <code>site</code> label</p>
-<p><strong>Every metric below also carries a <code>site</code> label</strong> — its first label — identifying the
-NetBackup primary it came from. Single-site deployments have one <code>site</code> value; a
-<code>nbuservers:</code> list produces one per configured site. The per-metric tables list only the
-<em>additional</em> labels, so a <code>—</code> in the Labels column means the series carries <code>site</code> only.</p>
-</div>
-<h2 id="job-metrics">Job Metrics</h2>
+<h1 id="feature-2-tape-drive-robot-metrics-opt-in-sub-collector">Feature 2 — Tape / Drive / Robot Metrics (opt-in sub-collector)</h1>
+<ul>
+<li><strong>Date:</strong> 2026-06-17</li>
+<li><strong>Status:</strong> Design (approved — pending spec review)</li>
+<li><strong>Deciders:</strong> Frederic Jacquet</li>
+<li><strong>Related:</strong> <a href="../../../adr/0002-opt-in-sub-collector-framework/">ADR-0002 (opt-in sub-collector framework)</a>,
+  <a href="../2026-06-16-nbu-feature-deferrals/">feature deferrals rationale</a>,
+  <a href="../../../adr/0004-multisite-snapshot-collection-model/">ADR-0004 (multi-site snapshot model)</a></li>
+</ul>
+<h2 id="context-goal">Context &amp; Goal</h2>
+<p>Charles's request (Feature 2) asks for tape library visibility: drives, tape media (volumes),
+and robots. The deferral note settled the approach: <strong>REST, not CLI shell-out</strong> (shelling out to
+<code>bpmedialist</code>/<code>vmquery</code> would force the exporter onto a master/media server, breaking the
+remote-HTTP-only model), shipped as an <strong>opt-in sub-collector</strong> per ADR-0002.</p>
+<p>Goal: a single opt-in <code>tape</code> sub-collector exposing bounded-cardinality drive/media/robot health
+metrics, default-off, that works across NBU versions via per-endpoint graceful degradation and
+carries the <code>site</code> label automatically (multi-site, ADR-0004).</p>
+<h2 id="scope">Scope</h2>
+<p>Three <code>/storage/</code> endpoints (validated against the checked-in OpenAPI bundles):</p>
 <table>
 <thead>
 <tr>
-<th>Metric</th>
-<th>Labels</th>
-<th>Description</th>
+<th>Endpoint</th>
+<th>NBU availability</th>
+<th>Notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>nbu_jobs_count</code></td>
-<td><code>action</code>, <code>policy_type</code>, <code>status</code></td>
-<td>Number of jobs by type, policy, and status</td>
+<td><code>GET /storage/drives</code></td>
+<td><strong>10.0+</strong> (<code>docs/veritas-10.3/storage.yaml</code>)</td>
+<td>present on all supported NBU</td>
 </tr>
 <tr>
-<td><code>nbu_jobs_bytes</code></td>
-<td><code>action</code>, <code>policy_type</code>, <code>status</code></td>
-<td>Total bytes transferred by jobs</td>
+<td><code>GET /storage/tape-media</code></td>
+<td><strong>10.5+</strong> (<code>docs/veritas-10.5/storage.yaml</code>)</td>
+<td>absent on NBU 10.0–10.4</td>
 </tr>
 <tr>
-<td><code>nbu_status_count</code></td>
-<td><code>action</code>, <code>status</code></td>
-<td>Job count aggregated by action and status</td>
-</tr>
-<tr>
-<td><code>nbu_jobs_state_count</code></td>
-<td><code>action</code>, <code>state</code></td>
-<td>Job count per lifecycle state (e.g. <code>ACTIVE</code>, <code>QUEUED</code>, <code>DONE</code>)</td>
-</tr>
-<tr>
-<td><code>nbu_jobs_queued_count</code></td>
-<td><code>action</code>, <code>reason</code></td>
-<td>Queued job count per NetBackup queue reason code</td>
-</tr>
-<tr>
-<td><code>nbu_jobs_files_count</code></td>
-<td><code>action</code>, <code>policy_type</code></td>
-<td>Total number of files processed by jobs</td>
-</tr>
-<tr>
-<td><code>nbu_jobs_dedup_ratio</code></td>
-<td><code>action</code>, <code>policy_type</code></td>
-<td>Mean deduplication ratio across jobs (emitted only when jobs exist)</td>
-</tr>
-<tr>
-<td><code>nbu_job_duration_seconds</code></td>
-<td><code>action</code>, <code>policy_type</code></td>
-<td>Histogram of completed job durations in seconds</td>
+<td><code>GET /storage/robots-device-hosts</code></td>
+<td><strong>10.5+</strong></td>
+<td>returns a flat <strong>list of device-host names</strong> only</td>
 </tr>
 </tbody>
 </table>
-<p>The <code>nbu_job_duration_seconds</code> histogram covers completed jobs only (those with an
-<code>EndTime</code> after <code>StartTime</code>). Bucket upper bounds (seconds): 60, 300, 900, 1800,
-3600, 7200, 14400, 28800, 86400.</p>
-<h2 id="storage-metrics">Storage Metrics</h2>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Labels</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>nbu_disk_bytes</code></td>
-<td><code>name</code>, <code>type</code>, <code>size</code></td>
-<td>Storage unit capacity; <code>size</code> is <code>free</code> or <code>used</code></td>
-</tr>
-<tr>
-<td><code>nbu_disk_capacity_bytes</code></td>
-<td><code>name</code>, <code>type</code></td>
-<td>Authoritative total capacity reported by the API</td>
-</tr>
-<tr>
-<td><code>nbu_storage_max_concurrent_jobs</code></td>
-<td><code>name</code>, <code>type</code></td>
-<td>Maximum concurrent jobs the unit accepts</td>
-</tr>
-<tr>
-<td><code>nbu_storage_max_fragment_size_bytes</code></td>
-<td><code>name</code>, <code>type</code></td>
-<td>Maximum fragment size in bytes</td>
-</tr>
-<tr>
-<td><code>nbu_storage_info</code></td>
-<td><code>name</code>, <code>type</code>, <code>subtype</code>, <code>is_cloud</code>, <code>worm_capable</code>, <code>use_worm</code>, <code>replication_capable</code>, <code>instant_access</code></td>
-<td>Storage unit capabilities (value always <code>1</code>)</td>
-</tr>
-</tbody>
-</table>
-<p><code>nbu_disk_capacity_bytes</code> is a separate metric (not a <code>size="total"</code> label) so that
-<code>sum(nbu_disk_bytes{name=X})</code> continues to equal total capacity (free + used).</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Tape storage units are excluded from metrics collection.</p>
-</div>
-<h2 id="opt-in-collectors">Opt-in collectors</h2>
-<p>These metrics are exposed by optional sub-collectors. <strong>All default to disabled</strong> — enable
-only the ones your appliance and account permissions support. They are graceful: a failing
-endpoint is logged and skipped without affecting core storage/jobs metrics or flipping
-<code>nbu_up</code> to <code>0</code>. The alerts/malware/catalog/SLO collectors require NetBackup 11.2 (API
-<code>version=14.0</code>); the <strong><code>tape</code></strong> collector works on older releases too (<code>/storage/drives</code> on
-NBU 10.0+, <code>/storage/tape-media</code> and <code>/storage/robots-device-hosts</code> on 10.5+).</p>
+<p>The collector must <strong>degrade per endpoint</strong>: on NBU 10.0–10.4 the tape-media and robots endpoints
+are absent (404/406) — those are logged and skipped while drives still report. The same applies
+to any per-endpoint permission error. A failing endpoint never flips <code>nbu_up</code> to 0.</p>
+<p><strong>Robot correction (validated against 10.5 + 11.0 specs):</strong> there is <strong>no bulk robot-listing
+endpoint</strong> — only <code>/storage/robots-device-hosts</code> (hostnames: <code>data[].id</code>, <code>type: deviceHost</code>) and
+a per-robot <code>GET /storage/robots/{robotId}</code>. So a <code>robots_count{robot_type}</code> / per-robot <code>info</code>
+metric is <strong>not</strong> buildable without N+1 per-robot calls (rejected). Robot context is instead taken
+from the <strong><code>robotType</code> / <code>robotNumber</code> attributes already present on each drive</strong> (and tape
+volume). 11.0/API-13.0 is identical here, so this is version-robust.</p>
+<p>Out of scope (separate features): alerting rules for tape (<strong>Feature 4</strong>), per-client metrics
+(<strong>Feature 3</strong>), and any tape <em>write</em> operations (move/rescan/erase) — this collector is read-only.</p>
+<h2 id="metrics">Metrics</h2>
+<p>Every series carries <code>site</code> as its first label (shared label builder; ADR-0004 invariant). The
+metric-specific labels:</p>
 <table>
 <thead>
 <tr>
 <th>Metric</th>
 <th>Type</th>
-<th>Labels</th>
-<th>Source endpoint</th>
-<th>Source API attribute</th>
+<th>Labels (after <code>site</code>)</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>nbu_alerts_count</code></td>
-<td>Gauge</td>
-<td><code>severity</code>, <code>category</code></td>
-<td><code>GET /manage/alerts</code></td>
-<td>Alerts grouped by <code>severity</code> + <code>category</code></td>
-</tr>
-<tr>
-<td><code>nbu_malware_files_scanned</code></td>
-<td>Gauge</td>
-<td>—</td>
-<td><code>GET /malware/latest-scan-results</code></td>
-<td>Sum of <code>numberOfFilesScanned</code></td>
-</tr>
-<tr>
-<td><code>nbu_malware_files_infected</code></td>
-<td>Gauge</td>
-<td>—</td>
-<td><code>GET /malware/latest-scan-results</code></td>
-<td>Sum of <code>numberOfFilesImpacted</code></td>
-</tr>
-<tr>
-<td><code>nbu_malware_scan_count</code></td>
-<td>Gauge</td>
-<td><code>status</code></td>
-<td><code>GET /malware/latest-scan-results</code></td>
-<td>Results grouped by <code>scanState</code></td>
-</tr>
-<tr>
-<td><code>nbu_catalog_images_count</code></td>
-<td>Gauge</td>
-<td><code>malware_status</code>, <code>anomaly_status</code></td>
-<td><code>GET /catalog/images</code></td>
-<td><code>meta.pagination.count</code> per filter combination</td>
-</tr>
-<tr>
-<td><code>nbu_slo_count</code></td>
-<td>Gauge</td>
-<td>—</td>
-<td><code>GET /servicecatalog/slos</code></td>
-<td>Total number of <code>data[]</code> entries</td>
-</tr>
-<tr>
 <td><code>nbu_tape_drives_count</code></td>
 <td>Gauge</td>
 <td><code>state</code>, <code>drive_type</code>, <code>robot_type</code></td>
-<td><code>GET /storage/drives</code></td>
-<td>Drives grouped by <code>driveStatus</code>/<code>driveType</code>/<code>robotType</code></td>
-</tr>
-<tr>
-<td><code>nbu_tape_drive_info</code></td>
-<td>Gauge</td>
-<td><code>drive_name</code>, <code>media_server</code>, <code>drive_type</code>, <code>robot_number</code>, <code>state</code></td>
-<td><code>GET /storage/drives</code></td>
-<td>One series per drive (value always <code>1</code>)</td>
+<td>Number of drives grouped by status + type + robot type</td>
 </tr>
 <tr>
 <td><code>nbu_tape_media_count</code></td>
 <td>Gauge</td>
 <td><code>media_type</code>, <code>status</code></td>
-<td><code>GET /storage/tape-media</code></td>
-<td>Tape volumes grouped by <code>mediaType</code> + <code>mediaStatus</code></td>
+<td>Number of tape volumes grouped by media type + status</td>
 </tr>
 <tr>
 <td><code>nbu_tape_robot_device_hosts</code></td>
 <td>Gauge</td>
-<td>—</td>
-<td><code>GET /storage/robots-device-hosts</code></td>
-<td>Count of device hosts with robots configured</td>
+<td><em>(none beyond <code>site</code>)</em></td>
+<td>Number of device hosts that have robots configured</td>
+</tr>
+<tr>
+<td><code>nbu_tape_drive_info</code></td>
+<td>Gauge (=1)</td>
+<td><code>drive_name</code>, <code>media_server</code>, <code>drive_type</code>, <code>robot_number</code>, <code>state</code></td>
+<td>One series per drive (tens) — identifies <em>which</em> drive is down</td>
 </tr>
 </tbody>
 </table>
-<p>Notes on the implemented attributes (these differ from early guesses):</p>
+<p><strong>State vocabularies (confirmed enums in <code>storage.yaml</code>):</strong></p>
 <ul>
-<li><strong>Malware infected count</strong> reads <code>numberOfFilesImpacted</code>, not
-  <code>numberOfFilesInfected</code>. The 11.2 <code>latest-scan-results</code> response uses
-  <code>numberOfFilesImpacted</code>.</li>
-<li><strong>Malware scan status</strong> is grouped by <code>scanState</code> (enum values such as
-  <code>SCAN_COMPLETED</code> / <code>SCAN_FAILED</code>), exposed via the <code>status</code> label.</li>
-<li><strong>Catalog posture</strong> is collected with count-only queries (<code>page[limit]=1</code>,
-  reading <code>meta.pagination.count</code>) issued once per curated combination of
-  <code>malwareStatus</code> × <code>anomalyStatus</code>, keeping label cardinality bounded.</li>
-<li><strong>SLO count</strong> is a single unlabeled gauge. The 11.2 SLO response has no
-  per-SLO enforcement-type attribute, so the originally planned
-  <code>enforcement_type</code> label was dropped.</li>
-<li><strong>Tape collector</strong> (<code>collectors.tape</code>) is one collector over three endpoints with
-  per-endpoint graceful degradation. Tape media is offset-paginated and aggregated
-  client-side; <code>robot_type</code> is read from the per-drive attribute (there is no bulk
-  robot-listing endpoint, so a standalone robot type/count metric is not exposed);
-  <code>mediaStatus</code> is a free-form NetBackup status string. <code>drive_state</code> is the
-  <code>driveStatus</code> value with the <code>DRIVE_STATUS_</code> prefix stripped (<code>UP</code>/<code>DOWN</code>/<code>MIXED</code>/<code>DISABLED</code>).</li>
+<li>drive <code>state</code> ← <code>driveStatus</code> field (<code>driveStatusEnum</code>): <code>UP</code>, <code>DOWN</code>, <code>MIXED</code>, <code>DISABLED</code></li>
+<li>drive <code>drive_type</code> ← <code>driveType</code> field (<code>driveTypeEnum</code>): <code>DT_HCART</code>, <code>DT_DLT</code>, <code>DT_HCART2</code>, … (low cardinality)</li>
+<li><code>robot_type</code> ← <code>robotType</code> field <strong>on the drive</strong> (<code>robotTypeEnum</code>): <code>NA</code>, <code>NOT_ROBOTIC</code>, <code>ACS</code>, <code>TLD</code></li>
+<li>media <code>media_type</code> ← <code>mediaType</code> field (<code>tapeMediaTypeEnum</code>): <code>HCART</code>, <code>DLT</code>, …, plus cleaning media (<code>HC_CLN</code>, <code>DLT_CLN</code>, …)</li>
+<li>media <code>status</code> ← <strong><code>mediaStatus</code></strong> field (free-form string, e.g. <code>ACTIVE MULTIPLEXED</code>)</li>
 </ul>
-<h3 id="enabling-the-collectors">Enabling the collectors</h3>
-<p>Add a <code>collectors</code> block to your <code>config.yaml</code> (each collector is a
-<code>{ enabled: false }</code> toggle; all default to disabled):</p>
+<p><strong>Cardinality:</strong> <code>count</code> metrics are bounded by enum cross-products regardless of fleet size.
+The per-entity info metric is emitted <strong>only</strong> for drives (tens), <strong>never</strong> for tape media (can be
+thousands of volumes). Per-entity values like media barcode/serial and drive serial are kept out
+of all labels. Including <code>state</code> as a <code>drive_info</code> label is the
+kube-state-metrics idiom; the only cost is mild series churn when a drive's state changes, which
+is infrequent and acceptable.</p>
+<h2 id="collection-pagination-degradation">Collection, pagination &amp; degradation</h2>
+<ul>
+<li>The collector implements the existing <code>subCollector</code> interface (<code>Name() string</code>,
+  <code>Collect(ctx, ch) error</code>) and is built per target by <code>buildSubCollectorsFor(client, cfg, site)</code>,
+  so its metrics are buffered into the <code>SiteSnapshot</code> and re-emitted per scrape (no live fetch on
+  scrape).</li>
+<li><strong>Aggregate from <code>data[]</code></strong> (discover states from the data, like the alerts/malware collectors)
+  rather than count-only filtered queries — <code>mediaStatus</code> is free-form so it cannot be enumerated
+  up front, and drives must be enumerated anyway for their info metric.</li>
+<li><strong>drives</strong> → aggregate <code>driveStatus × driveType × robotType</code> into <code>nbu_tape_drives_count</code>, and
+    emit one <code>nbu_tape_drive_info</code> per drive.</li>
+<li><strong>tape-media</strong> → aggregate <code>mediaType × mediaStatus</code> into <code>nbu_tape_media_count</code>.</li>
+<li><strong>robots-device-hosts</strong> → <code>nbu_tape_robot_device_hosts</code> = <code>len(data)</code> (count of device hosts).</li>
+<li><strong>Pagination:</strong> drives are tens → a single page (<code>page[limit]</code>) suffices. robots-device-hosts is
+  a short host list. <strong>Tape media can be thousands → offset-paginate</strong> with <code>page[offset]</code>/
+  <code>page[limit]</code> (drives confirmed to expose <code>page[offset]</code>; tape-media returns the same
+  <code>meta.pagination</code> shape as <code>/storage/storage-units</code>, so reuse the existing <code>/storage/</code> offset
+  loop — worst case a non-paginating endpoint returns a single page and the loop terminates). Runs
+  on the 5m collection cycle, not per scrape.</li>
+<li><strong>Graceful degradation:</strong> each endpoint fetch is independent; an error (absent endpoint on 10.x,
+  permission denied, transient failure) is logged with <code>site</code> + endpoint and skipped. Successful
+  endpoints still emit. Mirrors the per-combination degradation already in the catalog collector.</li>
+</ul>
+<h2 id="configuration">Configuration</h2>
+<p>One opt-in toggle (default disabled), consistent with the other sub-collectors:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">collectors</span><span class="p">:</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">alerts</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">malware</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">catalog</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">slo</span><span class="p">:</span><span class="w">     </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">tape</span><span class="p">:</span><span class="w">    </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">tape</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">   </span><span class="c1"># drives + tape-media + robot-device-host count</span>
 </code></pre></div>
-<div class="admonition note">
-<p class="admonition-title">Job metrics and the missing 11.2 <code>admin.yaml</code></p>
-<p>Job metrics (<code>GET /admin/jobs</code>) are validated against the NetBackup 11.0
-(<code>version=13.0</code>) spec because <code>admin.yaml</code> is absent from the local
-<code>docs/veritas-11.2/</code> bundle. The endpoint is backward-compatible under
-<code>version=14.0</code>, so the existing job metrics remain correct. Obtaining the
-11.2 <code>admin.yaml</code> is a follow-up item to confirm no new job attributes were
-added.</p>
-</div>
-<h2 id="system-metrics">System Metrics</h2>
-<table>
-<thead>
-<tr>
-<th>Metric</th>
-<th>Labels</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>nbu_up</code></td>
-<td>—</td>
-<td><code>1</code> if any collection succeeded, <code>0</code> if all collections failed</td>
-</tr>
-<tr>
-<td><code>nbu_api_version</code></td>
-<td><code>version</code></td>
-<td>Currently active NetBackup API version (14.0, 13.0, 12.0, or 10.0)</td>
-</tr>
-<tr>
-<td><code>nbu_response_time_ms</code></td>
-<td>—</td>
-<td>NetBackup API response time in milliseconds</td>
-</tr>
-<tr>
-<td><code>nbu_last_scrape_timestamp_seconds</code></td>
-<td><code>source</code></td>
-<td>Unix timestamp of the last successful collection (<code>source</code>: <code>storage</code> or <code>jobs</code>)</td>
-</tr>
-</tbody>
-</table>
-<h2 id="label-encoding">Label Encoding</h2>
-<p>Metrics use pipe-delimited keys internally, split into labels:</p>
+<h2 id="testing">Testing</h2>
 <ul>
-<li><strong>Storage</strong>: <code>name|type|size</code> (e.g., "pool1|AdvancedDisk|free")</li>
-<li><strong>Jobs</strong>: <code>action|policy_type|status</code> (e.g., "BACKUP|Standard|0")</li>
+<li>JSON fixtures per endpoint under <code>testdata/</code>: <code>drives</code> (mixed <code>driveStatus</code>/<code>driveType</code>/
+  <code>robotType</code>), <code>tape-media</code> (<strong>multi-page</strong>, to exercise offset pagination + aggregation),
+  <code>robots-device-hosts</code> (a couple of host entries).</li>
+<li>An "absent endpoint" / error fixture proving per-endpoint graceful degradation (drives succeed,
+  tape-media 404 → only drive metrics emitted, <code>Collect</code> returns nil, <code>nbu_up</code> unaffected).</li>
+<li>Assertions mirror existing sub-collector tests: bounded labels, <code>site</code> first label, correct
+  counts, <code>nbu_tape_drive_info</code> present per drive (drives only).</li>
 </ul>
-<p>The <code>site</code> label is prepended at emission time (it is not part of these internal keys), so every
-emitted series is <code>site</code> followed by the labels above.</p>
-<h2 id="prometheus-configuration">Prometheus Configuration</h2>
-<p>Add to your <code>prometheus.yml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">scrape_configs</span><span class="p">:</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">job_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;netbackup&#39;</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">static_configs</span><span class="p">:</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;localhost:9440&#39;</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">scrape_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
-</code></pre></div>
-<p>Alerting rules are provided in <code>grafana/alerts.yml</code> (load via <code>rule_files</code>).</p>
-<h2 id="dashboards">Dashboards</h2>
-<p>The Grafana dashboards are <strong>generated</strong> by <code>python3 grafana/build_dashboards.py</code>
-(pure Python stdlib). Never hand-edit the JSON in <code>grafana/</code> — the generator is the
-single source of truth and a metric-reference validator fails the build on any
-unknown <code>nbu_*</code> name. Regenerate after changing the builders in <code>grafana/gen/</code>.</p>
-<p>Four focused dashboards live in the <code>grafana/</code> directory:</p>
-<table>
-<thead>
-<tr>
-<th>File</th>
-<th>uid</th>
-<th>Focus</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>grafana/nbu-overview.json</code></td>
-<td><code>nbu-overview</code></td>
-<td>One-screen health + headline KPIs</td>
-</tr>
-<tr>
-<td><code>grafana/nbu-jobs.json</code></td>
-<td><code>nbu-jobs</code></td>
-<td>Backup outcomes, states, volume, queue, durations, dedup</td>
-</tr>
-<tr>
-<td><code>grafana/nbu-storage.json</code></td>
-<td><code>nbu-storage</code></td>
-<td>Capacity utilization, storage units, limits</td>
-</tr>
-<tr>
-<td><code>grafana/nbu-dataprotection.json</code></td>
-<td><code>nbu-dataprotection</code></td>
-<td>Alerts, malware scans, catalog posture, SLOs (11.2)</td>
-</tr>
-</tbody>
-</table>
-<p>The dashboards cross-link to each other via the shared <code>netbackup</code> tag (a tag-based
-dashboard-links dropdown) and use the <code>${datasource}</code> template variable so they work
-on any server. Jobs adds a <code>policy_type</code> variable and Storage adds a <code>storage_unit</code>
-variable for per-unit / per-policy filtering.</p>
-<p>The legacy "NBU Statistics" dashboard (the original 2021 export) was retired; its
-views now live in the Storage and Jobs dashboards.</p>
-<p>To import: load the JSON into Grafana and select your Prometheus datasource.</p>
+<h2 id="confirmed-field-names-validated-against-docsveritas-105storageyaml">Confirmed field names (validated against <code>docs/veritas-10.5/storage.yaml</code>)</h2>
+<ul>
+<li><strong>drives</strong> <code>data[].attributes</code>: <code>driveName</code>, <code>driveStatus</code>, <code>driveType</code>, <code>robotType</code>,
+  <code>robotNumber</code>, <code>deviceHost</code> (used for <code>media_server</code>). GET exposes <code>page[offset]</code>/<code>page[limit]</code>.</li>
+<li><strong>tape-media</strong> <code>data[].attributes</code>: <code>barcode</code>, <code>mediaType</code>, <code>mediaStatus</code>, <code>robotType</code>,
+  <code>robotNumber</code>, <code>robotHost</code>. Response carries <code>meta.pagination</code> (same shape as storage-units).</li>
+<li><strong>robots-device-hosts</strong> <code>data[]</code>: <code>{ id: &lt;hostname&gt;, type: "deviceHost" }</code> — host list only.</li>
+</ul>
+<h2 id="open-items-verify-at-implementation-time-do-not-change-the-shape-above">Open items (verify at implementation time — do not change the shape above)</h2>
+<ol>
+<li>The exact <code>mediaStatus</code> value space in the wild (free-form string; the collector groups on
+   whatever the API returns — no fixed enum assumed).</li>
+<li>Confirm the tape-media offset loop terminates correctly against the live <code>meta.pagination</code>
+   (the existing <code>/storage/storage-units</code> loop is the reference).</li>
+</ol>
+<h2 id="consequences">Consequences</h2>
+<ul>
+<li><strong>Positive:</strong> tape-library health (drives down by state/type/robot, tape-volume status mix,
+  robot device-host count) becomes observable over the remote HTTP model; bounded cardinality;
+  works on 10.x (drives) through 11.x; per-site via the snapshot model; unlocks Feature 4 tape
+  alerting.</li>
+<li><strong>Trade-offs:</strong> tape-media collection pulls all volumes each cycle (mitigated by opt-in + 5m
+  cycle); <code>drive_info{state}</code> churns on state change (accepted). 11.2 <code>storage.yaml</code> is not in the
+  repo bundle — the endpoints are backward-compatible, but a follow-up should add the 11.2 bundle
+  to confirm (mirrors the existing 11.2 <code>admin.yaml</code> gap).</li>
+</ul>
 
 
 
@@ -1695,10 +1400,10 @@ views now live in the Storage and Jobs dashboards.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.sections", "navigation.expand", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
