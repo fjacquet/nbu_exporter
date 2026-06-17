@@ -1,0 +1,33 @@
+# Optional Prometheus alerting rules — per-client backup staleness.
+#
+# Requires the opt-in per-client collector (collectors.perClient), which produces
+# nbu_client_last_successful_backup_timestamp_seconds. Load alongside nbu.rules.yml:
+#
+#   rule_files:
+#     - /etc/prometheus/rules/nbu.rules.yml
+#     - /etc/prometheus/rules/rules-perclient.yml
+#
+# Validate:  make check-rules
+#
+# Note: these fire for a client that HAD a success and went stale. A client that has
+# never succeeded produces no series and cannot be caught by a time()-based rule;
+# confirm the metric appears for each allowlisted client after enabling the collector.
+groups:
+  - name: nbu_perclient
+    rules:
+      - alert: NbuClientBackupStale
+        expr: time() - nbu_client_last_successful_backup_timestamp_seconds > 25 * 3600
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Client {{ $labels.client }} has no successful backup in over 25h (site {{ $labels.site }})"
+          description: "Client {{ $labels.client }} on site {{ $labels.site }} has not completed a successful backup in over 25 hours."
+      - alert: NbuClientBackupCritical
+        expr: time() - nbu_client_last_successful_backup_timestamp_seconds > 48 * 3600
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "Client {{ $labels.client }} has no successful backup in over 48h (site {{ $labels.site }})"
+          description: "Client {{ $labels.client }} on site {{ $labels.site }} has not completed a successful backup in over 48 hours."
