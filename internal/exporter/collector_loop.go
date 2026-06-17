@@ -15,6 +15,7 @@ import (
 type TargetCollector struct {
 	site           string
 	cfg            models.Config // a single-server view: cfg.NbuServer set from this site's entry
+	clientMu       sync.Mutex    // guards client (lazy build vs. close)
 	client         *NbuClient    // built lazily with version detection; nil until first success
 	tracing        *TracerWrapper
 	tracerProvider trace.TracerProvider // threaded into the lazily-built client
@@ -65,6 +66,8 @@ func NewTargetCollector(base models.Config, entry models.NbuServerConfig, opts .
 }
 
 func (tc *TargetCollector) clientFor(ctx context.Context) (*NbuClient, error) {
+	tc.clientMu.Lock()
+	defer tc.clientMu.Unlock()
 	if tc.client != nil {
 		return tc.client, nil
 	}
@@ -86,7 +89,8 @@ func (tc *TargetCollector) jobWindow() string {
 }
 
 // maxDurationString returns whichever of two duration strings parses to the larger
-// duration. If one fails to parse, the other is returned; if both fail, a is returned.
+// duration. If exactly one fails to parse, the other is returned. (Both inputs are
+// validated/defaulted upstream, so the both-unparseable case is unreachable.)
 func maxDurationString(a, b string) string {
 	da, ea := time.ParseDuration(a)
 	db, eb := time.ParseDuration(b)
@@ -104,6 +108,8 @@ func maxDurationString(a, b string) string {
 
 // close releases this target's client connections, if a client was built.
 func (tc *TargetCollector) close() error {
+	tc.clientMu.Lock()
+	defer tc.clientMu.Unlock()
 	if tc.client != nil {
 		return tc.client.Close()
 	}

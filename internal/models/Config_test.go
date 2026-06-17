@@ -1935,6 +1935,31 @@ func TestConfigPureMultiSiteValidates(t *testing.T) {
 	}
 }
 
+// TestConfigMultiSiteDefaultsURI verifies that a multi-site entry omitting `uri`
+// inherits the default "/netbackup" (so per-site clients build correct URLs and
+// the reverse-map does not clobber it).
+func TestConfigMultiSiteDefaultsURI(t *testing.T) {
+	cfg := &Config{}
+	cfg.Server.Port = "9440"
+	cfg.Server.Host = "localhost"
+	cfg.Server.URI = testPathMetrics
+	cfg.Server.ScrapingInterval = "5m"
+	cfg.NbuServers = []NbuServerConfig{
+		// no uri specified -> must default to /netbackup
+		{Site: "paris", Host: "nbu-paris", Port: "1556", Scheme: "https", APIKey: "k1", APIVersion: "13.0"},
+	}
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("config should validate: %v", err)
+	}
+	if cfg.NbuServers[0].URI != "/netbackup" {
+		t.Errorf("NbuServers[0].URI = %q, want /netbackup (default)", cfg.NbuServers[0].URI)
+	}
+	if cfg.NbuServer.URI != "/netbackup" {
+		t.Errorf("NbuServer.URI = %q, want /netbackup (reverse-mapped default)", cfg.NbuServer.URI)
+	}
+}
+
 // TestGetCollectionInterval verifies parsing, default, and fallback behaviour.
 func TestGetCollectionInterval(t *testing.T) {
 	cfg := &Config{}

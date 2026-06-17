@@ -147,6 +147,16 @@ func (c *Config) SetDefaults() {
 		}
 	}
 
+	// Default each multi-site entry's URI so an omitted uri inherits "/netbackup",
+	// matching the legacy single-server default. This ensures both the per-site
+	// clients and the reverse-map below build a correct base URL (without it,
+	// API calls would drop the /netbackup base path and 404).
+	for i := range c.NbuServers {
+		if c.NbuServers[i].URI == "" {
+			c.NbuServers[i].URI = "/netbackup"
+		}
+	}
+
 	// Reverse-map: when only nbuservers[] is provided (no legacy nbuserver: block),
 	// mirror the primary entry into the legacy NbuServer fields so legacy
 	// single-server code paths (validation, GetNBUBaseURL, telemetry, MaskAPIKey)
