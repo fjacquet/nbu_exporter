@@ -7,7 +7,115 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-(No unreleased changes yet)
+### Added
+
+- **NetBackup 10.x support**: the exporter negotiates API media-type `version=10.0` for
+  NetBackup 10.0–10.4 (replacing the never-valid `3.0`); the auto-detect ladder is now
+  `14.0 → 13.0 → 12.0 → 10.0`. Includes the NBU 10.3 and 11.2 OpenAPI bundles used for
+  validation ([#34](https://github.com/fjacquet/nbu_exporter/pull/34)).
+
+### Fixed
+
+- **Job metrics on all modern NetBackup**: `GET /admin/jobs` is cursor-paginated (API ≥ 9.0:
+  `page[after]`/`page[before]`, string `next`/`prev`). The exporter sent `page[offset]` and
+  parsed `next` as an int, so the jobs response failed to unmarshal and **all `nbu_jobs_*`
+  metrics were silently dropped** on NBU 10.x/10.5/11.0/11.2. Reworked the jobs pagination
+  model and loop to follow cursors (storage pagination unchanged)
+  ([#34](https://github.com/fjacquet/nbu_exporter/pull/34)).
+- Restored API-version auto-detection when `apiVersion` is omitted — a forced `14.0` default
+  in `SetDefaults()` had silently disabled it, hard-failing against NetBackup < 11.2
+  ([#34](https://github.com/fjacquet/nbu_exporter/pull/34)).
+
+### Changed
+
+- Repo hygiene: removed a 22 MB committed `go test -c` binary and empty doc stubs, untracked
+  `.planning/` and `.serena/` tool state (now gitignored), and fixed a stale `3.0` reference
+  in `config-auto-detect.yaml` ([#35](https://github.com/fjacquet/nbu_exporter/pull/35)).
+
+## [3.0.1] - 2026-06-14
+
+### Added
+
+- **Helm chart** for Kubernetes deployment, with lockstep version publishing alongside
+  container images ([#33](https://github.com/fjacquet/nbu_exporter/pull/33)).
+
+## [3.0.0] - 2026-06-14
+
+### Changed
+
+- **BREAKING:** the canonical metrics/exporter port is now **9440** (previously 2112).
+  Update Prometheus scrape configs, compose files, Helm values, and firewall rules
+  accordingly ([#32](https://github.com/fjacquet/nbu_exporter/pull/32)).
+
+### Added
+
+- Node Exporter Full (Grafana dashboard 1860) companion dashboard for host-level metrics
+  alongside the NBU dashboards ([#32](https://github.com/fjacquet/nbu_exporter/pull/32)).
+
+## [2.14.1] - 2026-06-14
+
+### Fixed
+
+- Demo compose stack: log to stdout and allow overriding host ports
+  ([#30](https://github.com/fjacquet/nbu_exporter/pull/30)).
+
+## [2.14.0] - 2026-06-14
+
+### Added
+
+- **Observability quickstart demo stack** — exporter + Prometheus + Grafana with datasource
+  and dashboard provisioning, runnable with one `docker compose up`
+  ([#29](https://github.com/fjacquet/nbu_exporter/pull/29)).
+- **Redesigned Grafana dashboards** — focused, generator-produced (`grafana/gen/`),
+  cross-linked; the legacy hardcoded dashboard was retired
+  ([#28](https://github.com/fjacquet/nbu_exporter/pull/28)).
+
+## [2.13.0] - 2026-06-14
+
+### Added
+
+- **NetBackup 11.2 (API version 14.0) support**: auto-detection probes `14.0` first
+  (`14.0 → 13.0 → 12.0 → 3.0`), with v14 response fixtures.
+- **Opt-in sub-collector framework** ([ADR-0002](docs/adr/0002-opt-in-sub-collector-framework.md))
+  with four collectors, all **default-off** via a new `collectors:` config section: alerts
+  (`nbu_alerts_count`), malware scan results, catalog posture, and SLO compliance
+  (`nbu_slo_count`). Each degrades gracefully and never affects `nbu_up`.
+- Grafana panels for the new alerts/malware/catalog/SLO metrics.
+
+## [2.12.0] - 2026-06-12
+
+### Added
+
+- Extended NetBackup job and storage metrics — job state, files, dedup ratio, queued reason,
+  a duration histogram, and storage-capability info — plus templated dashboard and alerting
+  rules ([#26](https://github.com/fjacquet/nbu_exporter/pull/26)).
+
+## [2.11.1] - 2026-06-12
+
+### Fixed
+
+- Docker image copies the CA bundle from the build stage instead of `apk add`, for a smaller
+  and more reproducible image ([#25](https://github.com/fjacquet/nbu_exporter/pull/25)).
+
+## [2.11.0] - 2026-06-12
+
+### Added
+
+- Native `.env` loading at startup with no-override semantics (a real environment variable
+  always wins over the `.env` file).
+
+## [2.10.0] - 2026-06-11
+
+### Changed
+
+- Aligned `.gitignore` with the exporter-family canonical template.
+
+## [2.9.0] - 2026-06-11
+
+### Added
+
+- `--trace` flag to log NetBackup API **response bodies** for live-appliance payload
+  validation. It never logs request headers or credentials.
 
 ## [2.8.0] - 2026-06-05
 
@@ -264,9 +372,9 @@ opentelemetry:
   samplingRate: 0.1 # Sample 10% of scrapes
 ```
 
-2. Deploy OpenTelemetry Collector (see `docker-compose-otel.yaml` for example)
-3. Restart the exporter
-4. View traces in Jaeger, Tempo, or your observability backend
+1. Deploy OpenTelemetry Collector (see `docker-compose-otel.yaml` for example)
+2. Restart the exporter
+3. View traces in Jaeger, Tempo, or your observability backend
 
 **Backward Compatibility**:
 
