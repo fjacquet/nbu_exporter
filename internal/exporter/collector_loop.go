@@ -77,6 +77,31 @@ func (tc *TargetCollector) clientFor(ctx context.Context) (*NbuClient, error) {
 	return c, nil
 }
 
+// jobWindow returns the job lookback window for one collection: the larger of the
+// configured scrapingInterval and collectionInterval. Because the loop polls every
+// collectionInterval, the window must be at least that long so each poll covers
+// the time since the previous one (no gaps in job coverage).
+func (tc *TargetCollector) jobWindow() string {
+	return maxDurationString(tc.cfg.Server.ScrapingInterval, tc.cfg.Server.CollectionInterval)
+}
+
+// maxDurationString returns whichever of two duration strings parses to the larger
+// duration. If one fails to parse, the other is returned; if both fail, a is returned.
+func maxDurationString(a, b string) string {
+	da, ea := time.ParseDuration(a)
+	db, eb := time.ParseDuration(b)
+	switch {
+	case ea != nil:
+		return b
+	case eb != nil:
+		return a
+	case db > da:
+		return b
+	default:
+		return a
+	}
+}
+
 // close releases this target's client connections, if a client was built.
 func (tc *TargetCollector) close() error {
 	if tc.client != nil {
@@ -104,7 +129,7 @@ func (tc *TargetCollector) collect(ctx context.Context) *SiteSnapshot {
 	var sErr, jErr error
 	g, gctx := errgroup.WithContext(ctx)
 	g.Go(func() error { sm, su, sErr = FetchStorageFull(gctx, client); return nil })
-	g.Go(func() error { agg, jErr = FetchAllJobsFull(gctx, client, tc.cfg.Server.ScrapingInterval); return nil })
+	g.Go(func() error { agg, jErr = FetchAllJobsFull(gctx, client, tc.jobWindow()); return nil })
 	_ = g.Wait()
 
 	now := time.Now()

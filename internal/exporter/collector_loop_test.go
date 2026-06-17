@@ -124,6 +124,23 @@ func TestCollectionLoop_collectOnce(t *testing.T) {
 	}
 }
 
+// TestMaxDurationString verifies the job-window coupling: the larger of the two
+// durations wins, with sane fallback when one is unparseable.
+func TestMaxDurationString(t *testing.T) {
+	cases := []struct{ a, b, want string }{
+		{"1h", "5m", "1h"},   // scraping window already larger
+		{"1m", "10m", "10m"}, // poll interval larger -> widen window to avoid gaps
+		{"5m", "5m", "5m"},   // equal
+		{"5m", "", "5m"},     // unparseable b -> a
+		{"", "5m", "5m"},     // unparseable a -> b
+	}
+	for _, c := range cases {
+		if got := maxDurationString(c.a, c.b); got != c.want {
+			t.Errorf("maxDurationString(%q,%q) = %q, want %q", c.a, c.b, got, c.want)
+		}
+	}
+}
+
 // TestTargetCollector_BuffersSubMetrics verifies that an enabled opt-in
 // sub-collector is run per-target and its metrics are buffered into the
 // SiteSnapshot, carrying the target's site label. The SLO collector always
