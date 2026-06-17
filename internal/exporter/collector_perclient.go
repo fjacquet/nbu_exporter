@@ -50,9 +50,13 @@ func (c *perClientCollector) Collect(ctx context.Context, ch chan<- prometheus.M
 // collectClient queries the single most recent successful backup for one client and
 // emits its endTime. A fetch error / no result is logged-and-skipped for that client.
 func (c *perClientCollector) collectClient(ctx context.Context, ch chan<- prometheus.Metric, name string) {
+	// Single quotes are not percent-encoded by url.Values.Encode (Go's net/url
+	// passes them through), so a name containing one would terminate the OData
+	// string literal early and yield a malformed filter. Names come from the
+	// operator allowlist, so this is defence-in-depth, not injection mitigation.
 	if strings.ContainsRune(name, '\'') {
 		log.WithField("site", c.site).WithField("client", name).
-			Warn("perClient: client name contains a single quote; skipping (cannot build a safe filter)")
+			Warn("perClient: client name contains a single quote; skipping (would build a malformed OData filter)")
 		return
 	}
 	filter := fmt.Sprintf("clientName eq '%s' and jobType eq 'BACKUP' and status eq 0", name)
