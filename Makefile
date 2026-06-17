@@ -42,6 +42,11 @@ test-race:
 vuln:
 	govulncheck ./...
 
+# Validate + unit-test the Prometheus alerting rules (requires promtool).
+check-rules:
+	promtool check rules deploy/prometheus/nbu.rules.yml deploy/prometheus/rules-perclient.yml deploy/prometheus/rules-tape.yml
+	promtool test rules deploy/prometheus/rules-perclient_test.yml deploy/prometheus/rules-tape_test.yml
+
 # Aggregate gate run by CI.
 ci: fmt-check vet lint test-race vuln
 
@@ -93,5 +98,5 @@ clean:
 		docker image rm -f $(CLI_BIN); \
 	fi
 
-.PHONY: all tools fmt-check fmt vet lint test test-race vuln ci sure \
+.PHONY: all tools fmt-check fmt vet lint test test-race vuln check-rules ci sure \
         cli build-release sbom test-coverage docker run-cli run-docker clean
