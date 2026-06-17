@@ -51,7 +51,7 @@ Replace the single `nbuserver:` block with a list, and add a top-level collectio
 
 ```yaml
 server:
-  collectionInterval: "2m"   # how often the loop polls every target (new)
+  collectionInterval: "5m"   # how often the loop polls every target (new; default 5m, matches today's storage-cache TTL)
 nbuservers:
   - site: "paris"            # required identity, unique across the list
     host: "nbu-par.example.com"
@@ -128,11 +128,14 @@ nbuservers:
 - Existing single-site configs keep working (legacy block → one site).
 - No metric renamed; only `site` added.
 
-## Open questions for review
+## Decisions (resolved 2026-06-17)
 
-1. **Back-compat vs clean break:** auto-map legacy `nbuserver:` (recommended), or require
-   `nbuservers:` and document the migration?
-2. **`collectionInterval` default** (proposed `2m`) and whether to keep the existing 5-min
-   storage-cache semantics as the interval default.
-3. **Label name:** `site` (per the NetBackup 1-master-per-site decision) — confirm over a
-   more generic `cluster`/`server`.
+1. **Config back-compat:** **auto-map** the legacy single `nbuserver:` block — when present
+   and `nbuservers:` is absent, treat it as a one-entry list with `site` defaulting to the
+   server `host`, and log a deprecation warning. Existing single-site configs keep working;
+   no forced migration. New configs use `nbuservers:` with an explicit `site`.
+2. **`collectionInterval` default:** **`5m`**, matching today's storage-cache TTL so per-master
+   API load stays close to current behaviour. Operators can tune it; metrics may be up to one
+   interval stale (expected for the snapshot model).
+3. **Identity label:** **`site`** (1 master per site is the NetBackup reality), on every
+   series, first in the label set.
