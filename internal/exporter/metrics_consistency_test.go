@@ -69,7 +69,7 @@ func TestMetricsConsistencyJobMetrics(t *testing.T) {
 			require.NotNil(t, apiVersionMetric, "API version metric should exist")
 			assert.Equal(t, 1, len(apiVersionMetric.GetMetric()),
 				"API version metric should have one value")
-			assert.Equal(t, version, apiVersionMetric.GetMetric()[0].GetLabel()[0].GetValue(),
+			assert.Equal(t, version, labelValue(apiVersionMetric.GetMetric()[0], "version"),
 				"API version label should match configured version")
 		})
 	}
@@ -115,7 +115,7 @@ func TestMetricsConsistencyStorageMetrics(t *testing.T) {
 				}
 
 				// Expected labels for storage metrics
-				expectedLabels := []string{"name", "type", "size"}
+				expectedLabels := []string{"site", "name", "type", "size"}
 				for _, expected := range expectedLabels {
 					assert.Contains(t, labelNames, expected,
 						"Storage metric should have label %s for version %s", expected, version)

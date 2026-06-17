@@ -412,14 +412,8 @@ func loadJobsTestData(t *testing.T) *models.Jobs {
 }
 
 func createTestConfig(serverURL, apiVersion string) models.Config {
-	// Parse the test server URL to extract host and port
-	// serverURL format: http://127.0.0.1:12345
-	parts := strings.Split(strings.TrimPrefix(serverURL, "http://"), ":")
-	host := parts[0]
-	port := ""
-	if len(parts) > 1 {
-		port = parts[1]
-	}
+	// Parse the test server URL ("http://127.0.0.1:12345") into host and port.
+	host, port := splitTestServerURL(serverURL)
 
 	cfg := models.Config{}
 	cfg.Server.Host = "localhost"

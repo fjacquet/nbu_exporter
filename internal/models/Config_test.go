@@ -91,12 +91,13 @@ func TestSetDefaults_PreservesEmptyAPIVersionForAutoDetection(t *testing.T) {
 func createConfigWithAPIVersion(apiVersion string) *Config {
 	return &Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -510,12 +511,13 @@ func TestConfigGetServerAddress(t *testing.T) {
 			name: "standard server address",
 			config: Config{
 				Server: struct {
-					Port             string `yaml:"port"`
-					Host             string `yaml:"host"`
-					URI              string `yaml:"uri"`
-					ScrapingInterval string `yaml:"scrapingInterval"`
-					LogName          string `yaml:"logName"`
-					CacheTTL         string `yaml:"cacheTTL"`
+					Port               string `yaml:"port"`
+					Host               string `yaml:"host"`
+					URI                string `yaml:"uri"`
+					ScrapingInterval   string `yaml:"scrapingInterval"`
+					LogName            string `yaml:"logName"`
+					CacheTTL           string `yaml:"cacheTTL"`
+					CollectionInterval string `yaml:"collectionInterval"`
 				}{
 					Host: "0.0.0.0",
 					Port: "9440",
@@ -527,12 +529,13 @@ func TestConfigGetServerAddress(t *testing.T) {
 			name: "localhost with custom port",
 			config: Config{
 				Server: struct {
-					Port             string `yaml:"port"`
-					Host             string `yaml:"host"`
-					URI              string `yaml:"uri"`
-					ScrapingInterval string `yaml:"scrapingInterval"`
-					LogName          string `yaml:"logName"`
-					CacheTTL         string `yaml:"cacheTTL"`
+					Port               string `yaml:"port"`
+					Host               string `yaml:"host"`
+					URI                string `yaml:"uri"`
+					ScrapingInterval   string `yaml:"scrapingInterval"`
+					LogName            string `yaml:"logName"`
+					CacheTTL           string `yaml:"cacheTTL"`
+					CollectionInterval string `yaml:"collectionInterval"`
 				}{
 					Host: "localhost",
 					Port: "9090",
@@ -556,12 +559,13 @@ func TestConfigGetServerAddress(t *testing.T) {
 func createConfigWithInterval(interval string) Config {
 	return Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			ScrapingInterval: interval,
 		},
@@ -788,12 +792,13 @@ func TestConfigValidateServerFields(t *testing.T) {
 	baseConfig := func() Config {
 		return Config{
 			Server: struct {
-				Port             string `yaml:"port"`
-				Host             string `yaml:"host"`
-				URI              string `yaml:"uri"`
-				ScrapingInterval string `yaml:"scrapingInterval"`
-				LogName          string `yaml:"logName"`
-				CacheTTL         string `yaml:"cacheTTL"`
+				Port               string `yaml:"port"`
+				Host               string `yaml:"host"`
+				URI                string `yaml:"uri"`
+				ScrapingInterval   string `yaml:"scrapingInterval"`
+				LogName            string `yaml:"logName"`
+				CacheTTL           string `yaml:"cacheTTL"`
+				CollectionInterval string `yaml:"collectionInterval"`
 			}{
 				Port:             "9440",
 				Host:             "localhost",
@@ -1026,12 +1031,13 @@ func TestConfigValidateSupportedVersions(t *testing.T) {
 func createBaseTestConfig() Config {
 	return Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -1267,12 +1273,13 @@ func TestConfigValidateOTelEndpoint(t *testing.T) {
 	baseConfig := func() Config {
 		return Config{
 			Server: struct {
-				Port             string `yaml:"port"`
-				Host             string `yaml:"host"`
-				URI              string `yaml:"uri"`
-				ScrapingInterval string `yaml:"scrapingInterval"`
-				LogName          string `yaml:"logName"`
-				CacheTTL         string `yaml:"cacheTTL"`
+				Port               string `yaml:"port"`
+				Host               string `yaml:"host"`
+				URI                string `yaml:"uri"`
+				ScrapingInterval   string `yaml:"scrapingInterval"`
+				LogName            string `yaml:"logName"`
+				CacheTTL           string `yaml:"cacheTTL"`
+				CollectionInterval string `yaml:"collectionInterval"`
 			}{
 				Port:             "9440",
 				Host:             "localhost",
@@ -1837,5 +1844,136 @@ func TestCollectorsConfigDefaults(t *testing.T) {
 	if c.Collectors.Alerts.Enabled || c.Collectors.Malware.Enabled ||
 		c.Collectors.Catalog.Enabled || c.Collectors.SLO.Enabled {
 		t.Errorf("new collectors must default to disabled, got %+v", c.Collectors)
+	}
+}
+
+// TestConfigNbuServersAutoMapLegacy verifies that a single legacy nbuserver block is
+// automatically promoted into NbuServers[0] with Site set to the host name.
+func TestConfigNbuServersAutoMapLegacy(t *testing.T) {
+	cfg := createConfigWithAPIVersion("13.0")
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate() unexpected error: %v", err)
+	}
+
+	if len(cfg.NbuServers) != 1 {
+		t.Fatalf("expected len(NbuServers)==1, got %d", len(cfg.NbuServers))
+	}
+
+	if cfg.NbuServers[0].Site != cfg.NbuServer.Host {
+		t.Errorf("NbuServers[0].Site = %q, want %q (NbuServer.Host)", cfg.NbuServers[0].Site, cfg.NbuServer.Host)
+	}
+}
+
+// TestConfigNbuServersRequireUniqueSite verifies that duplicate Site values in
+// NbuServers produce a validation error.
+func TestConfigNbuServersRequireUniqueSite(t *testing.T) {
+	cfg := createConfigWithAPIVersion("13.0")
+	cfg.NbuServers = []NbuServerConfig{
+		{
+			Site:       "paris",
+			Host:       testServerNBUMaster,
+			Port:       "1556",
+			Scheme:     "https",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
+			APIVersion: "13.0",
+		},
+		{
+			Site:       "paris", // duplicate
+			Host:       testServerNBUMaster,
+			Port:       "1556",
+			Scheme:     "https",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
+			APIVersion: "13.0",
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("Validate() expected error for duplicate Site names, got nil")
+	} else if !strings.Contains(err.Error(), "duplicate") {
+		t.Errorf("Validate() error = %q, want error containing 'duplicate'", err.Error())
+	}
+}
+
+// TestConfigCollectionIntervalDefault verifies that SetDefaults populates
+// Server.CollectionInterval with "5m" when not set.
+func TestConfigCollectionIntervalDefault(t *testing.T) {
+	cfg := &Config{}
+
+	cfg.SetDefaults()
+
+	if cfg.Server.CollectionInterval != "5m" {
+		t.Errorf("SetDefaults() CollectionInterval = %q, want %q", cfg.Server.CollectionInterval, "5m")
+	}
+}
+
+// TestConfigPureMultiSiteValidates verifies that a config providing only the
+// nbuservers[] list (no legacy nbuserver: block) validates, and that the legacy
+// NbuServer fields are mirrored from the primary entry for legacy code paths.
+func TestConfigPureMultiSiteValidates(t *testing.T) {
+	cfg := &Config{}
+	cfg.Server.Port = "9440"
+	cfg.Server.Host = "localhost"
+	cfg.Server.URI = testPathMetrics
+	cfg.Server.ScrapingInterval = "5m"
+	cfg.NbuServers = []NbuServerConfig{
+		{Site: "paris", Host: "nbu-paris", Port: "1556", Scheme: "https", URI: testPathNetBackup, APIKey: "k1", APIVersion: "13.0"},
+		{Site: "lyon", Host: "nbu-lyon", Port: "1556", Scheme: "https", URI: testPathNetBackup, APIKey: "k2", APIVersion: "13.0"},
+	}
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("pure multi-site config should validate, got: %v", err)
+	}
+	if cfg.NbuServer.Host != "nbu-paris" {
+		t.Errorf("NbuServer.Host = %q, want nbu-paris (mirrored from NbuServers[0])", cfg.NbuServer.Host)
+	}
+	if len(cfg.NbuServers) != 2 {
+		t.Errorf("len(NbuServers) = %d, want 2 (list preserved)", len(cfg.NbuServers))
+	}
+}
+
+// TestConfigMultiSiteDefaultsURI verifies that a multi-site entry omitting `uri`
+// inherits the default "/netbackup" (so per-site clients build correct URLs and
+// the reverse-map does not clobber it).
+func TestConfigMultiSiteDefaultsURI(t *testing.T) {
+	cfg := &Config{}
+	cfg.Server.Port = "9440"
+	cfg.Server.Host = "localhost"
+	cfg.Server.URI = testPathMetrics
+	cfg.Server.ScrapingInterval = "5m"
+	cfg.NbuServers = []NbuServerConfig{
+		// no uri specified -> must default to /netbackup
+		{Site: "paris", Host: "nbu-paris", Port: "1556", Scheme: "https", APIKey: "k1", APIVersion: "13.0"},
+	}
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("config should validate: %v", err)
+	}
+	if cfg.NbuServers[0].URI != "/netbackup" {
+		t.Errorf("NbuServers[0].URI = %q, want /netbackup (default)", cfg.NbuServers[0].URI)
+	}
+	if cfg.NbuServer.URI != "/netbackup" {
+		t.Errorf("NbuServer.URI = %q, want /netbackup (reverse-mapped default)", cfg.NbuServer.URI)
+	}
+}
+
+// TestGetCollectionInterval verifies parsing, default, and fallback behaviour.
+func TestGetCollectionInterval(t *testing.T) {
+	cfg := &Config{}
+	if got := cfg.GetCollectionInterval(); got != 5*time.Minute {
+		t.Errorf("default GetCollectionInterval() = %v, want 5m", got)
+	}
+
+	cfg.Server.CollectionInterval = "10m"
+	if got := cfg.GetCollectionInterval(); got != 10*time.Minute {
+		t.Errorf("GetCollectionInterval() = %v, want 10m", got)
+	}
+
+	cfg.Server.CollectionInterval = "not-a-duration"
+	if got := cfg.GetCollectionInterval(); got != 5*time.Minute {
+		t.Errorf("invalid GetCollectionInterval() = %v, want 5m fallback", got)
 	}
 }

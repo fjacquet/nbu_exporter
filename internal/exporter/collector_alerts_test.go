@@ -11,7 +11,7 @@ import (
 
 func TestAlertsCollector(t *testing.T) {
 	client := newMockClientFromFixture(t, "../../testdata/api-versions/alerts-response.json")
-	c := newAlertsCollector(client, testConfig())
+	c := newAlertsCollector(client, testConfig(), "site1")
 	ch := make(chan prometheus.Metric, 16)
 	require.NoError(t, c.Collect(context.Background(), ch))
 	close(ch)
@@ -20,6 +20,7 @@ func TestAlertsCollector(t *testing.T) {
 	for m := range ch {
 		var d dto.Metric
 		require.NoError(t, m.Write(&d))
+		require.Equal(t, "site1", labelValue(&d, "site"))
 		key := labelValue(&d, "severity") + "/" + labelValue(&d, "category")
 		counts[key] = d.GetGauge().GetValue()
 	}
@@ -29,7 +30,7 @@ func TestAlertsCollector(t *testing.T) {
 
 func TestAlertsCollectorError(t *testing.T) {
 	client := &errClient{}
-	c := newAlertsCollector(client, testConfig())
+	c := newAlertsCollector(client, testConfig(), "site1")
 	ch := make(chan prometheus.Metric, 4)
 	require.Error(t, c.Collect(context.Background(), ch))
 	close(ch)

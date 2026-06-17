@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Multi-site support**: a single exporter can scrape multiple NetBackup primary servers via
+  a `nbuservers:` list, each with a unique `site`; every metric series carries a `site` label
+  (first label). Collection adopts the family **snapshot model** — a background loop polls
+  every site on `server.collectionInterval` (default 5m) and publishes an immutable snapshot,
+  decoupling backend API load from Prometheus scrape frequency. `/metrics` serves immediately
+  (empty until the first cycle); a down site reports only `nbu_up{site=…}=0` without affecting
+  the others. A legacy single `nbuserver:` block is auto-mapped to a one-entry list (`site`
+  defaults to the host), so existing configs keep working unchanged. Opt-in sub-collectors
+  (alerts/malware/catalog/SLO) are per-site and carry the `site` label too. See
+  [ADR-0004](docs/adr/0004-multisite-snapshot-collection-model.md) and
+  `docs/config-examples/config-multisite.yaml`.
 - **NetBackup 10.x support**: the exporter negotiates API media-type `version=10.0` for
   NetBackup 10.0–10.4 (replacing the never-valid `3.0`); the auto-detect ladder is now
   `14.0 → 13.0 → 12.0 → 10.0`. Includes the NBU 10.3 and 11.2 OpenAPI bundles used for

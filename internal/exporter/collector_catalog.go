@@ -21,17 +21,19 @@ var catalogAnomalyStatuses = []string{"ANOMALOUS", "NOT_ANOMALOUS", "NOT_PROCESS
 type catalogCollector struct {
 	client NetBackupClient
 	cfg    models.Config
+	site   string
 	desc   *prometheus.Desc
 }
 
-func newCatalogCollector(client NetBackupClient, cfg models.Config) *catalogCollector {
+func newCatalogCollector(client NetBackupClient, cfg models.Config, site string) *catalogCollector {
 	return &catalogCollector{
 		client: client,
 		cfg:    cfg,
+		site:   site,
 		desc: prometheus.NewDesc(
 			"nbu_catalog_images_count",
 			"Number of catalog images by malware and anomaly status",
-			[]string{"malware_status", "anomaly_status"}, nil,
+			[]string{"site", "malware_status", "anomaly_status"}, nil,
 		),
 	}
 }
@@ -50,6 +52,7 @@ func (c *catalogCollector) Collect(ctx context.Context, ch chan<- prometheus.Met
 				// Per-combination graceful degradation: log and skip this
 				// combination so successful combinations are still emitted.
 				log.WithError(err).
+					WithField("site", c.site).
 					WithField("malware_status", mw).
 					WithField("anomaly_status", an).
 					Warn("catalog count fetch failed; skipping combination")
@@ -57,7 +60,7 @@ func (c *catalogCollector) Collect(ctx context.Context, ch chan<- prometheus.Met
 			}
 			ch <- prometheus.MustNewConstMetric(
 				c.desc, prometheus.GaugeValue,
-				float64(resp.Meta.Pagination.Count), mw, an,
+				float64(resp.Meta.Pagination.Count), c.site, mw, an,
 			)
 		}
 	}

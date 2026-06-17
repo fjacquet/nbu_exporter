@@ -13,6 +13,7 @@ import (
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -380,12 +381,13 @@ func TestNbuCollectorDescribe(t *testing.T) {
 func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -442,12 +444,13 @@ func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 func TestNbuCollectorCreateScrapeSpanWithTracer(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -510,12 +513,13 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -557,42 +561,42 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 		nbuDiskSize: prometheus.NewDesc(
 			"nbu_disk_bytes",
 			"The quantity of storage bytes",
-			[]string{"name", "type", "size"}, nil,
+			[]string{"site", "name", "type", "size"}, nil,
 		),
 		nbuResponseTime: prometheus.NewDesc(
 			"nbu_response_time_ms",
 			"The server response time in milliseconds",
-			nil, nil,
+			[]string{"site"}, nil,
 		),
 		nbuJobsSize: prometheus.NewDesc(
 			"nbu_jobs_bytes",
 			"The quantity of processed bytes",
-			[]string{"action", "policy_type", "status"}, nil,
+			[]string{"site", "action", "policy_type", "status"}, nil,
 		),
 		nbuJobsCount: prometheus.NewDesc(
 			"nbu_jobs_count",
 			"The quantity of jobs",
-			[]string{"action", "policy_type", "status"}, nil,
+			[]string{"site", "action", "policy_type", "status"}, nil,
 		),
 		nbuJobsStatusCount: prometheus.NewDesc(
 			"nbu_status_count",
 			"The quantity per status",
-			[]string{"action", "status"}, nil,
+			[]string{"site", "action", "status"}, nil,
 		),
 		nbuAPIVersion: prometheus.NewDesc(
 			"nbu_api_version",
 			"The NetBackup API version currently in use",
-			[]string{"version"}, nil,
+			[]string{"site", "version"}, nil,
 		),
 		nbuUp: prometheus.NewDesc(
 			"nbu_up",
 			"1 if NetBackup API is reachable, 0 if all collections failed",
-			nil, nil,
+			[]string{"site"}, nil,
 		),
 		nbuLastScrapeTime: prometheus.NewDesc(
 			"nbu_last_scrape_timestamp_seconds",
 			"Unix timestamp of the last successful metric collection",
-			[]string{"source"}, nil,
+			[]string{"site", "source"}, nil,
 		),
 	}
 
@@ -627,12 +631,13 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 func TestNbuCollectorTracingDisabled(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -702,12 +707,13 @@ func TestNbuCollectorStorageCacheIntegration(t *testing.T) {
 
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -773,12 +779,13 @@ func TestNbuCollectorHelpStringIncludesTTL(t *testing.T) {
 
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -840,4 +847,115 @@ func TestNbuCollectorHelpStringIncludesTTL(t *testing.T) {
 	if !foundDiskBytes {
 		t.Error("nbu_disk_bytes descriptor not found")
 	}
+}
+
+// TestNbuCollectorNbuUpHasSiteLabel verifies that nbu_up carries a "site" label
+// equal to the configured site name (NbuServers[0].Site after SetDefaults promotion).
+func TestNbuCollectorNbuUpHasSiteLabel(t *testing.T) {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"data": []}`))
+	}))
+	defer server.Close()
+
+	serverHost, serverPort, _ := net.SplitHostPort(server.Listener.Addr().String())
+
+	cfg := models.Config{}
+	cfg.Server.Host = "localhost"
+	cfg.Server.Port = "9440"
+	cfg.Server.URI = "/metrics"
+	cfg.Server.ScrapingInterval = "5m"
+	cfg.NbuServer.Scheme = "https"
+	cfg.NbuServer.Host = serverHost
+	cfg.NbuServer.Port = serverPort
+	cfg.NbuServer.APIKey = testAPIKey
+	cfg.NbuServer.APIVersion = models.APIVersion130
+	cfg.NbuServer.InsecureSkipVerify = true
+	// SetDefaults (called inside NewNbuCollector via performVersionDetectionIfNeeded)
+	// promotes NbuServer -> NbuServers[0].Site = serverHost
+
+	collector, err := NewNbuCollector(cfg)
+	require.NoError(t, err)
+	require.NotNil(t, collector)
+	defer func() { _ = collector.Close() }()
+
+	registry := prometheus.NewRegistry()
+	require.NoError(t, registry.Register(collector))
+
+	metricFamilies, err := registry.Gather()
+	require.NoError(t, err)
+
+	var upFamily *dto.MetricFamily
+	for _, mf := range metricFamilies {
+		if mf.GetName() == "nbu_up" {
+			upFamily = mf
+			break
+		}
+	}
+	require.NotNil(t, upFamily, "nbu_up metric family must be present")
+	require.Len(t, upFamily.GetMetric(), 1, "nbu_up must have exactly one series")
+
+	labels := upFamily.GetMetric()[0].GetLabel()
+	require.Len(t, labels, 1, "nbu_up must carry exactly one label (site)")
+	assert.Equal(t, "site", labels[0].GetName(), "first label must be named 'site'")
+	assert.Equal(t, serverHost, labels[0].GetValue(), "site label value must equal NbuServers[0].Site")
+}
+
+// TestSnapshotCollectorEmitsAllSites verifies the snapshot-reading collector emits
+// metrics for every site in the latest snapshot, with the right nbu_up values,
+// and emits nothing (no panic) before the first snapshot is published.
+func TestSnapshotCollectorEmitsAllSites(t *testing.T) {
+	store := &SnapshotStore{}
+	collector := NewSnapshotCollector(models.Config{}, store)
+
+	registry := prometheus.NewRegistry()
+	require.NoError(t, registry.Register(collector))
+
+	// Before any snapshot: gather succeeds and yields no nbu_up series.
+	mfs, err := registry.Gather()
+	require.NoError(t, err)
+	require.Empty(t, upValuesBySite(mfs), "no series expected before first snapshot")
+
+	// Publish a two-site snapshot: paris up, lyon down.
+	store.Store(&Snapshot{Sites: map[string]*SiteSnapshot{
+		"paris": {Site: "paris", APIVersion: models.APIVersion130, Up: true},
+		"lyon":  {Site: "lyon", APIVersion: models.APIVersion130, Up: false},
+	}})
+
+	mfs, err = registry.Gather()
+	require.NoError(t, err)
+
+	ups := upValuesBySite(mfs)
+	require.Contains(t, ups, "paris")
+	require.Contains(t, ups, "lyon")
+	assert.Equal(t, float64(1), ups["paris"], "nbu_up{site=paris} should be 1")
+	assert.Equal(t, float64(0), ups["lyon"], "nbu_up{site=lyon} should be 0")
+
+	// Degradation contract: the up site emits nbu_api_version; the down site does
+	// NOT (a fully-down site exposes only nbu_up=0).
+	apiVersionSites := map[string]bool{}
+	for _, mf := range mfs {
+		if mf.GetName() != "nbu_api_version" {
+			continue
+		}
+		for _, m := range mf.GetMetric() {
+			apiVersionSites[labelValue(m, "site")] = true
+		}
+	}
+	assert.True(t, apiVersionSites["paris"], "up site should emit nbu_api_version")
+	assert.False(t, apiVersionSites["lyon"], "down site must not emit nbu_api_version")
+}
+
+// upValuesBySite extracts nbu_up gauge values keyed by their site label.
+func upValuesBySite(mfs []*dto.MetricFamily) map[string]float64 {
+	out := map[string]float64{}
+	for _, mf := range mfs {
+		if mf.GetName() != "nbu_up" {
+			continue
+		}
+		for _, m := range mf.GetMetric() {
+			out[labelValue(m, "site")] = m.GetGauge().GetValue()
+		}
+	}
+	return out
 }
