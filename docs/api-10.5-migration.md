@@ -174,7 +174,7 @@ nbuserver:
     port: "1556"
     apiVersion: "12.0"  # ADD THIS LINE
     apiKey: "your-api-key-here"
-    contentType: "application/vnd.netbackup+json; version=3.0"
+    contentType: "application/vnd.netbackup+json; version=12.0"
     insecureSkipVerify: false
 ```
 
@@ -255,7 +255,7 @@ nbuserver:
     port: "1556"
     apiVersion: "12.0"  # NetBackup 10.5 API version
     apiKey: "your-api-key-here"
-    contentType: "application/vnd.netbackup+json; version=3.0"
+    contentType: "application/vnd.netbackup+json; version=12.0"
     insecureSkipVerify: false
 ```
 
@@ -609,4 +609,4 @@ If you encounter issues not covered in this guide:
 
 ## Changelog
 
-See [CHANGELOG.md](../CHANGELOG.md) for detailed version history and all changes.
+See [Changelog](changelog.md) for detailed version history and all changes.

@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the others. A legacy single `nbuserver:` block is auto-mapped to a one-entry list (`site`
   defaults to the host), so existing configs keep working unchanged. Opt-in sub-collectors
   (alerts/malware/catalog/SLO) are per-site and carry the `site` label too. See
-  [ADR-0004](docs/adr/0004-multisite-snapshot-collection-model.md) and
+  [ADR-0004](https://github.com/fjacquet/nbu_exporter/blob/main/docs/adr/0004-multisite-snapshot-collection-model.md) and
   `docs/config-examples/config-multisite.yaml`.
 - **NetBackup 10.x support**: the exporter negotiates API media-type `version=10.0` for
   NetBackup 10.0–10.4 (replacing the never-valid `3.0`); the auto-detect ladder is now
@@ -87,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **NetBackup 11.2 (API version 14.0) support**: auto-detection probes `14.0` first
   (`14.0 → 13.0 → 12.0 → 3.0`), with v14 response fixtures.
-- **Opt-in sub-collector framework** ([ADR-0002](docs/adr/0002-opt-in-sub-collector-framework.md))
+- **Opt-in sub-collector framework** ([ADR-0002](https://github.com/fjacquet/nbu_exporter/blob/main/docs/adr/0002-opt-in-sub-collector-framework.md))
   with four collectors, all **default-off** via a new `collectors:` config section: alerts
   (`nbu_alerts_count`), malware scan results, catalog posture, and SLO compliance
   (`nbu_slo_count`). Each degrades gracefully and never affects `nbu_up`.
@@ -162,7 +162,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.5.0] - 2026-06-05
 
 Tooling/CI/security baseline sync with the sibling `pflex_exporter` (see
-[ADR-0001](docs/adr/0001-tooling-baseline-sync-with-pflex.md), [#19](https://github.com/fjacquet/nbu_exporter/pull/19)).
+[ADR-0001](https://github.com/fjacquet/nbu_exporter/blob/main/docs/adr/0001-tooling-baseline-sync-with-pflex.md), [#19](https://github.com/fjacquet/nbu_exporter/pull/19)).
 
 ### Added
 
@@ -402,11 +402,11 @@ opentelemetry:
 - Correlate logs with traces for troubleshooting
 - Monitor API version detection performance
 
-See [docs/opentelemetry-example.md](docs/opentelemetry-example.md) for complete setup guide and [docs/trace-analysis-guide.md](docs/trace-analysis-guide.md) for trace analysis examples.
+See [docs/opentelemetry-example.md](https://github.com/fjacquet/nbu_exporter/blob/main/docs/opentelemetry-example.md) for complete setup guide and [docs/trace-analysis-guide.md](https://github.com/fjacquet/nbu_exporter/blob/main/docs/trace-analysis-guide.md) for trace analysis examples.
 
 ### Multi-Version API Support
 
-**Important**: This version adds support for NetBackup 10.0, 10.5, and 11.0 with automatic version detection. See [docs/netbackup-11-migration.md](docs/netbackup-11-migration.md) for complete migration guide.
+**Important**: This version adds support for NetBackup 10.0, 10.5, and 11.0 with automatic version detection. See [docs/netbackup-11-migration.md](https://github.com/fjacquet/nbu_exporter/blob/main/docs/netbackup-11-migration.md) for complete migration guide.
 
 **Quick Start:**
 

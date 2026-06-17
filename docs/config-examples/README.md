@@ -390,7 +390,7 @@ ERROR: Failed to detect compatible NetBackup API version
 
 ## Additional Resources
 
-- [Main README](../../README.md) - Complete documentation
+- [Home](../index.md) - Complete documentation
 - [Migration Guide](../netbackup-11-migration.md) - Upgrade instructions
 - [API 10.5 Migration](../api-10.5-migration.md) - Previous migration guide
 - [NetBackup API Documentation](https://sort.veritas.com/public/documents/nbu/)
