@@ -109,3 +109,15 @@ func TestPerClient_FetchErrorDegrades(t *testing.T) {
 	close(ch)
 	require.Empty(t, ch)
 }
+
+func TestBuildSubCollectorsFor_PerClient(t *testing.T) {
+	cfg := perClientConfig("clientA")
+	subs := buildSubCollectorsFor(&errClient{}, cfg, "site1")
+	found := false
+	for _, s := range subs {
+		if s.Name() == "perclient" {
+			found = true
+		}
+	}
+	require.True(t, found, "perClient collector should be built when collectors.perClient.enabled")
+}

@@ -30,6 +30,9 @@ func buildSubCollectorsFor(client NetBackupClient, cfg models.Config, site strin
 	if cfg.Collectors.Tape.Enabled {
 		subs = append(subs, newTapeCollector(client, cfg, site))
 	}
+	if cfg.Collectors.PerClient.Enabled {
+		subs = append(subs, newPerClientCollector(client, cfg, site))
+	}
 	return subs
 }
 
