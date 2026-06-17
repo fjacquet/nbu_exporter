@@ -7,6 +7,7 @@ coverage.html
 *.coverprofile
 /nbu_exporter
 /nbu-exporter
+*.test
 
 # Logs
 log/
@@ -39,6 +40,8 @@ __pycache__/
 .dccache
 .codegpt
 node_modules/
+.planning/
+.serena/
 
 # Repo-specific
 samples/
