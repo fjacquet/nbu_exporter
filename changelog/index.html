@@ -1076,7 +1076,18 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[Unreleased]">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#400-2026-06-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [4.0.0] - 2026-06-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[4.0.0] - 2026-06-17">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1845,7 +1856,18 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="[Unreleased]">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#400-2026-06-17" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [4.0.0] - 2026-06-17
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[4.0.0] - 2026-06-17">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2596,8 +2618,19 @@
 <p>The format is based on <a href="https://keepachangelog.com/en/1.0.0/">Keep a Changelog</a>,
 and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <h2 id="unreleased">[Unreleased]</h2>
+<h2 id="400-2026-06-17">[4.0.0] - 2026-06-17</h2>
 <h3 id="added">Added</h3>
 <ul>
+<li><strong>Per-client lifecycle metrics &amp; three new dashboards</strong> (reconciled from PR #39, thanks
+  <strong>@cbijon</strong>): per-client <strong>lifecycle</strong> metrics behind the <code>collectors.perClient</code> opt-in +
+  allowlist — <code>nbu_client_jobs_count{client,action,status}</code> and
+  <code>nbu_client_last_job_success_seconds{client,policy,action}</code> covering the full
+  BACKUP → DUPLICATION → IMPORT lifecycle, derived from the main jobs scrape and bounded to
+  allowlisted clients — plus three generated dashboards on the same <code>site</code>-wired generator:
+  <strong>Lifecycle</strong> (<code>nbu-lifecycle</code>), <strong>Tape &amp; Disk Pools</strong> (<code>nbu-tape</code>), and <strong>Multi-site</strong>
+  (<code>nbu-multisite</code>). #39's tape metrics were folded into the existing <code>collectors.tape</code> as a
+  superset (two extra endpoints — see Tape metrics below), and its richer tape label schema was
+  adopted (raw <code>DRIVE_STATUS_*</code> <code>status</code>; media keyed by <code>pool</code>/<code>media_type</code>/<code>robot_type</code>).</li>
 <li><strong>Multi-site Grafana dashboards</strong>: every generated dashboard now carries a <code>site</code> template
   variable (multi-value + "All", sourced from <code>label_values(nbu_up, site)</code>) as the first selector,
   and every panel query is filtered by <code>site=~"$site"</code> with <code>site</code> threaded into each <code>by (…)</code>
@@ -2607,20 +2640,24 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
   <code>grafana/gen/</code> generator (<code>panels.with_site</code>), and <code>build_dashboards.py</code> now fails the build if any
   dashboard is missing the <code>site</code> selector or leaves a query unfiltered. See the Multi-Site
   Dashboards design spec.</li>
-<li><strong>Alerting rules</strong> (<code>deploy/prometheus/</code>): two optional, site-aware Prometheus rule files —
-  <code>rules-perclient.yml</code> (<code>NbuClientBackupStale</code> &gt;25h warning, <code>NbuClientBackupCritical</code> &gt;48h
-  critical) and <code>rules-tape.yml</code> (<code>NbuTapeDriveDown</code> / <code>NbuTapeDriveDisabled</code> per site) — each with
-  promtool unit tests, plus a <code>make check-rules</code> target. The generic <code>nbu.rules.yml</code> is unchanged.</li>
+<li><strong>Alerting rules</strong> (<code>deploy/prometheus/</code>): three optional, site-aware Prometheus rule files —
+  <code>rules-perclient.yml</code> (<code>NbuClientBackupStale</code> &gt;25h, <code>NbuClientBackupCritical</code> &gt;48h,
+  <code>NbuClientNoRecentTapeCopy</code> &gt;26h, <code>NbuClientNoRecentReplication</code> &gt;28h,
+  <code>NbuClientBackupFailureRate</code> &gt;20%), <code>rules-tape.yml</code> (<code>NbuTapeDriveDown</code> / <code>NbuTapeDriveDisabled</code>,
+  <code>NbuTapePoolScratchLow</code>, <code>NbuDiskPoolVolumeDegraded</code>), and <code>rules-multisite.yml</code>
+  (<code>NbuInterSiteDivergence</code>) — each with promtool unit tests, plus a <code>make check-rules</code> target. The
+  generic <code>nbu.rules.yml</code> is unchanged.</li>
 <li><strong>Per-client last-successful-backup metric</strong> (opt-in <code>collectors.perClient</code>, default off):
   <code>nbu_client_last_successful_backup_timestamp_seconds{site,client}</code> for each allowlisted client,
   from a targeted <code>/admin/jobs</code> query (latest <code>status=0</code> BACKUP, <code>sort=-endTime</code>, <code>page[limit]=1</code>).
   An exact-name allowlist bounds the <code>client</code> cardinality; an empty allowlist emits nothing. Enables
   a "no backup in N hours" alert. See the Feature 3 design spec.</li>
 <li><strong>Tape / drive metrics</strong> (opt-in <code>collectors.tape</code>, default off): <code>nbu_tape_drives_count</code>
-  (by state/drive_type/robot_type), <code>nbu_tape_drive_info</code> (per drive), <code>nbu_tape_media_count</code>
-  (by media_type/status), and <code>nbu_tape_robot_device_hosts</code>, collected over REST — drives on
-  NBU 10.0+, tape-media + robot device hosts on 10.5+ — with per-endpoint graceful degradation
-  and the <code>site</code> label. No CLI shell-out. See the Feature 2 design spec.</li>
+  (by drive_type/robot_type/raw <code>status</code>), <code>nbu_tape_drive_info</code> (per drive), <code>nbu_tape_media_count</code>
+  (by pool/media_type/robot_type), <code>nbu_tape_robot_device_hosts</code>, plus <code>nbu_tape_pool_partially_full</code>
+  (<code>/storage/tape-volume-pools</code>) and <code>nbu_disk_pool_volume_count</code> (<code>/storage/disk-pools</code>), collected
+  over REST — drives on NBU 10.0+, the rest on 10.5+ (API v12.0+) — with per-endpoint graceful
+  degradation and the <code>site</code> label. No CLI shell-out. See the Feature 2 design spec.</li>
 <li><strong>Multi-site support</strong>: a single exporter can scrape multiple NetBackup primary servers via
   a <code>nbuservers:</code> list, each with a unique <code>site</code>; every metric series carries a <code>site</code> label
   (first label). Collection adopts the family <strong>snapshot model</strong> — a background loop polls
@@ -2651,6 +2688,12 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
+<li><strong>BREAKING:</strong> every metric series now carries a <code>site</code> label as its first label (multi-site
+  support). Single-site deployments keep working, but PromQL that pins exact label sets or
+  aggregates without <code>by (site)</code>, plus recording rules and dashboards from v3.x, should be
+  reviewed. The opt-in <code>tape</code> collector's labels also moved to the richer schema: drives expose
+  the raw <code>DRIVE_STATUS_*</code> <code>status</code> (was a stripped <code>state</code>) and <code>nbu_tape_media_count</code> is keyed
+  by <code>pool</code>/<code>media_type</code>/<code>robot_type</code> (was <code>media_type</code>/<code>status</code>).</li>
 <li>Repo hygiene: removed a 22 MB committed <code>go test -c</code> binary and empty doc stubs, untracked
   <code>.planning/</code> and <code>.serena/</code> tool state (now gitignored), and fixed a stale <code>3.0</code> reference
   in <code>config-auto-detect.yaml</code> (<a href="https://github.com/fjacquet/nbu_exporter/pull/35">#35</a>).</li>

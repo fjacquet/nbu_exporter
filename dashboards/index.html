@@ -930,10 +930,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-four-dashboards" class="md-nav__link">
+  <a href="#the-seven-dashboards" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The four dashboards
+        The seven dashboards
       
     </span>
   </a>
@@ -1204,10 +1204,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-four-dashboards" class="md-nav__link">
+  <a href="#the-seven-dashboards" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The four dashboards
+        The seven dashboards
       
     </span>
   </a>
@@ -1274,8 +1274,8 @@ multi-site support) the series neither collapse together nor double-count. Selec
 sites filters the whole dashboard; "All" shows every site. The Overview's <strong>Sites</strong> row shows one
 UP/DOWN availability tile per primary (repeated over <code>$site</code>), so a down master stands out at a
 glance.</p>
-<h2 id="the-four-dashboards">The four dashboards</h2>
-<p>All four dashboards share the <code>$site</code> selector (above); the table below lists each one's
+<h2 id="the-seven-dashboards">The seven dashboards</h2>
+<p>All dashboards share the <code>$site</code> selector (above); the table below lists each one's
 <strong>additional</strong> variables.</p>
 <table>
 <thead>
@@ -1311,11 +1311,32 @@ glance.</p>
 <td>NetBackup 11.2 collectors: alerts by severity/category, malware scanned vs infected and scan status, catalog malware/anomaly posture, configured SLOs</td>
 <td>—</td>
 </tr>
+<tr>
+<td><strong>Lifecycle</strong></td>
+<td><code>nbu-lifecycle.json</code> / <code>nbu-lifecycle</code></td>
+<td>Per-client compliance across the full lifecycle (BACKUP → DUPLICATION → IMPORT): success rate per phase, age-of-last-success table, overdue clients</td>
+<td><code>$client</code></td>
+</tr>
+<tr>
+<td><strong>Tape &amp; Disk Pools</strong></td>
+<td><code>nbu-tape.json</code> / <code>nbu-tape</code></td>
+<td>Tape drive status, media by pool/type, partially-full volume pools, and disk-pool volume health</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Multi-site</strong></td>
+<td><code>nbu-multisite.json</code> / <code>nbu-multisite</code></td>
+<td>Side-by-side cross-site comparison of backup volume, success rate, inter-site replication, divergence, and per-site tape</td>
+<td><code>$client</code></td>
+</tr>
 </tbody>
 </table>
 <p>The <strong>Data Protection</strong> dashboard's panels stay empty until the optional 11.2 collectors are enabled
 in <code>config.yaml</code> (<code>collectors.{alerts,malware,catalog,slo}.enabled: true</code>) and the appliance returns
-data, so it is safe to leave in place on older NetBackup versions.</p>
+data, so it is safe to leave in place on older NetBackup versions. Likewise <strong>Lifecycle</strong> and the
+per-site/<code>$client</code> panels on <strong>Multi-site</strong> stay empty until <code>collectors.perClient</code> is enabled with a
+non-empty <code>allowlist</code>, and <strong>Tape &amp; Disk Pools</strong> needs <code>collectors.tape</code> (NBU 10.5+ for the
+volume-pool and disk-pool rows).</p>
 <p>The previous single overview and the legacy "NBU Statistics" dashboard have been retired; their views
 now live in the Overview, Jobs, and Storage dashboards above.</p>
 <h2 id="node-exporter-full-grafana-1860">Node Exporter Full (Grafana 1860)</h2>
