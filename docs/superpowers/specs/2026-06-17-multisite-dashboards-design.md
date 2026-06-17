@@ -1,7 +1,7 @@
 # Multi-Site Grafana Dashboards — Design
 
 **Date:** 2026-06-17
-**Status:** Draft for review (depends on Feature 1 shipping the `site` label)
+**Status:** Implemented (Feature 1's `site` label shipped in PR #36)
 **Scope:** Add a `site` template variable and per-site filtering to the generated Grafana
 dashboards, so the multi-site exporter (Feature 1) is usable in one Grafana view.
 **Depends on:** [`2026-06-17-feature1-multisite-design.md`](2026-06-17-feature1-multisite-design.md)
@@ -77,9 +77,21 @@ multiple masters collapse together or double-count.
 - Generator remains the single source of truth (no hand-edited JSON); regenerated output
   committed.
 
-## Open questions for review
+## Open questions for review — resolved
 
-1. Variable source metric: `nbu_up` (always present per site) vs a broader metric — `nbu_up`
-   recommended (one series per site regardless of which collectors are enabled).
-2. Overview "Sites" row: repeated stat panels vs a single status table — which reads better
-   for 2–handful of sites? (Suggest a small table.)
+1. Variable source metric: **`nbu_up`** — chosen (one series per site regardless of which
+   collectors are enabled).
+2. Overview "Sites" row: implemented as a **stat panel repeated over `$site`** (one UP/DOWN tile
+   per primary) rather than a status table — a down master shows as a full red tile, which reads
+   more obviously than a table cell for the typical 2–handful of sites.
+
+## Implementation notes
+
+- The `site=~"$site"` filter and `by (site, …)` grouping are centralized in
+  `grafana/gen/panels.py` (`with_site()`), applied in `target()` and `table_info()` so no panel
+  expression is hand-edited; legends gain a `{{site}}` prefix only where the series keep a per-site
+  label (scalar KPI aggregates stay unprefixed). Both rewrites are idempotent.
+- `grafana/gen/variables.py` adds `site_var()` and the `dashboard()` assembler injects it as the
+  first non-datasource templating entry on every dashboard.
+- `grafana/gen/validate.py` gains `check_site_wiring()`, and `build_dashboards.py` fails the build
+  if any dashboard is missing the `site` selector or leaves a query unfiltered.

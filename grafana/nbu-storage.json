@@ -1,6 +1,6 @@
 {
   "uid": "nbu-storage",
-  "title": "NetBackup \u2014 Stockage / Storage",
+  "title": "NetBackup \u2014 Storage / Stockage",
   "tags": [
     "netbackup",
     "nbu",
@@ -41,6 +41,28 @@
         "current": {},
         "hide": 0,
         "refresh": 1
+      },
+      {
+        "name": "site",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "label": "Site",
+        "query": {
+          "query": "label_values(nbu_up, site)",
+          "refId": "StandardVariableQuery"
+        },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "refresh": 2,
+        "sort": 1
       },
       {
         "name": "storage_unit",
@@ -84,7 +106,7 @@
     {
       "type": "row",
       "id": 1,
-      "title": "Capacit\u00e9 / Capacity",
+      "title": "Capacity / Capacit\u00e9",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -97,7 +119,7 @@
     {
       "type": "gauge",
       "id": 2,
-      "title": "% Utilis\u00e9 / % Used",
+      "title": "% Used / % Utilis\u00e9",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -154,8 +176,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (name) (nbu_disk_bytes{name=~\"$storage_unit\",size=\"used\"}) / sum by (name) (nbu_disk_bytes{name=~\"$storage_unit\"}) * 100",
-          "legendFormat": "{{name}}",
+          "expr": "sum by (site, name) (nbu_disk_bytes{name=~\"$storage_unit\",size=\"used\",site=~\"$site\"}) / sum by (site, name) (nbu_disk_bytes{name=~\"$storage_unit\",site=~\"$site\"}) * 100",
+          "legendFormat": "{{site}} / {{name}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -165,7 +187,7 @@
     {
       "type": "timeseries",
       "id": 3,
-      "title": "Capacit\u00e9 utilis\u00e9e / Used capacity",
+      "title": "Used capacity / Capacit\u00e9 utilis\u00e9e",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -215,8 +237,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (name) (nbu_disk_bytes{name=~\"$storage_unit\",size=\"used\"})",
-          "legendFormat": "{{name}} used",
+          "expr": "sum by (site, name) (nbu_disk_bytes{name=~\"$storage_unit\",size=\"used\",site=~\"$site\"})",
+          "legendFormat": "{{site}} / {{name}} used",
           "range": true,
           "instant": false,
           "refId": "A"
@@ -226,8 +248,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "nbu_disk_capacity_bytes{name=~\"$storage_unit\"}",
-          "legendFormat": "{{name}} total",
+          "expr": "nbu_disk_capacity_bytes{name=~\"$storage_unit\",site=~\"$site\"}",
+          "legendFormat": "{{site}} / {{name}} total",
           "range": true,
           "instant": false,
           "refId": "A"
@@ -237,7 +259,7 @@
     {
       "type": "row",
       "id": 4,
-      "title": "Unit\u00e9s / Units",
+      "title": "Units / Unit\u00e9s",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -250,7 +272,7 @@
     {
       "type": "table",
       "id": 5,
-      "title": "Unit\u00e9s de stockage / Storage units",
+      "title": "Storage units / Unit\u00e9s de stockage",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -278,7 +300,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "nbu_storage_info{name=~\"$storage_unit\"}",
+          "expr": "nbu_storage_info{name=~\"$storage_unit\",site=~\"$site\"}",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -306,7 +328,7 @@
     {
       "type": "stat",
       "id": 6,
-      "title": "Jobs simultan\u00e9s max / Max concurrent jobs",
+      "title": "Max concurrent jobs / Jobs simultan\u00e9s max",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -356,8 +378,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "nbu_storage_max_concurrent_jobs{name=~\"$storage_unit\"}",
-          "legendFormat": "{{name}}",
+          "expr": "nbu_storage_max_concurrent_jobs{name=~\"$storage_unit\",site=~\"$site\"}",
+          "legendFormat": "{{site}} / {{name}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -367,7 +389,7 @@
     {
       "type": "stat",
       "id": 7,
-      "title": "Taille fragment max / Max fragment size",
+      "title": "Max fragment size / Taille fragment max",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -417,8 +439,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "nbu_storage_max_fragment_size_bytes{name=~\"$storage_unit\"}",
-          "legendFormat": "{{name}}",
+          "expr": "nbu_storage_max_fragment_size_bytes{name=~\"$storage_unit\",site=~\"$site\"}",
+          "legendFormat": "{{site}} / {{name}}",
           "range": false,
           "instant": true,
           "refId": "A"

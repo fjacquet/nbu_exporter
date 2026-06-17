@@ -31,6 +31,12 @@ def _query_var(name, label, metric, value_label):
     }
 
 
+def site_var():
+    # One series per NetBackup primary regardless of which collectors are enabled,
+    # so nbu_up is the most reliable source for the site list.
+    return _query_var("site", "Site", "nbu_up", "site")
+
+
 def storage_unit_var():
     return _query_var("storage_unit", "Storage unit", "nbu_disk_bytes", "name")
 
@@ -54,8 +60,12 @@ def dashboard_links():
 
 
 def dashboard(uid, title, panels, extra_vars=None):
-    """Assemble a full dashboard dict. `extra_vars` are appended after the datasource var."""
-    templating = {"list": [datasource_var()] + (extra_vars or [])}
+    """Assemble a full dashboard dict.
+
+    The `site` selector is wired onto every dashboard as the first non-datasource
+    variable; `extra_vars` (dashboard-specific selectors) follow it.
+    """
+    templating = {"list": [datasource_var(), site_var()] + (extra_vars or [])}
     return {
         "uid": uid,
         "title": title,

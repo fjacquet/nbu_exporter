@@ -1,6 +1,6 @@
 {
   "uid": "nbu-jobs",
-  "title": "NetBackup \u2014 Sauvegardes / Jobs",
+  "title": "NetBackup \u2014 Jobs / Sauvegardes",
   "tags": [
     "netbackup",
     "nbu",
@@ -41,6 +41,28 @@
         "current": {},
         "hide": 0,
         "refresh": 1
+      },
+      {
+        "name": "site",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "label": "Site",
+        "query": {
+          "query": "label_values(nbu_up, site)",
+          "refId": "StandardVariableQuery"
+        },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "refresh": 2,
+        "sort": 1
       },
       {
         "name": "policy_type",
@@ -84,7 +106,7 @@
     {
       "type": "row",
       "id": 1,
-      "title": "R\u00e9sultats / Outcomes",
+      "title": "Outcomes / R\u00e9sultats",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -97,7 +119,7 @@
     {
       "type": "stat",
       "id": 2,
-      "title": "Taux succ\u00e8s BACKUP / Backup success rate",
+      "title": "Backup success rate / Taux succ\u00e8s BACKUP",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -155,7 +177,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(nbu_status_count{action=\"BACKUP\",status=\"0\"}) / clamp_min(sum(nbu_status_count{action=\"BACKUP\"}), 1) * 100",
+          "expr": "sum(nbu_status_count{action=\"BACKUP\",status=\"0\",site=~\"$site\"}) / clamp_min(sum(nbu_status_count{action=\"BACKUP\",site=~\"$site\"}), 1) * 100",
           "legendFormat": "",
           "range": false,
           "instant": true,
@@ -166,7 +188,7 @@
     {
       "type": "piechart",
       "id": 3,
-      "title": "\u00c9tats des jobs / Job states",
+      "title": "Job states / \u00c9tats des jobs",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -209,8 +231,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (state) (nbu_jobs_state_count)",
-          "legendFormat": "{{state}}",
+          "expr": "sum by (site, state) (nbu_jobs_state_count{site=~\"$site\"})",
+          "legendFormat": "{{site}} / {{state}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -220,7 +242,7 @@
     {
       "type": "barchart",
       "id": 4,
-      "title": "Jobs par politique / Jobs by policy",
+      "title": "Jobs by policy / Jobs par politique",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -254,8 +276,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (policy_type) (nbu_jobs_count{action=\"BACKUP\",policy_type=~\"$policy_type\"})",
-          "legendFormat": "{{policy_type}}",
+          "expr": "sum by (site, policy_type) (nbu_jobs_count{action=\"BACKUP\",policy_type=~\"$policy_type\",site=~\"$site\"})",
+          "legendFormat": "{{site}} / {{policy_type}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -265,7 +287,7 @@
     {
       "type": "row",
       "id": 5,
-      "title": "Volume & file / Volume & queue",
+      "title": "Volume & queue / Volume & file",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -278,7 +300,7 @@
     {
       "type": "timeseries",
       "id": 6,
-      "title": "Volume sauvegard\u00e9 / Backup volume",
+      "title": "Backup volume / Volume sauvegard\u00e9",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -328,8 +350,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (policy_type) (nbu_jobs_bytes{action=\"BACKUP\",policy_type=~\"$policy_type\"})",
-          "legendFormat": "{{policy_type}}",
+          "expr": "sum by (site, policy_type) (nbu_jobs_bytes{action=\"BACKUP\",policy_type=~\"$policy_type\",site=~\"$site\"})",
+          "legendFormat": "{{site}} / {{policy_type}}",
           "range": true,
           "instant": false,
           "refId": "A"
@@ -339,7 +361,7 @@
     {
       "type": "barchart",
       "id": 7,
-      "title": "Jobs en file / Queued jobs",
+      "title": "Queued jobs / Jobs en file",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -373,8 +395,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (reason) (nbu_jobs_queued_count)",
-          "legendFormat": "{{reason}}",
+          "expr": "sum by (site, reason) (nbu_jobs_queued_count{site=~\"$site\"})",
+          "legendFormat": "{{site}} / {{reason}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -384,7 +406,7 @@
     {
       "type": "row",
       "id": 8,
-      "title": "Dur\u00e9es & efficacit\u00e9 / Durations & efficiency",
+      "title": "Durations & efficiency / Dur\u00e9es & efficacit\u00e9",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -397,7 +419,7 @@
     {
       "type": "timeseries",
       "id": 9,
-      "title": "Dur\u00e9e jobs p50/p95 / Job duration p50/p95",
+      "title": "Job duration p50/p95 / Dur\u00e9e jobs p50/p95",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -447,8 +469,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.95, sum by (le, policy_type) (nbu_job_duration_seconds_bucket{policy_type=~\"$policy_type\"}))",
-          "legendFormat": "p95 {{policy_type}}",
+          "expr": "histogram_quantile(0.95, sum by (site, le, policy_type) (nbu_job_duration_seconds_bucket{policy_type=~\"$policy_type\",site=~\"$site\"}))",
+          "legendFormat": "{{site}} / p95 {{policy_type}}",
           "range": true,
           "instant": false,
           "refId": "A"
@@ -458,8 +480,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "histogram_quantile(0.50, sum by (le, policy_type) (nbu_job_duration_seconds_bucket{policy_type=~\"$policy_type\"}))",
-          "legendFormat": "p50 {{policy_type}}",
+          "expr": "histogram_quantile(0.50, sum by (site, le, policy_type) (nbu_job_duration_seconds_bucket{policy_type=~\"$policy_type\",site=~\"$site\"}))",
+          "legendFormat": "{{site}} / p50 {{policy_type}}",
           "range": true,
           "instant": false,
           "refId": "A"
@@ -469,7 +491,7 @@
     {
       "type": "stat",
       "id": 10,
-      "title": "Fichiers trait\u00e9s / Files processed",
+      "title": "Files processed / Fichiers trait\u00e9s",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -519,7 +541,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(nbu_jobs_files_count{policy_type=~\"$policy_type\"})",
+          "expr": "sum(nbu_jobs_files_count{policy_type=~\"$policy_type\",site=~\"$site\"})",
           "legendFormat": "",
           "range": false,
           "instant": true,
@@ -530,7 +552,7 @@
     {
       "type": "stat",
       "id": 11,
-      "title": "D\u00e9dup moyenne / Mean dedup ratio",
+      "title": "Mean dedup ratio / D\u00e9dup moyenne",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -580,7 +602,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "avg(nbu_jobs_dedup_ratio{policy_type=~\"$policy_type\"})",
+          "expr": "avg(nbu_jobs_dedup_ratio{policy_type=~\"$policy_type\",site=~\"$site\"})",
           "legendFormat": "",
           "range": false,
           "instant": true,

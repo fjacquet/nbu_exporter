@@ -1,6 +1,6 @@
 {
   "uid": "nbu-dataprotection",
-  "title": "NetBackup \u2014 Protection des donn\u00e9es / Data Protection",
+  "title": "NetBackup \u2014 Data Protection / Protection des donn\u00e9es",
   "tags": [
     "netbackup",
     "nbu",
@@ -41,6 +41,28 @@
         "current": {},
         "hide": 0,
         "refresh": 1
+      },
+      {
+        "name": "site",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "label": "Site",
+        "query": {
+          "query": "label_values(nbu_up, site)",
+          "refId": "StandardVariableQuery"
+        },
+        "includeAll": true,
+        "multi": true,
+        "allValue": ".*",
+        "current": {
+          "text": "All",
+          "value": "$__all"
+        },
+        "refresh": 2,
+        "sort": 1
       }
     ]
   },
@@ -62,7 +84,7 @@
     {
       "type": "row",
       "id": 1,
-      "title": "Alertes / Alerts",
+      "title": "Alerts / Alertes",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -75,7 +97,7 @@
     {
       "type": "barchart",
       "id": 2,
-      "title": "Alertes par s\u00e9v\u00e9rit\u00e9 / Alerts by severity",
+      "title": "Alerts by severity / Alertes par s\u00e9v\u00e9rit\u00e9",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -109,8 +131,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (severity) (nbu_alerts_count)",
-          "legendFormat": "{{severity}}",
+          "expr": "sum by (site, severity) (nbu_alerts_count{site=~\"$site\"})",
+          "legendFormat": "{{site}} / {{severity}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -120,7 +142,7 @@
     {
       "type": "table",
       "id": 3,
-      "title": "Alertes par cat\u00e9gorie / Alerts by category",
+      "title": "Alerts by category / Alertes par cat\u00e9gorie",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -148,7 +170,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (category, severity) (nbu_alerts_count)",
+          "expr": "sum by (site, category, severity) (nbu_alerts_count{site=~\"$site\"})",
           "format": "table",
           "instant": true,
           "refId": "A"
@@ -176,7 +198,7 @@
     {
       "type": "row",
       "id": 4,
-      "title": "Malware / Malware",
+      "title": "Malware",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -189,7 +211,7 @@
     {
       "type": "timeseries",
       "id": 5,
-      "title": "Fichiers scann\u00e9s vs infect\u00e9s / Files scanned vs infected",
+      "title": "Files scanned vs infected / Fichiers scann\u00e9s vs infect\u00e9s",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -239,8 +261,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "nbu_malware_files_scanned",
-          "legendFormat": "scann\u00e9s / scanned",
+          "expr": "nbu_malware_files_scanned{site=~\"$site\"}",
+          "legendFormat": "{{site}} / scanned / scann\u00e9s",
           "range": true,
           "instant": false,
           "refId": "A"
@@ -250,8 +272,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "nbu_malware_files_infected",
-          "legendFormat": "infect\u00e9s / infected",
+          "expr": "nbu_malware_files_infected{site=~\"$site\"}",
+          "legendFormat": "{{site}} / infected / infect\u00e9s",
           "range": true,
           "instant": false,
           "refId": "A"
@@ -261,7 +283,7 @@
     {
       "type": "barchart",
       "id": 6,
-      "title": "Statut des scans / Scan status",
+      "title": "Scan status / Statut des scans",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -295,8 +317,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (status) (nbu_malware_scan_count)",
-          "legendFormat": "{{status}}",
+          "expr": "sum by (site, status) (nbu_malware_scan_count{site=~\"$site\"})",
+          "legendFormat": "{{site}} / {{status}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -306,7 +328,7 @@
     {
       "type": "row",
       "id": 7,
-      "title": "Catalogue & SLO / Catalog & SLO",
+      "title": "Catalog & SLO / Catalogue & SLO",
       "collapsed": false,
       "gridPos": {
         "x": 0,
@@ -319,7 +341,7 @@
     {
       "type": "barchart",
       "id": 8,
-      "title": "Posture malware / Malware posture",
+      "title": "Malware posture / Posture malware",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -353,8 +375,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (malware_status) (nbu_catalog_images_count)",
-          "legendFormat": "{{malware_status}}",
+          "expr": "sum by (site, malware_status) (nbu_catalog_images_count{site=~\"$site\"})",
+          "legendFormat": "{{site}} / {{malware_status}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -364,7 +386,7 @@
     {
       "type": "barchart",
       "id": 9,
-      "title": "Posture anomalies / Anomaly posture",
+      "title": "Anomaly posture / Posture anomalies",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -398,8 +420,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum by (anomaly_status) (nbu_catalog_images_count)",
-          "legendFormat": "{{anomaly_status}}",
+          "expr": "sum by (site, anomaly_status) (nbu_catalog_images_count{site=~\"$site\"})",
+          "legendFormat": "{{site}} / {{anomaly_status}}",
           "range": false,
           "instant": true,
           "refId": "A"
@@ -409,7 +431,7 @@
     {
       "type": "stat",
       "id": 10,
-      "title": "SLO configur\u00e9s / Configured SLOs",
+      "title": "Configured SLOs / SLO configur\u00e9s",
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
@@ -459,7 +481,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "sum(nbu_slo_count)",
+          "expr": "sum(nbu_slo_count{site=~\"$site\"})",
           "legendFormat": "",
           "range": false,
           "instant": true,

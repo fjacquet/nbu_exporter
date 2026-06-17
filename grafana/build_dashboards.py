@@ -2,13 +2,14 @@
 """Generate all nbu_exporter Grafana dashboards from grafana/gen/.
 
 Run from the repo root:  python3 grafana/build_dashboards.py
-Each dashboard is validated against the known nbu_* metric set before writing.
+Each dashboard is validated against the known nbu_* metric set and the multi-site
+template-variable contract before writing.
 """
 import json
 import sys
 
 from grafana.gen import overview, jobs, storage, dataprotection
-from grafana.gen.validate import check_dashboard
+from grafana.gen.validate import check_dashboard, check_site_wiring
 
 OUTPUTS = [
     ("grafana/nbu-overview.json", overview.build),
@@ -25,6 +26,10 @@ def main():
         unknown = check_dashboard(dash)
         if unknown:
             failures.append(f"{path}: unknown metrics {unknown}")
+            continue
+        site_problems = check_site_wiring(dash)
+        if site_problems:
+            failures.append(f"{path}: multi-site wiring: {site_problems}")
             continue
         with open(path, "w") as f:
             json.dump(dash, f, indent=2)
