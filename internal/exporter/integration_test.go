@@ -92,7 +92,7 @@ func TestJobMetricsCollection(t *testing.T) {
 		verifyAPIVersionHeader(t, r, "12.0")
 		verifyFilterParameter(t, r)
 
-		offset := parseOffsetFromRequest(r)
+		offset := parseCursorOffsetFromRequest(r)
 		response := createPaginatedJobsResponse(*allJobs, offset)
 
 		w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, "12.0"))
@@ -204,9 +204,7 @@ func TestPaginationHandling(t *testing.T) {
 		}
 
 		// All jobs fit in one page, so this is the last page
-		response.Meta.Pagination.Offset = totalJobs - 1
-		response.Meta.Pagination.Last = totalJobs - 1
-		response.Meta.Pagination.Count = totalJobs
+		response.Meta.Pagination.Next = ""
 
 		w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, "12.0"))
 		w.WriteHeader(http.StatusOK)
@@ -252,8 +250,7 @@ func TestFilteringByTime(t *testing.T) {
 		response := &models.Jobs{}
 		response.Data = make([]models.JobData, 0)
 
-		response.Meta.Pagination.Offset = 0
-		response.Meta.Pagination.Last = 0
+		response.Meta.Pagination.Next = ""
 
 		w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, "12.0"))
 		w.WriteHeader(http.StatusOK)
@@ -407,13 +404,9 @@ func loadJobsTestData(t *testing.T) *models.Jobs {
 	jobs.Data[2].Attributes.Status = 150
 	jobs.Data[2].Attributes.KilobytesTransferred = 0
 
-	// Set pagination
-	jobs.Meta.Pagination.Count = 3
-	jobs.Meta.Pagination.Offset = 0
+	// Set pagination (cursor: single page)
 	jobs.Meta.Pagination.Limit = 100
-	jobs.Meta.Pagination.First = 0
-	jobs.Meta.Pagination.Last = 2
-	jobs.Meta.Pagination.Next = 0
+	jobs.Meta.Pagination.Next = ""
 
 	return jobs
 }

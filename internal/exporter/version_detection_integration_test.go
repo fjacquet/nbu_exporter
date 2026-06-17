@@ -18,8 +18,8 @@ func extractVersionFromAcceptHeader(acceptHeader string) string {
 		return "13.0"
 	} else if strings.Contains(acceptHeader, testutil.APIVersion120) {
 		return "12.0"
-	} else if strings.Contains(acceptHeader, testutil.APIVersion30) {
-		return "3.0"
+	} else if strings.Contains(acceptHeader, testutil.APIVersion100) {
+		return "10.0"
 	}
 	return ""
 }
@@ -86,20 +86,20 @@ func TestVersionDetectionWithMockServers(t *testing.T) {
 	}{
 		{
 			name:              "Detect v13.0 when available",
-			supportedVersions: []string{"13.0", "12.0", "3.0"},
+			supportedVersions: []string{"13.0", "12.0", "10.0"},
 			expectedVersion:   "13.0",
 			expectError:       false,
 		},
 		{
 			name:              "Fallback to v12.0 when v13.0 not available",
-			supportedVersions: []string{"12.0", "3.0"},
+			supportedVersions: []string{"12.0", "10.0"},
 			expectedVersion:   "12.0",
 			expectError:       false,
 		},
 		{
-			name:              "Fallback to v3.0 when only v3.0 available",
-			supportedVersions: []string{"3.0"},
-			expectedVersion:   "3.0",
+			name:              "Fallback to v10.0 when only v10.0 available",
+			supportedVersions: []string{"10.0"},
+			expectedVersion:   "10.0",
 			expectError:       false,
 		},
 		{
@@ -142,16 +142,16 @@ func TestFallbackBehavior(t *testing.T) {
 			requestedVersion = "13.0"
 		} else if strings.Contains(acceptHeader, testutil.APIVersion120) {
 			requestedVersion = "12.0"
-		} else if strings.Contains(acceptHeader, testutil.APIVersion30) {
-			requestedVersion = "3.0"
+		} else if strings.Contains(acceptHeader, testutil.APIVersion100) {
+			requestedVersion = "10.0"
 		}
 
 		attemptedVersions = append(attemptedVersions, requestedVersion)
 
-		// Only v3.0 works
-		if requestedVersion == "3.0" {
+		// Only v10.0 works
+		if requestedVersion == "10.0" {
 			response := createMinimalJobsResponse()
-			w.Header().Set(testutil.ContentTypeHeader, "application/vnd.netbackup+json;version=3.0")
+			w.Header().Set(testutil.ContentTypeHeader, "application/vnd.netbackup+json;version=10.0")
 			w.WriteHeader(http.StatusOK)
 			_ = json.NewEncoder(w).Encode(response)
 		} else {
@@ -178,12 +178,12 @@ func TestFallbackBehavior(t *testing.T) {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	if detectedVersion != "3.0" {
-		t.Errorf("Expected version 3.0, got %s", detectedVersion)
+	if detectedVersion != "10.0" {
+		t.Errorf("Expected version 10.0, got %s", detectedVersion)
 	}
 
-	// Verify fallback order: 14.0 -> 13.0 -> 12.0 -> 3.0
-	expectedOrder := []string{"14.0", "13.0", "12.0", "3.0"}
+	// Verify fallback order: 14.0 -> 13.0 -> 12.0 -> 10.0
+	expectedOrder := []string{"14.0", "13.0", "12.0", "10.0"}
 	if len(attemptedVersions) != len(expectedOrder) {
 		t.Errorf("Expected %d version attempts, got %d", len(expectedOrder), len(attemptedVersions))
 	}

@@ -158,14 +158,10 @@ func TestJobsUnmarshalJSONWithoutOptionalFields(t *testing.T) {
 		}],
 		"meta": {
 			"pagination": {
-				"count": 1,
-				"offset": 0,
 				"limit": 100,
-				"first": 0,
-				"last": 0,
-				"page": 1,
-				"pages": 1,
-				"next": 0
+				"next": "",
+				"prev": "",
+				"rangeTruncated": false
 			}
 		},
 		"links": {
@@ -248,38 +244,43 @@ func TestJobsPagination(t *testing.T) {
 		t.Fatalf("Failed to unmarshal JSON: %v", err)
 	}
 
-	// Verify pagination metadata
-	if jobs.Meta.Pagination.Count != 3 {
-		t.Errorf("Expected pagination count 3, got %d", jobs.Meta.Pagination.Count)
-	}
-	if jobs.Meta.Pagination.Offset != 0 {
-		t.Errorf("Expected pagination offset 0, got %d", jobs.Meta.Pagination.Offset)
-	}
+	// Verify cursor pagination metadata
 	if jobs.Meta.Pagination.Limit != 100 {
 		t.Errorf("Expected pagination limit 100, got %d", jobs.Meta.Pagination.Limit)
 	}
-	if jobs.Meta.Pagination.Pages != 1 {
-		t.Errorf("Expected pagination pages 1, got %d", jobs.Meta.Pagination.Pages)
-	}
-	if jobs.Meta.Pagination.First != 0 {
-		t.Errorf("Expected pagination first 0, got %d", jobs.Meta.Pagination.First)
-	}
-	if jobs.Meta.Pagination.Last != 2 {
-		t.Errorf("Expected pagination last 2, got %d", jobs.Meta.Pagination.Last)
-	}
-	if jobs.Meta.Pagination.Next != 0 {
-		t.Errorf("Expected pagination next 0, got %d", jobs.Meta.Pagination.Next)
+	if jobs.Meta.Pagination.Next != "" {
+		t.Errorf("Expected empty next cursor (last page), got %q", jobs.Meta.Pagination.Next)
 	}
 
 	// Verify links
 	if jobs.Links.Self.Href == "" {
 		t.Error("Expected self link to be present")
 	}
-	if jobs.Links.First.Href == "" {
-		t.Error("Expected first link to be present")
+}
+
+func TestJobsCursorPaginationUnmarshal(t *testing.T) {
+	jsonData := `{
+		"data": [],
+		"meta": {
+			"pagination": {
+				"limit": 100,
+				"next": "eyJqb2JJZCI6NX0",
+				"prev": "",
+				"rangeTruncated": false
+			}
+		}
+	}`
+
+	var jobs Jobs
+	if err := json.Unmarshal([]byte(jsonData), &jobs); err != nil {
+		t.Fatalf("Failed to unmarshal cursor pagination: %v", err)
 	}
-	if jobs.Links.Last.Href == "" {
-		t.Error("Expected last link to be present")
+
+	if jobs.Meta.Pagination.Next != "eyJqb2JJZCI6NX0" {
+		t.Errorf("Expected Next cursor 'eyJqb2JJZCI6NX0', got %q", jobs.Meta.Pagination.Next)
+	}
+	if jobs.Meta.Pagination.Limit != 100 {
+		t.Errorf("Expected Limit 100, got %d", jobs.Meta.Pagination.Limit)
 	}
 }
 

@@ -387,10 +387,10 @@ func TestNbuClientHeaderConstructionAllVersions(t *testing.T) {
 		expectedAccept string
 	}{
 		{
-			name:           "API version 3.0 (NetBackup 10.0-10.4)",
-			apiVersion:     models.APIVersion30,
-			apiKey:         "test-key-v3",
-			expectedAccept: "application/vnd.netbackup+json;version=3.0",
+			name:           "API version 10.0 (NetBackup 10.0-10.4)",
+			apiVersion:     models.APIVersion100,
+			apiKey:         "test-key-v10",
+			expectedAccept: "application/vnd.netbackup+json;version=10.0",
 		},
 		{
 			name:           "API version 12.0 (NetBackup 10.5)",
@@ -459,11 +459,11 @@ func TestNbuClientVersionFailureErrorMessages(t *testing.T) {
 			},
 		},
 		{
-			name:       "406 error for version 3.0",
-			apiVersion: "3.0",
+			name:       "406 error for version 10.0",
+			apiVersion: "10.0",
 			statusCode: 406,
 			wantErrorContains: []string{
-				"API version 3.0 is not supported",
+				"API version 10.0 is not supported",
 				errMsgHTTP406,
 			},
 		},
@@ -558,8 +558,8 @@ func TestNewNbuClientWithVersionDetectionExplicitVersion(t *testing.T) {
 		shouldDetect      bool
 	}{
 		{
-			name:              "explicit version 3.0 bypasses detection",
-			configuredVersion: models.APIVersion30,
+			name:              "explicit version 10.0 bypasses detection",
+			configuredVersion: models.APIVersion100,
 			shouldDetect:      false,
 		},
 		{
@@ -631,9 +631,9 @@ func TestNbuClientConfigurationOverride(t *testing.T) {
 		wantVersion       string
 	}{
 		{
-			name:              "configured version 3.0 is preserved",
-			configuredVersion: "3.0",
-			wantVersion:       "3.0",
+			name:              "configured version 10.0 is preserved",
+			configuredVersion: "10.0",
+			wantVersion:       "10.0",
 		},
 		{
 			name:              "configured version 12.0 is preserved",
@@ -1036,8 +1036,8 @@ func TestShouldPerformVersionDetection(t *testing.T) {
 			expected:   true,
 		},
 		{
-			name:       "version 3.0 bypasses detection",
-			apiVersion: models.APIVersion30,
+			name:       "version 10.0 bypasses detection",
+			apiVersion: models.APIVersion100,
 			expected:   false,
 		},
 		{
@@ -1094,8 +1094,8 @@ func TestIsExplicitVersionConfigured(t *testing.T) {
 			expected:   true,
 		},
 		{
-			name:       "version 3.0 is explicit",
-			apiVersion: models.APIVersion30,
+			name:       "version 10.0 is explicit",
+			apiVersion: models.APIVersion100,
 			expected:   true,
 		},
 		{

@@ -34,8 +34,8 @@ func TestNewNbuCollectorExplicitVersion(t *testing.T) {
 			apiVersion: models.APIVersion120,
 		},
 		{
-			name:       "API version 3.0",
-			apiVersion: models.APIVersion30,
+			name:       "API version 10.0",
+			apiVersion: models.APIVersion100,
 		},
 	}
 
@@ -80,7 +80,7 @@ func createVersionMockServer(t *testing.T, responses map[string]int) *httptest.S
 
 // extractVersionFromHeader extracts the API version from the Accept header
 func extractVersionFromHeader(acceptHeader string) string {
-	for _, v := range []string{"13.0", "12.0", "3.0"} {
+	for _, v := range []string{"13.0", "12.0", "10.0"} {
 		if fmt.Sprintf("application/vnd.netbackup+json;version=%s", v) == acceptHeader {
 			return v
 		}
@@ -157,13 +157,13 @@ func TestNewNbuCollectorAutomaticDetection(t *testing.T) {
 			expectError:     false,
 		},
 		{
-			name: "Fallback to version 3.0",
+			name: "Fallback to version 10.0",
 			serverResponses: map[string]int{
 				"13.0": http.StatusNotAcceptable,
 				"12.0": http.StatusNotAcceptable,
-				"3.0":  http.StatusOK,
+				"10.0": http.StatusOK,
 			},
-			expectedVersion: models.APIVersion30,
+			expectedVersion: models.APIVersion100,
 			expectError:     false,
 		},
 		{
@@ -171,7 +171,7 @@ func TestNewNbuCollectorAutomaticDetection(t *testing.T) {
 			serverResponses: map[string]int{
 				"13.0": http.StatusNotAcceptable,
 				"12.0": http.StatusNotAcceptable,
-				"3.0":  http.StatusNotAcceptable,
+				"10.0": http.StatusNotAcceptable,
 			},
 			expectError: true,
 		},
