@@ -12,9 +12,10 @@ import (
 
 // TargetCollector collects one site (one NetBackup primary) into a SiteSnapshot.
 type TargetCollector struct {
-	site   string
-	cfg    models.Config // a single-server view: cfg.NbuServer set from this site's entry
-	client *NbuClient    // built lazily with version detection; nil until first success
+	site    string
+	cfg     models.Config  // a single-server view: cfg.NbuServer set from this site's entry
+	client  *NbuClient     // built lazily with version detection; nil until first success
+	tracing *TracerWrapper // noop unless a TracerProvider is wired
 }
 
 // NewTargetCollector builds a per-site collector. base supplies Server.* settings;
@@ -31,7 +32,11 @@ func NewTargetCollector(base models.Config, entry models.NbuServerConfig) *Targe
 	cfg.NbuServer.APIVersion = entry.APIVersion
 	cfg.NbuServer.ContentType = entry.ContentType
 	cfg.NbuServer.InsecureSkipVerify = entry.InsecureSkipVerify
-	return &TargetCollector{site: entry.Site, cfg: cfg}
+	return &TargetCollector{
+		site:    entry.Site,
+		cfg:     cfg,
+		tracing: NewTracerWrapper(nil, "nbu-exporter/target"),
+	}
 }
 
 func (tc *TargetCollector) clientFor(ctx context.Context) (*NbuClient, error) {
@@ -78,6 +83,13 @@ func (tc *TargetCollector) collect(ctx context.Context) *SiteSnapshot {
 		ss.LastJobsScrape = now
 	}
 	ss.Up = sErr == nil || jErr == nil
+
+	// Run enabled opt-in sub-collectors for this site and buffer their metrics
+	// into the snapshot, to be re-emitted on each scrape (graceful degradation:
+	// a failing sub-collector is logged and skipped, never aborting the cycle).
+	subs := buildSubCollectorsFor(client, tc.cfg, tc.site)
+	ss.SubMetrics = collectSubMetrics(ctx, subs, tc.tracing)
+
 	return ss
 }
 

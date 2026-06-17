@@ -260,20 +260,7 @@ func buildSubCollectors(c *NbuCollector) []subCollector {
 	if len(c.cfg.NbuServers) > 0 {
 		site = c.cfg.NbuServers[0].Site
 	}
-	var subs []subCollector
-	if c.cfg.Collectors.Alerts.Enabled {
-		subs = append(subs, newAlertsCollector(c.client, c.cfg, site))
-	}
-	if c.cfg.Collectors.Malware.Enabled {
-		subs = append(subs, newMalwareCollector(c.client, c.cfg, site))
-	}
-	if c.cfg.Collectors.Catalog.Enabled {
-		subs = append(subs, newCatalogCollector(c.client, c.cfg, site))
-	}
-	if c.cfg.Collectors.SLO.Enabled {
-		subs = append(subs, newSLOCollector(c.client, c.cfg, site))
-	}
-	return subs
+	return buildSubCollectorsFor(c.client, c.cfg, site)
 }
 
 // Describe sends the descriptors of each metric to the provided channel.

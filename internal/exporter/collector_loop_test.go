@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
+	dto "github.com/prometheus/client_model/go"
 )
 
 // nbuOKHandler returns HTTP 200 with valid empty NBU JSON for all requests.
@@ -120,5 +121,39 @@ func TestCollectionLoop_collectOnce(t *testing.T) {
 	}
 	if siteB.Up {
 		t.Errorf("site 'b' Up = true, want false")
+	}
+}
+
+// TestTargetCollector_BuffersSubMetrics verifies that an enabled opt-in
+// sub-collector is run per-target and its metrics are buffered into the
+// SiteSnapshot, carrying the target's site label. The SLO collector always
+// emits exactly one series, so it is the simplest probe.
+func TestTargetCollector_BuffersSubMetrics(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(nbuOKHandler))
+	defer server.Close()
+
+	base := createTestConfig(server.URL, "14.0")
+	base.Collectors.SLO.Enabled = true
+
+	entry := newNbuServerConfig("paris", server.URL, "14.0")
+	tc := NewTargetCollector(base, entry)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	ss := tc.collect(ctx)
+	if !ss.Up {
+		t.Fatalf("site Up = false, want true (storageErr=%v jobsErr=%v)", ss.StorageErr, ss.JobsErr)
+	}
+	if len(ss.SubMetrics) != 1 {
+		t.Fatalf("SubMetrics len = %d, want 1 (nbu_slo_count)", len(ss.SubMetrics))
+	}
+
+	var d dto.Metric
+	if err := ss.SubMetrics[0].Write(&d); err != nil {
+		t.Fatalf("metric write: %v", err)
+	}
+	if got := labelValue(&d, "site"); got != "paris" {
+		t.Errorf("buffered sub-metric site label = %q, want paris", got)
 	}
 }

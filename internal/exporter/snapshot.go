@@ -3,6 +3,8 @@ package exporter
 import (
 	"sync/atomic"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // SiteSnapshot holds one site's already-aggregated collection results.
@@ -17,6 +19,10 @@ type SiteSnapshot struct {
 	JobAgg            *JobAggregator
 	LastStorageScrape time.Time
 	LastJobsScrape    time.Time
+	// SubMetrics holds the already-built metrics emitted by enabled opt-in
+	// sub-collectors (alerts/malware/catalog/SLO) for this site. They are
+	// buffered at collection time and re-emitted verbatim on each scrape.
+	SubMetrics []prometheus.Metric
 }
 
 // Snapshot is an immutable, point-in-time view across all configured sites.
