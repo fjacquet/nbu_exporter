@@ -56,7 +56,7 @@ type Config struct {
 		ScrapingInterval   string `yaml:"scrapingInterval"`
 		LogName            string `yaml:"logName"`
 		CacheTTL           string `yaml:"cacheTTL"`           // TTL for storage metrics cache (e.g., "5m")
-		CollectionInterval string `yaml:"collectionInterval"` // How far back to collect job data (e.g., "5m")
+		CollectionInterval string `yaml:"collectionInterval"` // Background collection loop poll interval (e.g., "5m")
 	} `yaml:"server"`
 
 	// NbuServer is the legacy single-server configuration block. It is kept for
@@ -145,6 +145,24 @@ func (c *Config) SetDefaults() {
 				InsecureSkipVerify: c.NbuServer.InsecureSkipVerify,
 			},
 		}
+	}
+
+	// Reverse-map: when only nbuservers[] is provided (no legacy nbuserver: block),
+	// mirror the primary entry into the legacy NbuServer fields so legacy
+	// single-server code paths (validation, GetNBUBaseURL, telemetry, MaskAPIKey)
+	// operate on the primary site.
+	if c.NbuServer.Host == "" && len(c.NbuServers) > 0 {
+		first := c.NbuServers[0]
+		c.NbuServer.Port = first.Port
+		c.NbuServer.Scheme = first.Scheme
+		c.NbuServer.URI = first.URI
+		c.NbuServer.Domain = first.Domain
+		c.NbuServer.DomainType = first.DomainType
+		c.NbuServer.Host = first.Host
+		c.NbuServer.APIKey = first.APIKey
+		c.NbuServer.APIVersion = first.APIVersion
+		c.NbuServer.ContentType = first.ContentType
+		c.NbuServer.InsecureSkipVerify = first.InsecureSkipVerify
 	}
 }
 
@@ -471,6 +489,24 @@ func (c *Config) GetCacheTTL() time.Duration {
 		return 5 * time.Minute
 	}
 	duration, err := time.ParseDuration(c.Server.CacheTTL)
+	if err != nil {
+		return 5 * time.Minute
+	}
+	return duration
+}
+
+// GetCollectionInterval parses and returns the background collection loop poll
+// interval as a time.Duration. Returns 5 minutes if unset or unparseable.
+//
+// This is how often the snapshot collection loop polls every configured site;
+// it decouples backend API load from Prometheus scrape frequency.
+//
+// Example: "5m" -> 5 * time.Minute
+func (c *Config) GetCollectionInterval() time.Duration {
+	if c.Server.CollectionInterval == "" {
+		return 5 * time.Minute
+	}
+	duration, err := time.ParseDuration(c.Server.CollectionInterval)
 	if err != nil {
 		return 5 * time.Minute
 	}

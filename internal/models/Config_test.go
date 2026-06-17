@@ -1909,3 +1909,46 @@ func TestConfigCollectionIntervalDefault(t *testing.T) {
 		t.Errorf("SetDefaults() CollectionInterval = %q, want %q", cfg.Server.CollectionInterval, "5m")
 	}
 }
+
+// TestConfigPureMultiSiteValidates verifies that a config providing only the
+// nbuservers[] list (no legacy nbuserver: block) validates, and that the legacy
+// NbuServer fields are mirrored from the primary entry for legacy code paths.
+func TestConfigPureMultiSiteValidates(t *testing.T) {
+	cfg := &Config{}
+	cfg.Server.Port = "9440"
+	cfg.Server.Host = "localhost"
+	cfg.Server.URI = testPathMetrics
+	cfg.Server.ScrapingInterval = "5m"
+	cfg.NbuServers = []NbuServerConfig{
+		{Site: "paris", Host: "nbu-paris", Port: "1556", Scheme: "https", URI: testPathNetBackup, APIKey: "k1", APIVersion: "13.0"},
+		{Site: "lyon", Host: "nbu-lyon", Port: "1556", Scheme: "https", URI: testPathNetBackup, APIKey: "k2", APIVersion: "13.0"},
+	}
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("pure multi-site config should validate, got: %v", err)
+	}
+	if cfg.NbuServer.Host != "nbu-paris" {
+		t.Errorf("NbuServer.Host = %q, want nbu-paris (mirrored from NbuServers[0])", cfg.NbuServer.Host)
+	}
+	if len(cfg.NbuServers) != 2 {
+		t.Errorf("len(NbuServers) = %d, want 2 (list preserved)", len(cfg.NbuServers))
+	}
+}
+
+// TestGetCollectionInterval verifies parsing, default, and fallback behaviour.
+func TestGetCollectionInterval(t *testing.T) {
+	cfg := &Config{}
+	if got := cfg.GetCollectionInterval(); got != 5*time.Minute {
+		t.Errorf("default GetCollectionInterval() = %v, want 5m", got)
+	}
+
+	cfg.Server.CollectionInterval = "10m"
+	if got := cfg.GetCollectionInterval(); got != 10*time.Minute {
+		t.Errorf("GetCollectionInterval() = %v, want 10m", got)
+	}
+
+	cfg.Server.CollectionInterval = "not-a-duration"
+	if got := cfg.GetCollectionInterval(); got != 5*time.Minute {
+		t.Errorf("invalid GetCollectionInterval() = %v, want 5m fallback", got)
+	}
+}
