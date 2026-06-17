@@ -39,13 +39,14 @@ The `nbu_job_duration_seconds` histogram covers completed jobs only (those with 
 !!! note
     Tape storage units are excluded from metrics collection.
 
-## NetBackup 11.2 opt-in collectors
+## Opt-in collectors
 
-These metrics require NetBackup 11.2 (API `version=14.0`) endpoints and are exposed
-by four optional sub-collectors. **All default to disabled** — enable only the ones
-your appliance and account permissions support. They are graceful: a failing
-endpoint is logged and skipped without affecting core storage/jobs metrics or
-flipping `nbu_up` to `0`.
+These metrics are exposed by optional sub-collectors. **All default to disabled** — enable
+only the ones your appliance and account permissions support. They are graceful: a failing
+endpoint is logged and skipped without affecting core storage/jobs metrics or flipping
+`nbu_up` to `0`. The alerts/malware/catalog/SLO collectors require NetBackup 11.2 (API
+`version=14.0`); the **`tape`** collector works on older releases too (`/storage/drives` on
+NBU 10.0+, `/storage/tape-media` and `/storage/robots-device-hosts` on 10.5+).
 
 | Metric | Type | Labels | Source endpoint | Source API attribute |
 |--------|------|--------|-----------------|----------------------|
@@ -55,6 +56,10 @@ flipping `nbu_up` to `0`.
 | `nbu_malware_scan_count` | Gauge | `status` | `GET /malware/latest-scan-results` | Results grouped by `scanState` |
 | `nbu_catalog_images_count` | Gauge | `malware_status`, `anomaly_status` | `GET /catalog/images` | `meta.pagination.count` per filter combination |
 | `nbu_slo_count` | Gauge | — | `GET /servicecatalog/slos` | Total number of `data[]` entries |
+| `nbu_tape_drives_count` | Gauge | `state`, `drive_type`, `robot_type` | `GET /storage/drives` | Drives grouped by `driveStatus`/`driveType`/`robotType` |
+| `nbu_tape_drive_info` | Gauge | `drive_name`, `media_server`, `drive_type`, `robot_number`, `state` | `GET /storage/drives` | One series per drive (value always `1`) |
+| `nbu_tape_media_count` | Gauge | `media_type`, `status` | `GET /storage/tape-media` | Tape volumes grouped by `mediaType` + `mediaStatus` |
+| `nbu_tape_robot_device_hosts` | Gauge | — | `GET /storage/robots-device-hosts` | Count of device hosts with robots configured |
 
 Notes on the implemented attributes (these differ from early guesses):
 
@@ -69,6 +74,12 @@ Notes on the implemented attributes (these differ from early guesses):
 - **SLO count** is a single unlabeled gauge. The 11.2 SLO response has no
   per-SLO enforcement-type attribute, so the originally planned
   `enforcement_type` label was dropped.
+- **Tape collector** (`collectors.tape`) is one collector over three endpoints with
+  per-endpoint graceful degradation. Tape media is offset-paginated and aggregated
+  client-side; `robot_type` is read from the per-drive attribute (there is no bulk
+  robot-listing endpoint, so a standalone robot type/count metric is not exposed);
+  `mediaStatus` is a free-form NetBackup status string. `drive_state` is the
+  `driveStatus` value with the `DRIVE_STATUS_` prefix stripped (`UP`/`DOWN`/`MIXED`/`DISABLED`).
 
 ### Enabling the collectors
 
@@ -81,6 +92,7 @@ collectors:
   malware: { enabled: false }
   catalog: { enabled: false }
   slo:     { enabled: false }
+  tape:    { enabled: false }
 ```
 
 !!! note "Job metrics and the missing 11.2 `admin.yaml`"

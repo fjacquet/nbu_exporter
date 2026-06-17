@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Tape / drive metrics** (opt-in `collectors.tape`, default off): `nbu_tape_drives_count`
+  (by state/drive_type/robot_type), `nbu_tape_drive_info` (per drive), `nbu_tape_media_count`
+  (by media_type/status), and `nbu_tape_robot_device_hosts`, collected over REST — drives on
+  NBU 10.0+, tape-media + robot device hosts on 10.5+ — with per-endpoint graceful degradation
+  and the `site` label. No CLI shell-out. See the Feature 2 design spec.
 - **Multi-site support**: a single exporter can scrape multiple NetBackup primary servers via
   a `nbuservers:` list, each with a unique `site`; every metric series carries a `site` label
   (first label). Collection adopts the family **snapshot model** — a background loop polls
