@@ -1,6 +1,6 @@
 {
   "data": [
-    {"attributes": {"barcode": "ABC001", "mediaType": "HCART", "mediaStatus": "ACTIVE", "robotType": "TLD", "robotNumber": 0}},
-    {"attributes": {"barcode": "ABC002", "mediaType": "HCART", "mediaStatus": "ACTIVE", "robotType": "TLD", "robotNumber": 0}}
+    {"attributes": {"barcode": "ABC001", "mediaType": "HCART", "volumePool": "NetBackup", "mediaStatus": "ACTIVE", "robotType": "TLD", "robotNumber": 0}},
+    {"attributes": {"barcode": "ABC002", "mediaType": "HCART", "volumePool": "NetBackup", "mediaStatus": "ACTIVE", "robotType": "TLD", "robotNumber": 0}}
   ]
 }

@@ -3,7 +3,6 @@ package exporter
 import (
 	"context"
 	"strconv"
-	"strings"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
@@ -46,18 +45,18 @@ func newTapeCollector(client NetBackupClient, cfg models.Config, site string) *t
 		site:   site,
 		drivesCount: prometheus.NewDesc(
 			"nbu_tape_drives_count",
-			"Number of tape drives by status, drive type and robot type",
-			[]string{"site", "state", "drive_type", "robot_type"}, nil,
+			"Number of tape drives grouped by drive type, robot type and raw drive status",
+			[]string{"site", "drive_type", "robot_type", "status"}, nil,
 		),
 		driveInfo: prometheus.NewDesc(
 			"nbu_tape_drive_info",
 			"Tape drive info (always 1; metadata in labels)",
-			[]string{"site", "drive_name", "media_server", "drive_type", "robot_number", "state"}, nil,
+			[]string{"site", "drive_name", "media_server", "drive_type", "robot_number", "status"}, nil,
 		),
 		mediaCount: prometheus.NewDesc(
 			"nbu_tape_media_count",
-			"Number of tape volumes by media type and status",
-			[]string{"site", "media_type", "status"}, nil,
+			"Number of tape volumes grouped by volume pool, media type and robot type",
+			[]string{"site", "pool", "media_type", "robot_type"}, nil,
 		),
 		robotHostsCount: prometheus.NewDesc(
 			"nbu_tape_robot_device_hosts",
@@ -78,9 +77,6 @@ func newTapeCollector(client NetBackupClient, cfg models.Config, site string) *t
 }
 
 func (c *tapeCollector) Name() string { return "tape" }
-
-// driveState strips the DRIVE_STATUS_ prefix so the label reads UP/DOWN/MIXED/DISABLED.
-func driveState(s string) string { return strings.TrimPrefix(s, "DRIVE_STATUS_") }
 
 func (c *tapeCollector) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
 	c.collectDrives(ctx, ch)
@@ -107,7 +103,7 @@ func (c *tapeCollector) collectRobotHosts(ctx context.Context, ch chan<- prometh
 }
 
 func (c *tapeCollector) collectMedia(ctx context.Context, ch chan<- prometheus.Metric) {
-	type key struct{ mediaType, status string }
+	type key struct{ pool, mediaType, robotType string }
 	counts := map[key]float64{}
 	offset := 0
 	for page := 0; page < maxMediaPages; page++ {
@@ -126,7 +122,7 @@ func (c *tapeCollector) collectMedia(ctx context.Context, ch chan<- prometheus.M
 			break
 		}
 		for _, d := range resp.Data {
-			counts[key{d.Attributes.MediaType, d.Attributes.MediaStatus}]++
+			counts[key{d.Attributes.VolumePool, d.Attributes.MediaType, d.Attributes.RobotType}]++
 		}
 		offset += len(resp.Data) // advance by rows returned; loop ends on the next empty page
 		if ctx.Err() != nil {
@@ -137,7 +133,7 @@ func (c *tapeCollector) collectMedia(ctx context.Context, ch chan<- prometheus.M
 		}
 	}
 	for k, v := range counts {
-		ch <- prometheus.MustNewConstMetric(c.mediaCount, prometheus.GaugeValue, v, c.site, k.mediaType, k.status)
+		ch <- prometheus.MustNewConstMetric(c.mediaCount, prometheus.GaugeValue, v, c.site, k.pool, k.mediaType, k.robotType)
 	}
 }
 
@@ -148,18 +144,17 @@ func (c *tapeCollector) collectDrives(ctx context.Context, ch chan<- prometheus.
 		log.WithError(err).WithField("site", c.site).Warn("tape: drives fetch failed; skipping")
 		return
 	}
-	type key struct{ state, driveType, robotType string }
+	type key struct{ driveType, robotType, status string }
 	counts := map[key]float64{}
 	for _, d := range resp.Data {
 		a := d.Attributes
-		state := driveState(a.DriveStatus)
-		counts[key{state, a.DriveType, a.RobotType}]++
+		counts[key{a.DriveType, a.RobotType, a.DriveStatus}]++
 		ch <- prometheus.MustNewConstMetric(c.driveInfo, prometheus.GaugeValue, 1,
-			c.site, a.DriveName, a.DeviceHost, a.DriveType, strconv.Itoa(a.RobotNumber), state)
+			c.site, a.DriveName, a.DeviceHost, a.DriveType, strconv.Itoa(a.RobotNumber), a.DriveStatus)
 	}
 	for k, v := range counts {
 		ch <- prometheus.MustNewConstMetric(c.drivesCount, prometheus.GaugeValue, v,
-			c.site, k.state, k.driveType, k.robotType)
+			c.site, k.driveType, k.robotType, k.status)
 	}
 }
 

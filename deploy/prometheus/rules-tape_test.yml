@@ -4,9 +4,9 @@ rule_files:
 tests:
   - interval: 1m
     input_series:
-      - series: 'nbu_tape_drives_count{site="paris",state="DOWN",drive_type="DT_HCART",robot_type="TLD"}'
+      - series: 'nbu_tape_drives_count{site="paris",status="DRIVE_STATUS_DOWN",drive_type="DT_HCART",robot_type="TLD"}'
         values: '1x60'
-      - series: 'nbu_tape_drives_count{site="paris",state="UP",drive_type="DT_HCART",robot_type="TLD"}'
+      - series: 'nbu_tape_drives_count{site="paris",status="DRIVE_STATUS_UP",drive_type="DT_HCART",robot_type="TLD"}'
         values: '3x60'
     alert_rule_test:
       # One DOWN drive, true > for:15m -> warning fires (sum by site drops drive_type/robot_type).

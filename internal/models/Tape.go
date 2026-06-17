@@ -20,6 +20,7 @@ type TapeMedia struct {
 		Attributes struct {
 			Barcode     string `json:"barcode"`
 			MediaType   string `json:"mediaType"`   // HCART, DLT, HC_CLN, ...
+			VolumePool  string `json:"volumePool"`  // e.g. "NetBackup", "Scratch"
 			MediaStatus string `json:"mediaStatus"` // free-form, e.g. "ACTIVE MULTIPLEXED"
 			RobotType   string `json:"robotType"`
 			RobotNumber int    `json:"robotNumber"`

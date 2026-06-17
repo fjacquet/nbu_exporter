@@ -78,7 +78,7 @@ func TestTapeCollector_Drives(t *testing.T) {
 	require.NoError(t, c.Collect(context.Background(), ch))
 	close(ch)
 
-	driveCounts := map[string]float64{} // "state|drive_type|robot_type" -> value
+	driveCounts := map[string]float64{} // "drive_type|robot_type|status" -> value
 	infoCount := 0
 	for m := range ch {
 		var d dto.Metric
@@ -87,15 +87,15 @@ func TestTapeCollector_Drives(t *testing.T) {
 		desc := m.Desc().String()
 		switch {
 		case strings.Contains(desc, "nbu_tape_drives_count"):
-			key := labelValue(&d, "state") + "|" + labelValue(&d, "drive_type") + "|" + labelValue(&d, "robot_type")
+			key := labelValue(&d, "drive_type") + "|" + labelValue(&d, "robot_type") + "|" + labelValue(&d, "status")
 			driveCounts[key] = d.GetGauge().GetValue()
 		case strings.Contains(desc, "nbu_tape_drive_info"):
 			require.Equal(t, float64(1), d.GetGauge().GetValue())
 			infoCount++
 		}
 	}
-	require.Equal(t, float64(2), driveCounts["UP|DT_HCART|TLD"])
-	require.Equal(t, float64(1), driveCounts["DOWN|DT_HCART|TLD"])
+	require.Equal(t, float64(2), driveCounts["DT_HCART|TLD|DRIVE_STATUS_UP"])
+	require.Equal(t, float64(1), driveCounts["DT_HCART|TLD|DRIVE_STATUS_DOWN"])
 	require.Equal(t, 3, infoCount, "one nbu_tape_drive_info per drive")
 }
 
@@ -120,17 +120,16 @@ func TestTapeCollector_MediaPaginated(t *testing.T) {
 	require.NoError(t, c.Collect(context.Background(), ch))
 	close(ch)
 
-	media := map[string]float64{} // "media_type|status" -> value
+	media := map[string]float64{} // "pool|media_type|robot_type" -> value
 	for m := range ch {
 		var d dto.Metric
 		require.NoError(t, m.Write(&d))
 		if strings.Contains(m.Desc().String(), "nbu_tape_media_count") {
 			require.Equal(t, "site1", labelValue(&d, "site"))
-			media[labelValue(&d, "media_type")+"|"+labelValue(&d, "status")] = d.GetGauge().GetValue()
+			media[labelValue(&d, "pool")+"|"+labelValue(&d, "media_type")+"|"+labelValue(&d, "robot_type")] = d.GetGauge().GetValue()
 		}
 	}
-	require.Equal(t, float64(2), media["HCART|ACTIVE"], "both pages aggregated")
-	require.Equal(t, float64(1), media["HCART|FROZEN"])
+	require.Equal(t, float64(3), media["NetBackup|HCART|TLD"], "both pages aggregated by pool/media_type/robot_type")
 }
 
 func TestTapeCollector_RobotHostsAndRegistration(t *testing.T) {
@@ -219,10 +218,10 @@ func TestTapeCollector_MediaPartialOnError(t *testing.T) {
 		var d dto.Metric
 		require.NoError(t, m.Write(&d))
 		if strings.Contains(m.Desc().String(), "nbu_tape_media_count") {
-			media[labelValue(&d, "media_type")+"|"+labelValue(&d, "status")] = d.GetGauge().GetValue()
+			media[labelValue(&d, "pool")+"|"+labelValue(&d, "media_type")+"|"+labelValue(&d, "robot_type")] = d.GetGauge().GetValue()
 		}
 	}
-	require.Equal(t, float64(2), media["HCART|ACTIVE"], "page-1 counts emitted despite the page-2 error")
+	require.Equal(t, float64(2), media["NetBackup|HCART|TLD"], "page-1 counts emitted despite the page-2 error")
 }
 
 // TestTapeCollector_PoolsAndDiskPools verifies the two API v12.0+ endpoints:

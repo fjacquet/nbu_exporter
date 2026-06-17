@@ -17,7 +17,7 @@ groups:
   - name: nbu_tape
     rules:
       - alert: NbuTapeDriveDown
-        expr: sum by (site) (nbu_tape_drives_count{state="DOWN"}) > 0
+        expr: sum by (site) (nbu_tape_drives_count{status="DRIVE_STATUS_DOWN"}) > 0
         for: 15m
         labels:
           severity: warning
@@ -25,7 +25,7 @@ groups:
           summary: "Tape drive(s) DOWN on site {{ $labels.site }}"
           description: "One or more tape drives are DOWN on site {{ $labels.site }}."
       - alert: NbuTapeDriveDisabled
-        expr: sum by (site) (nbu_tape_drives_count{state="DISABLED"}) > 0
+        expr: sum by (site) (nbu_tape_drives_count{status="DRIVE_STATUS_DISABLED"}) > 0
         for: 30m
         labels:
           severity: warning
