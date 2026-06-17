@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-06-17
+
 ### Added
 
 - **Per-client lifecycle metrics & three new dashboards** (reconciled from PR #39, thanks
@@ -76,6 +78,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BREAKING:** every metric series now carries a `site` label as its first label (multi-site
+  support). Single-site deployments keep working, but PromQL that pins exact label sets or
+  aggregates without `by (site)`, plus recording rules and dashboards from v3.x, should be
+  reviewed. The opt-in `tape` collector's labels also moved to the richer schema: drives expose
+  the raw `DRIVE_STATUS_*` `status` (was a stripped `state`) and `nbu_tape_media_count` is keyed
+  by `pool`/`media_type`/`robot_type` (was `media_type`/`status`).
 - Repo hygiene: removed a 22 MB committed `go test -c` binary and empty doc stubs, untracked
   `.planning/` and `.serena/` tool state (now gitignored), and fixed a stale `3.0` reference
   in `config-auto-detect.yaml` ([#35](https://github.com/fjacquet/nbu_exporter/pull/35)).
