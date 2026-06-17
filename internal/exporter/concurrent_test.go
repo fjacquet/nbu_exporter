@@ -97,8 +97,8 @@ func TestCollectorConcurrentDescribe(t *testing.T) {
 			}
 
 			// Should always get the full descriptor set (8 core + 4 storage
-			// attribute + 5 extended job metrics).
-			const expectedDescriptors = 17
+			// attribute + 5 extended job metrics + 2 per-client lifecycle).
+			const expectedDescriptors = 19
 			if count != expectedDescriptors {
 				t.Errorf("Describe() returned %d descriptors, expected %d", count, expectedDescriptors)
 			}

@@ -360,6 +360,9 @@ func TestNbuCollectorDescribe(t *testing.T) {
 		"nbu_jobs_dedup_ratio",
 		"nbu_jobs_queued_count",
 		"nbu_job_duration_seconds",
+		// Per-client lifecycle metrics (opt-in)
+		"nbu_client_jobs_count",
+		"nbu_client_last_job_success_seconds",
 	}
 
 	descriptorNames := make(map[string]bool)

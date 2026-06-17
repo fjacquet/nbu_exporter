@@ -165,6 +165,19 @@ func aggregateJob(agg *JobAggregator, attr models.JobAttributes) {
 	if !attr.EndTime.IsZero() && attr.EndTime.After(attr.StartTime) {
 		agg.observeDuration(policyKey, attr.EndTime.Sub(attr.StartTime).Seconds())
 	}
+
+	// Per-client lifecycle (opt-in; only allowlisted clients are folded in, so the
+	// maps and the persistent last-success cache stay bounded by the allowlist).
+	if agg.trackClient(attr.ClientName) {
+		agg.ClientCount[ClientJobKey{Client: attr.ClientName, Action: attr.JobType, Status: status}]++
+		if attr.Status == 0 && !attr.EndTime.IsZero() {
+			csKey := ClientSuccessKey{Client: attr.ClientName, Policy: attr.PolicyName, Action: attr.JobType}
+			ts := float64(attr.EndTime.Unix())
+			if existing, ok := agg.ClientLastSuccess[csKey]; !ok || ts > existing {
+				agg.ClientLastSuccess[csKey] = ts
+			}
+		}
+	}
 }
 
 // FetchJobDetails retrieves a page of job records (up to 100) at the given cursor and
@@ -344,6 +357,9 @@ func FetchAllJobsFull(
 	// Single aggregator threaded through every page; comparable struct keys enable
 	// direct map lookups, and capacity hints reduce reallocation during processing.
 	agg := NewJobAggregator()
+	// Opt-in per-client lifecycle tracking, bounded by the allowlist (default off =>
+	// no per-client work). The per-client config is global across sites.
+	agg.EnablePerClient(client.cfg.Collectors.PerClient.Enabled, client.cfg.Collectors.PerClient.Allowlist)
 
 	// Track page count
 	pageCount := 0

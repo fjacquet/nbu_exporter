@@ -102,10 +102,28 @@ type NbuCollector struct {
 	nbuJobsQueuedCount *prometheus.Desc // Queued job count per action/reason
 	nbuJobDuration     *prometheus.Desc // Job duration histogram per action/policy
 
+	// Per-client lifecycle metrics (opt-in collectors.perClient + allowlist).
+	nbuClientJobsCount   *prometheus.Desc // Job count per site/client/action/status (current window)
+	nbuClientLastSuccess *prometheus.Desc // Unix ts of last successful job per site/client/policy/action
+	// Persistent last-success cache, keyed by site so a client's value survives scrape
+	// windows with no new jobs without leaking across sites. Bounded by the allowlist.
+	clientSuccessMu   sync.RWMutex
+	clientLastSuccess map[clientLastSuccessKey]float64
+
 	// Scrape time tracking
 	scrapeMu              sync.RWMutex // Protects lastStorageScrapeTime and lastJobsScrapeTime
 	lastStorageScrapeTime time.Time    // Last successful storage metric collection
 	lastJobsScrapeTime    time.Time    // Last successful jobs metric collection
+}
+
+// clientLastSuccessKey keys the persistent per-client last-success cache. It adds
+// the site dimension to ClientSuccessKey so cached values do not collide or leak
+// across NetBackup primaries in the multi-site model.
+type clientLastSuccessKey struct {
+	Site   string
+	Client string
+	Policy string
+	Action string
 }
 
 // withSite prepends the site label value to a slice of additional label values.
@@ -292,6 +310,17 @@ func newBaseCollector(cfg models.Config, tracing *TracerWrapper) *NbuCollector {
 			"Histogram of completed job durations in seconds",
 			[]string{"site", "action", "policy_type"}, nil,
 		),
+		nbuClientJobsCount: prometheus.NewDesc(
+			"nbu_client_jobs_count",
+			"Number of jobs per client, action and status in the scraping window (opt-in, allowlisted clients)",
+			[]string{"site", "client", "action", "status"}, nil,
+		),
+		nbuClientLastSuccess: prometheus.NewDesc(
+			"nbu_client_last_job_success_seconds",
+			"Unix timestamp of the last successful (status=0) job per client, policy and action (opt-in, allowlisted clients)",
+			[]string{"site", "client", "policy", "action"}, nil,
+		),
+		clientLastSuccess: make(map[clientLastSuccessKey]float64),
 	}
 }
 
@@ -321,6 +350,8 @@ func (c *NbuCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.nbuJobsDedupRatio
 	ch <- c.nbuJobsQueuedCount
 	ch <- c.nbuJobDuration
+	ch <- c.nbuClientJobsCount
+	ch <- c.nbuClientLastSuccess
 }
 
 // createScrapeSpan creates a root span for the Prometheus scrape cycle.
@@ -703,6 +734,39 @@ func (c *NbuCollector) exposeJobAggregateMetrics(ch chan<- prometheus.Metric, si
 	for key, acc := range agg.Duration {
 		ch <- prometheus.MustNewConstHistogram(c.nbuJobDuration, acc.Count, acc.Sum, acc.Buckets(), withSite(site, key.Labels())...)
 	}
+
+	c.exposePerClientMetrics(ch, site, agg)
+}
+
+// exposePerClientMetrics emits the opt-in per-client lifecycle metrics for one site.
+// The aggregator only ever holds allowlisted clients (gated at the source), so the
+// emitted cardinality and the persistent last-success cache stay bounded by the
+// allowlist. The cache is keyed by site so a value survives scrape windows with no
+// new jobs without leaking across sites.
+func (c *NbuCollector) exposePerClientMetrics(ch chan<- prometheus.Metric, site string, agg *JobAggregator) {
+	for key, value := range agg.ClientCount {
+		ch <- prometheus.MustNewConstMetric(c.nbuClientJobsCount, prometheus.GaugeValue, value,
+			site, key.Client, key.Action, key.Status)
+	}
+
+	c.clientSuccessMu.Lock()
+	for key, ts := range agg.ClientLastSuccess {
+		ck := clientLastSuccessKey{Site: site, Client: key.Client, Policy: key.Policy, Action: key.Action}
+		if existing, ok := c.clientLastSuccess[ck]; !ok || ts > existing {
+			c.clientLastSuccess[ck] = ts
+		}
+	}
+	c.clientSuccessMu.Unlock()
+
+	c.clientSuccessMu.RLock()
+	for ck, ts := range c.clientLastSuccess {
+		if ck.Site != site {
+			continue
+		}
+		ch <- prometheus.MustNewConstMetric(c.nbuClientLastSuccess, prometheus.GaugeValue, ts,
+			ck.Site, ck.Client, ck.Policy, ck.Action)
+	}
+	c.clientSuccessMu.RUnlock()
 }
 
 // exposeStorageMetrics sends storage metrics to the Prometheus channel.
