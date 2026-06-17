@@ -1967,6 +1967,16 @@ func TestConfigMultiSiteDefaultsURI(t *testing.T) {
 	}
 }
 
+func TestCollectorsPerClientConfigDefaults(t *testing.T) {
+	cfg := &Config{}
+	if cfg.Collectors.PerClient.Enabled {
+		t.Error("collectors.perClient should default to disabled")
+	}
+	if len(cfg.Collectors.PerClient.Allowlist) != 0 {
+		t.Error("collectors.perClient.allowlist should default to empty")
+	}
+}
+
 // TestGetCollectionInterval verifies parsing, default, and fallback behaviour.
 func TestGetCollectionInterval(t *testing.T) {
 	cfg := &Config{}
