@@ -409,21 +409,18 @@ func TestTapeCollector_MediaPaginated(t *testing.T) {
 }
 ```
 
-Update `tapeRoutedClient.FetchData` to check `byOffset` first (parse the `page[offset]=` value out of `url`; an offset not in the map returns an empty `{"data":[]}` page, which is what ends the collector's loop). The collector advances `page[offset]` by the number of rows returned and stops on the first empty page:
+Update `tapeRoutedClient.FetchData` to check `byOffset` first. **`cfg.BuildURL` URL-encodes query params** (the URL contains `page%5Boffset%5D=`, not `page[offset]=`), so parse the offset with `net/url` (which decodes) rather than raw string matching. An offset not in the map returns an empty `{"data":[]}` page, which ends the collector's loop. The collector advances `page[offset]` by the number of rows returned and stops on the first empty page:
 
 ```go
-func (c *tapeRoutedClient) FetchData(_ context.Context, url string, target interface{}) error {
+func (c *tapeRoutedClient) FetchData(_ context.Context, rawURL string, target interface{}) error {
 	c.t.Helper()
 	for sub, offsets := range c.byOffset {
-		if strings.Contains(url, sub) {
-			off := "0"
-			if i := strings.Index(url, "page[offset]="); i >= 0 {
-				rest := url[i+len("page[offset]="):]
-				if j := strings.IndexByte(rest, '&'); j >= 0 {
-					off = rest[:j]
-				} else {
-					off = rest
-				}
+		if strings.Contains(rawURL, sub) {
+			u, err := neturl.Parse(rawURL)
+			require.NoError(c.t, err)
+			off := u.Query().Get("page[offset]")
+			if off == "" {
+				off = "0"
 			}
 			fixture, ok := offsets[off]
 			if !ok { // past the last page -> empty result
@@ -435,12 +432,12 @@ func (c *tapeRoutedClient) FetchData(_ context.Context, url string, target inter
 		}
 	}
 	for sub, fixture := range c.byPath { /* unchanged from Task 3 */ }
-	c.t.Fatalf("unexpected URL: %s", url)
+	c.t.Fatalf("unexpected URL: %s", rawURL)
 	return nil
 }
 ```
 
-(Keep the `byPath` loop body from Task 3 after the `byOffset` loop. Add `byOffset map[string]map[string]string` to the struct.)
+(Keep the `byPath` loop body from Task 3 after the `byOffset` loop. Add `byOffset map[string]map[string]string` to the struct, and the import `neturl "net/url"`.)
 
 - [ ] **Step 3: Run — expect FAIL** (no media metrics emitted yet).
 
