@@ -1218,9 +1218,10 @@
 <ul>
 <li><strong>Job Metrics Collection</strong> - Aggregates backup job statistics by type, policy, and status</li>
 <li><strong>Storage Monitoring</strong> - Tracks storage unit capacity (free/used bytes) for disk-based storage</li>
+<li><strong>Multi-Site</strong> - Scrape multiple NetBackup primary servers from one exporter, with every metric labelled by <code>site</code> (background snapshot collection)</li>
 <li><strong>Prometheus Integration</strong> - Native Prometheus metrics exposition via HTTP endpoint</li>
 <li><strong>OpenTelemetry Tracing</strong> - Optional distributed tracing for performance analysis and troubleshooting</li>
-<li><strong>Multi-Version API Support</strong> - Automatic detection of NetBackup API versions (3.0, 12.0, 13.0)</li>
+<li><strong>Multi-Version API Support</strong> - Automatic detection of NetBackup API versions (14.0, 13.0, 12.0, 10.0)</li>
 <li><strong>Health Checks</strong> - Built-in <code>/health</code> endpoint for monitoring exporter status</li>
 <li><strong>Graceful Shutdown</strong> - Proper signal handling with configurable shutdown timeout</li>
 <li><strong>Security</strong> - Configurable TLS verification, API key masking in logs</li>
@@ -1246,7 +1247,12 @@
 </thead>
 <tbody>
 <tr>
-<td>11.0+</td>
+<td>11.2</td>
+<td>14.0</td>
+<td>Fully Supported</td>
+</tr>
+<tr>
+<td>11.0 - 11.1</td>
 <td>13.0</td>
 <td>Fully Supported</td>
 </tr>
@@ -1257,12 +1263,12 @@
 </tr>
 <tr>
 <td>10.0 - 10.4</td>
-<td>3.0</td>
-<td>Legacy Support</td>
+<td>10.0</td>
+<td>Fully Supported</td>
 </tr>
 </tbody>
 </table>
-<p>The exporter automatically detects the highest supported API version (13.0 -&gt; 12.0 -&gt; 3.0).</p>
+<p>The exporter automatically detects the highest supported API version (14.0 -&gt; 13.0 -&gt; 12.0 -&gt; 10.0).</p>
 <h2 id="metrics-at-a-glance">Metrics at a Glance</h2>
 <table>
 <thead>

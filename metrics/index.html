@@ -1312,6 +1312,13 @@
 
 
 <h1 id="metrics-reference">Metrics Reference</h1>
+<div class="admonition info">
+<p class="admonition-title">The <code>site</code> label</p>
+<p><strong>Every metric below also carries a <code>site</code> label</strong> — its first label — identifying the
+NetBackup primary it came from. Single-site deployments have one <code>site</code> value; a
+<code>nbuservers:</code> list produces one per configured site. The per-metric tables list only the
+<em>additional</em> labels, so a <code>—</code> in the Labels column means the series carries <code>site</code> only.</p>
+</div>
 <h2 id="job-metrics">Job Metrics</h2>
 <table>
 <thead>
@@ -1521,7 +1528,7 @@ added.</p>
 <tr>
 <td><code>nbu_api_version</code></td>
 <td><code>version</code></td>
-<td>Currently active NetBackup API version (14.0, 13.0, 12.0, or 3.0)</td>
+<td>Currently active NetBackup API version (14.0, 13.0, 12.0, or 10.0)</td>
 </tr>
 <tr>
 <td><code>nbu_response_time_ms</code></td>
@@ -1541,6 +1548,8 @@ added.</p>
 <li><strong>Storage</strong>: <code>name|type|size</code> (e.g., "pool1|AdvancedDisk|free")</li>
 <li><strong>Jobs</strong>: <code>action|policy_type|status</code> (e.g., "BACKUP|Standard|0")</li>
 </ul>
+<p>The <code>site</code> label is prepended at emission time (it is not part of these internal keys), so every
+emitted series is <code>site</code> followed by the labels above.</p>
 <h2 id="prometheus-configuration">Prometheus Configuration</h2>
 <p>Add to your <code>prometheus.yml</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">scrape_configs</span><span class="p">:</span>

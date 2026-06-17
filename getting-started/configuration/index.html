@@ -429,6 +429,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#multiple-sites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Sites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#environment-variables-env-loading" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1148,6 +1159,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#multiple-sites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Sites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#environment-variables-env-loading" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1243,6 +1265,40 @@
 <p class="admonition-title">Warning</p>
 <p>Never commit API keys to version control. Use environment variables or secure secret management.</p>
 </div>
+<h2 id="multiple-sites">Multiple Sites</h2>
+<p>To monitor more than one NetBackup primary server from a single exporter, replace the single
+<code>nbuserver:</code> block with a <code>nbuservers:</code> list — one entry per site, each with a <strong>required, unique
+<code>site</code></strong>. Every metric is then labelled with its <code>site</code>, and a background loop collects all sites
+on <code>server.collectionInterval</code> (default <code>5m</code>), so backend API load is decoupled from Prometheus
+scrape frequency.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">server</span><span class="p">:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0.0.0.0&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;9440&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/metrics&quot;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">scrapingInterval</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1h&quot;</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">collectionInterval</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;5m&quot;</span><span class="w">   </span><span class="c1"># how often every site is polled (default 5m)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">logName</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;log/nbu-exporter.log&quot;</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="nt">nbuservers</span><span class="p">:</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">site</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;paris&quot;</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">      </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https&quot;</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">      </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/netbackup&quot;</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">      </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;nbu-paris.my.domain&quot;</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1556&quot;</span>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">      </span><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;13.0&quot;</span><span class="w">        </span><span class="c1"># optional; omit to auto-detect</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">      </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;your-paris-api-key&quot;</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">      </span><span class="nt">insecureSkipVerify</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">site</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;lyon&quot;</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">      </span><span class="nt">scheme</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https&quot;</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">      </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/netbackup&quot;</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">      </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;nbu-lyon.my.domain&quot;</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1556&quot;</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">      </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;your-lyon-api-key&quot;</span>
+</code></pre></div>
+<p>An unreachable site reports only <code>nbu_up{site="..."}=0</code> and never affects the others. A legacy
+single <code>nbuserver:</code> block is automatically mapped to a one-entry list (with <code>site</code> defaulting to
+the host), so existing single-site configurations keep working unchanged. See
+<a href="../../config-examples/config-multisite.yaml"><code>config-multisite.yaml</code></a>.</p>
 <h2 id="environment-variables-env-loading">Environment Variables / .env loading</h2>
 <p>The <code>host</code> and <code>apiKey</code> fields in the <code>nbuserver</code> section support <code>${VAR}</code> interpolation.
 At startup the exporter expands every <code>${VAR}</code> reference and fails loudly if a variable is not set.</p>
@@ -1252,26 +1308,26 @@ directory as <code>config.yaml</code>. Already-set environment variables always 
 never shadow real env/secret injection.</p>
 <p><strong>One-server quickstart</strong> — copy <code>.env.example</code> to <code>.env</code>, fill in your values, and reference
 them from <code>config.yaml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># edit .env — set NBU1_HOSTNAME and NBU1_APIKEY</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># edit .env — set NBU1_HOSTNAME and NBU1_APIKEY</span>
 </code></pre></div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">nbuserver</span><span class="p">:</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU1_HOSTNAME}&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU1_APIKEY}&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">nbuserver</span><span class="p">:</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU1_HOSTNAME}&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU1_APIKEY}&quot;</span>
 </code></pre></div>
 <p>The <code>NBU1_*</code> variables are passed into the container by <code>docker-compose.yml</code> from the <code>.env</code>
 file automatically.</p>
-<p><strong>Multi-server</strong> — <code>config.yaml</code> is the source of truth. Add one <code>nbuserver</code> entry per cluster
-and supply literal values or your own env references:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Cluster A</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">nbuserver</span><span class="p">:</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;nbu-a.example.com&quot;</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;literal-key-a&quot;</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="c1"># Cluster B (env-interpolated)</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nt">nbuserver</span><span class="p">:</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU_B_HOST}&quot;</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU_B_KEY}&quot;</span>
+<p><strong>Multi-site</strong> — use the <code>nbuservers:</code> list (see <a href="#multiple-sites">Multiple Sites</a> above). Each
+entry's <code>host</code> and <code>apiKey</code> support the same <code>${VAR}</code> interpolation:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">nbuservers</span><span class="p">:</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">site</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;paris&quot;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU_PARIS_HOST}&quot;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU_PARIS_KEY}&quot;</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="c1"># ...</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">site</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;lyon&quot;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU_LYON_HOST}&quot;</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="nt">apiKey</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${NBU_LYON_KEY}&quot;</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">    </span><span class="c1"># ...</span>
 </code></pre></div>
 <p>The <code>.env</code> / <code>NBU1_*</code> naming is a single-server convenience; there is no limit on variable names.</p>
 <h2 id="server-section">Server Section</h2>
@@ -1307,7 +1363,13 @@ and supply literal values or your own env references:</p>
 <td><code>scrapingInterval</code></td>
 <td>duration</td>
 <td>Yes</td>
-<td>Time window for job collection (e.g., "1h", "30m")</td>
+<td>Job lookback window per collection (e.g., "1h", "30m")</td>
+</tr>
+<tr>
+<td><code>collectionInterval</code></td>
+<td>duration</td>
+<td>No</td>
+<td>Background poll interval for every site (default "5m"). Effective job window = max(scrapingInterval, collectionInterval).</td>
 </tr>
 <tr>
 <td><code>logName</code></td>
@@ -1318,6 +1380,8 @@ and supply literal values or your own env references:</p>
 </tbody>
 </table>
 <h2 id="nbu-server-section">NBU Server Section</h2>
+<p>For multiple servers, use a <code>nbuservers:</code> list instead of this single block — each entry takes
+the same fields plus a required, unique <code>site</code> (see <a href="#multiple-sites">Multiple Sites</a>).</p>
 <table>
 <thead>
 <tr>
@@ -1368,7 +1432,7 @@ and supply literal values or your own env references:</p>
 <td><code>apiVersion</code></td>
 <td>string</td>
 <td>No</td>
-<td>API version (13.0, 12.0, or 3.0). Auto-detects if omitted.</td>
+<td>API version (14.0, 13.0, 12.0, or 10.0). Auto-detects if omitted.</td>
 </tr>
 <tr>
 <td><code>apiKey</code></td>
