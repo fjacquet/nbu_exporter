@@ -83,18 +83,18 @@ var (
 //
 //	server.Shutdown()
 type Server struct {
-	cfg              *models.SafeConfig     // Thread-safe config wrapper
-	configPath       string                 // Path to config file (for reload)
-	apiTrace         bool                   // Log NetBackup API response bodies (--trace flag)
-	httpSrv          *http.Server           // HTTP server instance
-	registry         *prometheus.Registry   // Prometheus metrics registry
-	telemetryManager *telemetry.Manager     // OpenTelemetry telemetry manager (nil if disabled)
-	collector        *exporter.NbuCollector // Snapshot-reading collector (for cleanup)
+	cfg              *models.SafeConfig       // Thread-safe config wrapper
+	configPath       string                   // Path to config file (for reload)
+	apiTrace         bool                     // Log NetBackup API response bodies (--trace flag)
+	httpSrv          *http.Server             // HTTP server instance
+	registry         *prometheus.Registry     // Prometheus metrics registry
+	telemetryManager *telemetry.Manager       // OpenTelemetry telemetry manager (nil if disabled)
+	collector        *exporter.NbuCollector   // Snapshot-reading collector (for cleanup)
 	store            *exporter.SnapshotStore  // Latest per-site snapshot, published by the loop
 	loop             *exporter.CollectionLoop // Background per-site collection loop
 	loopCancel       context.CancelFunc       // Cancels the collection loop on shutdown
 	loopDone         chan struct{}            // Closed when the loop goroutine returns
-	configWatcher    *fsnotify.Watcher      // File watcher for config reload (for cleanup)
+	configWatcher    *fsnotify.Watcher        // File watcher for config reload (for cleanup)
 	// serverErrChan receives HTTP server errors. It is buffered (capacity 1)
 	// to ensure the goroutine can send an error even if the main select
 	// hasn't started listening yet (race between Start() return and select).
