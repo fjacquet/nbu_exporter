@@ -77,6 +77,29 @@ This directory contains example configuration files for different NetBackup depl
 
 ---
 
+### 5. Multi-Site (multiple primary servers)
+
+**File:** `config-multisite.yaml`
+
+**Use when:**
+- You run more than one NetBackup primary server (typically one per site)
+- You want a single exporter instance to scrape them all
+- You want every metric labelled with its `site`
+
+**Features:**
+- A `nbuservers:` list with one entry per server, each with a unique `site`
+- A background collection loop polls every site on `collectionInterval`
+  (default 5m); scrapes read the latest snapshot, so backend API load is
+  decoupled from scrape frequency
+- Every metric series carries a `site` label (first label)
+- A down site shows only `nbu_up{site="..."}=0` and never affects the others
+- The legacy single `nbuserver:` block still works (auto-mapped to a one-entry
+  list whose `site` defaults to the host)
+
+**Best for:** Two-or-more-primary deployments; per-site dashboards and alerts
+
+---
+
 ## Quick Start
 
 ### Step 1: Choose Your Configuration
@@ -89,6 +112,7 @@ Select the configuration file that matches your NetBackup version:
 | 10.5              | `config-netbackup-10.5.yaml` | 12.0 |
 | 10.0-10.4         | `config-netbackup-10.0.yaml` | 10.0 |
 | Any/Mixed         | `config-auto-detect.yaml` | Auto |
+| Multiple servers  | `config-multisite.yaml` | Per-site |
 
 ### Step 2: Copy and Customize
 
@@ -127,7 +151,8 @@ nbuserver:
 | `host` | string | Yes | - | Server bind address (e.g., "localhost", "0.0.0.0") |
 | `port` | string | Yes | - | Server port (1-65535, typically "9440") |
 | `uri` | string | Yes | - | Metrics endpoint path (typically "/metrics") |
-| `scrapingInterval` | duration | Yes | - | Time window for job collection (e.g., "30m", "1h", "2h") |
+| `scrapingInterval` | duration | Yes | - | Job lookback window per collection (e.g., "30m", "1h", "2h") |
+| `collectionInterval` | duration | No | "5m" | How often the background loop polls every site. Backend API load is driven by this, not by scrape frequency. The effective job lookback window is `max(scrapingInterval, collectionInterval)`. |
 | `logName` | string | Yes | - | Log file path (e.g., "log/nbu-exporter.log") |
 
 ### NBU Server Section
@@ -144,6 +169,21 @@ nbuserver:
 | `apiKey` | string | Yes | - | NetBackup API key (generate from NetBackup UI) |
 | `contentType` | string | Yes | - | API content type header |
 | `insecureSkipVerify` | bool | No | false | Skip TLS verification (not recommended for production) |
+
+### NBU Servers Section (multi-site)
+
+For multiple primary servers, use a `nbuservers:` list **instead of** the single
+`nbuserver:` block. Each entry takes the same fields as the NBU Server section
+above, plus a required, unique `site`:
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `site` | string | Yes | - | Unique site identifier; emitted as the `site` label on every metric from this server |
+| *(all NBU Server fields)* | - | - | - | Same as the single-server section above |
+
+A legacy single `nbuserver:` block is automatically promoted to a one-entry
+`nbuservers:` list whose `site` defaults to the host, so existing single-site
+configurations keep working unchanged. See `config-multisite.yaml`.
 
 ---
 

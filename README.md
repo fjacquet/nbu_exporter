@@ -14,6 +14,8 @@ A Prometheus exporter that collects backup job statistics and storage metrics fr
 
 - Job metrics collection by type, policy, and status
 - Storage unit capacity monitoring (free/used bytes)
+- Multi-site: scrape several NetBackup primaries from one exporter, labelled by `site`
+  (background snapshot collection loop; see [`config-multisite.yaml`](docs/config-examples/config-multisite.yaml))
 - Automatic NetBackup API version detection (14.0, 13.0, 12.0, 10.0)
 - Optional OpenTelemetry distributed tracing
 - Hot config reload via SIGHUP / file watcher

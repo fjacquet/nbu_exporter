@@ -1,6 +1,6 @@
 # ADR-0004: Multi-site support via the snapshot collection model and a `site` identity label
 
-- **Status:** Accepted (implementation pending — tracked by the Feature 1 spec/plan)
+- **Status:** Accepted (implemented)
 - **Date:** 2026-06-17
 - **Deciders:** Frederic Jacquet
 - **Related:** `docs/superpowers/specs/2026-06-17-feature1-multisite-design.md`,
