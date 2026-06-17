@@ -67,7 +67,41 @@ func driveState(s string) string { return strings.TrimPrefix(s, "DRIVE_STATUS_")
 
 func (c *tapeCollector) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
 	c.collectDrives(ctx, ch)
+	c.collectMedia(ctx, ch)
 	return nil
+}
+
+func (c *tapeCollector) collectMedia(ctx context.Context, ch chan<- prometheus.Metric) {
+	type key struct{ mediaType, status string }
+	counts := map[key]float64{}
+	offset := 0
+	for page := 0; page < maxMediaPages; page++ {
+		url := c.cfg.BuildURL(tapeMediaPath, map[string]string{
+			QueryParamLimit:  pageLimit,
+			QueryParamOffset: strconv.Itoa(offset),
+		})
+		var resp models.TapeMedia
+		if err := c.client.FetchData(ctx, url, &resp); err != nil {
+			log.WithError(err).WithField("site", c.site).Warn("tape: tape-media fetch failed; skipping")
+			return
+		}
+		if len(resp.Data) == 0 { // empty page: no more rows
+			break
+		}
+		for _, d := range resp.Data {
+			counts[key{d.Attributes.MediaType, d.Attributes.MediaStatus}]++
+		}
+		offset += len(resp.Data) // advance by rows returned; loop ends on the next empty page
+		if ctx.Err() != nil {
+			break
+		}
+		if page == maxMediaPages-1 {
+			log.WithField("site", c.site).Warnf("tape: tape-media pagination hit the %d-page cap; counts may be truncated", maxMediaPages)
+		}
+	}
+	for k, v := range counts {
+		ch <- prometheus.MustNewConstMetric(c.mediaCount, prometheus.GaugeValue, v, c.site, k.mediaType, k.status)
+	}
 }
 
 func (c *tapeCollector) collectDrives(ctx context.Context, ch chan<- prometheus.Metric) {

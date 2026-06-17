@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	neturl "net/url"
 	"os"
 	"strings"
 	"testing"
@@ -14,17 +15,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// tapeRoutedClient is a NetBackupClient mock that serves a fixture per endpoint
-// path. A path mapped to "" yields an error (to exercise graceful degradation).
+// tapeRoutedClient is a NetBackupClient mock. byPath serves a fixture per endpoint
+// path substring ("" => return an error, to exercise graceful degradation). byOffset
+// serves paginated fixtures keyed by path substring then page[offset] value; an offset
+// not in the map returns an empty page (which ends the collector's pagination loop).
 type tapeRoutedClient struct {
-	t      *testing.T
-	byPath map[string]string // path substring -> fixture file ("" => return error)
+	t        *testing.T
+	byPath   map[string]string
+	byOffset map[string]map[string]string
 }
 
-func (c *tapeRoutedClient) FetchData(_ context.Context, url string, target interface{}) error {
+func (c *tapeRoutedClient) FetchData(_ context.Context, rawURL string, target interface{}) error {
 	c.t.Helper()
+	for sub, offsets := range c.byOffset {
+		if strings.Contains(rawURL, sub) {
+			u, err := neturl.Parse(rawURL)
+			require.NoError(c.t, err)
+			off := u.Query().Get("page[offset]")
+			if off == "" {
+				off = "0"
+			}
+			fixture, ok := offsets[off]
+			if !ok { // past the last page -> empty result
+				return json.Unmarshal([]byte(`{"data":[]}`), target)
+			}
+			data, err := os.ReadFile(fixture)
+			require.NoError(c.t, err)
+			return json.Unmarshal(data, target)
+		}
+	}
 	for sub, fixture := range c.byPath {
-		if strings.Contains(url, sub) {
+		if strings.Contains(rawURL, sub) {
 			if fixture == "" {
 				return errors.New("endpoint unavailable")
 			}
@@ -33,7 +54,7 @@ func (c *tapeRoutedClient) FetchData(_ context.Context, url string, target inter
 			return json.Unmarshal(data, target)
 		}
 	}
-	c.t.Fatalf("unexpected URL: %s", url)
+	c.t.Fatalf("unexpected URL: %s", rawURL)
 	return nil
 }
 func (c *tapeRoutedClient) DetectAPIVersion(context.Context) (string, error) {
@@ -71,4 +92,36 @@ func TestTapeCollector_Drives(t *testing.T) {
 	require.Equal(t, float64(2), driveCounts["UP|DT_HCART|TLD"])
 	require.Equal(t, float64(1), driveCounts["DOWN|DT_HCART|TLD"])
 	require.Equal(t, 3, infoCount, "one nbu_tape_drive_info per drive")
+}
+
+func TestTapeCollector_MediaPaginated(t *testing.T) {
+	client := &tapeRoutedClient{
+		t: t,
+		byPath: map[string]string{
+			"/storage/drives":              "",
+			"/storage/robots-device-hosts": "",
+		},
+		byOffset: map[string]map[string]string{
+			"/storage/tape-media": {
+				"0": "../../testdata/api-versions/tape-media-page1.json",
+				"2": "../../testdata/api-versions/tape-media-page2.json",
+			},
+		},
+	}
+	c := newTapeCollector(client, testConfig(), "site1")
+	ch := make(chan prometheus.Metric, 64)
+	require.NoError(t, c.Collect(context.Background(), ch))
+	close(ch)
+
+	media := map[string]float64{} // "media_type|status" -> value
+	for m := range ch {
+		var d dto.Metric
+		require.NoError(t, m.Write(&d))
+		if strings.Contains(m.Desc().String(), "nbu_tape_media_count") {
+			require.Equal(t, "site1", labelValue(&d, "site"))
+			media[labelValue(&d, "media_type")+"|"+labelValue(&d, "status")] = d.GetGauge().GetValue()
+		}
+	}
+	require.Equal(t, float64(2), media["HCART|ACTIVE"], "both pages aggregated")
+	require.Equal(t, float64(1), media["HCART|FROZEN"])
 }
