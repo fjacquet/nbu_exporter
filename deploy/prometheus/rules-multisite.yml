@@ -1,0 +1,32 @@
+# Optional Prometheus alerting rules — inter-site backup divergence.
+#
+# Only meaningful with a multi-target deployment: an nbuservers[] config (or several
+# exporters) producing distinct `site` labels. Builds on the core nbu_jobs_bytes metric.
+# Load alongside nbu.rules.yml:
+#
+#   rule_files:
+#     - /etc/prometheus/rules/nbu.rules.yml
+#     - /etc/prometheus/rules/rules-multisite.yml
+#
+# Validate:  make check-rules
+#
+# `for: 1h` rides out short-lived schedule skew between sites (a site whose nightly
+# window simply starts later) before paging. Tune the 30% threshold to your topology.
+groups:
+  - name: nbu_multisite
+    rules:
+      # A site backing up far less than the cross-site average can signal a
+      # connectivity, scheduling, or configuration problem at that site.
+      - alert: NbuInterSiteDivergence
+        expr: |
+          (
+            sum by (site) (nbu_jobs_bytes{action="BACKUP"})
+            / on() group_left()
+            avg(sum by (site) (nbu_jobs_bytes{action="BACKUP"}))
+          ) < 0.3
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backup volume on site {{ $labels.site }} is unusually low"
+          description: "Site {{ $labels.site }} backed up less than 30% of the cross-site average BACKUP volume. Check connectivity and job scheduling."

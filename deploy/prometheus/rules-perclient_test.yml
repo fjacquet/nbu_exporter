@@ -35,3 +35,81 @@ tests:
             exp_annotations:
               summary: "Client clientA has no successful backup in over 48h (site paris)"
               description: "Client clientA on site paris has not completed a successful backup in over 48 hours."
+
+  # NbuClientNoRecentTapeCopy: last successful DUPLICATION (tape copy) older than 26h.
+  - interval: 5m
+    input_series:
+      - series: 'nbu_client_last_job_success_seconds{site="paris",client="db01",policy="gold",action="DUPLICATION"}'
+        values: '0x360'
+    alert_rule_test:
+      # 24h elapsed (< 26h threshold) -> silent.
+      - eval_time: 24h
+        alertname: NbuClientNoRecentTapeCopy
+        exp_alerts: []
+      # 27h elapsed (> 26h threshold), past for:5m -> fires.
+      - eval_time: 27h
+        alertname: NbuClientNoRecentTapeCopy
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              site: paris
+              client: db01
+              policy: gold
+              action: DUPLICATION
+            exp_annotations:
+              summary: "No recent tape copy for client db01 (policy gold, site paris)"
+              description: "Client db01 (policy gold) on site paris has had no successful tape duplication (DUPLICATION) job in over 26 hours. Verify the Storage Lifecycle Policy is running."
+
+  # NbuClientNoRecentReplication: last successful IMPORT (AIR replication) older than 28h.
+  - interval: 5m
+    input_series:
+      - series: 'nbu_client_last_job_success_seconds{site="paris",client="db01",policy="gold",action="IMPORT"}'
+        values: '0x420'
+    alert_rule_test:
+      # 27h elapsed (< 28h threshold) -> silent.
+      - eval_time: 27h
+        alertname: NbuClientNoRecentReplication
+        exp_alerts: []
+      # 29h elapsed (> 28h threshold), past for:5m -> fires.
+      - eval_time: 29h
+        alertname: NbuClientNoRecentReplication
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              site: paris
+              client: db01
+              policy: gold
+              action: IMPORT
+            exp_annotations:
+              summary: "No recent replication for client db01 (policy gold, site paris)"
+              description: "Client db01 (policy gold) on site paris has had no successful replication (IMPORT) job in over 28 hours. Check inter-site connectivity and Auto Image Replication."
+
+  # NbuClientBackupFailureRate: >20% of a client's BACKUP jobs failed in the window.
+  - interval: 1m
+    input_series:
+      # db01: 3 failed / 10 total = 30% -> fires.
+      - series: 'nbu_client_jobs_count{site="paris",client="db01",action="BACKUP",status="0"}'
+        values: '7x40'
+      - series: 'nbu_client_jobs_count{site="paris",client="db01",action="BACKUP",status="1"}'
+        values: '3x40'
+      # app02: 1 failed / 10 total = 10% -> silent (proves per-client selectivity).
+      - series: 'nbu_client_jobs_count{site="paris",client="app02",action="BACKUP",status="0"}'
+        values: '9x40'
+      - series: 'nbu_client_jobs_count{site="paris",client="app02",action="BACKUP",status="1"}'
+        values: '1x40'
+    alert_rule_test:
+      # Past for:30m -> only db01 (30%) fires; app02 (10%) stays silent.
+      - eval_time: 35m
+        alertname: NbuClientBackupFailureRate
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              site: paris
+              client: db01
+            exp_annotations:
+              summary: "High backup failure rate for client db01 (site paris)"
+              description: "More than 20% of BACKUP jobs for client db01 on site paris failed in the current scraping window."
+      # Before the 30m hold window -> no alert yet.
+      - eval_time: 20m
+        alertname: NbuClientBackupFailureRate
+        exp_alerts: []
