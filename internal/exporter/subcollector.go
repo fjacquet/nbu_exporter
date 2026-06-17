@@ -27,6 +27,9 @@ func buildSubCollectorsFor(client NetBackupClient, cfg models.Config, site strin
 	if cfg.Collectors.SLO.Enabled {
 		subs = append(subs, newSLOCollector(client, cfg, site))
 	}
+	if cfg.Collectors.Tape.Enabled {
+		subs = append(subs, newTapeCollector(client, cfg, site))
+	}
 	return subs
 }
 
