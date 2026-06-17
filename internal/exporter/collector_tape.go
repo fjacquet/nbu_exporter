@@ -15,6 +15,7 @@ const (
 	tapeMediaPath = "/storage/tape-media"
 	robotHostPath = "/storage/robots-device-hosts"
 	maxMediaPages = 1000 // safety cap so a backend ignoring page[offset] cannot loop forever
+	pageLimitInt  = 100  // int form of pageLimit ("100"), for full-page truncation checks
 )
 
 // tapeCollector is an opt-in sub-collector for tape/drive health. It reads
@@ -79,6 +80,11 @@ func (c *tapeCollector) collectRobotHosts(ctx context.Context, ch chan<- prometh
 		log.WithError(err).WithField("site", c.site).Warn("tape: robots-device-hosts fetch failed; skipping")
 		return
 	}
+	// This endpoint returns a flat list (no pagination). If it fills a full page the
+	// count may be truncated — surface it rather than silently under-reporting.
+	if len(resp.Data) >= pageLimitInt {
+		log.WithField("site", c.site).Warnf("tape: robots-device-hosts returned a full page (%s); count may be truncated", pageLimit)
+	}
 	ch <- prometheus.MustNewConstMetric(c.robotHostsCount, prometheus.GaugeValue, float64(len(resp.Data)), c.site)
 }
 
@@ -93,8 +99,10 @@ func (c *tapeCollector) collectMedia(ctx context.Context, ch chan<- prometheus.M
 		})
 		var resp models.TapeMedia
 		if err := c.client.FetchData(ctx, url, &resp); err != nil {
-			log.WithError(err).WithField("site", c.site).Warn("tape: tape-media fetch failed; skipping")
-			return
+			// Break (not return) so counts already aggregated from earlier pages are
+			// still emitted — degraded-but-partial rather than all-or-nothing.
+			log.WithError(err).WithField("site", c.site).Warn("tape: tape-media fetch failed; emitting partial counts")
+			break
 		}
 		if len(resp.Data) == 0 { // empty page: no more rows
 			break

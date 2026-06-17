@@ -39,6 +39,9 @@ func (c *tapeRoutedClient) FetchData(_ context.Context, rawURL string, target in
 			if !ok { // past the last page -> empty result
 				return json.Unmarshal([]byte(`{"data":[]}`), target)
 			}
+			if fixture == "" { // simulate a fetch error at this offset (mid-pagination)
+				return errors.New("endpoint unavailable")
+			}
 			data, err := os.ReadFile(fixture)
 			require.NoError(c.t, err)
 			return json.Unmarshal(data, target)
@@ -178,4 +181,36 @@ func TestBuildSubCollectorsFor_Tape(t *testing.T) {
 		}
 	}
 	require.True(t, found, "tape collector should be built when collectors.tape.enabled")
+}
+
+// TestTapeCollector_MediaPartialOnError verifies that a mid-pagination fetch error
+// still emits the counts accumulated from earlier pages (degraded-but-partial).
+func TestTapeCollector_MediaPartialOnError(t *testing.T) {
+	client := &tapeRoutedClient{
+		t: t,
+		byPath: map[string]string{
+			"/storage/drives":              "",
+			"/storage/robots-device-hosts": "",
+		},
+		byOffset: map[string]map[string]string{
+			"/storage/tape-media": {
+				"0": "../../testdata/api-versions/tape-media-page1.json",
+				"2": "", // page 2 errors mid-pagination
+			},
+		},
+	}
+	c := newTapeCollector(client, testConfig(), "site1")
+	ch := make(chan prometheus.Metric, 32)
+	require.NoError(t, c.Collect(context.Background(), ch))
+	close(ch)
+
+	media := map[string]float64{}
+	for m := range ch {
+		var d dto.Metric
+		require.NoError(t, m.Write(&d))
+		if strings.Contains(m.Desc().String(), "nbu_tape_media_count") {
+			media[labelValue(&d, "media_type")+"|"+labelValue(&d, "status")] = d.GetGauge().GetValue()
+		}
+	}
+	require.Equal(t, float64(2), media["HCART|ACTIVE"], "page-1 counts emitted despite the page-2 error")
 }
