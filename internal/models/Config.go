@@ -125,6 +125,7 @@ type Config struct {
 		Malware CollectorToggle `yaml:"malware"`
 		Catalog CollectorToggle `yaml:"catalog"`
 		SLO     CollectorToggle `yaml:"slo"`
+		Tape    CollectorToggle `yaml:"tape"`
 	} `yaml:"collectors"`
 }
 

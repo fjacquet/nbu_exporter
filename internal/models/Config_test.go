@@ -1898,6 +1898,13 @@ func TestConfigNbuServersRequireUniqueSite(t *testing.T) {
 	}
 }
 
+func TestCollectorsTapeToggleDefaultsDisabled(t *testing.T) {
+	cfg := &Config{}
+	if cfg.Collectors.Tape.Enabled {
+		t.Error("collectors.tape should default to disabled")
+	}
+}
+
 // TestConfigCollectionIntervalDefault verifies that SetDefaults populates
 // Server.CollectionInterval with "5m" when not set.
 func TestConfigCollectionIntervalDefault(t *testing.T) {
