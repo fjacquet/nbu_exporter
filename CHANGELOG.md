@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Per-client lifecycle metrics & three new dashboards** (reconciled from PR #39, thanks
+  **@cbijon**): per-client **lifecycle** metrics behind the `collectors.perClient` opt-in +
+  allowlist — `nbu_client_jobs_count{client,action,status}` and
+  `nbu_client_last_job_success_seconds{client,policy,action}` covering the full
+  BACKUP → DUPLICATION → IMPORT lifecycle, derived from the main jobs scrape and bounded to
+  allowlisted clients — plus three generated dashboards on the same `site`-wired generator:
+  **Lifecycle** (`nbu-lifecycle`), **Tape & Disk Pools** (`nbu-tape`), and **Multi-site**
+  (`nbu-multisite`). #39's tape metrics were folded into the existing `collectors.tape` as a
+  superset (two extra endpoints — see Tape metrics below), and its richer tape label schema was
+  adopted (raw `DRIVE_STATUS_*` `status`; media keyed by `pool`/`media_type`/`robot_type`).
 - **Multi-site Grafana dashboards**: every generated dashboard now carries a `site` template
   variable (multi-value + "All", sourced from `label_values(nbu_up, site)`) as the first selector,
   and every panel query is filtered by `site=~"$site"` with `site` threaded into each `by (…)`
@@ -18,20 +28,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `grafana/gen/` generator (`panels.with_site`), and `build_dashboards.py` now fails the build if any
   dashboard is missing the `site` selector or leaves a query unfiltered. See the Multi-Site
   Dashboards design spec.
-- **Alerting rules** (`deploy/prometheus/`): two optional, site-aware Prometheus rule files —
-  `rules-perclient.yml` (`NbuClientBackupStale` >25h warning, `NbuClientBackupCritical` >48h
-  critical) and `rules-tape.yml` (`NbuTapeDriveDown` / `NbuTapeDriveDisabled` per site) — each with
-  promtool unit tests, plus a `make check-rules` target. The generic `nbu.rules.yml` is unchanged.
+- **Alerting rules** (`deploy/prometheus/`): three optional, site-aware Prometheus rule files —
+  `rules-perclient.yml` (`NbuClientBackupStale` >25h, `NbuClientBackupCritical` >48h,
+  `NbuClientNoRecentTapeCopy` >26h, `NbuClientNoRecentReplication` >28h,
+  `NbuClientBackupFailureRate` >20%), `rules-tape.yml` (`NbuTapeDriveDown` / `NbuTapeDriveDisabled`,
+  `NbuTapePoolScratchLow`, `NbuDiskPoolVolumeDegraded`), and `rules-multisite.yml`
+  (`NbuInterSiteDivergence`) — each with promtool unit tests, plus a `make check-rules` target. The
+  generic `nbu.rules.yml` is unchanged.
 - **Per-client last-successful-backup metric** (opt-in `collectors.perClient`, default off):
   `nbu_client_last_successful_backup_timestamp_seconds{site,client}` for each allowlisted client,
   from a targeted `/admin/jobs` query (latest `status=0` BACKUP, `sort=-endTime`, `page[limit]=1`).
   An exact-name allowlist bounds the `client` cardinality; an empty allowlist emits nothing. Enables
   a "no backup in N hours" alert. See the Feature 3 design spec.
 - **Tape / drive metrics** (opt-in `collectors.tape`, default off): `nbu_tape_drives_count`
-  (by state/drive_type/robot_type), `nbu_tape_drive_info` (per drive), `nbu_tape_media_count`
-  (by media_type/status), and `nbu_tape_robot_device_hosts`, collected over REST — drives on
-  NBU 10.0+, tape-media + robot device hosts on 10.5+ — with per-endpoint graceful degradation
-  and the `site` label. No CLI shell-out. See the Feature 2 design spec.
+  (by drive_type/robot_type/raw `status`), `nbu_tape_drive_info` (per drive), `nbu_tape_media_count`
+  (by pool/media_type/robot_type), `nbu_tape_robot_device_hosts`, plus `nbu_tape_pool_partially_full`
+  (`/storage/tape-volume-pools`) and `nbu_disk_pool_volume_count` (`/storage/disk-pools`), collected
+  over REST — drives on NBU 10.0+, the rest on 10.5+ (API v12.0+) — with per-endpoint graceful
+  degradation and the `site` label. No CLI shell-out. See the Feature 2 design spec.
 - **Multi-site support**: a single exporter can scrape multiple NetBackup primary servers via
   a `nbuservers:` list, each with a unique `site`; every metric series carries a `site` label
   (first label). Collection adopts the family **snapshot model** — a background loop polls

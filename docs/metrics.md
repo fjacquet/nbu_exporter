@@ -46,7 +46,8 @@ only the ones your appliance and account permissions support. They are graceful:
 endpoint is logged and skipped without affecting core storage/jobs metrics or flipping
 `nbu_up` to `0`. The alerts/malware/catalog/SLO collectors require NetBackup 11.2 (API
 `version=14.0`); the **`tape`** collector works on older releases too (`/storage/drives` on
-NBU 10.0+, `/storage/tape-media` and `/storage/robots-device-hosts` on 10.5+).
+NBU 10.0+; `/storage/tape-media`, `/storage/robots-device-hosts`, `/storage/tape-volume-pools`
+and `/storage/disk-pools` on 10.5+).
 
 | Metric | Type | Labels | Source endpoint | Source API attribute |
 |--------|------|--------|-----------------|----------------------|
@@ -56,11 +57,15 @@ NBU 10.0+, `/storage/tape-media` and `/storage/robots-device-hosts` on 10.5+).
 | `nbu_malware_scan_count` | Gauge | `status` | `GET /malware/latest-scan-results` | Results grouped by `scanState` |
 | `nbu_catalog_images_count` | Gauge | `malware_status`, `anomaly_status` | `GET /catalog/images` | `meta.pagination.count` per filter combination |
 | `nbu_slo_count` | Gauge | — | `GET /servicecatalog/slos` | Total number of `data[]` entries |
-| `nbu_tape_drives_count` | Gauge | `state`, `drive_type`, `robot_type` | `GET /storage/drives` | Drives grouped by `driveStatus`/`driveType`/`robotType` |
-| `nbu_tape_drive_info` | Gauge | `drive_name`, `media_server`, `drive_type`, `robot_number`, `state` | `GET /storage/drives` | One series per drive (value always `1`) |
-| `nbu_tape_media_count` | Gauge | `media_type`, `status` | `GET /storage/tape-media` | Tape volumes grouped by `mediaType` + `mediaStatus` |
+| `nbu_tape_drives_count` | Gauge | `drive_type`, `robot_type`, `status` | `GET /storage/drives` | Drives grouped by `driveType`/`robotType`/`driveStatus` (raw `DRIVE_STATUS_*`) |
+| `nbu_tape_drive_info` | Gauge | `drive_name`, `media_server`, `drive_type`, `robot_number`, `status` | `GET /storage/drives` | One series per drive (value always `1`) |
+| `nbu_tape_media_count` | Gauge | `pool`, `media_type`, `robot_type` | `GET /storage/tape-media` | Tape volumes grouped by volume pool, `mediaType` and robot type |
 | `nbu_tape_robot_device_hosts` | Gauge | — | `GET /storage/robots-device-hosts` | Count of device hosts with robots configured |
+| `nbu_tape_pool_partially_full` | Gauge | `pool_name`, `pool_type` | `GET /storage/tape-volume-pools` | Partially-full tape volumes per volume pool (API v12.0+) |
+| `nbu_disk_pool_volume_count` | Gauge | `pool_name`, `storage_category`, `state` | `GET /storage/disk-pools` | Disk-pool volumes grouped by pool, storage category and state (API v12.0+) |
 | `nbu_client_last_successful_backup_timestamp_seconds` | Gauge | `client` | `GET /admin/jobs` (per allowlisted client) | `endTime` of the latest `status=0` BACKUP for the client |
+| `nbu_client_jobs_count` | Gauge | `client`, `action`, `status` | `GET /admin/jobs` (main scrape) | Per-allowlisted-client job count by action and status in the scrape window |
+| `nbu_client_last_job_success_seconds` | Gauge | `client`, `policy`, `action` | `GET /admin/jobs` (main scrape) | Unix ts of the last `status=0` job per allowlisted client, policy and lifecycle phase |
 
 Notes on the implemented attributes (these differ from early guesses):
 
@@ -75,19 +80,27 @@ Notes on the implemented attributes (these differ from early guesses):
 - **SLO count** is a single unlabeled gauge. The 11.2 SLO response has no
   per-SLO enforcement-type attribute, so the originally planned
   `enforcement_type` label was dropped.
-- **Tape collector** (`collectors.tape`) is one collector over three endpoints with
-  per-endpoint graceful degradation. Tape media is offset-paginated and aggregated
-  client-side; `robot_type` is read from the per-drive attribute (there is no bulk
-  robot-listing endpoint, so a standalone robot type/count metric is not exposed);
-  `mediaStatus` is a free-form NetBackup status string. `drive_state` is the
-  `driveStatus` value with the `DRIVE_STATUS_` prefix stripped (`UP`/`DOWN`/`MIXED`/`DISABLED`).
+- **Tape collector** (`collectors.tape`) is one collector over five endpoints with
+  per-endpoint graceful degradation. The `tape-volume-pools` and `disk-pools` endpoints are
+  API v12.0+ (NBU 10.5+) and are skipped with a debug log on older releases. Tape media is
+  offset-paginated and aggregated client-side; `robot_type` is read from the per-drive
+  attribute (there is no bulk robot-listing endpoint, so a standalone robot type/count metric
+  is not exposed). The drive `status` label carries the **raw** `driveStatus` enum
+  (`DRIVE_STATUS_UP`/`DRIVE_STATUS_DOWN`/`DRIVE_STATUS_DISABLED`/…) and `nbu_tape_media_count`
+  is keyed by volume `pool`, `media_type` and `robot_type`.
 - **Per-client collector** (`collectors.perClient`) requires an explicit `allowlist` because the
   `client` label is high-cardinality (hundreds of clients) — an **empty allowlist emits nothing**.
   For each allowlisted client it issues one targeted `/admin/jobs` query
   (`filter clientName eq '<c>' and jobType eq 'BACKUP' and status eq 0`, `sort=-endTime`,
-  `page[limit]=1`) and emits that job's `endTime`, so it always reflects the last success with no
-  lookback gap. Feed a "no successful backup in N hours" alert with
+  `page[limit]=1`) and emits that job's `endTime` as
+  `nbu_client_last_successful_backup_timestamp_seconds`, so it always reflects the last success
+  with no lookback gap. Feed a "no successful backup in N hours" alert with
   `time() - nbu_client_last_successful_backup_timestamp_seconds > N*3600`.
+  The same collector also emits two **lifecycle** metrics derived from the main jobs scrape
+  (not a separate query), bucketed to allowlisted clients only: `nbu_client_jobs_count`
+  (job count per `action`/`status`) and `nbu_client_last_job_success_seconds` (last `status=0`
+  timestamp per `policy`/`action`, covering BACKUP → DUPLICATION → IMPORT). The last-success
+  timestamps are cached per site/client/policy/action so they carry forward across scrapes.
 
 ### Enabling the collectors
 
@@ -147,10 +160,13 @@ scrape_configs:
 ```
 
 Alerting rules live in `deploy/prometheus/`: the generic `nbu.rules.yml` (availability,
-staleness, backup-success-rate, storage) plus two **optional** files loaded only if you enabled
-the matching opt-in collector — `rules-perclient.yml` (per-client backup staleness;
-needs `collectors.perClient`) and `rules-tape.yml` (tape drive DOWN/DISABLED; needs
-`collectors.tape`). Load them via `rule_files` and validate with `make check-rules`.
+staleness, backup-success-rate, storage) plus three **optional** files loaded only if you
+enabled the matching opt-in collector (or run multi-target) — `rules-perclient.yml`
+(per-client backup staleness, tape-copy/replication lag, backup failure rate; needs
+`collectors.perClient`), `rules-tape.yml` (tape drive DOWN/DISABLED, low scratch pool,
+degraded disk-pool volume; needs `collectors.tape`), and `rules-multisite.yml` (inter-site
+backup divergence; needs distinct `site` labels). Load them via `rule_files` and validate
+with `make check-rules`.
 
 ## Dashboards
 
@@ -159,7 +175,7 @@ The Grafana dashboards are **generated** by `python3 grafana/build_dashboards.py
 single source of truth and a metric-reference validator fails the build on any
 unknown `nbu_*` name. Regenerate after changing the builders in `grafana/gen/`.
 
-Four focused dashboards live in the `grafana/` directory:
+Seven focused dashboards live in the `grafana/` directory:
 
 | File | uid | Focus |
 |------|-----|-------|
@@ -167,11 +183,18 @@ Four focused dashboards live in the `grafana/` directory:
 | `grafana/nbu-jobs.json` | `nbu-jobs` | Backup outcomes, states, volume, queue, durations, dedup |
 | `grafana/nbu-storage.json` | `nbu-storage` | Capacity utilization, storage units, limits |
 | `grafana/nbu-dataprotection.json` | `nbu-dataprotection` | Alerts, malware scans, catalog posture, SLOs (11.2) |
+| `grafana/nbu-lifecycle.json` | `nbu-lifecycle` | Per-client compliance across BACKUP → DUPLICATION → IMPORT (needs `collectors.perClient`) |
+| `grafana/nbu-tape.json` | `nbu-tape` | Tape drives, media pools, partially-full volumes, disk-pool volumes (needs `collectors.tape`, NBU 10.5+) |
+| `grafana/nbu-multisite.json` | `nbu-multisite` | Cross-site backup volume, replication, and compliance comparison |
 
 The dashboards cross-link to each other via the shared `netbackup` tag (a tag-based
 dashboard-links dropdown) and use the `${datasource}` template variable so they work
-on any server. Jobs adds a `policy_type` variable and Storage adds a `storage_unit`
-variable for per-unit / per-policy filtering.
+on any server. Every dashboard carries a multi-value `site` selector (sourced from
+`label_values(nbu_up, site)`) as its first variable and filters every query by
+`site=~"$site"`, so series from multiple NetBackup primaries neither collapse nor
+double-count; `nbu-multisite` additionally groups `by (site)` to compare sites side by
+side. Jobs adds a `policy_type` variable, Storage adds a `storage_unit` variable, and
+Lifecycle / Multi-site add a `client` filter for per-unit / per-policy / per-client views.
 
 The legacy "NBU Statistics" dashboard (the original 2021 export) was retired; its
 views now live in the Storage and Jobs dashboards.
