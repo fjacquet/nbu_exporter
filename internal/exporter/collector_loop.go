@@ -7,20 +7,41 @@ import (
 	"time"
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
 // TargetCollector collects one site (one NetBackup primary) into a SiteSnapshot.
 type TargetCollector struct {
-	site    string
-	cfg     models.Config  // a single-server view: cfg.NbuServer set from this site's entry
-	client  *NbuClient     // built lazily with version detection; nil until first success
-	tracing *TracerWrapper // noop unless a TracerProvider is wired
+	site           string
+	cfg            models.Config // a single-server view: cfg.NbuServer set from this site's entry
+	client         *NbuClient    // built lazily with version detection; nil until first success
+	tracing        *TracerWrapper
+	tracerProvider trace.TracerProvider // threaded into the lazily-built client
+	apiTrace       bool                 // --trace: log API response bodies on this site's client
+}
+
+// TargetOption configures optional per-target settings (tracing, API trace).
+type TargetOption func(*TargetCollector)
+
+// WithTargetTracerProvider wires an OpenTelemetry TracerProvider into the target's
+// client and sub-collector spans. Without it, tracing is a noop.
+func WithTargetTracerProvider(tp trace.TracerProvider) TargetOption {
+	return func(tc *TargetCollector) {
+		tc.tracerProvider = tp
+		tc.tracing = NewTracerWrapper(tp, "nbu-exporter/target")
+	}
+}
+
+// WithTargetAPITrace enables NetBackup API response-body trace logging on the
+// target's client (the --trace flag).
+func WithTargetAPITrace(enabled bool) TargetOption {
+	return func(tc *TargetCollector) { tc.apiTrace = enabled }
 }
 
 // NewTargetCollector builds a per-site collector. base supplies Server.* settings;
 // entry supplies this site's NetBackup server fields.
-func NewTargetCollector(base models.Config, entry models.NbuServerConfig) *TargetCollector {
+func NewTargetCollector(base models.Config, entry models.NbuServerConfig, opts ...TargetOption) *TargetCollector {
 	cfg := base
 	cfg.NbuServer.Host = entry.Host
 	cfg.NbuServer.Port = entry.Port
@@ -32,23 +53,36 @@ func NewTargetCollector(base models.Config, entry models.NbuServerConfig) *Targe
 	cfg.NbuServer.APIVersion = entry.APIVersion
 	cfg.NbuServer.ContentType = entry.ContentType
 	cfg.NbuServer.InsecureSkipVerify = entry.InsecureSkipVerify
-	return &TargetCollector{
+	tc := &TargetCollector{
 		site:    entry.Site,
 		cfg:     cfg,
 		tracing: NewTracerWrapper(nil, "nbu-exporter/target"),
 	}
+	for _, opt := range opts {
+		opt(tc)
+	}
+	return tc
 }
 
 func (tc *TargetCollector) clientFor(ctx context.Context) (*NbuClient, error) {
 	if tc.client != nil {
 		return tc.client, nil
 	}
-	c, err := NewNbuClientWithVersionDetection(ctx, &tc.cfg)
+	c, err := NewNbuClientWithVersionDetection(ctx, &tc.cfg,
+		WithTracerProvider(tc.tracerProvider), WithAPITrace(tc.apiTrace))
 	if err != nil {
 		return nil, err
 	}
 	tc.client = c
 	return c, nil
+}
+
+// close releases this target's client connections, if a client was built.
+func (tc *TargetCollector) close() error {
+	if tc.client != nil {
+		return tc.client.Close()
+	}
+	return nil
 }
 
 // collect fetches storage + jobs for this site and returns a SiteSnapshot. It never
@@ -129,6 +163,18 @@ func (l *CollectionLoop) collectOnce(ctx context.Context) {
 	}
 	_ = g.Wait()
 	l.store.Store(&Snapshot{Sites: sites})
+}
+
+// Close releases every target's client connections. Call it only after Run has
+// returned (the loop goroutine has stopped), so no collection is in flight.
+func (l *CollectionLoop) Close() error {
+	var firstErr error
+	for _, tc := range l.targets {
+		if err := tc.close(); err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+	return firstErr
 }
 
 // Run collects immediately, then every interval until ctx is cancelled.

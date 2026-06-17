@@ -89,7 +89,11 @@ type Server struct {
 	httpSrv          *http.Server           // HTTP server instance
 	registry         *prometheus.Registry   // Prometheus metrics registry
 	telemetryManager *telemetry.Manager     // OpenTelemetry telemetry manager (nil if disabled)
-	collector        *exporter.NbuCollector // NetBackup collector (for cleanup)
+	collector        *exporter.NbuCollector // Snapshot-reading collector (for cleanup)
+	store            *exporter.SnapshotStore  // Latest per-site snapshot, published by the loop
+	loop             *exporter.CollectionLoop // Background per-site collection loop
+	loopCancel       context.CancelFunc       // Cancels the collection loop on shutdown
+	loopDone         chan struct{}            // Closed when the loop goroutine returns
 	configWatcher    *fsnotify.Watcher      // File watcher for config reload (for cleanup)
 	// serverErrChan receives HTTP server errors. It is buffered (capacity 1)
 	// to ensure the goroutine can send an error even if the main select
@@ -183,10 +187,38 @@ func (s *Server) Start() error {
 		log.Info("API trace enabled: logging every NetBackup API response body (bodies only, never headers)")
 	}
 
-	collector, err := exporter.NewNbuCollector(*cfg, collectorOpts...)
-	if err != nil {
-		return fmt.Errorf("failed to create collector: %w", err)
+	// Build one collection target per configured site (nbuservers[]). Each target
+	// owns its own client + version detection, built lazily so a single
+	// unreachable site never blocks startup.
+	var targetOpts []exporter.TargetOption
+	if tracerProvider != nil {
+		targetOpts = append(targetOpts, exporter.WithTargetTracerProvider(tracerProvider))
 	}
+	if s.apiTrace {
+		targetOpts = append(targetOpts, exporter.WithTargetAPITrace(true))
+	}
+	targets := make([]*exporter.TargetCollector, 0, len(cfg.NbuServers))
+	for _, entry := range cfg.NbuServers {
+		targets = append(targets, exporter.NewTargetCollector(*cfg, entry, targetOpts...))
+	}
+
+	// Start the background collection loop: it polls every site on
+	// collectionInterval and publishes an immutable snapshot into the store.
+	s.store = &exporter.SnapshotStore{}
+	s.loop = exporter.NewCollectionLoop(targets, s.store, cfg.GetCollectionInterval())
+
+	loopCtx, loopCancel := context.WithCancel(context.Background())
+	s.loopCancel = loopCancel
+	s.loopDone = make(chan struct{})
+	go func() {
+		defer close(s.loopDone)
+		s.loop.Run(loopCtx)
+	}()
+	log.Infof("Collecting %d NetBackup site(s) every %s", len(targets), cfg.GetCollectionInterval())
+
+	// The registered collector reads the latest snapshot; it never fetches on
+	// scrape, so /metrics serves immediately (empty until the first cycle).
+	collector := exporter.NewSnapshotCollector(*cfg, s.store, collectorOpts...)
 
 	// Store collector reference for shutdown cleanup
 	s.collector = collector
@@ -252,11 +284,16 @@ func (s *Server) ReloadConfig(configPath string) error {
 		return err
 	}
 
-	// Flush cache if NBU server address changed
-	if serverChanged && s.collector != nil {
-		if cache := s.collector.GetStorageCache(); cache != nil {
-			cache.Flush()
-			log.Info("Storage cache flushed due to server address change")
+	// The background collection loop's targets are built once at startup, so a
+	// changed NBU server configuration needs a restart to take effect. Surface
+	// that instead of silently ignoring the change.
+	if serverChanged {
+		log.Warn("NBU server configuration changed; restart the exporter to apply it to the collection loop (live target rebuild is not yet supported)")
+		if s.collector != nil {
+			if cache := s.collector.GetStorageCache(); cache != nil {
+				cache.Flush()
+				log.Info("Storage cache flushed due to server address change")
+			}
 		}
 	}
 
@@ -314,6 +351,16 @@ func (s *Server) Shutdown() error {
 		}
 	}
 
+	// Step 1b: Stop the background collection loop and wait for it to finish, so
+	// no collection is in flight before telemetry flush and client close.
+	if s.loopCancel != nil {
+		log.Info("Stopping collection loop...")
+		s.loopCancel()
+		if s.loopDone != nil {
+			<-s.loopDone
+		}
+	}
+
 	// Step 2: Shutdown OpenTelemetry (flush pending spans)
 	if s.telemetryManager != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
@@ -326,9 +373,16 @@ func (s *Server) Shutdown() error {
 		}
 	}
 
-	// Step 3: Close collector (drains API connections)
+	// Step 3: Close per-site collection clients (drains API connections)
+	if s.loop != nil {
+		log.Info("Closing collection clients...")
+		if err := s.loop.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("collection loop close: %w", err))
+		}
+	}
+
+	// Step 4: Close collector (snapshot reader holds no client; symmetry/safety)
 	if s.collector != nil {
-		log.Info("Closing collector connections...")
 		if err := s.collector.Close(); err != nil {
 			errs = append(errs, fmt.Errorf("collector close: %w", err))
 		}

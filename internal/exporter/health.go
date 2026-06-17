@@ -27,6 +27,12 @@ const healthCheckTimeout = 5 * time.Second
 //	    log.Warnf("NBU connectivity failed: %v", err)
 //	}
 func (c *NbuCollector) TestConnectivity(ctx context.Context) error {
+	// Multi-site mode: health is derived from the latest snapshot — at least one
+	// site reachable — without an extra live API call.
+	if c.store != nil {
+		return c.snapshotHealth()
+	}
+
 	// Use provided context or create one with timeout
 	if _, ok := ctx.Deadline(); !ok {
 		var cancel context.CancelFunc
@@ -40,6 +46,21 @@ func (c *NbuCollector) TestConnectivity(ctx context.Context) error {
 		return fmt.Errorf("NetBackup connectivity test failed: %w", err)
 	}
 	return nil
+}
+
+// snapshotHealth reports health from the latest published snapshot: healthy if no
+// snapshot exists yet (still starting up) or if at least one site is reachable.
+func (c *NbuCollector) snapshotHealth() error {
+	snap := c.store.Load()
+	if snap == nil {
+		return nil // first collection in flight; treat as starting, not unhealthy
+	}
+	for _, ss := range snap.Sites {
+		if ss.Up {
+			return nil
+		}
+	}
+	return fmt.Errorf("no NetBackup site reachable")
 }
 
 // IsHealthy returns true if the last collection was successful.

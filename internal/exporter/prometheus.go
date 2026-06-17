@@ -67,11 +67,18 @@ func WithCollectorAPITrace(enabled bool) CollectorOption {
 // Storage metrics are cached to reduce NetBackup API load. The cache TTL is
 // configurable via Config.Server.CacheTTL (default 5m).
 type NbuCollector struct {
-	cfg                models.Config
+	cfg     models.Config
+	tracing *TracerWrapper
+
+	// store is set for the multi-site snapshot-reading collector (the registered
+	// collector). When non-nil, Collect reads the latest Snapshot and emits each
+	// site's metrics, performing no live fetch on scrape. When nil, the collector
+	// is in the legacy single-target live-fetch mode (used by tests).
+	store *SnapshotStore
+
 	client             *NbuClient
-	tracing            *TracerWrapper
-	storageCache       *StorageCache  // TTL cache for storage metrics
-	subCollectors      []subCollector // Enabled opt-in metric collectors
+	storageCache       *StorageCache  // TTL cache for storage metrics (live mode only)
+	subCollectors      []subCollector // Enabled opt-in metric collectors (live mode only)
 	nbuDiskSize        *prometheus.Desc
 	nbuResponseTime    *prometheus.Desc
 	nbuJobsSize        *prometheus.Desc
@@ -153,14 +160,41 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 	// Create TracerWrapper for collector
 	tracing := NewTracerWrapper(options.tracerProvider, "nbu-exporter/collector")
 
-	// Create storage cache with configured TTL
-	storageCache := NewStorageCache(cfg.GetCacheTTL())
+	c := newBaseCollector(cfg, tracing)
+	c.client = client
+	c.storageCache = NewStorageCache(cfg.GetCacheTTL())
 
-	c := &NbuCollector{
-		cfg:          cfg,
-		client:       client,
-		tracing:      tracing,
-		storageCache: storageCache,
+	// Populate enabled opt-in collectors from config (empty unless configured).
+	c.subCollectors = buildSubCollectors(c)
+
+	return c, nil
+}
+
+// NewSnapshotCollector creates the multi-site collector that exposes metrics from
+// the latest Snapshot published by the background collection loop. It performs no
+// live fetching on scrape: Collect reads the SnapshotStore and emits each site's
+// metrics. This is the collector registered with Prometheus in production.
+//
+// cfg supplies only descriptor metadata (e.g. help strings); all metric values
+// come from the snapshot, so per-site connection details live in the targets.
+func NewSnapshotCollector(cfg models.Config, store *SnapshotStore, opts ...CollectorOption) *NbuCollector {
+	options := defaultCollectorOptions()
+	for _, opt := range opts {
+		opt(&options)
+	}
+	tracing := NewTracerWrapper(options.tracerProvider, "nbu-exporter/collector")
+	c := newBaseCollector(cfg, tracing)
+	c.store = store
+	return c
+}
+
+// newBaseCollector builds an NbuCollector with its configuration, tracer, and all
+// Prometheus metric descriptors set, but without a client, cache, store, or
+// sub-collectors. Both constructors share it so the descriptor set stays identical.
+func newBaseCollector(cfg models.Config, tracing *TracerWrapper) *NbuCollector {
+	return &NbuCollector{
+		cfg:     cfg,
+		tracing: tracing,
 		nbuResponseTime: prometheus.NewDesc(
 			"nbu_response_time_ms",
 			"The server response time in milliseconds",
@@ -247,11 +281,6 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 			[]string{"site", "action", "policy_type"}, nil,
 		),
 	}
-
-	// Populate enabled opt-in collectors from config (empty until Phase 4).
-	c.subCollectors = buildSubCollectors(c)
-
-	return c, nil
 }
 
 // buildSubCollectors returns the enabled optional collectors based on config.
@@ -329,6 +358,12 @@ func (c *NbuCollector) createScrapeSpan(ctx context.Context) (context.Context, t
 // Parameters:
 //   - ch: Channel to send Prometheus metrics to (provided by Prometheus registry)
 func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
+	// Multi-site mode: read the latest snapshot and emit per-site (no live fetch).
+	if c.store != nil {
+		c.collectFromSnapshot(ch)
+		return
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), collectionTimeout)
 	defer cancel()
 
@@ -361,6 +396,62 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 
 	log.Debugf("Collected %d storage, %d storage units, %d job metric keys",
 		len(storageMetrics), len(storageUnits), jobMetricCount)
+}
+
+// collectFromSnapshot emits metrics for every site in the latest snapshot
+// published by the background collection loop. If no snapshot exists yet (first
+// collection still in flight), it emits nothing: /metrics is up but empty until
+// the first cycle completes (serve-before-first-collect).
+func (c *NbuCollector) collectFromSnapshot(ch chan<- prometheus.Metric) {
+	ctx, cancel := context.WithTimeout(context.Background(), collectionTimeout)
+	defer cancel()
+	_, span := c.createScrapeSpan(ctx)
+	defer span.End()
+
+	snap := c.store.Load()
+	if snap == nil {
+		span.SetStatus(codes.Ok, "no snapshot yet")
+		return
+	}
+	for site, ss := range snap.Sites {
+		c.exposeSnapshot(ch, site, ss)
+	}
+	span.SetStatus(codes.Ok, "")
+}
+
+// exposeSnapshot emits one site's metrics from its already-aggregated SiteSnapshot.
+// Every series carries the site label (first), and a failed site still emits
+// nbu_up{site}=0 without affecting the others (graceful degradation).
+func (c *NbuCollector) exposeSnapshot(ch chan<- prometheus.Metric, site string, ss *SiteSnapshot) {
+	if ss == nil {
+		return
+	}
+
+	upValue := 0.0
+	if ss.Up {
+		upValue = 1.0
+	}
+	ch <- prometheus.MustNewConstMetric(c.nbuUp, prometheus.GaugeValue, upValue, site)
+
+	if !ss.LastStorageScrape.IsZero() {
+		ch <- prometheus.MustNewConstMetric(c.nbuLastScrapeTime, prometheus.GaugeValue,
+			float64(ss.LastStorageScrape.Unix()), site, "storage")
+	}
+	if !ss.LastJobsScrape.IsZero() {
+		ch <- prometheus.MustNewConstMetric(c.nbuLastScrapeTime, prometheus.GaugeValue,
+			float64(ss.LastJobsScrape.Unix()), site, "jobs")
+	}
+
+	c.exposeStorageMetrics(ch, site, ss.StorageMetrics)
+	c.exposeStorageUnitMetrics(ch, site, ss.StorageUnits)
+	c.exposeJobAggregateMetrics(ch, site, ss.JobAgg)
+
+	ch <- prometheus.MustNewConstMetric(c.nbuAPIVersion, prometheus.GaugeValue, 1, site, ss.APIVersion)
+
+	// Re-emit the buffered opt-in sub-collector metrics (already site-labelled).
+	for _, m := range ss.SubMetrics {
+		ch <- m
+	}
 }
 
 // collectAllMetrics fetches storage and job metrics from NetBackup API in parallel.

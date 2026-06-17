@@ -900,3 +900,48 @@ func TestNbuCollectorNbuUpHasSiteLabel(t *testing.T) {
 	assert.Equal(t, "site", labels[0].GetName(), "first label must be named 'site'")
 	assert.Equal(t, serverHost, labels[0].GetValue(), "site label value must equal NbuServers[0].Site")
 }
+
+// TestSnapshotCollectorEmitsAllSites verifies the snapshot-reading collector emits
+// metrics for every site in the latest snapshot, with the right nbu_up values,
+// and emits nothing (no panic) before the first snapshot is published.
+func TestSnapshotCollectorEmitsAllSites(t *testing.T) {
+	store := &SnapshotStore{}
+	collector := NewSnapshotCollector(models.Config{}, store)
+
+	registry := prometheus.NewRegistry()
+	require.NoError(t, registry.Register(collector))
+
+	// Before any snapshot: gather succeeds and yields no nbu_up series.
+	mfs, err := registry.Gather()
+	require.NoError(t, err)
+	require.Empty(t, upValuesBySite(mfs), "no series expected before first snapshot")
+
+	// Publish a two-site snapshot: paris up, lyon down.
+	store.Store(&Snapshot{Sites: map[string]*SiteSnapshot{
+		"paris": {Site: "paris", APIVersion: models.APIVersion130, Up: true},
+		"lyon":  {Site: "lyon", APIVersion: models.APIVersion130, Up: false},
+	}})
+
+	mfs, err = registry.Gather()
+	require.NoError(t, err)
+
+	ups := upValuesBySite(mfs)
+	require.Contains(t, ups, "paris")
+	require.Contains(t, ups, "lyon")
+	assert.Equal(t, float64(1), ups["paris"], "nbu_up{site=paris} should be 1")
+	assert.Equal(t, float64(0), ups["lyon"], "nbu_up{site=lyon} should be 0")
+}
+
+// upValuesBySite extracts nbu_up gauge values keyed by their site label.
+func upValuesBySite(mfs []*dto.MetricFamily) map[string]float64 {
+	out := map[string]float64{}
+	for _, mf := range mfs {
+		if mf.GetName() != "nbu_up" {
+			continue
+		}
+		for _, m := range mf.GetMetric() {
+			out[labelValue(m, "site")] = m.GetGauge().GetValue()
+		}
+	}
+	return out
+}
