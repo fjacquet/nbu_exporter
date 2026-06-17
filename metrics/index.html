@@ -1505,6 +1505,13 @@ NBU 10.0+, <code>/storage/tape-media</code> and <code>/storage/robots-device-hos
 <td><code>GET /storage/robots-device-hosts</code></td>
 <td>Count of device hosts with robots configured</td>
 </tr>
+<tr>
+<td><code>nbu_client_last_successful_backup_timestamp_seconds</code></td>
+<td>Gauge</td>
+<td><code>client</code></td>
+<td><code>GET /admin/jobs</code> (per allowlisted client)</td>
+<td><code>endTime</code> of the latest <code>status=0</code> BACKUP for the client</td>
+</tr>
 </tbody>
 </table>
 <p>Notes on the implemented attributes (these differ from early guesses):</p>
@@ -1526,6 +1533,13 @@ NBU 10.0+, <code>/storage/tape-media</code> and <code>/storage/robots-device-hos
   robot-listing endpoint, so a standalone robot type/count metric is not exposed);
   <code>mediaStatus</code> is a free-form NetBackup status string. <code>drive_state</code> is the
   <code>driveStatus</code> value with the <code>DRIVE_STATUS_</code> prefix stripped (<code>UP</code>/<code>DOWN</code>/<code>MIXED</code>/<code>DISABLED</code>).</li>
+<li><strong>Per-client collector</strong> (<code>collectors.perClient</code>) requires an explicit <code>allowlist</code> because the
+  <code>client</code> label is high-cardinality (hundreds of clients) — an <strong>empty allowlist emits nothing</strong>.
+  For each allowlisted client it issues one targeted <code>/admin/jobs</code> query
+  (<code>filter clientName eq '&lt;c&gt;' and jobType eq 'BACKUP' and status eq 0</code>, <code>sort=-endTime</code>,
+  <code>page[limit]=1</code>) and emits that job's <code>endTime</code>, so it always reflects the last success with no
+  lookback gap. Feed a "no successful backup in N hours" alert with
+  <code>time() - nbu_client_last_successful_backup_timestamp_seconds &gt; N*3600</code>.</li>
 </ul>
 <h3 id="enabling-the-collectors">Enabling the collectors</h3>
 <p>Add a <code>collectors</code> block to your <code>config.yaml</code> (each collector is a
@@ -1536,6 +1550,9 @@ NBU 10.0+, <code>/storage/tape-media</code> and <code>/storage/robots-device-hos
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">catalog</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">slo</span><span class="p">:</span><span class="w">     </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="nt">tape</span><span class="p">:</span><span class="w">    </span><span class="p p-Indicator">{</span><span class="nt"> enabled</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">perClient</span><span class="p">:</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">    </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">    </span><span class="nt">allowlist</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span><span class="w">   </span><span class="c1"># exact client names; empty =&gt; no per-client series</span>
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Job metrics and the missing 11.2 <code>admin.yaml</code></p>
