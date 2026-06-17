@@ -52,6 +52,7 @@ func (c *catalogCollector) Collect(ctx context.Context, ch chan<- prometheus.Met
 				// Per-combination graceful degradation: log and skip this
 				// combination so successful combinations are still emitted.
 				log.WithError(err).
+					WithField("site", c.site).
 					WithField("malware_status", mw).
 					WithField("anomaly_status", an).
 					Warn("catalog count fetch failed; skipping combination")

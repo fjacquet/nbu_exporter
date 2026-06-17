@@ -29,7 +29,7 @@ whole `/metrics` response.
 ## Goals
 
 - `nbuservers:` — a list of primary servers, each with a required `site` identity.
-- A single background collection loop polls **every** server on `collection.interval` and
+- A single background collection loop polls **every** server on `server.collectionInterval` and
   publishes an **immutable snapshot**; `Collect` reads the latest snapshot (no live fetch).
 - Every metric carries a `site` label (constant per target, emitted on every series).
 - Per-target graceful degradation: a failed target emits `nbu_up{site=…}=0` and does not

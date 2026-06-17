@@ -225,6 +225,13 @@ func (s *Server) Start() error {
 
 	// Register collector with Prometheus
 	if err := s.registry.Register(collector); err != nil {
+		// Registration failed after the loop goroutine started: stop and drain it
+		// (and close per-site clients) so we don't leak background work. main()
+		// returns on Start() error without calling Shutdown(), so do it here.
+		s.loopCancel()
+		<-s.loopDone
+		_ = s.loop.Close()
+		_ = collector.Close()
 		return fmt.Errorf("failed to register collector: %w", err)
 	}
 
@@ -473,6 +480,12 @@ func validateConfig(configPath string) (*models.Config, error) {
 	var cfg models.Config
 	if err := utils.ReadFile(&cfg, configPath); err != nil {
 		return nil, err
+	}
+
+	// Detect legacy single-server usage before Validate() promotes it into
+	// NbuServers[0], and warn the operator to migrate to the nbuservers[] list.
+	if cfg.NbuServer.Host != "" && len(cfg.NbuServers) == 0 {
+		log.Warn("config: the single 'nbuserver:' block is deprecated and auto-mapped to a one-site 'nbuservers:' list; migrate to 'nbuservers:' (see docs/config-examples/config-multisite.yaml)")
 	}
 
 	if err := cfg.Validate(); err != nil {

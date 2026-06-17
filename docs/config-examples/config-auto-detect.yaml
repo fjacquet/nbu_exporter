@@ -28,7 +28,8 @@ nbuserver:
     # apiVersion: NOT SPECIFIED - Will auto-detect highest supported version
     # Detection order: 14.0 (NBU 11.2) → 13.0 (NBU 11.0) → 12.0 (NBU 10.5) → 10.0 (NBU 10.0-10.4)
     apiKey: "your-api-key-here"  # Generate from NetBackup UI
-    contentType: "application/vnd.netbackup+json; version=14.0"
+    # contentType is intentionally omitted: with auto-detect, the Accept header is
+    # built dynamically from the detected apiVersion (the field is otherwise ignored).
     insecureSkipVerify: false  # Set to true only for testing environments
 
 # Version Detection Behavior:

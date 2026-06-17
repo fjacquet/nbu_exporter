@@ -210,9 +210,12 @@ func (l *CollectionLoop) Close() error {
 
 // Run collects immediately, then every interval until ctx is cancelled.
 func (l *CollectionLoop) Run(ctx context.Context) {
-	l.collectOnce(ctx)
+	// Start the ticker before the first sweep so its cadence is anchored at t0:
+	// the next sweep fires at `interval`, not `first_sweep_duration + interval`,
+	// avoiding a startup coverage gap.
 	t := time.NewTicker(l.interval)
 	defer t.Stop()
+	l.collectOnce(ctx)
 	for {
 		select {
 		case <-ctx.Done():

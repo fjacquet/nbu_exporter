@@ -433,6 +433,12 @@ func (c *NbuCollector) exposeSnapshot(ch chan<- prometheus.Metric, site string, 
 	}
 	ch <- prometheus.MustNewConstMetric(c.nbuUp, prometheus.GaugeValue, upValue, site)
 
+	// Per-site degradation contract: a fully-down site exposes ONLY nbu_up=0, so
+	// no stale/misleading series (e.g. nbu_api_version) are published for it.
+	if !ss.Up {
+		return
+	}
+
 	if !ss.LastStorageScrape.IsZero() {
 		ch <- prometheus.MustNewConstMetric(c.nbuLastScrapeTime, prometheus.GaugeValue,
 			float64(ss.LastStorageScrape.Unix()), site, "storage")

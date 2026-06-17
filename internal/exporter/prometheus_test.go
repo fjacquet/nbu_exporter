@@ -930,6 +930,20 @@ func TestSnapshotCollectorEmitsAllSites(t *testing.T) {
 	require.Contains(t, ups, "lyon")
 	assert.Equal(t, float64(1), ups["paris"], "nbu_up{site=paris} should be 1")
 	assert.Equal(t, float64(0), ups["lyon"], "nbu_up{site=lyon} should be 0")
+
+	// Degradation contract: the up site emits nbu_api_version; the down site does
+	// NOT (a fully-down site exposes only nbu_up=0).
+	apiVersionSites := map[string]bool{}
+	for _, mf := range mfs {
+		if mf.GetName() != "nbu_api_version" {
+			continue
+		}
+		for _, m := range mf.GetMetric() {
+			apiVersionSites[labelValue(m, "site")] = true
+		}
+	}
+	assert.True(t, apiVersionSites["paris"], "up site should emit nbu_api_version")
+	assert.False(t, apiVersionSites["lyon"], "down site must not emit nbu_api_version")
 }
 
 // upValuesBySite extracts nbu_up gauge values keyed by their site label.
