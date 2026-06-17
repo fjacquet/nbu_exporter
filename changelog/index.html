@@ -2598,6 +2598,15 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h2 id="unreleased">[Unreleased]</h2>
 <h3 id="added">Added</h3>
 <ul>
+<li><strong>Multi-site Grafana dashboards</strong>: every generated dashboard now carries a <code>site</code> template
+  variable (multi-value + "All", sourced from <code>label_values(nbu_up, site)</code>) as the first selector,
+  and every panel query is filtered by <code>site=~"$site"</code> with <code>site</code> threaded into each <code>by (…)</code>
+  grouping and legend — so series from multiple NetBackup primaries no longer collapse together or
+  double-count. The Overview gains a per-site availability row (one UP/DOWN tile per primary,
+  repeated over <code>$site</code>) so a down master is obvious. The filter/grouping is centralized in the
+  <code>grafana/gen/</code> generator (<code>panels.with_site</code>), and <code>build_dashboards.py</code> now fails the build if any
+  dashboard is missing the <code>site</code> selector or leaves a query unfiltered. See the Multi-Site
+  Dashboards design spec.</li>
 <li><strong>Alerting rules</strong> (<code>deploy/prometheus/</code>): two optional, site-aware Prometheus rule files —
   <code>rules-perclient.yml</code> (<code>NbuClientBackupStale</code> &gt;25h warning, <code>NbuClientBackupCritical</code> &gt;48h
   critical) and <code>rules-tape.yml</code> (<code>NbuTapeDriveDown</code> / <code>NbuTapeDriveDisabled</code> per site) — each with

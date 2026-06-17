@@ -1147,10 +1147,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#open-questions-for-review" class="md-nav__link">
+  <a href="#open-questions-for-review-resolved" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Open questions for review
+        Open questions for review — resolved
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation notes
       
     </span>
   </a>
@@ -1179,7 +1190,7 @@
 
 <h1 id="multi-site-grafana-dashboards-design">Multi-Site Grafana Dashboards — Design</h1>
 <p><strong>Date:</strong> 2026-06-17
-<strong>Status:</strong> Draft for review (depends on Feature 1 shipping the <code>site</code> label)
+<strong>Status:</strong> Implemented (Feature 1's <code>site</code> label shipped in PR #36)
 <strong>Scope:</strong> Add a <code>site</code> template variable and per-site filtering to the generated Grafana
 dashboards, so the multi-site exporter (Feature 1) is usable in one Grafana view.
 <strong>Depends on:</strong> <a href="../2026-06-17-feature1-multisite-design/"><code>2026-06-17-feature1-multisite-design.md</code></a>
@@ -1250,13 +1261,25 @@ multiple masters collapse together or double-count.</p>
 <li>Generator remains the single source of truth (no hand-edited JSON); regenerated output
   committed.</li>
 </ul>
-<h2 id="open-questions-for-review">Open questions for review</h2>
+<h2 id="open-questions-for-review-resolved">Open questions for review — resolved</h2>
 <ol>
-<li>Variable source metric: <code>nbu_up</code> (always present per site) vs a broader metric — <code>nbu_up</code>
-   recommended (one series per site regardless of which collectors are enabled).</li>
-<li>Overview "Sites" row: repeated stat panels vs a single status table — which reads better
-   for 2–handful of sites? (Suggest a small table.)</li>
+<li>Variable source metric: <strong><code>nbu_up</code></strong> — chosen (one series per site regardless of which
+   collectors are enabled).</li>
+<li>Overview "Sites" row: implemented as a <strong>stat panel repeated over <code>$site</code></strong> (one UP/DOWN tile
+   per primary) rather than a status table — a down master shows as a full red tile, which reads
+   more obviously than a table cell for the typical 2–handful of sites.</li>
 </ol>
+<h2 id="implementation-notes">Implementation notes</h2>
+<ul>
+<li>The <code>site=~"$site"</code> filter and <code>by (site, …)</code> grouping are centralized in
+  <code>grafana/gen/panels.py</code> (<code>with_site()</code>), applied in <code>target()</code> and <code>table_info()</code> so no panel
+  expression is hand-edited; legends gain a <code>{{site}}</code> prefix only where the series keep a per-site
+  label (scalar KPI aggregates stay unprefixed). Both rewrites are idempotent.</li>
+<li><code>grafana/gen/variables.py</code> adds <code>site_var()</code> and the <code>dashboard()</code> assembler injects it as the
+  first non-datasource templating entry on every dashboard.</li>
+<li><code>grafana/gen/validate.py</code> gains <code>check_site_wiring()</code>, and <code>build_dashboards.py</code> fails the build
+  if any dashboard is missing the <code>site</code> selector or leaves a query unfiltered.</li>
+</ul>
 
 
 

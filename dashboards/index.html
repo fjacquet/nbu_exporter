@@ -910,6 +910,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="NetBackup folder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-site-selector-multi-site" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The $site selector (multi-site)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1167,6 +1184,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="NetBackup folder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-site-selector-multi-site" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The $site selector (multi-site)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1228,10 +1262,21 @@ folder named <strong>NetBackup</strong>, and they cross-link to each other throu
 compose files mount the JSON read-only into <code>/var/lib/grafana/dashboards</code>; Grafana re-scans that
 folder every 30 seconds, so regenerating the JSON updates the dashboards in place. Edits made in the
 Grafana UI are allowed (<code>allowUiUpdates: true</code>) but are not written back to the JSON files.</p>
-<p>Panel titles are bilingual (French / English). Every dashboard uses the <code>${datasource}</code> template
+<p>Panel titles are bilingual (English / French). Every dashboard uses the <code>${datasource}</code> template
 variable (defaulting to the provisioned <strong>Prometheus</strong>), so it keeps working if re-pointed at another
 Prometheus.</p>
+<h3 id="the-site-selector-multi-site">The <code>$site</code> selector (multi-site)</h3>
+<p>Every dashboard also carries a <strong><code>$site</code></strong> template variable — the first selector after the
+datasource — populated from <code>label_values(nbu_up, site)</code> and configured as multi-value with an
+<strong>All</strong> option. Each panel query is filtered by <code>site=~"$site"</code>, and per-series panels add <code>site</code>
+to their grouping and legend, so when one exporter scrapes several NetBackup primaries (see
+multi-site support) the series neither collapse together nor double-count. Selecting one or more
+sites filters the whole dashboard; "All" shows every site. The Overview's <strong>Sites</strong> row shows one
+UP/DOWN availability tile per primary (repeated over <code>$site</code>), so a down master stands out at a
+glance.</p>
 <h2 id="the-four-dashboards">The four dashboards</h2>
+<p>All four dashboards share the <code>$site</code> selector (above); the table below lists each one's
+<strong>additional</strong> variables.</p>
 <table>
 <thead>
 <tr>
@@ -1245,7 +1290,7 @@ Prometheus.</p>
 <tr>
 <td><strong>Overview</strong></td>
 <td><code>nbu-overview.json</code> / <code>nbu-overview</code></td>
-<td>One-screen health and headline KPIs (success rate, failed backups, storage % used, infected files, alerts) that link out to the domain dashboards</td>
+<td>One-screen health and headline KPIs (per-site availability, success rate, failed backups, storage % used, infected files, alerts) that link out to the domain dashboards</td>
 <td>—</td>
 </tr>
 <tr>
