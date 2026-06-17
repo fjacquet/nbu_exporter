@@ -60,6 +60,7 @@ NBU 10.0+, `/storage/tape-media` and `/storage/robots-device-hosts` on 10.5+).
 | `nbu_tape_drive_info` | Gauge | `drive_name`, `media_server`, `drive_type`, `robot_number`, `state` | `GET /storage/drives` | One series per drive (value always `1`) |
 | `nbu_tape_media_count` | Gauge | `media_type`, `status` | `GET /storage/tape-media` | Tape volumes grouped by `mediaType` + `mediaStatus` |
 | `nbu_tape_robot_device_hosts` | Gauge | — | `GET /storage/robots-device-hosts` | Count of device hosts with robots configured |
+| `nbu_client_last_successful_backup_timestamp_seconds` | Gauge | `client` | `GET /admin/jobs` (per allowlisted client) | `endTime` of the latest `status=0` BACKUP for the client |
 
 Notes on the implemented attributes (these differ from early guesses):
 
@@ -80,6 +81,13 @@ Notes on the implemented attributes (these differ from early guesses):
   robot-listing endpoint, so a standalone robot type/count metric is not exposed);
   `mediaStatus` is a free-form NetBackup status string. `drive_state` is the
   `driveStatus` value with the `DRIVE_STATUS_` prefix stripped (`UP`/`DOWN`/`MIXED`/`DISABLED`).
+- **Per-client collector** (`collectors.perClient`) requires an explicit `allowlist` because the
+  `client` label is high-cardinality (hundreds of clients) — an **empty allowlist emits nothing**.
+  For each allowlisted client it issues one targeted `/admin/jobs` query
+  (`filter clientName eq '<c>' and jobType eq 'BACKUP' and status eq 0`, `sort=-endTime`,
+  `page[limit]=1`) and emits that job's `endTime`, so it always reflects the last success with no
+  lookback gap. Feed a "no successful backup in N hours" alert with
+  `time() - nbu_client_last_successful_backup_timestamp_seconds > N*3600`.
 
 ### Enabling the collectors
 
@@ -93,6 +101,9 @@ collectors:
   catalog: { enabled: false }
   slo:     { enabled: false }
   tape:    { enabled: false }
+  perClient:
+    enabled: false
+    allowlist: []   # exact client names; empty => no per-client series
 ```
 
 !!! note "Job metrics and the missing 11.2 `admin.yaml`"

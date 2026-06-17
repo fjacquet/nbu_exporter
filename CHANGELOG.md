@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Per-client last-successful-backup metric** (opt-in `collectors.perClient`, default off):
+  `nbu_client_last_successful_backup_timestamp_seconds{site,client}` for each allowlisted client,
+  from a targeted `/admin/jobs` query (latest `status=0` BACKUP, `sort=-endTime`, `page[limit]=1`).
+  An exact-name allowlist bounds the `client` cardinality; an empty allowlist emits nothing. Enables
+  a "no backup in N hours" alert. See the Feature 3 design spec.
 - **Tape / drive metrics** (opt-in `collectors.tape`, default off): `nbu_tape_drives_count`
   (by state/drive_type/robot_type), `nbu_tape_drive_info` (per drive), `nbu_tape_media_count`
   (by media_type/status), and `nbu_tape_robot_device_hosts`, collected over REST — drives on
