@@ -27,6 +27,14 @@ KNOWN_METRICS = {
     "nbu_malware_scan_count",
     "nbu_catalog_images_count",
     "nbu_slo_count",
+    # Tape / disk-pool collector (opt-in, NBU 10.5+)
+    "nbu_tape_drives_count",
+    "nbu_tape_media_count",
+    "nbu_tape_pool_partially_full",
+    "nbu_disk_pool_volume_count",
+    # Per-client lifecycle (opt-in, allowlisted)
+    "nbu_client_jobs_count",
+    "nbu_client_last_job_success_seconds",
 }
 
 _METRIC_RE = re.compile(r"nbu_[a-z0-9_]+")

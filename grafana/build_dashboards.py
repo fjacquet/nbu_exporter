@@ -8,7 +8,7 @@ template-variable contract before writing.
 import json
 import sys
 
-from grafana.gen import overview, jobs, storage, dataprotection
+from grafana.gen import overview, jobs, storage, dataprotection, tape, lifecycle, multisite
 from grafana.gen.validate import check_dashboard, check_site_wiring
 
 OUTPUTS = [
@@ -16,6 +16,9 @@ OUTPUTS = [
     ("grafana/nbu-jobs.json", jobs.build),
     ("grafana/nbu-storage.json", storage.build),
     ("grafana/nbu-dataprotection.json", dataprotection.build),
+    ("grafana/nbu-tape.json", tape.build),
+    ("grafana/nbu-lifecycle.json", lifecycle.build),
+    ("grafana/nbu-multisite.json", multisite.build),
 ]
 
 
