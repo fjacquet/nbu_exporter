@@ -100,7 +100,8 @@ const (
 // Query parameter names used in NetBackup API pagination and filtering.
 const (
 	QueryParamLimit  = "page[limit]"  // Maximum number of results per page
-	QueryParamOffset = "page[offset]" // Starting offset for pagination
+	QueryParamOffset = "page[offset]" // Starting offset for pagination (storage)
+	QueryParamAfter  = "page[after]"  // Cursor for the next page (jobs, NBU API >= 9.0)
 	QueryParamSort   = "sort"         // Field to sort results by
 	QueryParamFilter = "filter"       // Filter expression for result filtering
 )

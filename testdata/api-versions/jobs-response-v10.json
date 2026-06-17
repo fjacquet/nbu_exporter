@@ -84,13 +84,10 @@
   ],
   "meta": {
     "pagination": {
-      "count": 2,
-      "offset": 0,
       "limit": 100,
-      "first": 0,
-      "last": 1,
-      "page": 1,
-      "pages": 1
+      "next": "",
+      "prev": "",
+      "rangeTruncated": false
     }
   },
   "links": {

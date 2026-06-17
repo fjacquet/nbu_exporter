@@ -251,14 +251,10 @@
   ],
   "meta": {
     "pagination": {
-      "count": 3,
-      "offset": 0,
       "limit": 100,
-      "first": 0,
-      "last": 2,
-      "page": 1,
-      "pages": 1,
-      "next": 0
+      "next": "",
+      "prev": "",
+      "rangeTruncated": false
     }
   },
   "links": {

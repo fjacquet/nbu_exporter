@@ -60,7 +60,7 @@ func TestEndToEndWorkflowAPI130(t *testing.T) {
 						"clientName": "test-client"
 					}
 				}],
-				"meta": {"pagination": {"first": 0, "last": 0, "limit": 1, "offset": 0, "next": 0}}
+				"meta": {"pagination": {"limit": 1, "next": ""}}
 			}`
 			_, _ = w.Write([]byte(jobsResponse))
 
@@ -167,7 +167,7 @@ func TestEndToEndWorkflowAPI120(t *testing.T) {
 						"clientName": "test-client-2"
 					}
 				}],
-				"meta": {"pagination": {"first": 0, "last": 0, "limit": 1, "offset": 0, "next": 0}}
+				"meta": {"pagination": {"limit": 1, "next": ""}}
 			}`
 			_, _ = w.Write([]byte(jobsResponse))
 
@@ -255,7 +255,7 @@ func TestEndToEndFallbackScenario(t *testing.T) {
 							"clientName": "legacy-client"
 						}
 					}],
-					"meta": {"pagination": {"first": 0, "last": 0, "limit": 1, "offset": 0, "next": 0}}
+					"meta": {"pagination": {"limit": 1, "next": ""}}
 				}`
 				_, _ = w.Write([]byte(jobsResponse))
 
@@ -393,7 +393,7 @@ func TestEndToEndErrorScenarios(t *testing.T) {
 // TestEndToEndMetricsConsistency verifies metrics are consistent across API versions
 func TestEndToEndMetricsConsistency(t *testing.T) {
 	t.Skip("Skipping slow end-to-end test - functionality covered by unit tests")
-	versions := []string{"10.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0", "14.0"}
 
 	for _, version := range versions {
 		t.Run(fmt.Sprintf("API_%s", strings.ReplaceAll(version, ".", "_")), func(t *testing.T) {
@@ -461,7 +461,7 @@ func TestEndToEndGracefulDegradation(t *testing.T) {
 						"clientName": "degraded-test-client"
 					}
 				}],
-				"meta": {"pagination": {"first": 0, "last": 0, "limit": 1, "offset": 0, "next": 0}}
+				"meta": {"pagination": {"limit": 1, "next": ""}}
 			}`
 			_, _ = w.Write([]byte(jobsResponse))
 
@@ -545,7 +545,7 @@ func createVersionedMockServer(t *testing.T, version string) *httptest.Server {
 						"clientName": "test-client-v%s"
 					}
 				}],
-				"meta": {"pagination": {"first": 0, "last": 0, "limit": 1, "offset": 0, "next": 0}}
+				"meta": {"pagination": {"limit": 1, "next": ""}}
 			}`, version)
 			_, _ = w.Write([]byte(jobsResponse))
 

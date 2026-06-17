@@ -21,7 +21,7 @@ func TestFetchJobDetails_BatchProcessing(t *testing.T) {
 		callCount++
 
 		// Create a response with multiple jobs
-		response := createJobsResponse(jobsInBatch, 0, jobsInBatch-1)
+		response := createJobsResponse(jobsInBatch, 0)
 
 		w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, "12.0"))
 		w.WriteHeader(http.StatusOK)
@@ -40,7 +40,7 @@ func TestFetchJobDetails_BatchProcessing(t *testing.T) {
 
 	startTime := time.Now().Add(-5 * time.Minute)
 
-	nextOffset, err := FetchJobDetails(context.Background(), client, agg, 0, startTime)
+	nextCursor, err := FetchJobDetails(context.Background(), client, agg, "", startTime)
 	if err != nil {
 		t.Fatalf("FetchJobDetails failed: %v", err)
 	}
@@ -68,9 +68,9 @@ func TestFetchJobDetails_BatchProcessing(t *testing.T) {
 		t.Errorf("Expected job size %v, got %v", expectedSize, jobsSize[expectedKey])
 	}
 
-	// Since all jobs fit in one page, nextOffset should be -1 (end of pagination)
-	if nextOffset != -1 {
-		t.Errorf("Expected nextOffset -1 (end of pagination), got %d", nextOffset)
+	// Since all jobs fit in one page, nextCursor should be "" (end of pagination)
+	if nextCursor != "" {
+		t.Errorf("Expected empty nextCursor (end of pagination), got %q", nextCursor)
 	}
 }
 
@@ -80,20 +80,22 @@ func TestFetchJobDetails_BatchPagination(t *testing.T) {
 	jobsPerPage := 100 // Simulate first page with 100 jobs
 	jobsLastPage := 50 // Second page with 50 jobs
 	totalJobs := jobsPerPage + jobsLastPage
+	secondPageCursor := ""
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
 
 		var response *models.Jobs
-		if callCount == 1 {
-			// First page: 100 jobs, next offset = 100
-			response = createJobsResponse(jobsPerPage, 0, totalJobs-1)
-			response.Meta.Pagination.Next = jobsPerPage
-			response.Meta.Pagination.Offset = 0
+		cursor := r.URL.Query().Get("page[after]")
+		if cursor == "" {
+			// First page: 100 jobs, next cursor = "CURSOR2"
+			response = createJobsResponse(jobsPerPage, 0)
+			response.Meta.Pagination.Next = "CURSOR2"
 		} else {
-			// Second page: 50 jobs, last page
-			response = createJobsResponse(jobsLastPage, jobsPerPage, totalJobs-1)
-			response.Meta.Pagination.Offset = response.Meta.Pagination.Last // Signal last page
+			// Second page: 50 jobs, last page. Record the cursor the client sent.
+			secondPageCursor = cursor
+			response = createJobsResponse(jobsLastPage, jobsPerPage)
+			response.Meta.Pagination.Next = ""
 		}
 
 		w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, "12.0"))
@@ -119,6 +121,11 @@ func TestFetchJobDetails_BatchPagination(t *testing.T) {
 		t.Errorf("Expected 2 API calls for pagination, got %d", callCount)
 	}
 
+	// Verify the client followed the cursor: the second request carried page[after]=CURSOR2
+	if secondPageCursor != "CURSOR2" {
+		t.Errorf("Expected second page request to send page[after]=CURSOR2, got %q", secondPageCursor)
+	}
+
 	// Verify total jobs collected
 	totalCollected := 0
 	for _, m := range jobsCountSlice {
@@ -136,8 +143,6 @@ func TestFetchJobDetails_EmptyBatch(t *testing.T) {
 		// Return empty jobs response
 		response := &models.Jobs{}
 		response.Data = nil // No jobs
-		response.Meta.Pagination.Offset = 0
-		response.Meta.Pagination.Last = 0
 
 		w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, "12.0"))
 		w.WriteHeader(http.StatusOK)
@@ -154,14 +159,14 @@ func TestFetchJobDetails_EmptyBatch(t *testing.T) {
 
 	startTime := time.Now().Add(-5 * time.Minute)
 
-	nextOffset, err := FetchJobDetails(context.Background(), client, agg, 0, startTime)
+	nextCursor, err := FetchJobDetails(context.Background(), client, agg, "", startTime)
 	if err != nil {
 		t.Fatalf("FetchJobDetails failed: %v", err)
 	}
 
-	// Verify returns -1 (end of pagination) for empty response
-	if nextOffset != -1 {
-		t.Errorf("Expected nextOffset -1 for empty batch, got %d", nextOffset)
+	// Verify returns "" (end of pagination) for empty response
+	if nextCursor != "" {
+		t.Errorf("Expected empty nextCursor for empty batch, got %q", nextCursor)
 	}
 
 	// Verify no panic with empty slice - maps should be empty
@@ -195,7 +200,7 @@ func TestFetchJobDetails_MixedJobTypes(t *testing.T) {
 
 	startTime := time.Now().Add(-5 * time.Minute)
 
-	_, err := FetchJobDetails(context.Background(), client, agg, 0, startTime)
+	_, err := FetchJobDetails(context.Background(), client, agg, "", startTime)
 	if err != nil {
 		t.Fatalf("FetchJobDetails failed: %v", err)
 	}
@@ -233,7 +238,7 @@ func TestFetchJobDetails_MixedJobTypes(t *testing.T) {
 // Helper functions for creating test responses
 
 // createJobsResponse creates a jobs response with the specified number of identical jobs
-func createJobsResponse(numJobs int, startID int, lastIndex int) *models.Jobs {
+func createJobsResponse(numJobs int, startID int) *models.Jobs {
 	response := &models.Jobs{}
 	response.Data = make([]models.JobData, numJobs)
 
@@ -247,9 +252,7 @@ func createJobsResponse(numJobs int, startID int, lastIndex int) *models.Jobs {
 		response.Data[i].Attributes.KilobytesTransferred = 1024 // 1MB
 	}
 
-	response.Meta.Pagination.Offset = lastIndex
-	response.Meta.Pagination.Last = lastIndex
-	response.Meta.Pagination.Count = numJobs
+	response.Meta.Pagination.Next = ""
 
 	return response
 }
@@ -286,9 +289,7 @@ func createMixedJobsResponse() *models.Jobs {
 	response.Data[2].Attributes.Status = 150
 	response.Data[2].Attributes.KilobytesTransferred = 0
 
-	response.Meta.Pagination.Offset = 2
-	response.Meta.Pagination.Last = 2
-	response.Meta.Pagination.Count = 3
+	response.Meta.Pagination.Next = ""
 
 	return response
 }

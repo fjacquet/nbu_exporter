@@ -29,9 +29,10 @@ func TestJobsAPICompatibilityAcrossVersions(t *testing.T) {
 		version  string
 		filename string
 	}{
-		{"10.0", "../../testdata/api-versions/jobs-response-v3.json"},
+		{"10.0", "../../testdata/api-versions/jobs-response-v10.json"},
 		{"12.0", "../../testdata/api-versions/jobs-response-v12.json"},
 		{"13.0", "../../testdata/api-versions/jobs-response-v13.json"},
+		{"14.0", "../../testdata/api-versions/jobs-response-v14.json"},
 	}
 
 	for _, v := range versions {
@@ -110,9 +111,10 @@ func TestStorageAPICompatibilityAcrossVersions(t *testing.T) {
 		version  string
 		filename string
 	}{
-		{"10.0", "../../testdata/api-versions/storage-response-v3.json"},
+		{"10.0", "../../testdata/api-versions/storage-response-v10.json"},
 		{"12.0", "../../testdata/api-versions/storage-response-v12.json"},
 		{"13.0", "../../testdata/api-versions/storage-response-v13.json"},
+		{"14.0", "../../testdata/api-versions/storage-response-v14.json"},
 	}
 
 	for _, v := range versions {
@@ -169,7 +171,7 @@ func verifyStorageMetrics(t *testing.T, storageMetrics map[string]float64, versi
 
 // TestMetricsConsistencyAcrossVersions verifies that metric names and labels remain consistent
 func TestMetricsConsistencyAcrossVersions(t *testing.T) {
-	versions := []string{"10.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0", "14.0"}
 
 	allJobMetrics := collectJobMetricsForAllVersions(t, versions)
 	allStorageMetrics := collectStorageMetricsForAllVersions(t, versions)
@@ -234,11 +236,13 @@ func collectStorageMetricsForAllVersions(t *testing.T, versions []string) map[st
 func getVersionSuffix(version string) string {
 	switch version {
 	case "10.0":
-		return "3"
+		return "10"
 	case "12.0":
 		return "12"
 	case "13.0":
 		return "13"
+	case "14.0":
+		return "14"
 	default:
 		return strings.Split(version, ".")[0]
 	}
@@ -288,7 +292,7 @@ func verifyStorageMetricConsistency(t *testing.T, allStorageMetrics map[string]m
 
 // TestAuthenticationWithAllVersions tests that authentication works with all API versions
 func TestAuthenticationWithAllVersions(t *testing.T) {
-	versions := []string{"10.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0", "14.0"}
 
 	for _, version := range versions {
 		t.Run(fmt.Sprintf(testAPIVersionFormat, version), func(t *testing.T) {
@@ -340,8 +344,8 @@ func TestParsingWithRealResponseFiles(t *testing.T) {
 		{
 			name:        "NetBackup 10.0 (API v10.0)",
 			version:     "10.0",
-			jobsFile:    "../../testdata/api-versions/jobs-response-v3.json",
-			storageFile: "../../testdata/api-versions/storage-response-v3.json",
+			jobsFile:    "../../testdata/api-versions/jobs-response-v10.json",
+			storageFile: "../../testdata/api-versions/storage-response-v10.json",
 		},
 		{
 			name:        "NetBackup 10.5 (API v12.0)",
@@ -354,6 +358,12 @@ func TestParsingWithRealResponseFiles(t *testing.T) {
 			version:     "13.0",
 			jobsFile:    "../../testdata/api-versions/jobs-response-v13.json",
 			storageFile: "../../testdata/api-versions/storage-response-v13.json",
+		},
+		{
+			name:        "NetBackup 11.2 (API v14.0)",
+			version:     "14.0",
+			jobsFile:    "../../testdata/api-versions/jobs-response-v14.json",
+			storageFile: "../../testdata/api-versions/storage-response-v14.json",
 		},
 	}
 
@@ -463,7 +473,7 @@ func verifyStorageFields(t *testing.T, storage models.Storages) {
 // TestErrorHandlingAcrossVersions tests error handling with different API versions
 // Note: Disables retries to avoid slow exponential backoff on 500 errors
 func TestErrorHandlingAcrossVersions(t *testing.T) {
-	versions := []string{"10.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0", "14.0"}
 
 	for _, version := range versions {
 		t.Run(fmt.Sprintf("API_v%s", version), func(t *testing.T) {
@@ -539,7 +549,7 @@ func handlePaginatedJobsRequest(t *testing.T, w http.ResponseWriter, r *http.Req
 	t.Helper()
 
 	fullJobs := unmarshalJobsData(t, data)
-	offset := parseOffsetFromRequest(r)
+	offset := parseCursorOffsetFromRequest(r)
 	response := createPaginatedJobsResponse(fullJobs, offset)
 
 	writeJSONResponse(w, response, version)
@@ -556,12 +566,13 @@ func unmarshalJobsData(t *testing.T, data []byte) models.Jobs {
 	return fullJobs
 }
 
-// parseOffsetFromRequest extracts the pagination offset from the request
-func parseOffsetFromRequest(r *http.Request) int {
-	offsetStr := r.URL.Query().Get("page[offset]")
+// parseCursorOffsetFromRequest extracts the pagination offset encoded in the cursor.
+// The mock encodes cursors as "cursor_N" where N is the offset of the next page.
+func parseCursorOffsetFromRequest(r *http.Request) int {
+	cursor := r.URL.Query().Get("page[after]")
 	offset := 0
-	if offsetStr != "" {
-		_, _ = fmt.Sscanf(offsetStr, "%d", &offset)
+	if cursor != "" {
+		_, _ = fmt.Sscanf(cursor, "cursor_%d", &offset)
 	}
 	return offset
 }
@@ -585,25 +596,19 @@ func createPaginatedJobsResponse(fullJobs models.Jobs, offset int) *models.Jobs 
 	return response
 }
 
-// setBatchPaginationMetadata sets pagination metadata for a batch response
+// setBatchPaginationMetadata sets cursor pagination metadata for a batch response.
 func setBatchPaginationMetadata(response *models.Jobs, offset int, batchSize int, totalJobs int) {
-	response.Meta.Pagination.Offset = offset
-	response.Meta.Pagination.Last = totalJobs - 1
-	response.Meta.Pagination.Count = batchSize
-
 	nextOffset := offset + batchSize
 	if nextOffset < totalJobs {
-		response.Meta.Pagination.Next = nextOffset
+		response.Meta.Pagination.Next = fmt.Sprintf("cursor_%d", nextOffset)
 	} else {
-		// No more pages - set offset equal to last to signal end
-		response.Meta.Pagination.Offset = response.Meta.Pagination.Last
+		response.Meta.Pagination.Next = ""
 	}
 }
 
-// setEmptyPaginationMetadata sets pagination metadata when no more jobs are available
-func setEmptyPaginationMetadata(response *models.Jobs, totalJobs int) {
-	response.Meta.Pagination.Offset = totalJobs
-	response.Meta.Pagination.Last = totalJobs - 1
+// setEmptyPaginationMetadata sets pagination metadata when no more jobs are available.
+func setEmptyPaginationMetadata(response *models.Jobs, _ int) {
+	response.Meta.Pagination.Next = ""
 }
 
 // writeJSONResponse writes a JSON response with appropriate headers
@@ -613,19 +618,24 @@ func writeJSONResponse(w http.ResponseWriter, response interface{}, version stri
 	_ = json.NewEncoder(w).Encode(response)
 }
 
-// handleFullDataResponse handles non-paginated requests by returning full data
+// handleFullDataResponse handles non-paginated requests by returning full data.
+// Re-encodes via json.NewEncoder to avoid direct w.Write on raw bytes.
 func handleFullDataResponse(w http.ResponseWriter, data []byte, version string) {
+	var payload json.RawMessage
+	if err := json.Unmarshal(data, &payload); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set(contentTypeHeader, fmt.Sprintf(contentTypeNetBackupJSONFormat, version))
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(data)
+	_ = json.NewEncoder(w).Encode(payload)
 }
 
 // createMinimalJobsResponse creates a minimal jobs response for testing
 func createMinimalJobsResponse() *models.Jobs {
 	response := &models.Jobs{}
 	response.Data = make([]models.JobData, 0)
-	response.Meta.Pagination.Offset = 0
-	response.Meta.Pagination.Last = 0
+	response.Meta.Pagination.Next = ""
 
 	return response
 }
