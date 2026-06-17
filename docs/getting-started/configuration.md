@@ -33,6 +33,45 @@ nbuserver:
 !!! warning
     Never commit API keys to version control. Use environment variables or secure secret management.
 
+## Multiple Sites
+
+To monitor more than one NetBackup primary server from a single exporter, replace the single
+`nbuserver:` block with a `nbuservers:` list — one entry per site, each with a **required, unique
+`site`**. Every metric is then labelled with its `site`, and a background loop collects all sites
+on `server.collectionInterval` (default `5m`), so backend API load is decoupled from Prometheus
+scrape frequency.
+
+```yaml
+server:
+    host: "0.0.0.0"
+    port: "9440"
+    uri: "/metrics"
+    scrapingInterval: "1h"
+    collectionInterval: "5m"   # how often every site is polled (default 5m)
+    logName: "log/nbu-exporter.log"
+
+nbuservers:
+    - site: "paris"
+      scheme: "https"
+      uri: "/netbackup"
+      host: "nbu-paris.my.domain"
+      port: "1556"
+      apiVersion: "13.0"        # optional; omit to auto-detect
+      apiKey: "your-paris-api-key"
+      insecureSkipVerify: false
+    - site: "lyon"
+      scheme: "https"
+      uri: "/netbackup"
+      host: "nbu-lyon.my.domain"
+      port: "1556"
+      apiKey: "your-lyon-api-key"
+```
+
+An unreachable site reports only `nbu_up{site="..."}=0` and never affects the others. A legacy
+single `nbuserver:` block is automatically mapped to a one-entry list (with `site` defaulting to
+the host), so existing single-site configurations keep working unchanged. See
+[`config-multisite.yaml`](../config-examples/config-multisite.yaml).
+
 ## Environment Variables / .env loading
 
 The `host` and `apiKey` fields in the `nbuserver` section support `${VAR}` interpolation.
@@ -60,19 +99,19 @@ nbuserver:
 The `NBU1_*` variables are passed into the container by `docker-compose.yml` from the `.env`
 file automatically.
 
-**Multi-server** — `config.yaml` is the source of truth. Add one `nbuserver` entry per cluster
-and supply literal values or your own env references:
+**Multi-site** — use the `nbuservers:` list (see [Multiple Sites](#multiple-sites) above). Each
+entry's `host` and `apiKey` support the same `${VAR}` interpolation:
 
 ```yaml
-# Cluster A
-nbuserver:
-  host: "nbu-a.example.com"
-  apiKey: "literal-key-a"
-
-# Cluster B (env-interpolated)
-nbuserver:
-  host: "${NBU_B_HOST}"
-  apiKey: "${NBU_B_KEY}"
+nbuservers:
+  - site: "paris"
+    host: "${NBU_PARIS_HOST}"
+    apiKey: "${NBU_PARIS_KEY}"
+    # ...
+  - site: "lyon"
+    host: "${NBU_LYON_HOST}"
+    apiKey: "${NBU_LYON_KEY}"
+    # ...
 ```
 
 The `.env` / `NBU1_*` naming is a single-server convenience; there is no limit on variable names.
@@ -84,10 +123,14 @@ The `.env` / `NBU1_*` naming is a single-server convenience; there is no limit o
 | `host` | string | Yes | Server bind address |
 | `port` | string | Yes | Server port (1-65535) |
 | `uri` | string | Yes | Metrics endpoint path |
-| `scrapingInterval` | duration | Yes | Time window for job collection (e.g., "1h", "30m") |
+| `scrapingInterval` | duration | Yes | Job lookback window per collection (e.g., "1h", "30m") |
+| `collectionInterval` | duration | No | Background poll interval for every site (default "5m"). Effective job window = max(scrapingInterval, collectionInterval). |
 | `logName` | string | Yes | Log file path |
 
 ## NBU Server Section
+
+For multiple servers, use a `nbuservers:` list instead of this single block — each entry takes
+the same fields plus a required, unique `site` (see [Multiple Sites](#multiple-sites)).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -97,7 +140,7 @@ The `.env` / `NBU1_*` naming is a single-server convenience; there is no limit o
 | `domainType` | string | Yes | Domain type (NT, vx, etc.) |
 | `host` | string | Yes | NetBackup master server hostname |
 | `port` | string | Yes | API port (typically 1556) |
-| `apiVersion` | string | No | API version (13.0, 12.0, or 3.0). Auto-detects if omitted. |
+| `apiVersion` | string | No | API version (14.0, 13.0, 12.0, or 10.0). Auto-detects if omitted. |
 | `apiKey` | string | Yes | NetBackup API key |
 | `contentType` | string | Yes | API content type header |
 | `insecureSkipVerify` | bool | No | Skip TLS certificate verification |

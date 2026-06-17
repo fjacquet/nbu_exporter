@@ -1,5 +1,11 @@
 # Metrics Reference
 
+!!! info "The `site` label"
+    **Every metric below also carries a `site` label** — its first label — identifying the
+    NetBackup primary it came from. Single-site deployments have one `site` value; a
+    `nbuservers:` list produces one per configured site. The per-metric tables list only the
+    *additional* labels, so a `—` in the Labels column means the series carries `site` only.
+
 ## Job Metrics
 
 | Metric | Labels | Description |
@@ -90,7 +96,7 @@ collectors:
 | Metric | Labels | Description |
 |--------|--------|-------------|
 | `nbu_up` | — | `1` if any collection succeeded, `0` if all collections failed |
-| `nbu_api_version` | `version` | Currently active NetBackup API version (14.0, 13.0, 12.0, or 3.0) |
+| `nbu_api_version` | `version` | Currently active NetBackup API version (14.0, 13.0, 12.0, or 10.0) |
 | `nbu_response_time_ms` | — | NetBackup API response time in milliseconds |
 | `nbu_last_scrape_timestamp_seconds` | `source` | Unix timestamp of the last successful collection (`source`: `storage` or `jobs`) |
 
@@ -100,6 +106,9 @@ Metrics use pipe-delimited keys internally, split into labels:
 
 - **Storage**: `name|type|size` (e.g., "pool1|AdvancedDisk|free")
 - **Jobs**: `action|policy_type|status` (e.g., "BACKUP|Standard|0")
+
+The `site` label is prepended at emission time (it is not part of these internal keys), so every
+emitted series is `site` followed by the labels above.
 
 ## Prometheus Configuration
 
