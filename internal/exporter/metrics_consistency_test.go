@@ -22,7 +22,7 @@ import (
 // TestMetricsConsistency_JobMetrics verifies that job metrics have consistent
 // names and labels across all API versions.
 func TestMetricsConsistencyJobMetrics(t *testing.T) {
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0", "14.0"}
 
 	for _, version := range versions {
 		t.Run("Version_"+strings.ReplaceAll(version, ".", "_"), func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestMetricsConsistencyJobMetrics(t *testing.T) {
 // TestMetricsConsistency_StorageMetrics verifies that storage metrics have consistent
 // names and labels across all API versions.
 func TestMetricsConsistencyStorageMetrics(t *testing.T) {
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0", "14.0"}
 
 	for _, version := range versions {
 		t.Run("Version_"+strings.ReplaceAll(version, ".", "_"), func(t *testing.T) {
@@ -129,7 +129,7 @@ func TestMetricsConsistencyStorageMetrics(t *testing.T) {
 // across API versions for the same data.
 func TestMetricsConsistencyLabelValues(t *testing.T) {
 	jobData := createTestJobData()
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0", "14.0"}
 
 	collectedLabels := collectLabelsForAllVersions(t, jobData, versions)
 	verifyLabelConsistency(t, collectedLabels)
@@ -229,7 +229,7 @@ func verifyLabelConsistency(t *testing.T, collectedLabels map[string]map[string]
 // TestMetricsConsistency_MetricTypes verifies that metric types (gauge, counter)
 // remain consistent across API versions.
 func TestMetricsConsistencyMetricTypes(t *testing.T) {
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0", "14.0"}
 	metricTypes := make(map[string]map[string]string) // version -> metric name -> type
 
 	for _, version := range versions {
@@ -328,7 +328,7 @@ func TestMetricsConsistencyGrafanaDashboard(t *testing.T) {
 // TestMetricsConsistency_PrometheusExport verifies that metrics can be exported
 // in Prometheus format consistently across versions.
 func TestMetricsConsistencyPrometheusExport(t *testing.T) {
-	versions := []string{"3.0", "12.0", "13.0"}
+	versions := []string{"10.0", "12.0", "13.0", "14.0"}
 
 	for _, version := range versions {
 		t.Run("Version_"+strings.ReplaceAll(version, ".", "_"), func(t *testing.T) {

@@ -179,8 +179,7 @@ func combinedServer(t *testing.T) *httptest.Server {
 		NumberOfFiles: 42, KilobytesTransferred: 2048, DedupRatio: 3.0,
 		StartTime: end.Add(-5 * time.Minute), EndTime: end,
 	}
-	jobs.Meta.Pagination.Offset = 0
-	jobs.Meta.Pagination.Last = 0
+	jobs.Meta.Pagination.Next = ""
 
 	storageResp := storageResponseWithAttributes(t)
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -167,28 +167,28 @@ func aggregateJob(agg *JobAggregator, attr models.JobAttributes) {
 	}
 }
 
-// FetchJobDetails retrieves a page of job records (up to 100) at the specified
-// pagination offset and folds each job into the aggregator. It processes all jobs
-// in the API response and uses the API's pagination metadata to determine the
-// next offset.
+// FetchJobDetails retrieves a page of job records (up to 100) at the given cursor and
+// folds each job into the aggregator. /admin/jobs is cursor-paginated (NetBackup API
+// >= 9.0): it processes all jobs in the response and returns the next-page cursor from
+// the API's pagination metadata.
 //
 // Parameters:
 //   - ctx: Context for request cancellation and timeout
 //   - client: Configured NetBackup API client
 //   - agg: Aggregator accumulating all job-derived metrics across pages
-//   - offset: Pagination offset (starts at 0, use Meta.Pagination.Next for subsequent calls)
+//   - cursor: Page cursor (empty string for the first page; pass Meta.Pagination.Next for subsequent pages)
 //   - startTime: Filter to only include jobs completed after this time
 //
 // Returns:
-//   - Next pagination offset (or -1 if no more jobs)
+//   - Next-page cursor (empty string when there are no more jobs)
 //   - Error if the API request fails
 func FetchJobDetails(
 	ctx context.Context,
 	client *NbuClient,
 	agg *JobAggregator,
-	offset int,
+	cursor string,
 	startTime time.Time,
-) (int, error) {
+) (string, error) {
 	// Start child span "netbackup.fetch_job_page" from parent context
 	ctx, span := client.tracing.StartSpan(ctx, "netbackup.fetch_job_page", trace.SpanKindClient)
 	defer span.End()
@@ -197,9 +197,13 @@ func FetchJobDetails(
 
 	queryParams := map[string]string{
 		QueryParamLimit:  jobPageLimit, // Fetch up to 100 jobs per page for efficiency
-		QueryParamOffset: strconv.Itoa(offset),
 		QueryParamSort:   "jobId",
 		QueryParamFilter: fmt.Sprintf("endTime gt %s", utils.ConvertTimeToNBUDate(startTime)),
+	}
+	// Cursor pagination: omit page[after] on the first page; follow the response's
+	// next cursor thereafter (NetBackup API >= 9.0 returns opaque string cursors).
+	if cursor != "" {
+		queryParams[QueryParamAfter] = cursor
 	}
 
 	url := client.cfg.BuildURL(jobsPath, queryParams)
@@ -207,18 +211,15 @@ func FetchJobDetails(
 	if err := client.FetchData(ctx, url, &jobs); err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		return -1, fmt.Errorf("failed to fetch job details at offset %d: %w", offset, err)
+		return "", fmt.Errorf("failed to fetch job details: %w", err)
 	}
+
+	span.SetAttributes(attribute.Int(telemetry.AttrNetBackupJobsInPage, len(jobs.Data)))
 
 	// No more jobs to process
 	if len(jobs.Data) == 0 {
-		attrs := []attribute.KeyValue{
-			attribute.Int(telemetry.AttrNetBackupPageOffset, offset),
-			attribute.Int(telemetry.AttrNetBackupJobsInPage, 0),
-		}
-		span.SetAttributes(attrs...)
 		span.SetStatus(codes.Ok, "No more jobs to process")
-		return -1, nil
+		return "", nil
 	}
 
 	// Process ALL jobs in the batch response
@@ -226,35 +227,19 @@ func FetchJobDetails(
 		aggregateJob(agg, job.Attributes)
 	}
 
-	// Batch span attributes for job page
-	attrs := []attribute.KeyValue{
-		attribute.Int(telemetry.AttrNetBackupPageOffset, offset),
-		attribute.Int(telemetry.AttrNetBackupJobsInPage, len(jobs.Data)),
-	}
-	span.SetAttributes(attrs...)
-
-	// Check if we've reached the last page
-	if jobs.Meta.Pagination.Offset == jobs.Meta.Pagination.Last {
-		span.SetStatus(codes.Ok, "Last page reached")
-		return -1, nil
-	}
-
+	// An empty next cursor signals the last page.
 	span.SetStatus(codes.Ok, "Page fetched successfully")
 	return jobs.Meta.Pagination.Next, nil
 }
 
-// HandlePagination provides a generic pagination handler that repeatedly calls a fetch function
-// until all pages have been processed. It handles context cancellation and propagates errors
-// from the fetch function.
+// HandlePagination drives cursor-based pagination: it calls fetchFunc with the current
+// cursor (empty on the first page) and follows the returned next cursor until it is empty.
+// Context cancellation is checked before each page fetch.
 //
 // The fetch function should:
-//   - Accept a context and offset parameter
-//   - Return the next offset (or -1 when pagination is complete)
+//   - Accept a context and the current cursor (empty string for the first page)
+//   - Return the next cursor (empty string when there are no more pages)
 //   - Return an error if the fetch operation fails
-//
-// Parameters:
-//   - ctx: Context for cancellation (checked before each page fetch)
-//   - fetchFunc: Function to fetch and process a single page of results
 //
 // Returns an error if:
 //   - Context is cancelled (ctx.Err())
@@ -262,24 +247,26 @@ func FetchJobDetails(
 //
 // Example:
 //
-//	err := HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
-//	    return FetchJobDetails(ctx, client, metrics, offset, startTime)
+//	err := HandlePagination(ctx, func(ctx context.Context, cursor string) (string, error) {
+//	    return FetchJobDetails(ctx, client, agg, cursor, startTime)
 //	})
-func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, offset int) (int, error)) error {
-	offset := 0
-	for offset != -1 {
+func HandlePagination(ctx context.Context, fetchFunc func(ctx context.Context, cursor string) (string, error)) error {
+	cursor := ""
+	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			nextOffset, err := fetchFunc(ctx, offset)
+			next, err := fetchFunc(ctx, cursor)
 			if err != nil {
 				return err
 			}
-			offset = nextOffset
+			if next == "" {
+				return nil
+			}
+			cursor = next
 		}
 	}
-	return nil
 }
 
 // FetchAllJobs aggregates job statistics by iterating over paginated job data.
@@ -361,9 +348,9 @@ func FetchAllJobsFull(
 	// Track page count
 	pageCount := 0
 
-	err := HandlePagination(ctx, func(ctx context.Context, offset int) (int, error) {
+	err := HandlePagination(ctx, func(ctx context.Context, cursor string) (string, error) {
 		pageCount++
-		return FetchJobDetails(ctx, client, agg, offset, startTime)
+		return FetchJobDetails(ctx, client, agg, cursor, startTime)
 	})
 
 	// Calculate total jobs fetched

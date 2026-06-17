@@ -111,15 +111,14 @@ type JobData struct {
 type Jobs struct {
 	Data []JobData `json:"data"`
 	Meta struct {
+		// Pagination is cursor-based for /admin/jobs (NetBackup API >= 9.0, i.e. all
+		// supported versions): the response carries opaque string cursors, not offsets.
+		// `Next` is empty on the last page. Request the next page with page[after]=Next.
 		Pagination struct {
-			Next   int `json:"next"`
-			Pages  int `json:"pages"`
-			Offset int `json:"offset"`
-			Last   int `json:"last"`
-			Limit  int `json:"limit"`
-			Count  int `json:"count"`
-			Page   int `json:"page"`
-			First  int `json:"first"`
+			Limit          int    `json:"limit"`
+			Next           string `json:"next"`
+			Prev           string `json:"prev"`
+			RangeTruncated bool   `json:"rangeTruncated"`
 		} `json:"pagination"`
 	} `json:"meta"`
 	Links struct {

@@ -79,9 +79,9 @@ func TestAPIVersionDetectorDetectVersionSuccess(t *testing.T) {
 			expectedVersion: models.APIVersion120,
 		},
 		{
-			name:            "detects API version 3.0 (NetBackup 10.0)",
-			serverVersion:   models.APIVersion30,
-			expectedVersion: models.APIVersion30,
+			name:            "detects API version 10.0 (NetBackup 10.0)",
+			serverVersion:   models.APIVersion100,
+			expectedVersion: models.APIVersion100,
 		},
 	}
 
@@ -118,10 +118,10 @@ func TestAPIVersionDetectorDetectVersionFallback(t *testing.T) {
 			description:     "Server doesn't support 13.0, falls back to 12.0",
 		},
 		{
-			name:            "falls back from 13.0 to 12.0 to 3.0",
-			serverVersion:   models.APIVersion30,
-			expectedVersion: models.APIVersion30,
-			description:     "Server only supports 3.0, falls back through all versions",
+			name:            "falls back from 13.0 to 12.0 to 10.0",
+			serverVersion:   models.APIVersion100,
+			expectedVersion: models.APIVersion100,
+			description:     "Server only supports 10.0, falls back through all versions",
 		},
 	}
 
