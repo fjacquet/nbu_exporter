@@ -13,6 +13,7 @@ import (
 
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -560,42 +561,42 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 		nbuDiskSize: prometheus.NewDesc(
 			"nbu_disk_bytes",
 			"The quantity of storage bytes",
-			[]string{"name", "type", "size"}, nil,
+			[]string{"site", "name", "type", "size"}, nil,
 		),
 		nbuResponseTime: prometheus.NewDesc(
 			"nbu_response_time_ms",
 			"The server response time in milliseconds",
-			nil, nil,
+			[]string{"site"}, nil,
 		),
 		nbuJobsSize: prometheus.NewDesc(
 			"nbu_jobs_bytes",
 			"The quantity of processed bytes",
-			[]string{"action", "policy_type", "status"}, nil,
+			[]string{"site", "action", "policy_type", "status"}, nil,
 		),
 		nbuJobsCount: prometheus.NewDesc(
 			"nbu_jobs_count",
 			"The quantity of jobs",
-			[]string{"action", "policy_type", "status"}, nil,
+			[]string{"site", "action", "policy_type", "status"}, nil,
 		),
 		nbuJobsStatusCount: prometheus.NewDesc(
 			"nbu_status_count",
 			"The quantity per status",
-			[]string{"action", "status"}, nil,
+			[]string{"site", "action", "status"}, nil,
 		),
 		nbuAPIVersion: prometheus.NewDesc(
 			"nbu_api_version",
 			"The NetBackup API version currently in use",
-			[]string{"version"}, nil,
+			[]string{"site", "version"}, nil,
 		),
 		nbuUp: prometheus.NewDesc(
 			"nbu_up",
 			"1 if NetBackup API is reachable, 0 if all collections failed",
-			nil, nil,
+			[]string{"site"}, nil,
 		),
 		nbuLastScrapeTime: prometheus.NewDesc(
 			"nbu_last_scrape_timestamp_seconds",
 			"Unix timestamp of the last successful metric collection",
-			[]string{"source"}, nil,
+			[]string{"site", "source"}, nil,
 		),
 	}
 
@@ -846,4 +847,56 @@ func TestNbuCollectorHelpStringIncludesTTL(t *testing.T) {
 	if !foundDiskBytes {
 		t.Error("nbu_disk_bytes descriptor not found")
 	}
+}
+
+// TestNbuCollectorNbuUpHasSiteLabel verifies that nbu_up carries a "site" label
+// equal to the configured site name (NbuServers[0].Site after SetDefaults promotion).
+func TestNbuCollectorNbuUpHasSiteLabel(t *testing.T) {
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"data": []}`))
+	}))
+	defer server.Close()
+
+	serverHost, serverPort, _ := net.SplitHostPort(server.Listener.Addr().String())
+
+	cfg := models.Config{}
+	cfg.Server.Host = "localhost"
+	cfg.Server.Port = "9440"
+	cfg.Server.URI = "/metrics"
+	cfg.Server.ScrapingInterval = "5m"
+	cfg.NbuServer.Scheme = "https"
+	cfg.NbuServer.Host = serverHost
+	cfg.NbuServer.Port = serverPort
+	cfg.NbuServer.APIKey = testAPIKey
+	cfg.NbuServer.APIVersion = models.APIVersion130
+	cfg.NbuServer.InsecureSkipVerify = true
+	// SetDefaults (called inside NewNbuCollector via performVersionDetectionIfNeeded)
+	// promotes NbuServer -> NbuServers[0].Site = serverHost
+
+	collector, err := NewNbuCollector(cfg)
+	require.NoError(t, err)
+	require.NotNil(t, collector)
+	defer func() { _ = collector.Close() }()
+
+	registry := prometheus.NewRegistry()
+	require.NoError(t, registry.Register(collector))
+
+	metricFamilies, err := registry.Gather()
+	require.NoError(t, err)
+
+	var upFamily *dto.MetricFamily
+	for _, mf := range metricFamilies {
+		if mf.GetName() == "nbu_up" {
+			upFamily = mf
+			break
+		}
+	}
+	require.NotNil(t, upFamily, "nbu_up metric family must be present")
+	require.Len(t, upFamily.GetMetric(), 1, "nbu_up must have exactly one series")
+
+	labels := upFamily.GetMetric()[0].GetLabel()
+	require.Len(t, labels, 1, "nbu_up must carry exactly one label (site)")
+	assert.Equal(t, "site", labels[0].GetName(), "first label must be named 'site'")
+	assert.Equal(t, serverHost, labels[0].GetValue(), "site label value must equal NbuServers[0].Site")
 }

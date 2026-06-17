@@ -100,6 +100,13 @@ type NbuCollector struct {
 	lastJobsScrapeTime    time.Time    // Last successful jobs metric collection
 }
 
+// withSite prepends the site label value to a slice of additional label values.
+// Used at emission time so every metric series carries the site dimension.
+func withSite(site string, labels []string) []string {
+	result := make([]string, 0, 1+len(labels))
+	return append(append(result, site), labels...)
+}
+
 // NewNbuCollector creates a new NetBackup collector with the provided configuration.
 // It initializes the HTTP client, performs automatic API version detection if needed,
 // and registers Prometheus metric descriptors.
@@ -157,87 +164,87 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 		nbuResponseTime: prometheus.NewDesc(
 			"nbu_response_time_ms",
 			"The server response time in milliseconds",
-			nil, nil,
+			[]string{"site"}, nil,
 		),
 		nbuDiskSize: prometheus.NewDesc(
 			"nbu_disk_bytes",
 			fmt.Sprintf("The quantity of storage bytes (cached: %s TTL)", cfg.GetCacheTTL()),
-			[]string{"name", "type", "size"}, nil,
+			[]string{"site", "name", "type", "size"}, nil,
 		),
 		nbuJobsSize: prometheus.NewDesc(
 			"nbu_jobs_bytes",
 			"The quantity of processed bytes",
-			[]string{"action", "policy_type", "status"}, nil,
+			[]string{"site", "action", "policy_type", "status"}, nil,
 		),
 		nbuJobsCount: prometheus.NewDesc(
 			"nbu_jobs_count",
 			"The quantity of jobs",
-			[]string{"action", "policy_type", "status"}, nil,
+			[]string{"site", "action", "policy_type", "status"}, nil,
 		),
 		nbuJobsStatusCount: prometheus.NewDesc(
 			"nbu_status_count",
 			"The quantity per status",
-			[]string{"action", "status"}, nil,
+			[]string{"site", "action", "status"}, nil,
 		),
 		nbuAPIVersion: prometheus.NewDesc(
 			"nbu_api_version",
 			"The NetBackup API version currently in use",
-			[]string{"version"}, nil,
+			[]string{"site", "version"}, nil,
 		),
 		nbuUp: prometheus.NewDesc(
 			"nbu_up",
 			"1 if NetBackup API is reachable, 0 if all collections failed",
-			nil, nil,
+			[]string{"site"}, nil,
 		),
 		nbuLastScrapeTime: prometheus.NewDesc(
 			"nbu_last_scrape_timestamp_seconds",
 			"Unix timestamp of the last successful metric collection",
-			[]string{"source"}, nil, // source: "storage" or "jobs"
+			[]string{"site", "source"}, nil, // source: "storage" or "jobs"
 		),
 		nbuDiskCapacity: prometheus.NewDesc(
 			"nbu_disk_capacity_bytes",
 			"Authoritative total capacity of the storage unit in bytes",
-			[]string{"name", "type"}, nil,
+			[]string{"site", "name", "type"}, nil,
 		),
 		nbuStorageMaxJobs: prometheus.NewDesc(
 			"nbu_storage_max_concurrent_jobs",
 			"Maximum number of concurrent jobs the storage unit accepts",
-			[]string{"name", "type"}, nil,
+			[]string{"site", "name", "type"}, nil,
 		),
 		nbuStorageMaxFragment: prometheus.NewDesc(
 			"nbu_storage_max_fragment_size_bytes",
 			"Maximum fragment size the storage unit accepts, in bytes",
-			[]string{"name", "type"}, nil,
+			[]string{"site", "name", "type"}, nil,
 		),
 		nbuStorageInfo: prometheus.NewDesc(
 			"nbu_storage_info",
 			"Storage unit capabilities (always 1; metadata carried in labels)",
-			[]string{"name", "type", "subtype", "is_cloud", "worm_capable", "use_worm", "replication_capable", "instant_access"}, nil,
+			[]string{"site", "name", "type", "subtype", "is_cloud", "worm_capable", "use_worm", "replication_capable", "instant_access"}, nil,
 		),
 		nbuJobsStateCount: prometheus.NewDesc(
 			"nbu_jobs_state_count",
 			"The quantity of jobs per lifecycle state",
-			[]string{"action", "state"}, nil,
+			[]string{"site", "action", "state"}, nil,
 		),
 		nbuJobsFilesCount: prometheus.NewDesc(
 			"nbu_jobs_files_count",
 			"The total number of files processed by jobs",
-			[]string{"action", "policy_type"}, nil,
+			[]string{"site", "action", "policy_type"}, nil,
 		),
 		nbuJobsDedupRatio: prometheus.NewDesc(
 			"nbu_jobs_dedup_ratio",
 			"The mean deduplication ratio across jobs",
-			[]string{"action", "policy_type"}, nil,
+			[]string{"site", "action", "policy_type"}, nil,
 		),
 		nbuJobsQueuedCount: prometheus.NewDesc(
 			"nbu_jobs_queued_count",
 			"The quantity of queued jobs per queue reason code",
-			[]string{"action", "reason"}, nil,
+			[]string{"site", "action", "reason"}, nil,
 		),
 		nbuJobDuration: prometheus.NewDesc(
 			"nbu_job_duration_seconds",
 			"Histogram of completed job durations in seconds",
-			[]string{"action", "policy_type"}, nil,
+			[]string{"site", "action", "policy_type"}, nil,
 		),
 	}
 
@@ -349,8 +356,14 @@ func (c *NbuCollector) Collect(ch chan<- prometheus.Metric) {
 	// Update span with scrape results
 	c.updateScrapeSpan(span, scrapeStart, storageMetrics, jobMetricCount, storageErr, jobsErr)
 
+	// Determine site label value (fallback to NbuServer.Host for tests that bypass SetDefaults)
+	site := c.cfg.NbuServer.Host
+	if len(c.cfg.NbuServers) > 0 {
+		site = c.cfg.NbuServers[0].Site
+	}
+
 	// Expose all collected metrics (pass errors for nbu_up calculation)
-	c.exposeMetrics(ch, storageMetrics, storageUnits, jobAgg, storageErr, jobsErr)
+	c.exposeMetrics(ch, site, storageMetrics, storageUnits, jobAgg, storageErr, jobsErr)
 
 	// Run enabled opt-in sub-collectors (graceful degradation: errors logged, never propagated).
 	runSubCollectors(ctx, c.subCollectors, ch, c.tracing)
@@ -517,14 +530,14 @@ func (c *NbuCollector) recordScrapeAttributes(span trace.Span, scrapeStart time.
 // exposeMetrics sends all collected metrics to the Prometheus channel.
 // It calculates nbu_up based on collection errors: 1 if any collection succeeded, 0 if all failed.
 // It also exposes nbu_last_scrape_timestamp_seconds for staleness detection.
-func (c *NbuCollector) exposeMetrics(ch chan<- prometheus.Metric, storageMetrics []StorageMetricValue, storageUnits []StorageUnitInfo, jobAgg *JobAggregator, storageErr, jobsErr error) {
+func (c *NbuCollector) exposeMetrics(ch chan<- prometheus.Metric, site string, storageMetrics []StorageMetricValue, storageUnits []StorageUnitInfo, jobAgg *JobAggregator, storageErr, jobsErr error) {
 	// Expose nbu_up metric first (Prometheus convention)
 	// up=1 if ANY collection succeeded, up=0 if ALL failed
 	upValue := 0.0
 	if storageErr == nil || jobsErr == nil {
 		upValue = 1.0
 	}
-	ch <- prometheus.MustNewConstMetric(c.nbuUp, prometheus.GaugeValue, upValue)
+	ch <- prometheus.MustNewConstMetric(c.nbuUp, prometheus.GaugeValue, upValue, site)
 
 	// Expose last scrape timestamps for staleness detection
 	c.scrapeMu.RLock()
@@ -533,7 +546,7 @@ func (c *NbuCollector) exposeMetrics(ch chan<- prometheus.Metric, storageMetrics
 			c.nbuLastScrapeTime,
 			prometheus.GaugeValue,
 			float64(c.lastStorageScrapeTime.Unix()),
-			"storage",
+			site, "storage",
 		)
 	}
 	if !c.lastJobsScrapeTime.IsZero() {
@@ -541,27 +554,27 @@ func (c *NbuCollector) exposeMetrics(ch chan<- prometheus.Metric, storageMetrics
 			c.nbuLastScrapeTime,
 			prometheus.GaugeValue,
 			float64(c.lastJobsScrapeTime.Unix()),
-			"jobs",
+			site, "jobs",
 		)
 	}
 	c.scrapeMu.RUnlock()
 
 	// Expose existing storage + job metrics
-	c.exposeStorageMetrics(ch, storageMetrics)
-	c.exposeStorageUnitMetrics(ch, storageUnits)
-	c.exposeJobAggregateMetrics(ch, jobAgg)
-	c.exposeAPIVersionMetric(ch)
+	c.exposeStorageMetrics(ch, site, storageMetrics)
+	c.exposeStorageUnitMetrics(ch, site, storageUnits)
+	c.exposeJobAggregateMetrics(ch, site, jobAgg)
+	c.exposeAPIVersionMetric(ch, site)
 }
 
 // exposeStorageUnitMetrics emits the per-unit storage attribute metrics:
 // capacity, max concurrent jobs, max fragment size, and the info metric.
-func (c *NbuCollector) exposeStorageUnitMetrics(ch chan<- prometheus.Metric, units []StorageUnitInfo) {
+func (c *NbuCollector) exposeStorageUnitMetrics(ch chan<- prometheus.Metric, site string, units []StorageUnitInfo) {
 	for _, u := range units {
-		labels := []string{u.Name, u.Type}
+		labels := withSite(site, []string{u.Name, u.Type})
 		ch <- prometheus.MustNewConstMetric(c.nbuDiskCapacity, prometheus.GaugeValue, u.TotalCapacityBytes, labels...)
 		ch <- prometheus.MustNewConstMetric(c.nbuStorageMaxJobs, prometheus.GaugeValue, u.MaxConcurrentJobs, labels...)
 		ch <- prometheus.MustNewConstMetric(c.nbuStorageMaxFragment, prometheus.GaugeValue, u.MaxFragmentBytes, labels...)
-		ch <- prometheus.MustNewConstMetric(c.nbuStorageInfo, prometheus.GaugeValue, 1, u.InfoLabels()...)
+		ch <- prometheus.MustNewConstMetric(c.nbuStorageInfo, prometheus.GaugeValue, 1, withSite(site, u.InfoLabels())...)
 	}
 }
 
@@ -569,59 +582,59 @@ func (c *NbuCollector) exposeStorageUnitMetrics(ch chan<- prometheus.Metric, uni
 // A nil aggregator (jobs fetch failed) yields no job metrics, preserving the
 // graceful-degradation contract. Dedup ratio is emitted only when at least one
 // job contributed (absent, never a fake zero).
-func (c *NbuCollector) exposeJobAggregateMetrics(ch chan<- prometheus.Metric, agg *JobAggregator) {
+func (c *NbuCollector) exposeJobAggregateMetrics(ch chan<- prometheus.Metric, site string, agg *JobAggregator) {
 	if agg == nil {
 		return
 	}
 
 	for key, value := range agg.Size {
-		ch <- prometheus.MustNewConstMetric(c.nbuJobsSize, prometheus.GaugeValue, value, key.Labels()...)
+		ch <- prometheus.MustNewConstMetric(c.nbuJobsSize, prometheus.GaugeValue, value, withSite(site, key.Labels())...)
 	}
 	for key, value := range agg.Count {
-		ch <- prometheus.MustNewConstMetric(c.nbuJobsCount, prometheus.GaugeValue, value, key.Labels()...)
+		ch <- prometheus.MustNewConstMetric(c.nbuJobsCount, prometheus.GaugeValue, value, withSite(site, key.Labels())...)
 	}
 	for key, value := range agg.StatusCount {
-		ch <- prometheus.MustNewConstMetric(c.nbuJobsStatusCount, prometheus.GaugeValue, value, key.Labels()...)
+		ch <- prometheus.MustNewConstMetric(c.nbuJobsStatusCount, prometheus.GaugeValue, value, withSite(site, key.Labels())...)
 	}
 	for key, value := range agg.StateCount {
-		ch <- prometheus.MustNewConstMetric(c.nbuJobsStateCount, prometheus.GaugeValue, value, key.Labels()...)
+		ch <- prometheus.MustNewConstMetric(c.nbuJobsStateCount, prometheus.GaugeValue, value, withSite(site, key.Labels())...)
 	}
 	for key, value := range agg.FilesCount {
-		ch <- prometheus.MustNewConstMetric(c.nbuJobsFilesCount, prometheus.GaugeValue, value, key.Labels()...)
+		ch <- prometheus.MustNewConstMetric(c.nbuJobsFilesCount, prometheus.GaugeValue, value, withSite(site, key.Labels())...)
 	}
 	for key, value := range agg.QueuedCount {
-		ch <- prometheus.MustNewConstMetric(c.nbuJobsQueuedCount, prometheus.GaugeValue, value, key.Labels()...)
+		ch <- prometheus.MustNewConstMetric(c.nbuJobsQueuedCount, prometheus.GaugeValue, value, withSite(site, key.Labels())...)
 	}
 	for key, sum := range agg.DedupSum {
 		if n := agg.DedupCount[key]; n > 0 {
-			ch <- prometheus.MustNewConstMetric(c.nbuJobsDedupRatio, prometheus.GaugeValue, sum/n, key.Labels()...)
+			ch <- prometheus.MustNewConstMetric(c.nbuJobsDedupRatio, prometheus.GaugeValue, sum/n, withSite(site, key.Labels())...)
 		}
 	}
 	for key, acc := range agg.Duration {
-		ch <- prometheus.MustNewConstHistogram(c.nbuJobDuration, acc.Count, acc.Sum, acc.Buckets(), key.Labels()...)
+		ch <- prometheus.MustNewConstHistogram(c.nbuJobDuration, acc.Count, acc.Sum, acc.Buckets(), withSite(site, key.Labels())...)
 	}
 }
 
 // exposeStorageMetrics sends storage metrics to the Prometheus channel.
 // Uses Labels() method directly - no string parsing needed.
-func (c *NbuCollector) exposeStorageMetrics(ch chan<- prometheus.Metric, storageMetrics []StorageMetricValue) {
+func (c *NbuCollector) exposeStorageMetrics(ch chan<- prometheus.Metric, site string, storageMetrics []StorageMetricValue) {
 	for _, m := range storageMetrics {
 		ch <- prometheus.MustNewConstMetric(
 			c.nbuDiskSize,
 			prometheus.GaugeValue,
 			m.Value,
-			m.Key.Labels()...,
+			withSite(site, m.Key.Labels())...,
 		)
 	}
 }
 
 // exposeAPIVersionMetric sends the API version metric to the Prometheus channel.
-func (c *NbuCollector) exposeAPIVersionMetric(ch chan<- prometheus.Metric) {
+func (c *NbuCollector) exposeAPIVersionMetric(ch chan<- prometheus.Metric, site string) {
 	ch <- prometheus.MustNewConstMetric(
 		c.nbuAPIVersion,
 		prometheus.GaugeValue,
 		1,
-		c.cfg.NbuServer.APIVersion,
+		site, c.cfg.NbuServer.APIVersion,
 	)
 }
 
