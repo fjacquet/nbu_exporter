@@ -1,0 +1,34 @@
+# Optional Prometheus alerting rules — tape drive health.
+#
+# Requires the opt-in tape collector (collectors.tape), which produces
+# nbu_tape_drives_count. Load alongside nbu.rules.yml:
+#
+#   rule_files:
+#     - /etc/prometheus/rules/nbu.rules.yml
+#     - /etc/prometheus/rules/rules-tape.yml
+#
+# Validate:  make check-rules
+#
+# `for:` hold windows are operator policy, not metric behaviour: 15m on DOWN rides
+# out transient drive scans/robot cycles before paging; DISABLED is usually a
+# deliberate operator action, so 30m avoids noise on planned maintenance. Tune to
+# your environment.
+groups:
+  - name: nbu_tape
+    rules:
+      - alert: NbuTapeDriveDown
+        expr: sum by (site) (nbu_tape_drives_count{state="DOWN"}) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Tape drive(s) DOWN on site {{ $labels.site }}"
+          description: "One or more tape drives are DOWN on site {{ $labels.site }}."
+      - alert: NbuTapeDriveDisabled
+        expr: sum by (site) (nbu_tape_drives_count{state="DISABLED"}) > 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Tape drive(s) DISABLED on site {{ $labels.site }}"
+          description: "One or more tape drives are DISABLED on site {{ $labels.site }}."

@@ -1,0 +1,37 @@
+# promtool test rules deploy/prometheus/rules-perclient_test.yml
+rule_files:
+  - rules-perclient.yml
+tests:
+  - interval: 5m
+    input_series:
+      # Last successful backup at t=0; series present (value 0) through 50h.
+      # 5m interval is fine enough to exercise the rules' `for: 1h` hold window.
+      - series: 'nbu_client_last_successful_backup_timestamp_seconds{site="paris",client="clientA"}'
+        values: '0x600'
+    alert_rule_test:
+      - eval_time: 24h
+        alertname: NbuClientBackupStale
+        exp_alerts: []
+      - eval_time: 27h
+        alertname: NbuClientBackupStale
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              site: paris
+              client: clientA
+            exp_annotations:
+              summary: "Client clientA has no successful backup in over 25h (site paris)"
+              description: "Client clientA on site paris has not completed a successful backup in over 25 hours."
+      - eval_time: 27h
+        alertname: NbuClientBackupCritical
+        exp_alerts: []
+      - eval_time: 50h
+        alertname: NbuClientBackupCritical
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              site: paris
+              client: clientA
+            exp_annotations:
+              summary: "Client clientA has no successful backup in over 48h (site paris)"
+              description: "Client clientA on site paris has not completed a successful backup in over 48 hours."
