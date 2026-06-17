@@ -8,6 +8,11 @@
 #     - /etc/prometheus/rules/rules-tape.yml
 #
 # Validate:  make check-rules
+#
+# `for:` hold windows are operator policy, not metric behaviour: 15m on DOWN rides
+# out transient drive scans/robot cycles before paging; DISABLED is usually a
+# deliberate operator action, so 30m avoids noise on planned maintenance. Tune to
+# your environment.
 groups:
   - name: nbu_tape
     rules:
