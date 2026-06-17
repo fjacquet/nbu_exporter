@@ -256,18 +256,22 @@ func NewNbuCollector(cfg models.Config, opts ...CollectorOption) (*NbuCollector,
 
 // buildSubCollectors returns the enabled optional collectors based on config.
 func buildSubCollectors(c *NbuCollector) []subCollector {
+	site := c.cfg.NbuServer.Host
+	if len(c.cfg.NbuServers) > 0 {
+		site = c.cfg.NbuServers[0].Site
+	}
 	var subs []subCollector
 	if c.cfg.Collectors.Alerts.Enabled {
-		subs = append(subs, newAlertsCollector(c.client, c.cfg))
+		subs = append(subs, newAlertsCollector(c.client, c.cfg, site))
 	}
 	if c.cfg.Collectors.Malware.Enabled {
-		subs = append(subs, newMalwareCollector(c.client, c.cfg))
+		subs = append(subs, newMalwareCollector(c.client, c.cfg, site))
 	}
 	if c.cfg.Collectors.Catalog.Enabled {
-		subs = append(subs, newCatalogCollector(c.client, c.cfg))
+		subs = append(subs, newCatalogCollector(c.client, c.cfg, site))
 	}
 	if c.cfg.Collectors.SLO.Enabled {
-		subs = append(subs, newSLOCollector(c.client, c.cfg))
+		subs = append(subs, newSLOCollector(c.client, c.cfg, site))
 	}
 	return subs
 }

@@ -14,17 +14,19 @@ const alertsPath = "/manage/alerts"
 type alertsCollector struct {
 	client NetBackupClient
 	cfg    models.Config
+	site   string
 	desc   *prometheus.Desc
 }
 
-func newAlertsCollector(client NetBackupClient, cfg models.Config) *alertsCollector {
+func newAlertsCollector(client NetBackupClient, cfg models.Config, site string) *alertsCollector {
 	return &alertsCollector{
 		client: client,
 		cfg:    cfg,
+		site:   site,
 		desc: prometheus.NewDesc(
 			"nbu_alerts_count",
 			"Number of NetBackup alerts by severity and category",
-			[]string{"severity", "category"}, nil,
+			[]string{"site", "severity", "category"}, nil,
 		),
 	}
 }
@@ -45,7 +47,7 @@ func (a *alertsCollector) Collect(ctx context.Context, ch chan<- prometheus.Metr
 		counts[key{d.Attributes.Severity, d.Attributes.Category}]++
 	}
 	for k, v := range counts {
-		ch <- prometheus.MustNewConstMetric(a.desc, prometheus.GaugeValue, v, k.severity, k.category)
+		ch <- prometheus.MustNewConstMetric(a.desc, prometheus.GaugeValue, v, a.site, k.severity, k.category)
 	}
 	return nil
 }

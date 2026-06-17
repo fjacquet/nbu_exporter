@@ -11,7 +11,7 @@ import (
 
 func TestSLOCollector(t *testing.T) {
 	client := newMockClientFromFixture(t, "../../testdata/api-versions/slo-response.json")
-	c := newSLOCollector(client, testConfig())
+	c := newSLOCollector(client, testConfig(), "site1")
 	ch := make(chan prometheus.Metric, 16)
 	require.NoError(t, c.Collect(context.Background(), ch))
 	close(ch)
@@ -21,7 +21,8 @@ func TestSLOCollector(t *testing.T) {
 	for m := range ch {
 		var d dto.Metric
 		require.NoError(t, m.Write(&d))
-		require.Empty(t, d.GetLabel(), "nbu_slo_count must be unlabeled")
+		require.Len(t, d.GetLabel(), 1, "nbu_slo_count carries only the site label")
+		require.Equal(t, "site1", labelValue(&d, "site"))
 		total = d.GetGauge().GetValue()
 		emitted++
 	}
@@ -31,7 +32,7 @@ func TestSLOCollector(t *testing.T) {
 
 func TestSLOCollectorError(t *testing.T) {
 	client := &errClient{}
-	c := newSLOCollector(client, testConfig())
+	c := newSLOCollector(client, testConfig(), "site1")
 	ch := make(chan prometheus.Metric, 4)
 	require.Error(t, c.Collect(context.Background(), ch))
 	close(ch)

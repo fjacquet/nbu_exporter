@@ -19,17 +19,19 @@ const sloPath = "/servicecatalog/slos"
 type sloCollector struct {
 	client NetBackupClient
 	cfg    models.Config
+	site   string
 	desc   *prometheus.Desc
 }
 
-func newSLOCollector(client NetBackupClient, cfg models.Config) *sloCollector {
+func newSLOCollector(client NetBackupClient, cfg models.Config, site string) *sloCollector {
 	return &sloCollector{
 		client: client,
 		cfg:    cfg,
+		site:   site,
 		desc: prometheus.NewDesc(
 			"nbu_slo_count",
 			"Number of configured NetBackup SLOs",
-			nil, nil,
+			[]string{"site"}, nil,
 		),
 	}
 }
@@ -42,6 +44,6 @@ func (s *sloCollector) Collect(ctx context.Context, ch chan<- prometheus.Metric)
 	if err := s.client.FetchData(ctx, url, &resp); err != nil {
 		return err
 	}
-	ch <- prometheus.MustNewConstMetric(s.desc, prometheus.GaugeValue, float64(len(resp.Data)))
+	ch <- prometheus.MustNewConstMetric(s.desc, prometheus.GaugeValue, float64(len(resp.Data)), s.site)
 	return nil
 }

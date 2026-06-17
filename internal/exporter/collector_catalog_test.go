@@ -12,7 +12,7 @@ import (
 
 func TestCatalogCollector(t *testing.T) {
 	client := newMockClientFromFixture(t, "../../testdata/api-versions/catalog-count-response.json")
-	c := newCatalogCollector(client, testConfig())
+	c := newCatalogCollector(client, testConfig(), "site1")
 	ch := make(chan prometheus.Metric, 64)
 	require.NoError(t, c.Collect(context.Background(), ch))
 	close(ch)
@@ -21,6 +21,7 @@ func TestCatalogCollector(t *testing.T) {
 	for m := range ch {
 		var d dto.Metric
 		require.NoError(t, m.Write(&d))
+		require.Equal(t, "site1", labelValue(&d, "site"))
 		require.True(t, strings.Contains(m.Desc().String(), "nbu_catalog_images_count"))
 		require.Equal(t, float64(42), d.GetGauge().GetValue())
 		emitted++
@@ -33,7 +34,7 @@ func TestCatalogCollectorError(t *testing.T) {
 	// After per-combination graceful degradation, every sub-call failing leaves
 	// Collect returning nil while emitting no metrics.
 	client := &errClient{}
-	c := newCatalogCollector(client, testConfig())
+	c := newCatalogCollector(client, testConfig(), "site1")
 	ch := make(chan prometheus.Metric, 64)
 	require.NoError(t, c.Collect(context.Background(), ch))
 	close(ch)
