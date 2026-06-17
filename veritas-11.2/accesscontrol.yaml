@@ -1,0 +1,3904 @@
+openapi: 3.0.0
+info:
+  title: NetBackup Access Control Administration API
+  version: '14.0'
+  description: >
+    The NetBackup Access Control Admin API provides access to NetBackup role
+    based access control configuration.
+externalDocs:
+  description: Getting Started Guide
+  url: >-
+    http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started/
+servers:
+  - url: 'https://<masterserver>:1556/netbackup'
+    description: NetBackup Master
+paths:
+  /access-control/roles:
+    get:
+      description: >
+        Returns the list of roles that the user can view.
+
+        Roles with roleType HOST_ID are meant to be used for internal puposes
+        only. These should not be used to assign user or group principals.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: Any roles for which the user has view access.\
+          (Reference the `data.meta.accessControlId` metadata response attribute for the specified `roleId` in the API response.\
+          `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|VIEW|`
+
+
+        To see principals related to this role, the following access is also
+        required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|` \
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Roles
+      parameters:
+        - &ref_9
+          in: query
+          name: meta
+          description: >
+            Appends additional metadata for the resources to the response. The
+            meta parameter is a comma-separated list of metadata values.
+
+            Following are the available values:
+
+            |Name|Description|
+
+            |---|---|
+
+            |messages|Adds localization metadata in the meta section of each
+            system-defined resource.|
+
+            |accessControlId|Appends access control identification metadata in
+            the meta section of each system-defined resource.|
+          schema:
+            type: string
+          required: false
+        - &ref_17
+          in: query
+          name: 'page[offset]'
+          description: The number of records to skip before starting the page.
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - &ref_28
+          in: query
+          name: 'page[limit]'
+          description: The number of records to include in the page.
+          schema:
+            type: integer
+            default: 2147483647
+            minimum: 0
+            maximum: 2147483647
+        - &ref_29
+          in: query
+          name: 'page[disable]'
+          description: >
+            Disables pagination. All results are returned together.
+
+            If this parameter is set to true, the page[offset] and the
+            page[limit] pagination parameters are not applied.
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |id|eq ne le lt ge gt|The id of the role.|integer|
+
+            |roleType|eq ne|The type of the role.|string|
+
+            |systemDefined|eq ne le lt ge gt|Whether or not the role is system
+            defined.|boolean|
+
+            |template|eq ne le lt ge gt|Whether or not the role is a
+            template.|boolean|
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sort
+          description: >
+            Sorts in ascending order on the specified property. Prefix with '-'
+            for descending order.
+
+            Sorting is supported on the following attributes:
+
+            |Name|
+
+            |---|
+
+            |id|
+
+            |systemDefined|
+          in: query
+          schema:
+            type: string
+            default: id
+      responses:
+        '200':
+          description: The list of roles the user can view.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_33
+                description: The collection of NetBackup role resources.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_4
+                      type: object
+                      required:
+                        - type
+                        - attributes
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self: &ref_0
+                              type: object
+                              description: Link to the resource.
+                              properties:
+                                href:
+                                  type: string
+                        meta:
+                          type: object
+                          properties:
+                            messages: &ref_56
+                              description: >-
+                                The localized, system-defined data for the
+                                NetBackup role.
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                  description: The localized NetBackup role name.
+                                description:
+                                  type: string
+                                  description: The localized NetBackup role description.
+                        type:
+                          type: string
+                          enum:
+                            - accessControlRoleV8
+                        id:
+                          type: string
+                          description: >-
+                            The unique identifier of the NetBackup role
+                            resource.
+                        attributes:
+                          type: object
+                          required:
+                            - name
+                          properties:
+                            name:
+                              description: The user-defined name for the role.
+                              type: string
+                              maxLength: 64
+                            uuid:
+                              description: >-
+                                The UUID value for the role. This value is auto
+                                generated and used as the identifier in the role
+                                namespace. User supplied values are ignored.
+                              type: string
+                            description:
+                              description: The user-defined description for the role.
+                              type: string
+                              maxLength: 256
+                            systemDefined:
+                              description: >-
+                                Indicates if the role is predefined in
+                                NetBackup. Predefined roles cannot be modified.
+                              type: boolean
+                            template:
+                              description: >-
+                                Template roles are used to copy collections of
+                                permissions to a new role
+                              type: boolean
+                            roleType:
+                              description: >-
+                                Distinguishes between the roles for user or
+                                group principals (USER), service principals
+                                (SERVICE_PRINCIPAL), and the system-defined
+                                roles for machines (HOST), and hosts (HOST_ID).
+                                HOST_ID type roles are for internal purposes
+                                only. They cannot be used to assign user or
+                                group principals.
+                              type: string
+                              enum:
+                                - USER
+                                - HOST
+                                - HOST_ID
+                                - SERVICE_PRINCIPAL
+                            elevatableRoles:
+                              description: The roles that this role can elevate to.
+                              type: array
+                              items: &ref_34
+                                type: object
+                                required:
+                                  - id
+                                  - name
+                                properties:
+                                  id:
+                                    type: integer
+                                    description: The unique identifier of the role.
+                                  name:
+                                    type: string
+                                    description: The name of the role.
+                                  description:
+                                    type: string
+                                    description: The description of the role.
+                        relationships:
+                          type: object
+                          required:
+                            - userPrincipals
+                            - groupPrincipals
+                          properties:
+                            userPrincipals:
+                              description: >-
+                                The user principals that are assigned to this
+                                role.
+                              type: object
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    self: *ref_0
+                                data:
+                                  type: array
+                                  items: &ref_2
+                                    description: >-
+                                      A resource identifier object that
+                                      represents an individual user.
+                                    type: object
+                                    required:
+                                      - id
+                                      - type
+                                    properties:
+                                      id:
+                                        type: string
+                                        description: >
+                                          The format should be \<domain
+                                          name\>:\<user name\>:\<domain
+                                          type\>:\<user ID\>.
+
+                                          Use the /rbac/identities API to get the
+                                          identity details of the user principal
+                                          to pass with this API.
+                                      type:
+                                        type: string
+                                        enum:
+                                          - userPrincipalV8
+                            groupPrincipals:
+                              description: >-
+                                The group principals that are assigned to this
+                                role.
+                              type: object
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    self: *ref_0
+                                data:
+                                  type: array
+                                  items: &ref_3
+                                    description: >-
+                                      A resource identifier object that
+                                      represents an individual user group.
+                                    type: object
+                                    required:
+                                      - id
+                                      - type
+                                    properties:
+                                      id:
+                                        type: string
+                                        description: >
+                                          The format should be \<domain
+                                          name\>:\<group name\>:\<domain
+                                          type\>:\<group ID\>.
+
+                                          Use the /rbac/identities API to get the
+                                          identity details of the group principal
+                                          to pass with this API.
+                                      type:
+                                        type: string
+                                        enum:
+                                          - groupPrincipalV8
+                            hostPrincipals:
+                              description: >-
+                                The host principals that are assigned to this
+                                role.
+                              type: object
+                              properties:
+                                data:
+                                  type: array
+                                  items: &ref_68
+                                    description: >-
+                                      A resource identifer object that
+                                      represents an individual host.
+                                    type: object
+                                    required:
+                                      - id
+                                      - type
+                                    properties:
+                                      id:
+                                        type: string
+                                        description: The UUID of the host.
+                                      type:
+                                        type: string
+                                        enum:
+                                          - hostPrincipal
+              examples:
+                rolesResponse: &ref_90
+                  summary: List of roles the user can view.
+                  value:
+                    data:
+                      - type: accessControlRoleV8
+                        id: '1'
+                        attributes:
+                          name: Administrator
+                          description: Full access to NetBackup operations
+                          systemDefined: true
+                          template: false
+                          roleType: USER
+                          elevatableRoles: []
+                        relationships:
+                          userPrincipals:
+                            data:
+                              - type: userPrincipalV8
+                                id: 'NBU_LOCAL:admin:UNIX_NATIVE:1001'
+                          groupPrincipals:
+                            data: []
+                      - type: accessControlRoleV8
+                        id: '2'
+                        attributes:
+                          name: Operator
+                          description: Standard backup and restore operations
+                          systemDefined: true
+                          template: false
+                          roleType: USER
+                          elevatableRoles:
+                            - id: '3'
+                              name: Security Administrator
+                              description: Manage security and RBAC administration
+                            - id: '4'
+                              name: Database Administrator
+                              description: Manage database assets and jobs
+                        relationships:
+                          userPrincipals:
+                            data: []
+                          groupPrincipals:
+                            data:
+                              - type: groupPrincipalV8
+                                id: 'NBU_LOCAL:operators:UNIX_NATIVE:2001'
+        '400': &ref_5
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_1
+                type: object
+                properties:
+                  errorCode:
+                    type: integer
+                    format: int64
+                    description: The NetBackup error code.
+                  errorMessage:
+                    type: string
+                    description: The NetBackup error code description.
+                  attributeErrors:
+                    type: object
+                    description: >
+                      Maps the attributes with the invalid values to an error
+                      that describes why the value is invalid, to provide more
+                      context to the nature of the error.
+                  errorDetails:
+                    type: array
+                    description: >-
+                      A list that contains additional information about the
+                      error.
+                    items:
+                      type: string
+                  fileUploadErrors:
+                    type: array
+                    description: >
+                      If an API is supporting content-type multipart/form-data,
+                      then this holds a list of objects that contains names of
+                      failed files and associated error messages.
+                    items:
+                      type: object
+                required:
+                  - errorCode
+                  - errorMessage
+        '401': &ref_6
+          description: >
+            The `Authorization` header is missing, the token is invalid, or you
+            do not have permission for this action.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+        '500': &ref_7
+          description: An unexpected system error occurred.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+        '503': &ref_8
+          description: The server is busy.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+    post:
+      description: >
+        Creates a new role.
+
+        Custom role names cannot contain a period (.).
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|ROLES|`\
+
+        Requires Operation: `|OPERATIONS|ADD|`
+
+
+        If related principals are supplied in the request, the following
+        permissions are also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|ACCESS-CONTROL|PRINCIPALS|ASSIGN-TO-ROLE|`
+      tags:
+        - Roles
+      parameters:
+        - &ref_11
+          name: X-NetBackup-Audit-Reason
+          in: header
+          description: >
+            Audit reason for the action being performed. This value must be
+            URL-encoded. Maximum 512 bytes, in UTF-8 encoding. The remaining
+            bytes are truncated.
+          schema:
+            type: string
+          required: false
+      requestBody:
+        description: The role to create.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_13
+              type: object
+              description: The request body for the /access-control/roles API.
+              properties:
+                data: &ref_58
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - accessControlRoleV8
+                    attributes:
+                      type: object
+                      required:
+                        - name
+                      properties:
+                        name:
+                          description: The user-defined name for the role.
+                          type: string
+                          maxLength: 64
+                        description:
+                          description: The user-defined description for the role.
+                          type: string
+                          maxLength: 256
+                    relationships:
+                      type: object
+                      required:
+                        - userPrincipals
+                        - groupPrincipals
+                      properties:
+                        userPrincipals:
+                          description: The user principals that are assigned to this role.
+                          type: object
+                          properties:
+                            links:
+                              type: object
+                              properties:
+                                self: *ref_0
+                            data:
+                              type: array
+                              items: *ref_2
+                        groupPrincipals:
+                          description: The group principals that are assigned to this role.
+                          type: object
+                          properties:
+                            links:
+                              type: object
+                              properties:
+                                self: *ref_0
+                            data:
+                              type: array
+                              items: *ref_3
+            examples:
+              VMware administrator: &ref_14
+                value:
+                  data:
+                    type: accessControlRole
+                    attributes:
+                      name: VMware Administrator
+                      description: Administrator for the VMware workload.
+                    relationships:
+                      userPrincipals:
+                        data:
+                          - type: userPrincipal
+                            id: ':user:unixpwd:1003'
+      responses:
+        '201':
+          description: Created a new role.
+          headers:
+            Location:
+              description: Link to the new role.
+              schema:
+                type: string
+                format: url
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_10
+                description: The NetBackup role resource data.
+                type: object
+                properties:
+                  data: *ref_4
+        '400': *ref_5
+        '401': *ref_6
+        '409':
+          description: The role already exists.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/roles/{roleId}':
+    get:
+      description: >
+        Retrieves the role with the specified identifier.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role. \
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|VIEW|` 
+
+
+        To see principals related to this role, the following access is also
+        required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|` \
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Roles
+      parameters:
+        - *ref_9
+        - &ref_12
+          name: roleId
+          description: The identifier of the role.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Retrieved the role.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_10
+        '401': *ref_6
+        '404': &ref_15
+          description: No entity found.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+        '500': *ref_7
+        '503': *ref_8
+    put:
+      description: >
+        Updates the role with the specified identifier.
+
+        Custom role names cannot contain a period (.).
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role.\
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+
+
+        If related principals are being added or removed as a result of the
+        request, the following permissions are also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|ACCESS-CONTROL|PRINCIPALS|ASSIGN-TO-ROLE|`
+      tags:
+        - Roles
+      parameters:
+        - *ref_11
+        - *ref_12
+      requestBody:
+        description: The role with updated attribute values.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: *ref_13
+            examples:
+              VMware administrator: *ref_14
+      responses:
+        '204':
+          description: Updated the role.
+        '400': *ref_5
+        '401': *ref_6
+        '403': &ref_16
+          description: Forbidden. An attempt to alter system-defined data was denied.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+    delete:
+      description: >
+        Deletes the role with the specified identifier and all the role's access
+        definitions.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role.\
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|DELETE|`
+      tags:
+        - Roles
+      parameters:
+        - *ref_11
+        - *ref_12
+      responses:
+        '204':
+          description: Deleted the role.
+        '401': *ref_6
+        '403': *ref_16
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/roles/{roleId}/access-definitions':
+    get:
+      description: >
+        Retrieves all the access definitions assigned to the role with the
+        specified identifier.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role. \
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|VIEW|`
+
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The namespace id attribute of the related `managedObject` of
+        each access definition. \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+      tags:
+        - Roles
+      parameters:
+        - &ref_32
+          in: query
+          name: meta
+          description: >
+            Appends additional metadata for the resources to the response. The
+            meta parameter is a comma-separated list of metadata values. The
+            "messages" metadata value adds localization metadata in the meta
+            section of each system-defined resource.
+          schema:
+            type: string
+            enum:
+              - messages
+          required: false
+        - *ref_12
+        - name: include
+          description: >
+            Appends the included section in the response payload with details
+            about the relationships that are specified in the include query. The
+            include query is the comma-separated list of the relationships,
+            which can include the role, the managedObject or the operations.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - role
+              - managedObject
+              - operations
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |systemDefined||Whether or not the access definition is system
+            defined.|boolean|
+          in: query
+          required: false
+          schema:
+            type: string
+        - *ref_17
+        - &ref_46
+          in: query
+          name: 'page[limit]'
+          description: The number of records to include in the page.
+          schema:
+            type: integer
+            default: 10
+            minimum: 0
+            maximum: 100
+      responses:
+        '200':
+          description: Retrieved the access definitions assigned to the role.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_76
+                description: The resource for the role's collection of access definitions.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_38
+                      type: object
+                      required:
+                        - type
+                        - attributes
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self: *ref_0
+                        id:
+                          type: string
+                          description: >-
+                            The unique identifier of the access definition
+                            resource.
+                        type:
+                          type: string
+                          enum:
+                            - accessDefinition
+                            - accessDefinitionV8
+                        attributes:
+                          type: object
+                          properties:
+                            propagation: &ref_42
+                              description: >
+                                Indicates if the access definition applies only
+                                to the object or to the object and its children.
+                              type: string
+                              enum:
+                                - OBJECT
+                                - CHILDREN
+                                - OBJECT_AND_CHILDREN
+                            systemDefined:
+                              description: >-
+                                Indicates if the access definition is predefined
+                                in NetBackup. Predefined access cannot be
+                                modified.
+                              type: boolean
+                        relationships:
+                          type: object
+                          required:
+                            - operations
+                            - managedObject
+                          properties:
+                            role:
+                              description: The resource of the access control role.
+                              type: object
+                              required:
+                                - data
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    self: *ref_0
+                                data: &ref_18
+                                  description: >-
+                                    A resource identifier object that represents
+                                    an individual resource.
+                                  type: object
+                                  required:
+                                    - id
+                                    - type
+                                  properties:
+                                    id:
+                                      type: string
+                                    type:
+                                      type: string
+                                      enum:
+                                        - managedObject
+                                        - accessDefinition
+                                        - accessDefinitionV8
+                                        - accessControlRole
+                                        - accessControlRoleV8
+                                        - accessControlOperation
+                            operations:
+                              description: >-
+                                The collection of resources for the access
+                                control operation.
+                              type: object
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    self: *ref_0
+                                data:
+                                  type: array
+                                  items: *ref_18
+                            managedObject:
+                              description: >-
+                                The resource of the access control managed
+                                object.
+                              type: object
+                              required:
+                                - data
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    self: *ref_0
+                                data: *ref_18
+                  links: &ref_31
+                    type: object
+                    properties:
+                      self:
+                        type: object
+                        description: Link to the current page.
+                        properties:
+                          href:
+                            type: string
+                      first:
+                        type: object
+                        description: Link to the first page.
+                        properties:
+                          href:
+                            type: string
+                      last:
+                        type: object
+                        description: Link to the last page.
+                        properties:
+                          href:
+                            type: string
+                      next:
+                        type: object
+                        description: Link to the next page.
+                        properties:
+                          href:
+                            type: string
+                      prev:
+                        type: object
+                        description: Link to the previous page.
+                        properties:
+                          href:
+                            type: string
+                  meta:
+                    type: object
+                    properties:
+                      pagination: &ref_30
+                        type: object
+                        properties:
+                          count:
+                            type: integer
+                            description: Total number of records.
+                          pages:
+                            type: integer
+                            description: Total number of pages.
+                          page:
+                            type: integer
+                            description: The current page number.
+                          offset:
+                            type: integer
+                            description: The offset value for the current page.
+                          limit:
+                            type: integer
+                            description: The number of records per page.
+                          first:
+                            type: integer
+                            description: The offset value for the first page.
+                          last:
+                            type: integer
+                            description: The offset value for the last page.
+                          next:
+                            type: integer
+                            description: The offset value for the next page.
+                          prev:
+                            type: integer
+                            description: The offset value for the previous page.
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/roles/{roleId}/relationships/user-principals':
+    post:
+      description: >
+        Assign the role to one or more user principals.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role. \
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|ACCESS-CONTROL|PRINCIPALS|ASSIGN-TO-ROLE|`
+      tags:
+        - Roles
+      parameters:
+        - *ref_11
+        - *ref_12
+      requestBody:
+        description: >
+          The user principals to assign to the role. The type should be
+          userPrincipal.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_19
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: array
+                  description: The list of users that are assigned to the role.
+                  items: *ref_2
+            examples:
+              unixpwd: &ref_20
+                value:
+                  data:
+                    - type: userPrincipal
+                      id: ':user:unixpwd:1003'
+              nt: &ref_21
+                value:
+                  data:
+                    - type: userPrincipal
+                      id: >-
+                        hostname:user:nt:0x0105000000000005150000009295034df85e1787851d658c04040000
+      responses:
+        '204':
+          description: Successfully assigned all the user principals to the role.
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+    delete:
+      description: >
+        Deletes the specified user principals from the role.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role. \
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|ACCESS-CONTROL|PRINCIPALS|ASSIGN-TO-ROLE|`
+      tags:
+        - Roles
+      parameters:
+        - *ref_11
+        - *ref_12
+      requestBody:
+        description: >
+          The user principals to remove from the role. The type should be
+          userPrincipal.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: *ref_19
+            examples:
+              unixpwd: *ref_20
+              nt: *ref_21
+      responses:
+        '204':
+          description: Successfully removed the specified user principals from the role.
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/roles/{roleId}/relationships/group-principals':
+    post:
+      description: >
+        Assign the role to one or more group principals.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role. \
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|ACCESS-CONTROL|PRINCIPALS|ASSIGN-TO-ROLE|`
+      tags:
+        - Roles
+      parameters:
+        - *ref_11
+        - *ref_12
+      requestBody:
+        description: >
+          The group principals to assign to the role. The type should be
+          groupPrincipal.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_22
+              type: object
+              required:
+                - data
+              properties:
+                data:
+                  type: array
+                  description: The list of user groups that are assigned to the role.
+                  items: *ref_3
+            examples:
+              unixpwd: &ref_23
+                value:
+                  data:
+                    - type: groupPrincipal
+                      id: ':group:unixpwd:105'
+              nt: &ref_24
+                value:
+                  data:
+                    - type: groupPrincipal
+                      id: >-
+                        hostname:group:nt:0x0105000000000005150000009295034df85e1787851d658cff030000
+      responses:
+        '204':
+          description: Successfully assigned all the group principals to the role.
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+    delete:
+      description: >
+        Deletes the specified group principals from the role.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role. \
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|VIEW|`\
+
+        Requires Operation: `|OPERATIONS|UPDATE|`
+
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|ACCESS-CONTROL|PRINCIPALS|ASSIGN-TO-ROLE|`
+      tags:
+        - Roles
+      parameters:
+        - *ref_11
+        - *ref_12
+      requestBody:
+        description: >
+          The group principals to remove from the role. The type should be
+          groupPrincipal.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: *ref_22
+            examples:
+              unixpwd: *ref_23
+              nt: *ref_24
+      responses:
+        '204':
+          description: Successfully removed the specified group principals from the role.
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/roles/{roleId}/relationships/elevatable-roles':
+    get:
+      tags:
+        - Role Elevation
+      description: >
+        Retrieves the list of roles that the specified role can elevate to.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role.\
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|VIEW|`
+      parameters:
+        - *ref_12
+      responses:
+        '200':
+          description: Retrieved the list of elevatable roles for the specified role.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_36
+                description: The collection of roles that can be elevated to.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    description: The list of roles that can be elevated to.
+                    items: &ref_74
+                      description: A role that can be elevated to.
+                      type: object
+                      required:
+                        - type
+                        - id
+                        - attributes
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                            - roleBasicDto
+                        id:
+                          type: string
+                          description: The unique identifier of the role.
+                        attributes:
+                          type: object
+                          required:
+                            - name
+                          properties:
+                            name:
+                              type: string
+                              description: The name of the role.
+                            description:
+                              type: string
+                              description: The description of the role.
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '406': &ref_35
+          description: >-
+            Invalid `Accept` type. Make sure your `Accept` header matches what
+            this API produces.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+        '500': *ref_7
+        '503': *ref_8
+    post:
+      tags:
+        - Role Elevation
+      description: >
+        Assigns roles that the specified role can elevate to.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role.\
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|UPDATE|`
+      parameters:
+        - *ref_11
+        - *ref_12
+      requestBody:
+        description: The roles to add to the elevatable roles of the specified role.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_25
+              type: object
+              description: The base request body for role elevation operations.
+              required:
+                - data
+              properties:
+                data: &ref_69
+                  type: object
+                  description: The base role elevation data containing role IDs.
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - roleElevationMappingRequestDto
+                    id:
+                      type: string
+                      description: The identifier for the role elevation request.
+                    attributes:
+                      type: object
+                      required:
+                        - roleIds
+                      properties:
+                        roleIds:
+                          type: array
+                          description: The list of role IDs for elevation.
+                          items:
+                            type: string
+                          minItems: 1
+                          uniqueItems: true
+            examples:
+              elevatableRoles: &ref_26
+                value:
+                  data:
+                    type: roleElevationMappingRequestDto
+                    attributes:
+                      roleIds:
+                        - '11'
+                        - '25'
+      responses:
+        '204':
+          description: Successfully assigned the specified elevatable roles to the role.
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '415': &ref_27
+          description: >
+            Unsupported Media Type. The media type specified in the
+            `Content-Type` header is not supported by this API.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+        '500': *ref_7
+        '503': *ref_8
+    delete:
+      tags:
+        - Role Elevation
+      description: >
+        Removes the specified roles from the set of elevatable roles for the
+        given roleId.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: The object namespace for the role.\
+
+        (Reference the `data.meta.accessControlId` metadata response attribute
+        for the specified `roleId` in the API response. \
+            `GET /access-control/roles?meta=accessControlId`) \
+        Requires Operation: `|OPERATIONS|DELETE|`
+      parameters:
+        - *ref_11
+        - *ref_12
+      requestBody:
+        description: The roles to remove from the elevatable roles of the specified role.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: *ref_25
+            examples:
+              elevatableRoles: *ref_26
+      responses:
+        '204':
+          description: Successfully removed the elevatable roles from the specified role.
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '415': *ref_27
+        '500': *ref_7
+        '503': *ref_8
+  /access-control/user-principals:
+    get:
+      description: >
+        Returns the list of user principals and their assigned roles that the
+        user can view.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: Each user principal's namespace (for which the user must have
+        `|OPERATIONS|VIEW|` permission).\
+          (Reference the `data.meta.accessControlId` metadata response attribute in the API response to identify each principal's namespace.\
+          Use `GET /access-control/user-principals?meta=accessControlId` to retrieve access control identifiers.) \
+        Requires Operation: `|OPERATIONS|VIEW|`
+
+
+        To access the principals API and view role assignments within
+        principals, the following access is also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|` \
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Principals
+      parameters:
+        - *ref_17
+        - *ref_28
+        - *ref_29
+      responses:
+        '200':
+          description: The list of user principals the user can view.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_85
+                description: The collection of user principal resources.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_86
+                      type: object
+                      required:
+                        - type
+                        - id
+                        - attributes
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self: *ref_0
+                        type:
+                          type: string
+                          enum:
+                            - userPrincipalWithRoles
+                        id:
+                          type: string
+                          description: The unique identifier for the user principal.
+                        attributes:
+                          type: object
+                          properties:
+                            roles:
+                              type: array
+                              description: >-
+                                The list of roles assigned to this user
+                                principal.
+                              items:
+                                type: object
+                                required:
+                                  - id
+                                  - name
+                                  - description
+                                properties:
+                                  id:
+                                    type: integer
+                                    description: The role ID.
+                                  name:
+                                    type: string
+                                    description: The name of the role.
+                                  description:
+                                    type: string
+                                    description: The description of the role.
+                                  elevationInfo:
+                                    type: object
+                                    description: >-
+                                      Present only if the user is temporarily
+                                      elevated to this role. When present,
+                                      expirationDateTime is always included.
+                                    required:
+                                      - expirationDateTime
+                                    properties:
+                                      expirationDateTime:
+                                        type: string
+                                        format: date-time
+                                        description: >-
+                                          The expiration timestamp of the
+                                          elevation. The value is in date-time in
+                                          ISO 8601 format.
+                                      reason:
+                                        type: string
+                                        maxLength: 100
+                                        description: >-
+                                          The audit reason or context for the
+                                          elevation, if provided during the
+                                          elevation request.
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_30
+                  links: *ref_31
+              examples:
+                userPrincipals: &ref_91
+                  value:
+                    data:
+                      - type: userPrincipalWithRoles
+                        id: ':test:unixpwd:1012'
+                        attributes:
+                          roles:
+                            - id: 13
+                              name: Default universal Share administrator
+                              description: >-
+                                manages protection for universal shares using
+                                classic policies. you can add users to this role
+                                but the permissions for this role cannot be
+                                edited.
+                            - id: 33
+                              name: Default IRE SLP Administrator
+                              description: >-
+                                Manages IRE (isolated Recovery Environment) SLP
+                                (storage lifecycle policies) functionalities.You
+                                can add users to this role but the permissions
+                                for this role cannot be edited.
+                              elevationInfo:
+                                expirationDateTime: 2025-12-31T13:49:00.122Z
+                                reason: Temporary reason for role elevation
+                    meta:
+                      pagination:
+                        page: 1
+                        pages: 1
+                        offset: 0
+                        last: 0
+                        limit: 2147483647
+                        count: 1
+                        first: 0
+                    links:
+                      self:
+                        href: >-
+                          https://localhost:1556/netbackup/access-control/user-principals?pageDisableOffset=0&page[limit]=2147483647
+                      first:
+                        href: >-
+                          https://localhost:1556/netbackup/access-control/user-principals?pageDisableOffset=0&page[limit]=2147483647
+                      last:
+                        href: >-
+                          https://localhost:1556/netbackup/access-control/user-principals?pageDisableOffset=0&page[limit]=2147483647
+                      next:
+                        href: >-
+                          https://localhost:1556/netbackup/access-control/user-principals?pageDisableOffset=0&page[limit]=2147483647
+        '400': *ref_5
+        '401': *ref_6
+        '500': *ref_7
+        '503': *ref_8
+  /access-control/group-principals:
+    get:
+      description: >
+        Returns the list of group principals and their assigned roles that the
+        user can view.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: Each group principal's namespace (for which the user must
+        have `|OPERATIONS|VIEW|` permission).\
+          (Reference the `data.meta.accessControlId` metadata response attribute in the API response to identify each principal's namespace.\
+          Use `GET /access-control/group-principals?meta=accessControlId` to retrieve access control identifiers.) \
+        Requires Operation: `|OPERATIONS|VIEW|`
+
+
+        To access the principals API and view role assignments within
+        principals, the following access is also required.\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|` \
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Principals
+      parameters:
+        - *ref_17
+        - *ref_28
+        - *ref_29
+      responses:
+        '200':
+          description: The list of group principals the user can view.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_87
+                description: The collection of group principal resources.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_88
+                      type: object
+                      required:
+                        - type
+                        - id
+                        - attributes
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self: *ref_0
+                        type:
+                          type: string
+                          enum:
+                            - groupPrincipalWithRoles
+                        id:
+                          type: string
+                          description: The unique identifier for the group principal.
+                        attributes:
+                          type: object
+                          properties:
+                            roles:
+                              type: array
+                              description: >-
+                                The list of roles assigned to this group
+                                principal.
+                              items:
+                                type: object
+                                required:
+                                  - id
+                                  - name
+                                  - description
+                                properties:
+                                  id:
+                                    type: integer
+                                    description: The role ID.
+                                  name:
+                                    type: string
+                                    description: The name of the role.
+                                  description:
+                                    type: string
+                                    description: The description of the role.
+                  meta:
+                    type: object
+                    properties:
+                      pagination: *ref_30
+                  links: *ref_31
+              examples:
+                groupPrincipals: &ref_97
+                  value:
+                    data:
+                      - type: groupPrincipalWithRoles
+                        id: ':test:unixpwd:1012'
+                        attributes:
+                          roles:
+                            - id: 13
+                              name: Default universal Share administrator
+                              description: >-
+                                manages protection for universal shares using
+                                classic policies. you can add users to this role
+                                but the permissions for this role cannot be
+                                edited.
+                    meta:
+                      pagination:
+                        page: 1
+                        pages: 1
+                        offset: 0
+                        last: 0
+                        limit: 2167483647
+                        count: 1
+                        first: 0
+                    links:
+                      self:
+                        href: >-
+                          https://localhost:1556/netbackup/access-control/group-principals?pageDisableOffset=0&page[limit]=2147483647
+                      first:
+                        href: >-
+                          https://localhost:1556/netbackup/access-control/group-principals?pageDisableOffset=0&page[limit]=2147483647
+                      last:
+                        href: >-
+                          https://localhost:1556/netbackup/access-control/group-principals?pageDisableOffset=0&page[limit]=2147483647
+                      next:
+                        href: >-
+                          https://localhost:1556/netbackup/access-control/group-principals?pageDisableOffset=0&page[limit]=2147483647
+        '400': *ref_5
+        '401': *ref_6
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/user-principals/{subjectIdentifier}/roles':
+    get:
+      description: Retrieves effective roles for a specific user.
+      tags:
+        - Principals
+      parameters:
+        - *ref_32
+        - &ref_89
+          name: subjectIdentifier
+          description: >
+            The identifier that fully identifies the subject. The subject
+            identifier must be in this format
+
+            <domain name>:<user name>:<domain type>:<user id>. Use the
+            /rbac/identities API to get the identity details of the user
+            principal.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Effective roles for a specific user.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_33
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  /access-control/user-principals/self/role-elevation:
+    get:
+      tags:
+        - Role Elevation
+      description: >
+        Retrieves the currently logged-in user's role elevation status.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+      responses:
+        '200':
+          description: >-
+            The user has active role elevations. Returns the elevated roles with
+            expiration details.
+          headers:
+            X-NetBackup-Pending-MPA-Ticket:
+              description: >-
+                The ticket ID of the pending multiperson authorization ticket
+                generated by the last 'POST
+                /access-control/user-principals/self/role-elevation' request.
+              schema:
+                type: string
+            Location:
+              description: The link to the pending multiperson authorization ticket.
+              schema:
+                type: string
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_72
+                description: >-
+                  The resource data for the current user's role elevation
+                  status.
+                type: object
+                properties:
+                  data: &ref_73
+                    type: object
+                    required:
+                      - type
+                      - id
+                      - attributes
+                    properties:
+                      type:
+                        type: string
+                        enum:
+                          - roleElevationStatusDto
+                      id:
+                        type: string
+                        description: >-
+                          The unique identifier for the user's role elevation
+                          session.
+                      attributes:
+                        type: object
+                        required:
+                          - roles
+                          - expirationDateTime
+                        properties:
+                          roles:
+                            description: >-
+                              The list of roles associated with the current
+                              user's elevation. This array will never be empty
+                              as this endpoint only returns data when the user
+                              has active role elevations.
+                            type: array
+                            items: *ref_34
+                          expirationDateTime:
+                            description: >
+                              Expiration timestamp for the current elevation.
+
+                              The value is in date-time in ISO 8601 format.
+
+                              This field always contains a valid expiration
+                              timestamp since the endpoint only returns data
+                              when the user is elevated.
+                            type: string
+                            format: date-time
+                          reason:
+                            description: >
+                              The audit reason or context for the elevation, if
+                              provided during the elevation request.
+
+                              This field is optional and may be omitted when no
+                              reason was provided during elevation.
+                            type: string
+                            maxLength: 100
+              examples:
+                roleElevationStatus: &ref_96
+                  value:
+                    data:
+                      type: roleElevationStatusDto
+                      id: self
+                      attributes:
+                        roles:
+                          - id: 11
+                            name: Security Administrator
+                            description: Manages security functionalities.
+                          - id: 25
+                            name: Backup Operator
+                            description: Manages backup operations.
+                        expirationDateTime: 2025-11-19T18:30:00.000Z
+                        reason: Emergency maintenance access
+        '204':
+          description: The user has no active role elevations. No content is returned.
+        '401': *ref_6
+        '406': *ref_35
+        '500': *ref_7
+        '503': *ref_8
+    post:
+      tags:
+        - Role Elevation
+      description: >
+        Elevate the currently authenticated user to multiple roles in a single
+        request.
+
+
+        This API enables the authenticated user to request elevation to multiple
+        roles simultaneously.
+
+        The user can only elevate their own privileges, not assign roles to
+        other users.
+
+        The set of elevatable roles for the current user can be retrieved from
+        the following API:
+
+        GET /access-control/user-principals/self/elevatable-roles
+
+
+        **Important:** A user can elevate to multiple roles at once, but cannot
+        add more roles while already elevated.
+
+        To gain an additional role, the user must first de-elevate using DELETE
+        /access-control/user-principals/self/role-elevation,
+
+        and then submit a new elevation request with all needed roles.
+
+
+        Note: As multiperson authorization is always enabled for this operation,
+        the response returns an HTTP 202 status code. The ticket link
+
+        is mentioned in the location header of the HTTP response, and the ticket
+        ID is provided in the X-NetBackup-MPA-Ticket header.
+
+        For more information, refer to the [multiperson
+        authorization](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-multi-person-authorization)
+        documentation.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+      requestBody:
+        description: The role elevation request containing role IDs.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_70
+              type: object
+              description: >-
+                The request body for user role elevation - elevating the current
+                user to multiple roles with optional expiration and reason.
+              required:
+                - data
+              properties:
+                data: &ref_71
+                  description: >-
+                    The user role elevation data extending the base with
+                    expiration and reason fields.
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - userRoleElevationDto
+                    id:
+                      type: string
+                      description: The identifier for the role elevation request.
+                    attributes:
+                      type: object
+                      required:
+                        - roleIds
+                        - duration
+                      properties:
+                        roleIds:
+                          type: array
+                          description: The list of role IDs to elevate the current user to.
+                          items:
+                            type: string
+                          minItems: 1
+                          uniqueItems: true
+                        duration:
+                          description: >
+                            Duration until expiration in ISO-8601 duration
+                            format (e.g. PT1H, P1D, P1DT2H, P30D).
+
+                            Minimum 1 hour (PT1H), maximum 30 days (P30D).
+                          type: string
+                          pattern: >-
+                            ^P(?:\d+D)?(?:T(?:\d+H)?(?:\d+M)?(?:\d+S)?|T(?:\d+H)?(?:\d+M)?(?:\d+S)?)$
+                          example: PT2H
+                        reason:
+                          description: >-
+                            The audit reason or context for the elevation, if
+                            provided.
+                          type: string
+                          maxLength: 100
+            examples:
+              roleElevation: &ref_95
+                value:
+                  data:
+                    type: userRoleElevationDto
+                    id: roleElevation-v1
+                    attributes:
+                      roleIds:
+                        - '11'
+                        - '25'
+                      duration: PT2H
+                      reason: Temporary elevation for maintenance tasks.
+      responses:
+        '202':
+          description: >-
+            The request was successfully received by the server and is awaiting
+            MPA approval.
+          headers:
+            X-NetBackup-MPA-Ticket:
+              description: >-
+                The ticket ID of newly-generated multiperson authorization
+                ticket.
+              schema:
+                type: string
+            Location:
+              description: >-
+                The link to the newly-generated multiperson authorization
+                ticket.
+              schema:
+                type: string
+        '204':
+          description: Successfully elevated the current user to all specified roles.
+        '400':
+          description: Bad request.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+              examples:
+                alreadyElevated:
+                  summary: User already has active elevation
+                  value:
+                    errorCode: 8961
+                    errorMessage: An invalid API request is encountered.
+                    attributeErrors: {}
+                    fileUploadErrors: []
+                    errorDetails:
+                      - >-
+                        User already has an active elevated role. Cannot elevate
+                        to another role.
+                invalidRoleIdFormat:
+                  summary: Invalid role ID format
+                  value:
+                    errorCode: 8961
+                    errorMessage: An invalid API request is encountered.
+                    attributeErrors: {}
+                    fileUploadErrors: []
+                    errorDetails:
+                      - >-
+                        '1212Invalid'. Invalid role ID format. Role ID must be a
+                        numeric value.
+                invalidExpirationDateTime:
+                  summary: Invalid expiration date/time
+                  value:
+                    errorCode: 8961
+                    errorMessage: An invalid API request is encountered.
+                    attributeErrors: {}
+                    fileUploadErrors: []
+                    errorDetails:
+                      - Expiration date/time must be in the future.
+                roleNotFound:
+                  summary: Role not found
+                  value:
+                    errorCode: 227
+                    errorMessage: no entity was found
+                    attributeErrors: {}
+                    fileUploadErrors: []
+                    errorDetails:
+                      - Role with ID '-1' not found.
+        '401': *ref_6
+        '409':
+          description: >-
+            The role is awaiting to be elevated by a request previously made.
+            Ticket for that request is not yet approved.
+          headers:
+            X-NetBackup-Pending-MPA-Ticket:
+              description: >-
+                The ticket ID of the pending multiperson authorization ticket
+                generated by the last 'POST
+                /access-control/user-principals/self/role-elevation' request.
+              schema:
+                type: string
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+        '415': *ref_27
+        '500': *ref_7
+        '503': *ref_8
+    delete:
+      tags:
+        - Role Elevation
+      description: >
+        Removes all role elevations for the current authenticated user
+        (self-service de-elevation).
+
+
+        This API enables users to voluntarily end their own privilege escalation
+        and return to their base 
+
+        permission level. This is a self-service operation that allows users to
+        proactively reduce their 
+
+        elevated privileges when they no longer need them.
+
+
+        **Use Cases:**
+
+        - Voluntary privilege reduction after completing elevated tasks
+
+        - Security best practice of minimal privilege duration
+
+        - Self-initiated cleanup of temporary elevated access
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+      responses:
+        '204':
+          description: >-
+            Successfully removed all role elevations for the current user. User
+            has been returned to base permissions.
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  /access-control/user-principals/self/elevatable-roles:
+    get:
+      tags:
+        - Role Elevation
+      description: >
+        Retrieves the list of roles that the currently authenticated user is
+        allowed to elevate to.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+      responses:
+        '200':
+          description: The list of roles that the current user can elevate to.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_36
+        '400': *ref_5
+        '401': *ref_6
+        '406': *ref_35
+        '500': *ref_7
+        '503': *ref_8
+  /access-control/operations:
+    get:
+      description: |
+        Retrieves the configured NetBackup operations. |
+
+        **Access Control**\
+        Enforcement Type: `None`
+      tags:
+        - Operations
+      parameters:
+        - *ref_32
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |namespace|eq ne startswith endswith contains|The namespace of the
+            operation.|string|
+          in: query
+          required: false
+          schema:
+            type: string
+        - *ref_29
+        - *ref_17
+        - *ref_28
+      responses:
+        '200':
+          description: Retrieved the configured NetBackup operations.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_47
+                description: The collection of NetBackup operation resources.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_37
+                      type: object
+                      required:
+                        - type
+                        - id
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self: *ref_0
+                        meta:
+                          type: object
+                          properties:
+                            messages: &ref_57
+                              description: >-
+                                The localized, system-defined data for the
+                                NetBackup operation.
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                  description: The localized NetBackup operation name.
+                                description:
+                                  type: string
+                                  description: >-
+                                    The localized NetBackup operation
+                                    description.
+                        type:
+                          type: string
+                          enum:
+                            - accessControlOperation
+                        id:
+                          type: string
+                          description: >-
+                            The unique identifier of the NetBackup operation
+                            resource.
+                        attributes:
+                          type: object
+                          properties:
+                            description:
+                              description: The description of the NetBackup operation.
+                              type: string
+                              maxLength: 256
+        '400': *ref_5
+        '401': *ref_6
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/operations/{operationId}':
+    get:
+      description: |
+        Retrieves the NetBackup operation with the specified identifier.
+
+        **Access Control**\
+        Enforcement Type: `None`
+      tags:
+        - Operations
+      parameters:
+        - *ref_32
+        - name: operationId
+          in: path
+          description: The identifier of the NetBackup operation.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Retrieved the NetBackup operation.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_65
+                description: The NetBackup operation resource data.
+                type: object
+                properties:
+                  data: *ref_37
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/managed-objects/{objectId}/access-definitions':
+    get:
+      description: >
+        Retrieves the configured access definitions for the managed object.
+
+
+        **Access Control** \
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: Required access is checked on the `objectId` path parameter.
+        \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+
+
+        To see the roles configured in an access definition, permissions are
+        also required on the role.
+
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: (Reference the `data.meta.accessControlId` metadata response
+        attribute for the `roleResource`) \
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Access Definitions
+      parameters:
+        - *ref_32
+        - &ref_39
+          name: objectId
+          description: >-
+            The namespace identifier for the managed object of the NetBackup
+            access control system.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Retrieved the configured access definitions for the managed object.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_41
+                description: >-
+                  The collection of access definition resources for a managed
+                  object.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: *ref_38
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+    post:
+      description: >
+        Adds the access definition to the access control system, for the managed
+        object.
+
+
+        **Access Control** \
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: Required access is checked on the `objectId` path parameter.
+        \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+
+
+        To allow a role to be used in an access definition, permissions are also
+        required on the role. \
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: (Reference the `data.meta.accessControlId` metadata response
+        attribute for the `roleResource`) \
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|ACCESS-CONTROL|ROLES|ASSIGN-ACCESS|`
+      tags:
+        - Access Definitions
+      parameters:
+        - *ref_11
+        - *ref_39
+      requestBody:
+        description: The access definition that defines access to the managed object.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_45
+              type: object
+              description: The request body for the /access-control/access-definitions API.
+              required:
+                - data
+              properties:
+                data: &ref_40
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                    - relationships
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - accessDefinition
+                        - accessDefinitionV8
+                    attributes:
+                      type: object
+                      required:
+                        - propagation
+                      properties:
+                        propagation:
+                          description: >-
+                            Indicates if the access definition applies only to
+                            the object or to the object and its children.
+                          type: string
+                          enum:
+                            - OBJECT
+                            - CHILDREN
+                            - OBJECT_AND_CHILDREN
+                        systemDefined:
+                          description: >-
+                            Indicates if the access definition is predefined in
+                            NetBackup. Predefined access cannot be modified.
+                          type: boolean
+                          default: false
+                    relationships:
+                      type: object
+                      required:
+                        - role
+                        - operations
+                      properties:
+                        role:
+                          description: The role to include in the access definition.
+                          type: object
+                          required:
+                            - data
+                          properties:
+                            data: *ref_18
+                        operations:
+                          description: >-
+                            List of operations to include in the access
+                            definition.
+                          type: object
+                          required:
+                            - data
+                          properties:
+                            data:
+                              type: array
+                              items: *ref_18
+                        managedObject:
+                          description: The resource of the access control managed object.
+                          type: object
+                          required:
+                            - data
+                          properties:
+                            data: *ref_18
+            examples:
+              Access definition: &ref_92
+                value:
+                  data:
+                    type: accessDefinitionV8
+                    attributes:
+                      propagation: OBJECT_AND_CHILDREN
+                    relationships:
+                      role:
+                        data:
+                          type: accessControlRoleV8
+                          id: 1
+                      operations:
+                        data:
+                          - type: accessControlOperation
+                            id: '|OPERATIONS|VIEW|'
+      responses:
+        '201':
+          description: Created a new access definition.
+          headers:
+            Location:
+              description: Link to the new access definition.
+              schema:
+                type: string
+                format: url
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_43
+                description: The access definition resource for a managed object.
+                type: object
+                properties:
+                  data: *ref_38
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '409':
+          description: The access definition already exists.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_1
+        '500': *ref_7
+        '503': *ref_8
+    patch:
+      description: >
+        Replace or remove the access definitions for the specified managed
+        object.
+
+
+        **Access Control** \
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: Required access is checked on the `objectId` path parameter.
+        \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+
+
+        To allow a role to be used or modified in an access definition,
+        permissions are also required on the role. \
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: (Reference the `data.meta.accessControlId` metadata response
+        attribute for the `roleResource`) \
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|ACCESS-CONTROL|ROLES|ASSIGN-ACCESS|`
+      tags:
+        - Access Definitions
+      parameters:
+        - *ref_11
+        - *ref_39
+      requestBody:
+        description: The access definitions that define access to the managed object.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_75
+              type: object
+              description: >-
+                The collection of access definition resources for a managed
+                object.
+              properties:
+                data:
+                  type: array
+                  items: *ref_40
+            examples:
+              Access definitions: &ref_94
+                value:
+                  data:
+                    - type: accessDefinitionV8
+                      attributes:
+                        propagation: OBJECT_AND_CHILDREN
+                      relationships:
+                        role:
+                          data:
+                            type: accessControlRoleV8
+                            id: 1
+                        operations:
+                          data:
+                            - type: accessControlOperation
+                              id: '|OPERATIONS|VIEW|'
+      responses:
+        '200':
+          description: >-
+            Updated the list of configured access definitions for the managed
+            object.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_41
+        '400': *ref_5
+        '401': *ref_6
+        '403': *ref_16
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/managed-objects/{objectId}/access-definitions/effective-acl':
+    get:
+      description: >
+        Retrieves a collection of effective access definitions for the managed
+        object and its parents.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: Required accesses are checked on the `objectId` and its
+        parents path parameters. \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: The object namespace for the role in each access definition.
+        \
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Managed Objects
+      parameters:
+        - *ref_39
+        - name: include
+          description: >
+            Appends the included section in the response payload with details
+            about the relationships that are specified in the include query. The
+            include query is the comma-separated list of the relationships,
+            which can include the role, the managedObject or the operations.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - role
+              - managedObject
+              - operations
+        - *ref_32
+      responses:
+        '200':
+          description: >-
+            A list of effective access definitions for the managed object and
+            its parents.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_77
+                description: >-
+                  The collection of effective access definition resources for a
+                  managed object and its parents.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_78
+                      type: object
+                      required:
+                        - type
+                        - attributes
+                        - id
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self: *ref_0
+                        id:
+                          type: string
+                          description: >-
+                            The unique identifier of the access definition
+                            resource.
+                        type:
+                          type: string
+                          enum:
+                            - accessDefinition
+                            - accessDefinitionV8
+                        attributes:
+                          type: object
+                          properties:
+                            propagation: *ref_42
+                        relationships:
+                          type: object
+                          properties:
+                            role:
+                              description: The resource of the access control role.
+                              type: object
+                              required:
+                                - data
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    self: *ref_0
+                                data: *ref_18
+                            operations:
+                              description: >-
+                                The collection of resources for the access
+                                control operation.
+                              type: object
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    self: *ref_0
+                                data:
+                                  type: array
+                                  items: *ref_18
+                            managedObject:
+                              description: >-
+                                The resource of the access control managed
+                                object.
+                              type: object
+                              required:
+                                - data
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    self: *ref_0
+                                data: *ref_18
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/managed-objects/{objectId}/access-definitions/{accessDefinitionId}':
+    get:
+      description: >
+        Retrieves the access definition with the specified identifier.
+
+
+        **Access Control** \
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: Required access is checked on the `objectId` path parameter.
+        \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+
+
+        To see the role configured in the access definition:
+
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: (Reference the `data.meta.accessControlId` metadata response
+        attribute for the `roleResource`) \
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Access Definitions
+      parameters:
+        - *ref_32
+        - *ref_39
+        - &ref_44
+          name: accessDefinitionId
+          description: >-
+            The access definition identifier for the managed object of the
+            NetBackup access control system.
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Retrieved the access definition with the specified identifier.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_43
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+    put:
+      description: >
+        Replaces the access definition represented by the specified identifier
+        with the new access definition.\
+
+        NOTE: Operations can be modified, but the propatation setting and role
+        defined in the access definition are immutable.
+
+
+        **Access Control** \
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: Required access is checked on the `objectId` path parameter.
+        \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+
+
+        To allow a role to be used or modified in an access definition: \
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: (Reference the `data.meta.accessControlId` metadata response
+        attribute for the `roleResource`) \
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|ACCESS-CONTROL|ROLES|ASSIGN-ACCESS|`
+      tags:
+        - Access Definitions
+      parameters:
+        - *ref_11
+        - *ref_39
+        - *ref_44
+      requestBody:
+        description: The new access definition with updated attribute values.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: *ref_45
+            examples:
+              Access definition: &ref_93
+                value:
+                  data:
+                    type: accessDefinitionV8
+                    attributes:
+                      propagation: OBJECT_AND_CHILDREN
+                    relationships:
+                      role:
+                        data:
+                          type: accessControlRoleV8
+                          id: 1
+                      operations:
+                        data:
+                          - type: accessControlOperation
+                            id: '|OPERATIONS|VIEW|'
+                      managedObject:
+                        data:
+                          type: managedOject
+                          id: '|SECURITY|ACCESS-CONTROL|ROLES|'
+      responses:
+        '204':
+          description: >-
+            Replaced the specified access definition with the new access
+            definition.
+        '400': *ref_5
+        '401': *ref_6
+        '403': *ref_16
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+    delete:
+      description: >
+        Deletes the access definition with the specified identifier.
+
+
+        **Access Control** \
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: Required access is checked on the `objectId` path parameter.
+        \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+
+
+        To allow a role to be used or modified in an access definition: \
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: (Reference the `data.meta.accessControlId` metadata response
+        attribute for the `roleResource`) \
+
+        Requires Operation:
+        `|OPERATIONS|SECURITY|ACCESS-CONTROL|ROLES|ASSIGN-ACCESS|`
+      tags:
+        - Access Definitions
+      parameters:
+        - *ref_11
+        - *ref_39
+        - *ref_44
+      responses:
+        '204':
+          description: Deleted the access definition.
+        '401': *ref_6
+        '403': *ref_16
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/managed-objects/{objectId}/primary-operations':
+    get:
+      description: >
+        Retrieves the configured primary operations for the managed object.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: Required access is checked on the `objectId` path parameter.
+        \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+      tags:
+        - Operations
+      parameters:
+        - *ref_32
+        - *ref_39
+        - *ref_17
+        - *ref_46
+      responses:
+        '200':
+          description: Retrieved the configured primary operations for the managed object.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: *ref_47
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  '/access-control/managed-objects/{objectId}':
+    get:
+      description: >
+        Retrieves the NetBackup managed object with the specified identifier.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: Required access is checked on the `objectId` path parameter.
+        \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+      tags:
+        - Managed Objects
+      parameters:
+        - *ref_39
+        - name: include
+          description: >
+            Includes the details about the related access definitions in the
+            response. For example, ?include=acl. To include specific elements of
+            the access definitions in the response, provide a comma-separated
+            list. For example, ?include=acl.role, acl.operations.
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - acl
+              - acl.role
+              - acl.operations
+      responses:
+        '200':
+          description: Retrieved the NetBackup managed object.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_61
+                description: The resource data for NetBackup managed object.
+                type: object
+                properties:
+                  data: &ref_62
+                    type: object
+                    required:
+                      - type
+                      - attributes
+                    properties:
+                      links:
+                        type: object
+                        properties:
+                          self: *ref_0
+                      type:
+                        type: string
+                        enum:
+                          - managedObject
+                      id:
+                        type: string
+                        description: >-
+                          The unique resource identifier for NetBackup managed
+                          object.
+                      meta:
+                        type: object
+                        properties:
+                          messages: &ref_48
+                            description: >-
+                              The localized label for a managed object
+                              namespace.
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: >-
+                                  The localized label for a managed object
+                                  namespace.
+                      attributes:
+                        type: object
+                        properties:
+                          inherit:
+                            description: >-
+                              Indicates if the object inherits access from its
+                              parent.
+                            type: boolean
+                          name:
+                            description: >-
+                              A display label for this managed object
+                              namespace.  A NetBackup service has the option to
+                              provide a localizable display name for a managed
+                              object namespace.
+                            type: string
+                          state:
+                            description: The registration state of the managed object.
+                            type: string
+                            enum:
+                              - PENDING
+                              - READY
+                      relationships:
+                        type: object
+                        required:
+                          - acl
+                        properties:
+                          objectType:
+                            description: The object type of a managed object
+                            type: object
+                            properties:
+                              data: &ref_79
+                                description: >-
+                                  The localized, system-defined data for the
+                                  NetBackup object type.
+                                type: object
+                                properties:
+                                  displayName:
+                                    type: string
+                                    description: >-
+                                      The localized name for the NetBackup
+                                      object type.
+                                  description:
+                                    type: string
+                                    description: >-
+                                      The localized description for the
+                                      NetBackup object type.
+                                  hierarchyDescription:
+                                    type: string
+                                    description: >-
+                                      The localized hierarchy description for
+                                      the NetBackup object type.
+                                  accessControlAttributes:
+                                    description: The attributes for the object type.
+                                    type: array
+                                    items: &ref_82
+                                      description: >-
+                                        The localized data for the object type
+                                        attribute.
+                                      type: object
+                                      properties:
+                                        displayName:
+                                          type: string
+                                          description: >-
+                                            The localized display name of the object
+                                            type attribute.
+                                        description:
+                                          type: string
+                                          description: >-
+                                            The localized description of the object
+                                            type attribute.
+                          acl:
+                            description: >-
+                              The collection of access definition resources for
+                              a managed object.
+                            type: object
+                            properties:
+                              links:
+                                type: object
+                                properties:
+                                  self: *ref_0
+                              data:
+                                type: array
+                                items: *ref_18
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+    patch:
+      description: >
+        Updates some of the attributes of the managed object with the specified
+        identifier from the access control
+
+        system.  The state attrbute of
+        `#/components/schemas/managedObjectRequestResource` can not be mofified.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)
+        \
+
+        Namespace: Required access is checked on the `objectId` path parameter.
+        \
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+      tags:
+        - Managed Objects
+      parameters:
+        - *ref_11
+        - *ref_39
+      requestBody:
+        description: The managed object with updated attribute values.
+        required: true
+        content:
+          application/vnd.netbackup+json;version=14.0:
+            schema: &ref_59
+              type: object
+              description: The request body for the /access-control/managed-objects API.
+              properties:
+                data: &ref_60
+                  type: object
+                  required:
+                    - type
+                    - attributes
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                        - managedObject
+                    attributes:
+                      type: object
+                      properties:
+                        inherit:
+                          description: >-
+                            The flag indicates if the object inherits access
+                            from its parent.
+                          type: boolean
+                        state:
+                          description: The registration state of the managed object.
+                          type: string
+                          enum:
+                            - PENDING
+                            - READY
+      responses:
+        '204':
+          description: Updated the specified attributes of the managed object.
+        '400': *ref_5
+        '401': *ref_6
+        '404': *ref_15
+        '500': *ref_7
+        '503': *ref_8
+  /access-control/service-namespaces:
+    get:
+      description: >
+        Retrieves the higher-level managed object namespaces registered to
+        access control via service registration.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [Object-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-object-level-enforcement)\
+
+        Namespace: Required access is checked on the id attribute of the
+        `serviceNamespace` resource.\
+
+        Requires Operation: `|OPERATIONS|MANAGE-ACCESS|`
+      tags:
+        - Service Namespaces
+      parameters:
+        - *ref_32
+        - name: include
+          description: >
+            Appends the included section in the response payload with details
+            about the relationships that are specified in the include query. The
+            include query is the name of the relationship, which is
+            "primaryOperations".
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - primaryOperations
+      responses:
+        '200':
+          description: Retrieved the higher-level service namespaces.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_63
+                description: A collection of service registered namespaces.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_64
+                      type: object
+                      required:
+                        - type
+                        - attributes
+                      properties:
+                        links:
+                          type: object
+                          properties:
+                            self: *ref_0
+                        type:
+                          type: string
+                          enum:
+                            - managedObject
+                        id:
+                          type: string
+                          description: >-
+                            The unique resource identifier for NetBackup managed
+                            object.
+                        meta:
+                          type: object
+                          properties:
+                            messages: *ref_48
+                        attributes:
+                          type: object
+                          properties:
+                            inherit:
+                              description: >-
+                                Indicates if the object inherits access from its
+                                parent.
+                              type: boolean
+                            name:
+                              description: >-
+                                A display label for this managed object
+                                namespace.  A NetBackup service has the option
+                                to provide a localizable display name for a
+                                managed object namespace.
+                              type: string
+                            state:
+                              description: The registration state of the managed object.
+                              type: string
+                              enum:
+                                - PENDING
+                                - READY
+                        relationships:
+                          type: object
+                          required:
+                            - primaryOperations
+                          properties:
+                            primaryOperations:
+                              description: >-
+                                The collection of operations designated by a
+                                NetBackup service as primary to this managed
+                                object namespace.
+                              type: object
+                              properties:
+                                links:
+                                  type: object
+                                  properties:
+                                    self: *ref_0
+                                data:
+                                  type: array
+                                  items: *ref_18
+        '400': *ref_5
+        '401': *ref_6
+        '500': *ref_7
+        '503': *ref_8
+  /rbac/identities:
+    get:
+      description: >
+        Obtains the list of specified users or user groups based on the
+        specified filters. The users or user
+
+        groups must be present in the directory service or the local domain.
+
+
+        **Access Control**\
+
+        Enforcement Type:
+        [API-Level](http://sort.veritas.com/public/documents/nbu/11.2/windowsandunix/productguides/html/getting-started#user-content-api-level-enforcement)\
+
+        Namespace: `|SECURITY|ACCESS-CONTROL|PRINCIPALS|`\
+
+        Requires Operation: `|OPERATIONS|VIEW|`
+      tags:
+        - Identities
+      parameters:
+        - name: filter
+          description: >
+            Filter criteria syntax is based on OData standards. Filtering is
+            supported on the following attributes:
+
+            |Name|Supported Operators|Description|Schema|
+
+            |---|---|---|---|
+
+            |id|eq|The name that identifies the user or the user group. Standard
+            formats are supported for this value.|string|
+
+            |identityType|eq|The identity type of the specified name. Possible
+            values: User, Group|string|
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: >
+            Successfully validated and retrieved the identity details of the
+            user or user group from the directory service or local domain, based
+            on the given filter criteria.
+          content:
+            application/vnd.netbackup+json;version=14.0:
+              schema: &ref_83
+                description: The collection of identityResource objects.
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: &ref_84
+                      description: >-
+                        A user or a user group that is represented in the
+                        directory service or local domain.
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        id:
+                          type: string
+                          description: The name that identifies the user or the user group.
+                        links:
+                          type: object
+                          description: The links to the URLs for the identity.
+                          properties:
+                            self:
+                              type: object
+                              properties:
+                                href:
+                                  type: string
+                                  description: The URI to get details for the identity.
+                        attributes:
+                          type: object
+                          description: The attributes of the identity.
+                          properties:
+                            identityType:
+                              type: string
+                              description: The identity type.
+                              enum:
+                                - User
+                                - Group
+                            domainType:
+                              type: string
+                              enum:
+                                - ldap
+                                - nt
+                                - unixpwd
+                              description: The domain type of the user or the user group.
+                            domainName:
+                              type: string
+                              description: >
+                                The domain name of the user or the user group.
+                                If the domain name is not provided, the value is
+                                set to the broker's hostname.
+                            id:
+                              type: string
+                              description: >-
+                                The unique ID of the user or the user group in
+                                the directory service or the local domain.
+                            displayName:
+                              type: string
+                              description: The display name of the user or the user group.
+                            name:
+                              type: string
+                              description: >-
+                                The name of the principal, either the user or
+                                user group.
+                            description:
+                              type: string
+                              description: The description of the user or the user group.
+                            isLocked:
+                              type: boolean
+                              description: >
+                                Indicates if the account is disabled or locked
+                                by the operating system. For user groups and
+                                some operating systems, this value is always set
+                                to FALSE.
+                            groupList:
+                              description: >-
+                                Indicates the membership of the account. This
+                                value is null for user groups.
+                              type: array
+                              items:
+                                type: string
+                          required:
+                            - identityType
+                            - id
+                            - displayName
+        '400': *ref_5
+        '401': *ref_6
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    checkAccessRequestResource:
+      type: object
+      properties:
+        data: &ref_49
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              enum:
+                - checkAccess
+            attributes:
+              type: object
+              required:
+                - checkAccessPairs
+              properties:
+                checkAccessPairs:
+                  type: array
+                  items: &ref_50
+                    type: object
+                    description: The object and operation pair.
+                    required:
+                      - operationId
+                      - objectId
+                    properties:
+                      operationId:
+                        type: string
+                        description: >-
+                          The identifier for the operation in the NetBackup
+                          access control system.
+                      objectId:
+                        type: string
+                        description: >-
+                          The namespace identifier for the managed object of the
+                          NetBackup access control system.
+                      checkAllDescendants:
+                        type: boolean
+                        description: >
+                          This attribute is used to indicate if the principal
+                          has access to perform an operation on the objectId of
+                          the checkAccessPair or any of its descendant namespace
+                          segments. When set to true, all descendants will be
+                          considered when looking for the required operation.
+                          When set to false, the operation will be checked for
+                          the namespace specified or inherited from parents.
+    checkAccessPairsRequest: *ref_49
+    accessCheckPair: *ref_50
+    checkAccessPairsResponseResource:
+      type: object
+      properties:
+        data: &ref_51
+          type: object
+          required:
+            - type
+            - id
+            - attributes
+          properties:
+            type:
+              type: string
+              enum:
+                - checkAccess
+            id:
+              type: string
+              description: >-
+                An identifier for the object and operation pair. This ID is a
+                randomly generated UUID.
+            attributes:
+              type: object
+              required:
+                - checkAccessPairs
+              properties:
+                checkAccessPairs:
+                  type: array
+                  items: *ref_50
+    checkAccessPairResponse: *ref_51
+    bulkObjectUpdateRequestResource:
+      type: object
+      properties:
+        data: &ref_52
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              enum:
+                - managedObjectUpdate
+            attributes:
+              type: object
+              required:
+                - managedObjectsWithAttributes
+              properties:
+                managedObjectsWithAttributes:
+                  type: array
+                  items: &ref_53
+                    type: object
+                    description: The managed object and state pair.
+                    required:
+                      - objectId
+                      - state
+                    properties:
+                      objectId:
+                        type: string
+                        description: >-
+                          The identifier for the managed object of the NetBackup
+                          access control system.
+                      state:
+                        type: string
+                        description: >
+                          The new state of the managed object. Valid state
+                          transitions are:
+
+                          READY -> PENDING, PENDING -> READY, PENDING ->
+                          DELETED.
+                        enum:
+                          - PENDING
+                          - READY
+                          - DELETED
+    objectAttributePairRequest: *ref_52
+    objectAttributePairs: *ref_53
+    bulkObjectUpdateResponseResource:
+      type: object
+      properties:
+        data: &ref_54
+          type: object
+          required:
+            - type
+            - id
+            - attributes
+          properties:
+            type:
+              type: string
+              enum:
+                - managedObjectUpdate
+            id:
+              type: string
+              description: >-
+                An identifier for the object and operation pair. This ID is a
+                randomly generated UUID.
+            attributes:
+              type: object
+              required:
+                - managedObjectsWithAttributes
+              properties:
+                managedObjectsWithAttributes:
+                  type: array
+                  items: *ref_53
+    objectAttributePairResponse: *ref_54
+    accessCacheResource:
+      description: The resource data for a NetBackup access cache.
+      type: object
+      properties:
+        data: &ref_55
+          description: >
+            Information necessary for loading an access cache from disk on the
+            master server.
+          type: object
+          properties:
+            links:
+              type: object
+              properties:
+                self: *ref_0
+            type:
+              type: string
+              enum:
+                - accessCache
+            id:
+              type: string
+              description: >
+                The unique NetBackup access-cache resource identifier. This
+                refers to a directory in NB_ACCESS_CACHE_DIR that holds
+                access-cache files.
+    accessCache: *ref_55
+    localizedManagedObjectData: *ref_48
+    localizedRoleData: *ref_56
+    localizedOperationData: *ref_57
+    roleRequestResource: *ref_13
+    roleRequestData: *ref_58
+    managedObjectRequestResource: *ref_59
+    managedObjectRequestData: *ref_60
+    managedObjectResource: *ref_61
+    managedObject: *ref_62
+    serviceNamespacesResource: *ref_63
+    serviceNamespace: *ref_64
+    rolesResource: *ref_33
+    roleResource: *ref_10
+    role: *ref_4
+    operationsResource: *ref_47
+    operationResource: *ref_65
+    operation: *ref_37
+    objectsRegistrationResource:
+      description: The collection of objects registration data.
+      type: object
+      properties:
+        data:
+          type: array
+          items: &ref_66
+            type: object
+            required:
+              - id
+              - type
+              - attributes
+            properties:
+              id:
+                description: >
+                  The object hierarchy as defined by the owning NetBackup
+                  subsystem.
+
+                  For example: |ASSETS|VMWARE|VCENTER-123| might represent a
+                  specific vCenter server to which
+
+                  you want to apply access control.
+                type: string
+              type:
+                type: string
+                enum:
+                  - objectRegistrationData
+              attributes:
+                type: object
+                required:
+                  - objectType
+                  - accessControlAttributes
+                properties:
+                  objectType:
+                    type: string
+                    description: >
+                      The object type as defined in the JSON schema registered
+                      by the owning NetBackup subsystem.
+
+                      For example: database, instance, vcenter, policy.
+                  accessControlAttributes:
+                    type: object
+                    description: >-
+                      The object as defined in the JSON schema registered by the
+                      owning NetBackup subsystem.
+              relationships:
+                type: object
+                properties:
+                  registeredObjects:
+                    description: The objects that were registered by the request.
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items: *ref_18
+    objectRegistrationResource:
+      type: object
+      required:
+        - data
+      properties:
+        data: &ref_67
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            id:
+              description: >
+                The object hierarchy as defined by the owning NetBackup
+                subsystem.
+
+                For example: |ASSETS|VMWARE|VCENTER-123| might represent a
+                specific vCenter server to which
+
+                you want to apply access control.
+              type: string
+            type:
+              type: string
+              enum:
+                - objectRegistrationData
+            attributes:
+              type: object
+              required:
+                - objectType
+                - accessControlAttributes
+              properties:
+                objectType:
+                  type: string
+                  description: >
+                    The object type as defined in the JSON schema registered by
+                    the owning NetBackup subsystem.
+
+                    For example: database, instance, vcenter, policy.
+                accessControlAttributes:
+                  type: object
+                  description: >-
+                    The object as defined in the JSON schema registered by the
+                    owning NetBackup subsystem.
+                registerParents:
+                  type: boolean
+                  description: Registers any non-existant parent namespaces.
+                  default: false
+                relativeChildNamespaces:
+                  type: array
+                  description: The child namespaces to register.
+                  items:
+                    type: string
+            meta:
+              type: object
+              required:
+                - initialAccess
+              properties:
+                initialAccess:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: array
+                      description: >-
+                        The access definitions granted to the object being
+                        registered.
+                      items: *ref_40
+            relationships:
+              type: object
+              properties:
+                registeredObjects:
+                  description: The objects that were registered by the request.
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items: *ref_18
+    bulkObjectRegistrationData: *ref_66
+    objectMigration:
+      type: object
+      required:
+        - id
+        - type
+        - attributes
+      properties:
+        id:
+          type: string
+          description: >-
+            An identifier for object migration pair. This ID is a randomly
+            generated UUID.
+        type:
+          type: string
+          enum:
+            - objectMigration
+        attributes:
+          type: object
+          required:
+            - objectMigrationPair
+          properties:
+            objectMigrationPair:
+              type: object
+              required:
+                - objectId
+                - newObjectId
+              properties:
+                objectId:
+                  description: >
+                    The original namespace of a managed object you want to
+                    migrate.
+                  type: string
+                newObjectId:
+                  description: |
+                    The target namespace of a managed object after migration.
+                  type: string
+    objectRegistrationData: *ref_67
+    objectTypeResourceIdentifierObject:
+      description: A resource identifier object that represents an individual object type.
+      type: object
+      required:
+        - id
+        - type
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - accessControlObjectType
+    userPrincipalResourceIdentifierObject: *ref_2
+    groupPrincipalResourceIdentifierObject: *ref_3
+    hostPrincipalResourceIdentifierObject: *ref_68
+    roleUserRelationRequestData: *ref_19
+    roleGroupRelationRequestData: *ref_22
+    roleElevationRequestResource: *ref_25
+    roleElevationData: *ref_69
+    userRoleElevationRequestResource: *ref_70
+    userRoleElevationData: *ref_71
+    selfElevateRolesResource: *ref_72
+    roleElevationStatus: *ref_73
+    roleBasicInfo: *ref_34
+    elevatableRolesResource: *ref_36
+    elevatableRole: *ref_74
+    accessDefinitionsRequestResource: *ref_75
+    accessDefinitionRequestResource: *ref_45
+    roleAccessDefinitionResource: *ref_76
+    managedObjectsAccessDefinitionResource: *ref_77
+    accessDefinitionsResource: *ref_41
+    accessDefinitionResource: *ref_43
+    effectiveAccessDefinition: *ref_78
+    accessDefinition: *ref_38
+    propagation: *ref_42
+    objectTypesResource:
+      description: The collection of resources for NetBackup object types.
+      type: object
+      properties:
+        data:
+          type: array
+          items: &ref_80
+            type: object
+            required:
+              - type
+              - attributes
+            properties:
+              links:
+                type: object
+                properties:
+                  self: *ref_0
+              meta:
+                type: object
+                properties:
+                  messages: *ref_79
+              type:
+                type: string
+                enum:
+                  - accessControlObjectType
+              id:
+                type: string
+                description: The unique identifier for the NetBackup object type resource.
+              attributes:
+                type: object
+                required:
+                  - displayName
+                  - description
+                  - hierarchyDescription
+                  - accessControlAttributes
+                properties:
+                  displayName:
+                    description: The name of the NetBackup object type.
+                    type: string
+                  description:
+                    description: The description of the NetBackup object type.
+                    type: string
+                  hierarchyDescription:
+                    description: The hierarchy description of the NetBackup object type.
+                    type: string
+                  accessControlAttributes:
+                    description: The object type attributes.
+                    type: array
+                    items: &ref_81
+                      type: object
+                      required:
+                        - name
+                        - displayName
+                        - description
+                      properties:
+                        name:
+                          type: string
+                          description: The name of the attribute to be used in the rule.
+                        displayName:
+                          type: string
+                          description: The display name of the object type attribute.
+                        description:
+                          type: string
+                          description: The description of the attribute.
+    objectType: *ref_80
+    accessControlAttributes: *ref_81
+    localizedObjectTypeData: *ref_79
+    localizedAccessControlAttributes: *ref_82
+    identitiesResource: *ref_83
+    identityResource: *ref_84
+    hostInfo:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              enum:
+                - hostidroleRequest
+            attributes:
+              type: object
+              required:
+                - uuid
+              properties:
+                uuid:
+                  description: host uuid
+                  type: string
+    hostidRoleResource:
+      type: object
+      properties:
+        data: *ref_4
+    userPrincipalsResource: *ref_85
+    userPrincipal: *ref_86
+    groupPrincipalsResource: *ref_87
+    groupPrincipal: *ref_88
+  parameters:
+    roleId: *ref_12
+    objectId: *ref_39
+    accessDefinitionId: *ref_44
+    ruleId:
+      name: ruleId
+      description: The identifier of the NetBackup rule.
+      in: path
+      required: true
+      schema:
+        type: string
+    subjectIdentifier: *ref_89
+    metaMessagesAndAccessControlId: *ref_9
+    pageDisable: *ref_29
+    pageLimit: *ref_28
+  examples:
+    rolesResponse: *ref_90
+    vmwareAdminRole: *ref_14
+    unixpwdUsers: *ref_20
+    userPrincipalsResponse: *ref_91
+    unixpwdGroups: *ref_23
+    ntUsers: *ref_21
+    ntGroups: *ref_24
+    accessDefinition: *ref_92
+    putAccessDefinition: *ref_93
+    accessDefinitions: *ref_94
+    roleElevationConfigRequest: *ref_26
+    roleElevationRequest: *ref_95
+    roleElevationStatusResponse: *ref_96
+    groupPrincipalsResponse: *ref_97
+security:
+  - apiKeyAuth: []
+  - cookieAuth: []
+  - jwtAuth: []
