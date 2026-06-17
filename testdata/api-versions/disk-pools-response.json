@@ -1,0 +1,19 @@
+{
+  "data": [
+    {
+      "id": "dp1",
+      "type": "diskPool",
+      "attributes": {
+        "name": "dp1",
+        "sType": "PureDisk",
+        "storageCategory": "MSDP",
+        "diskPoolState": "UP",
+        "diskVolumes": [
+          { "name": "vol-a", "id": "a", "state": "UP" },
+          { "name": "vol-b", "id": "b", "state": "UP" },
+          { "name": "vol-c", "id": "c", "state": "DOWN" }
+        ]
+      }
+    }
+  ]
+}
