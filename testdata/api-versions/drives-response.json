@@ -1,0 +1,7 @@
+{
+  "data": [
+    {"attributes": {"driveName": "drive0", "driveStatus": "DRIVE_STATUS_UP",   "driveType": "DT_HCART", "robotType": "TLD", "robotNumber": 0, "deviceHost": "ms1.example.com"}},
+    {"attributes": {"driveName": "drive1", "driveStatus": "DRIVE_STATUS_UP",   "driveType": "DT_HCART", "robotType": "TLD", "robotNumber": 0, "deviceHost": "ms1.example.com"}},
+    {"attributes": {"driveName": "drive2", "driveStatus": "DRIVE_STATUS_DOWN", "driveType": "DT_HCART", "robotType": "TLD", "robotNumber": 0, "deviceHost": "ms1.example.com"}}
+  ]
+}
