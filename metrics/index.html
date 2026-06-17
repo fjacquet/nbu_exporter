@@ -1612,7 +1612,11 @@ emitted series is <code>site</code> followed by the labels above.</p>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">scrape_interval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60s</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">scrape_timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30s</span>
 </code></pre></div>
-<p>Alerting rules are provided in <code>grafana/alerts.yml</code> (load via <code>rule_files</code>).</p>
+<p>Alerting rules live in <code>deploy/prometheus/</code>: the generic <code>nbu.rules.yml</code> (availability,
+staleness, backup-success-rate, storage) plus two <strong>optional</strong> files loaded only if you enabled
+the matching opt-in collector — <code>rules-perclient.yml</code> (per-client backup staleness;
+needs <code>collectors.perClient</code>) and <code>rules-tape.yml</code> (tape drive DOWN/DISABLED; needs
+<code>collectors.tape</code>). Load them via <code>rule_files</code> and validate with <code>make check-rules</code>.</p>
 <h2 id="dashboards">Dashboards</h2>
 <p>The Grafana dashboards are <strong>generated</strong> by <code>python3 grafana/build_dashboards.py</code>
 (pure Python stdlib). Never hand-edit the JSON in <code>grafana/</code> — the generator is the

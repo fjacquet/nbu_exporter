@@ -2598,6 +2598,10 @@ and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semant
 <h2 id="unreleased">[Unreleased]</h2>
 <h3 id="added">Added</h3>
 <ul>
+<li><strong>Alerting rules</strong> (<code>deploy/prometheus/</code>): two optional, site-aware Prometheus rule files —
+  <code>rules-perclient.yml</code> (<code>NbuClientBackupStale</code> &gt;25h warning, <code>NbuClientBackupCritical</code> &gt;48h
+  critical) and <code>rules-tape.yml</code> (<code>NbuTapeDriveDown</code> / <code>NbuTapeDriveDisabled</code> per site) — each with
+  promtool unit tests, plus a <code>make check-rules</code> target. The generic <code>nbu.rules.yml</code> is unchanged.</li>
 <li><strong>Per-client last-successful-backup metric</strong> (opt-in <code>collectors.perClient</code>, default off):
   <code>nbu_client_last_successful_backup_timestamp_seconds{site,client}</code> for each allowlisted client,
   from a targeted <code>/admin/jobs</code> query (latest <code>status=0</code> BACKUP, <code>sort=-endTime</code>, <code>page[limit]=1</code>).
