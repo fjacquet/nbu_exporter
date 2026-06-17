@@ -242,6 +242,75 @@ def barchart(title, expr, x, y, w, h, legend="{{policy_type}}", unit="none"):
     }
 
 
+def state_timeline(title, expr, x, y, w, h, legend="{{client}}", thresholds=None):
+    if thresholds is None:
+        thresholds = [{"color": "red", "value": None}, {"color": "green", "value": 0.5}]
+    return {
+        "type": "state-timeline",
+        "id": nid(),
+        "title": title,
+        "datasource": ds(),
+        "gridPos": gridpos(x, y, w, h),
+        "targets": [target(expr, legend, instant=False)],
+        "options": {
+            "mergeValues": True,
+            "showValue": "never",
+            "alignValue": "left",
+            "rowHeight": 0.9,
+            "legend": {"displayMode": "hidden", "placement": "bottom"},
+            "tooltip": {"mode": "single", "sort": "none"},
+        },
+        "fieldConfig": {
+            "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": thresholds},
+                "custom": {"fillOpacity": 90, "lineWidth": 0},
+            },
+            "overrides": [],
+        },
+    }
+
+
+def bar_gauge(title, expr, x, y, w, h, unit="none", thresholds=None, legend="{{client}}"):
+    if thresholds is None:
+        thresholds = [{"color": "green", "value": None}]
+    return {
+        "type": "bargauge",
+        "id": nid(),
+        "title": title,
+        "datasource": ds(),
+        "gridPos": gridpos(x, y, w, h),
+        "fieldConfig": {
+            "defaults": {
+                "unit": unit,
+                "color": {"mode": "thresholds"},
+                "thresholds": {"mode": "absolute", "steps": thresholds},
+            },
+            "overrides": [],
+        },
+        "options": {
+            "orientation": "horizontal",
+            "displayMode": "gradient",
+            "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": False},
+            "valueMode": "color",
+            "showUnfilled": True,
+            "minVizWidth": 0,
+        },
+        "targets": [target(expr, legend, instant=True)],
+    }
+
+
+def text_panel(title, content, x, y, w, h):
+    """Static Markdown panel (no datasource/targets) — used for flow diagrams."""
+    return {
+        "type": "text",
+        "id": nid(),
+        "title": title,
+        "gridPos": gridpos(x, y, w, h),
+        "options": {"mode": "markdown", "content": content},
+    }
+
+
 def table_info(title, expr, x, y, w, h):
     return {
         "type": "table",

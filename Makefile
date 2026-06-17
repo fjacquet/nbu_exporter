@@ -44,8 +44,8 @@ vuln:
 
 # Validate + unit-test the Prometheus alerting rules (requires promtool).
 check-rules:
-	promtool check rules deploy/prometheus/nbu.rules.yml deploy/prometheus/rules-perclient.yml deploy/prometheus/rules-tape.yml
-	promtool test rules deploy/prometheus/rules-perclient_test.yml deploy/prometheus/rules-tape_test.yml
+	promtool check rules deploy/prometheus/nbu.rules.yml deploy/prometheus/rules-perclient.yml deploy/prometheus/rules-tape.yml deploy/prometheus/rules-multisite.yml
+	promtool test rules deploy/prometheus/rules-perclient_test.yml deploy/prometheus/rules-tape_test.yml deploy/prometheus/rules-multisite_test.yml
 
 # Aggregate gate run by CI.
 ci: fmt-check vet lint test-race vuln

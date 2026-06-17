@@ -92,9 +92,19 @@ opentelemetry:
 #     insecure: false
 #     samplingRate: 0.01
 
-# Optional: opt-in NetBackup 11.2 metric collectors (all default to disabled)
+# Optional: opt-in metric collectors (all default to disabled).
+# alerts/malware/catalog/slo require NetBackup 11.2 (API version=14.0).
 collectors:
   alerts:  { enabled: false }
   malware: { enabled: false }
   catalog: { enabled: false }
   slo:     { enabled: false }
+  # Tape drives, media pools, partially-full volume pools and disk-pool volumes.
+  # Works on NBU 10.0+ (drive/media); volume-pool and disk-pool rows need 10.5+.
+  tape:    { enabled: false }
+  # Per-client backup compliance + lifecycle (BACKUP/DUPLICATION/IMPORT). The
+  # client label is high-cardinality, so an explicit allowlist is required —
+  # an empty allowlist emits nothing.
+  perClient:
+    enabled: false
+    allowlist: []   # exact client names, e.g. ["db01", "app02"]

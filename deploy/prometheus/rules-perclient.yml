@@ -1,7 +1,8 @@
-# Optional Prometheus alerting rules — per-client backup staleness.
+# Optional Prometheus alerting rules — per-client backup compliance.
 #
 # Requires the opt-in per-client collector (collectors.perClient), which produces
-# nbu_client_last_successful_backup_timestamp_seconds. Load alongside nbu.rules.yml:
+# nbu_client_last_successful_backup_timestamp_seconds plus the phase-aware
+# nbu_client_last_job_success_seconds and nbu_client_jobs_count. Load alongside nbu.rules.yml:
 #
 #   rule_files:
 #     - /etc/prometheus/rules/nbu.rules.yml
@@ -31,3 +32,37 @@ groups:
         annotations:
           summary: "Client {{ $labels.client }} has no successful backup in over 48h (site {{ $labels.site }})"
           description: "Client {{ $labels.client }} on site {{ $labels.site }} has not completed a successful backup in over 48 hours."
+      # Tape copy (DUPLICATION) for a client is missing/stale — 26h (1h margin over the daily SLP).
+      # Uses the phase-aware nbu_client_last_job_success_seconds; primary-backup staleness is
+      # already covered by NbuClientBackupStale above.
+      - alert: NbuClientNoRecentTapeCopy
+        expr: (time() - nbu_client_last_job_success_seconds{action="DUPLICATION"}) > 93600
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No recent tape copy for client {{ $labels.client }} (policy {{ $labels.policy }}, site {{ $labels.site }})"
+          description: "Client {{ $labels.client }} (policy {{ $labels.policy }}) on site {{ $labels.site }} has had no successful tape duplication (DUPLICATION) job in over 26 hours. Verify the Storage Lifecycle Policy is running."
+      # Inter-site replication (IMPORT / Auto Image Replication) missing/stale — 28h.
+      - alert: NbuClientNoRecentReplication
+        expr: (time() - nbu_client_last_job_success_seconds{action="IMPORT"}) > 100800
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No recent replication for client {{ $labels.client }} (policy {{ $labels.policy }}, site {{ $labels.site }})"
+          description: "Client {{ $labels.client }} (policy {{ $labels.policy }}) on site {{ $labels.site }} has had no successful replication (IMPORT) job in over 28 hours. Check inter-site connectivity and Auto Image Replication."
+      # Client BACKUP failure rate above 20% in the current scraping window.
+      - alert: NbuClientBackupFailureRate
+        expr: |
+          (
+            sum by (site, client) (nbu_client_jobs_count{action="BACKUP", status!="0"})
+            /
+            clamp_min(sum by (site, client) (nbu_client_jobs_count{action="BACKUP"}), 1)
+          ) * 100 > 20
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High backup failure rate for client {{ $labels.client }} (site {{ $labels.site }})"
+          description: "More than 20% of BACKUP jobs for client {{ $labels.client }} on site {{ $labels.site }} failed in the current scraping window."

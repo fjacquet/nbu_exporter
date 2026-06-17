@@ -1,5 +1,5 @@
 {
   "data": [
-    {"attributes": {"barcode": "ABC003", "mediaType": "HCART", "mediaStatus": "FROZEN", "robotType": "TLD", "robotNumber": 0}}
+    {"attributes": {"barcode": "ABC003", "mediaType": "HCART", "volumePool": "NetBackup", "mediaStatus": "FROZEN", "robotType": "TLD", "robotNumber": 0}}
   ]
 }

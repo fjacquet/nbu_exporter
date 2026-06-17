@@ -36,9 +36,9 @@ sites filters the whole dashboard; "All" shows every site. The Overview's **Site
 UP/DOWN availability tile per primary (repeated over `$site`), so a down master stands out at a
 glance.
 
-## The four dashboards
+## The seven dashboards
 
-All four dashboards share the `$site` selector (above); the table below lists each one's
+All dashboards share the `$site` selector (above); the table below lists each one's
 **additional** variables.
 
 | Dashboard | File / UID | Focus | Extra variables |
@@ -47,10 +47,16 @@ All four dashboards share the `$site` selector (above); the table below lists ea
 | **Jobs** | `nbu-jobs.json` / `nbu-jobs` | Backup outcomes, job states, jobs by policy, backup volume, queued jobs, duration p50/p95, files, deduplication | `$policy_type` |
 | **Storage** | `nbu-storage.json` / `nbu-storage` | Capacity utilization, used-vs-total trend, per-unit table, max concurrent jobs, max fragment size | `$storage_unit` |
 | **Data Protection** | `nbu-dataprotection.json` / `nbu-dataprotection` | NetBackup 11.2 collectors: alerts by severity/category, malware scanned vs infected and scan status, catalog malware/anomaly posture, configured SLOs | — |
+| **Lifecycle** | `nbu-lifecycle.json` / `nbu-lifecycle` | Per-client compliance across the full lifecycle (BACKUP → DUPLICATION → IMPORT): success rate per phase, age-of-last-success table, overdue clients | `$client` |
+| **Tape & Disk Pools** | `nbu-tape.json` / `nbu-tape` | Tape drive status, media by pool/type, partially-full volume pools, and disk-pool volume health | — |
+| **Multi-site** | `nbu-multisite.json` / `nbu-multisite` | Side-by-side cross-site comparison of backup volume, success rate, inter-site replication, divergence, and per-site tape | `$client` |
 
 The **Data Protection** dashboard's panels stay empty until the optional 11.2 collectors are enabled
 in `config.yaml` (`collectors.{alerts,malware,catalog,slo}.enabled: true`) and the appliance returns
-data, so it is safe to leave in place on older NetBackup versions.
+data, so it is safe to leave in place on older NetBackup versions. Likewise **Lifecycle** and the
+per-site/`$client` panels on **Multi-site** stay empty until `collectors.perClient` is enabled with a
+non-empty `allowlist`, and **Tape & Disk Pools** needs `collectors.tape` (NBU 10.5+ for the
+volume-pool and disk-pool rows).
 
 The previous single overview and the legacy "NBU Statistics" dashboard have been retired; their views
 now live in the Overview, Jobs, and Storage dashboards above.

@@ -45,6 +45,12 @@ def policy_type_var():
     return _query_var("policy_type", "Policy type", "nbu_jobs_count", "policy_type")
 
 
+def client_filter_var():
+    # Sourced from the opt-in per-client metric; resolves to no clients (".*" allValue)
+    # when collectors.perClient is disabled, so lifecycle/multi-site panels degrade cleanly.
+    return _query_var("client_filter", "Client", "nbu_client_last_job_success_seconds", "client")
+
+
 def dashboard_links():
     """Tag-based links so every nbu dashboard cross-links to the others."""
     return [{

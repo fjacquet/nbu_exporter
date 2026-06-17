@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "id": "0",
+      "type": "tapeVolumePool",
+      "attributes": {
+        "volumePoolName": "NetBackup",
+        "description": "default pool",
+        "partiallyFullMedia": 3,
+        "poolType": "SCRATCH"
+      }
+    },
+    {
+      "id": "1",
+      "type": "tapeVolumePool",
+      "attributes": {
+        "volumePoolName": "CatalogBackup",
+        "description": "catalog pool",
+        "partiallyFullMedia": 0,
+        "poolType": "NONE"
+      }
+    }
+  ]
+}

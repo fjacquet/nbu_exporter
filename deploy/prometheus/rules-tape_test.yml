@@ -4,9 +4,9 @@ rule_files:
 tests:
   - interval: 1m
     input_series:
-      - series: 'nbu_tape_drives_count{site="paris",state="DOWN",drive_type="DT_HCART",robot_type="TLD"}'
+      - series: 'nbu_tape_drives_count{site="paris",status="DRIVE_STATUS_DOWN",drive_type="DT_HCART",robot_type="TLD"}'
         values: '1x60'
-      - series: 'nbu_tape_drives_count{site="paris",state="UP",drive_type="DT_HCART",robot_type="TLD"}'
+      - series: 'nbu_tape_drives_count{site="paris",status="DRIVE_STATUS_UP",drive_type="DT_HCART",robot_type="TLD"}'
         values: '3x60'
     alert_rule_test:
       # One DOWN drive, true > for:15m -> warning fires (sum by site drops drive_type/robot_type).
@@ -23,3 +23,50 @@ tests:
       - eval_time: 40m
         alertname: NbuTapeDriveDisabled
         exp_alerts: []
+
+  # NbuTapePoolScratchLow: scratch volume pool running low for 15m.
+  - interval: 1m
+    input_series:
+      - series: 'nbu_tape_media_count{site="paris",pool="Scratch",media_type="HCART",robot_type="TLD"}'
+        values: '3x30'
+      - series: 'nbu_tape_media_count{site="paris",pool="NetBackup",media_type="HCART",robot_type="TLD"}'
+        values: '50x30'
+    alert_rule_test:
+      # Only 3 volumes in the Scratch pool (< 5), sustained past for:15m -> fires.
+      # The NetBackup pool (50 volumes) is excluded by the pool="Scratch" matcher.
+      - eval_time: 20m
+        alertname: NbuTapePoolScratchLow
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              pool: Scratch
+              site: paris
+            exp_annotations:
+              summary: "Tape scratch pool Scratch low on site paris"
+              description: "Fewer than 5 volumes remain in scratch pool Scratch on site paris. Order or reassign tapes before the pool is exhausted."
+      # Before the 15m hold window -> no alert yet.
+      - eval_time: 5m
+        alertname: NbuTapePoolScratchLow
+        exp_alerts: []
+
+  # NbuDiskPoolVolumeDegraded: a disk-pool volume not UP for 10m.
+  - interval: 1m
+    input_series:
+      - series: 'nbu_disk_pool_volume_count{site="paris",pool_name="dp_main",storage_category="AdvancedDisk",state="DOWN"}'
+        values: '1x20'
+      - series: 'nbu_disk_pool_volume_count{site="paris",pool_name="dp_main",storage_category="AdvancedDisk",state="UP"}'
+        values: '8x20'
+    alert_rule_test:
+      # One DOWN volume sustained past for:10m -> fires; the UP series is filtered out.
+      - eval_time: 15m
+        alertname: NbuDiskPoolVolumeDegraded
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              site: paris
+              pool_name: dp_main
+              storage_category: AdvancedDisk
+              state: DOWN
+            exp_annotations:
+              summary: "Disk pool volume not UP in dp_main on site paris"
+              description: "One or more volumes in disk pool dp_main (AdvancedDisk) are in state DOWN on site paris. Check storage server connectivity."

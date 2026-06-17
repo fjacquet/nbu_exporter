@@ -99,6 +99,10 @@ config: |
     malware: { enabled: false }
     catalog: { enabled: false }
     slo:     { enabled: false }
+    tape:    { enabled: false }   # tape/disk-pool metrics (NBU 10.0+; pools need 10.5+)
+    perClient:                    # per-client compliance + lifecycle (allowlist required)
+      enabled: false
+      allowlist: []               # exact client names; empty => no per-client series
 
 env: []
 # - name: NBU1_HOSTNAME

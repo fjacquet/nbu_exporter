@@ -70,13 +70,15 @@ func TestTapeCollector_Drives(t *testing.T) {
 		"/storage/drives":              "../../testdata/api-versions/drives-response.json",
 		"/storage/tape-media":          "",
 		"/storage/robots-device-hosts": "",
+		"/storage/tape-volume-pools":   "",
+		"/storage/disk-pools":          "",
 	}}
 	c := newTapeCollector(client, testConfig(), "site1")
 	ch := make(chan prometheus.Metric, 64)
 	require.NoError(t, c.Collect(context.Background(), ch))
 	close(ch)
 
-	driveCounts := map[string]float64{} // "state|drive_type|robot_type" -> value
+	driveCounts := map[string]float64{} // "drive_type|robot_type|status" -> value
 	infoCount := 0
 	for m := range ch {
 		var d dto.Metric
@@ -85,15 +87,15 @@ func TestTapeCollector_Drives(t *testing.T) {
 		desc := m.Desc().String()
 		switch {
 		case strings.Contains(desc, "nbu_tape_drives_count"):
-			key := labelValue(&d, "state") + "|" + labelValue(&d, "drive_type") + "|" + labelValue(&d, "robot_type")
+			key := labelValue(&d, "drive_type") + "|" + labelValue(&d, "robot_type") + "|" + labelValue(&d, "status")
 			driveCounts[key] = d.GetGauge().GetValue()
 		case strings.Contains(desc, "nbu_tape_drive_info"):
 			require.Equal(t, float64(1), d.GetGauge().GetValue())
 			infoCount++
 		}
 	}
-	require.Equal(t, float64(2), driveCounts["UP|DT_HCART|TLD"])
-	require.Equal(t, float64(1), driveCounts["DOWN|DT_HCART|TLD"])
+	require.Equal(t, float64(2), driveCounts["DT_HCART|TLD|DRIVE_STATUS_UP"])
+	require.Equal(t, float64(1), driveCounts["DT_HCART|TLD|DRIVE_STATUS_DOWN"])
 	require.Equal(t, 3, infoCount, "one nbu_tape_drive_info per drive")
 }
 
@@ -103,6 +105,8 @@ func TestTapeCollector_MediaPaginated(t *testing.T) {
 		byPath: map[string]string{
 			"/storage/drives":              "",
 			"/storage/robots-device-hosts": "",
+			"/storage/tape-volume-pools":   "",
+			"/storage/disk-pools":          "",
 		},
 		byOffset: map[string]map[string]string{
 			"/storage/tape-media": {
@@ -116,17 +120,16 @@ func TestTapeCollector_MediaPaginated(t *testing.T) {
 	require.NoError(t, c.Collect(context.Background(), ch))
 	close(ch)
 
-	media := map[string]float64{} // "media_type|status" -> value
+	media := map[string]float64{} // "pool|media_type|robot_type" -> value
 	for m := range ch {
 		var d dto.Metric
 		require.NoError(t, m.Write(&d))
 		if strings.Contains(m.Desc().String(), "nbu_tape_media_count") {
 			require.Equal(t, "site1", labelValue(&d, "site"))
-			media[labelValue(&d, "media_type")+"|"+labelValue(&d, "status")] = d.GetGauge().GetValue()
+			media[labelValue(&d, "pool")+"|"+labelValue(&d, "media_type")+"|"+labelValue(&d, "robot_type")] = d.GetGauge().GetValue()
 		}
 	}
-	require.Equal(t, float64(2), media["HCART|ACTIVE"], "both pages aggregated")
-	require.Equal(t, float64(1), media["HCART|FROZEN"])
+	require.Equal(t, float64(3), media["NetBackup|HCART|TLD"], "both pages aggregated by pool/media_type/robot_type")
 }
 
 func TestTapeCollector_RobotHostsAndRegistration(t *testing.T) {
@@ -134,6 +137,8 @@ func TestTapeCollector_RobotHostsAndRegistration(t *testing.T) {
 		"/storage/drives":              "",
 		"/storage/tape-media":          "",
 		"/storage/robots-device-hosts": "../../testdata/api-versions/robots-device-hosts-response.json",
+		"/storage/tape-volume-pools":   "",
+		"/storage/disk-pools":          "",
 	}}
 	c := newTapeCollector(client, testConfig(), "site1")
 	ch := make(chan prometheus.Metric, 16)
@@ -161,6 +166,8 @@ func TestTapeCollector_GracefulDegradation(t *testing.T) {
 		"/storage/drives":              "",
 		"/storage/tape-media":          "",
 		"/storage/robots-device-hosts": "",
+		"/storage/tape-volume-pools":   "",
+		"/storage/disk-pools":          "",
 	}}
 	c := newTapeCollector(client, testConfig(), "site1")
 	ch := make(chan prometheus.Metric, 4)
@@ -191,6 +198,8 @@ func TestTapeCollector_MediaPartialOnError(t *testing.T) {
 		byPath: map[string]string{
 			"/storage/drives":              "",
 			"/storage/robots-device-hosts": "",
+			"/storage/tape-volume-pools":   "",
+			"/storage/disk-pools":          "",
 		},
 		byOffset: map[string]map[string]string{
 			"/storage/tape-media": {
@@ -209,8 +218,44 @@ func TestTapeCollector_MediaPartialOnError(t *testing.T) {
 		var d dto.Metric
 		require.NoError(t, m.Write(&d))
 		if strings.Contains(m.Desc().String(), "nbu_tape_media_count") {
-			media[labelValue(&d, "media_type")+"|"+labelValue(&d, "status")] = d.GetGauge().GetValue()
+			media[labelValue(&d, "pool")+"|"+labelValue(&d, "media_type")+"|"+labelValue(&d, "robot_type")] = d.GetGauge().GetValue()
 		}
 	}
-	require.Equal(t, float64(2), media["HCART|ACTIVE"], "page-1 counts emitted despite the page-2 error")
+	require.Equal(t, float64(2), media["NetBackup|HCART|TLD"], "page-1 counts emitted despite the page-2 error")
+}
+
+// TestTapeCollector_PoolsAndDiskPools verifies the two API v12.0+ endpoints:
+// /storage/tape-volume-pools -> nbu_tape_pool_partially_full, and
+// /storage/disk-pools -> nbu_disk_pool_volume_count (counted by volume state).
+func TestTapeCollector_PoolsAndDiskPools(t *testing.T) {
+	client := &tapeRoutedClient{t: t, byPath: map[string]string{
+		"/storage/drives":              "",
+		"/storage/tape-media":          "",
+		"/storage/robots-device-hosts": "",
+		"/storage/tape-volume-pools":   "../../testdata/api-versions/tape-volume-pools-response.json",
+		"/storage/disk-pools":          "../../testdata/api-versions/disk-pools-response.json",
+	}}
+	c := newTapeCollector(client, testConfig(), "site1")
+	ch := make(chan prometheus.Metric, 64)
+	require.NoError(t, c.Collect(context.Background(), ch))
+	close(ch)
+
+	pools := map[string]float64{}    // "pool_name|pool_type" -> value
+	diskVols := map[string]float64{} // "pool_name|storage_category|state" -> value
+	for m := range ch {
+		var d dto.Metric
+		require.NoError(t, m.Write(&d))
+		require.Equal(t, "site1", labelValue(&d, "site"))
+		desc := m.Desc().String()
+		switch {
+		case strings.Contains(desc, "nbu_tape_pool_partially_full"):
+			pools[labelValue(&d, "pool_name")+"|"+labelValue(&d, "pool_type")] = d.GetGauge().GetValue()
+		case strings.Contains(desc, "nbu_disk_pool_volume_count"):
+			diskVols[labelValue(&d, "pool_name")+"|"+labelValue(&d, "storage_category")+"|"+labelValue(&d, "state")] = d.GetGauge().GetValue()
+		}
+	}
+	require.Equal(t, float64(3), pools["NetBackup|SCRATCH"], "partiallyFullMedia surfaced per pool")
+	require.Equal(t, float64(0), pools["CatalogBackup|NONE"])
+	require.Equal(t, float64(2), diskVols["dp1|MSDP|UP"], "disk volumes counted by state")
+	require.Equal(t, float64(1), diskVols["dp1|MSDP|DOWN"])
 }

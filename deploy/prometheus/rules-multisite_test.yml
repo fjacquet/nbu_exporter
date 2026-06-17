@@ -1,0 +1,29 @@
+# promtool test rules deploy/prometheus/rules-multisite_test.yml
+rule_files:
+  - rules-multisite.yml
+tests:
+  - interval: 1m
+    input_series:
+      # Three sites; lyon backs up far less than the cross-site average.
+      - series: 'nbu_jobs_bytes{site="paris",action="BACKUP",policy_type="Standard"}'
+        values: '1000x70'
+      - series: 'nbu_jobs_bytes{site="nyc",action="BACKUP",policy_type="Standard"}'
+        values: '1000x70'
+      - series: 'nbu_jobs_bytes{site="lyon",action="BACKUP",policy_type="Standard"}'
+        values: '10x70'
+    alert_rule_test:
+      # avg = (1000+1000+10)/3 ≈ 670; lyon ratio ≈ 0.015 (< 0.3), sustained past for:1h -> fires.
+      # paris and nyc ratios ≈ 1.49 -> silent.
+      - eval_time: 65m
+        alertname: NbuInterSiteDivergence
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              site: lyon
+            exp_annotations:
+              summary: "Backup volume on site lyon is unusually low"
+              description: "Site lyon backed up less than 30% of the cross-site average BACKUP volume. Check connectivity and job scheduling."
+      # Before the 1h hold window -> no alert yet.
+      - eval_time: 30m
+        alertname: NbuInterSiteDivergence
+        exp_alerts: []

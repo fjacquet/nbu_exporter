@@ -1,7 +1,8 @@
-# Optional Prometheus alerting rules — tape drive health.
+# Optional Prometheus alerting rules — tape drive, volume-pool, and disk-pool health.
 #
 # Requires the opt-in tape collector (collectors.tape), which produces
-# nbu_tape_drives_count. Load alongside nbu.rules.yml:
+# nbu_tape_drives_count, nbu_tape_media_count, and nbu_disk_pool_volume_count
+# (the latter two on NetBackup 10.5+ / API v12.0+). Load alongside nbu.rules.yml:
 #
 #   rule_files:
 #     - /etc/prometheus/rules/nbu.rules.yml
@@ -17,7 +18,7 @@ groups:
   - name: nbu_tape
     rules:
       - alert: NbuTapeDriveDown
-        expr: sum by (site) (nbu_tape_drives_count{state="DOWN"}) > 0
+        expr: sum by (site) (nbu_tape_drives_count{status="DRIVE_STATUS_DOWN"}) > 0
         for: 15m
         labels:
           severity: warning
@@ -25,10 +26,29 @@ groups:
           summary: "Tape drive(s) DOWN on site {{ $labels.site }}"
           description: "One or more tape drives are DOWN on site {{ $labels.site }}."
       - alert: NbuTapeDriveDisabled
-        expr: sum by (site) (nbu_tape_drives_count{state="DISABLED"}) > 0
+        expr: sum by (site) (nbu_tape_drives_count{status="DRIVE_STATUS_DISABLED"}) > 0
         for: 30m
         labels:
           severity: warning
         annotations:
           summary: "Tape drive(s) DISABLED on site {{ $labels.site }}"
           description: "One or more tape drives are DISABLED on site {{ $labels.site }}."
+      # Scratch volume pool running low. Requires nbu_tape_media_count (tape collector).
+      # The pool name is the NBU volume pool — adjust "Scratch" to match your config.
+      - alert: NbuTapePoolScratchLow
+        expr: sum by (pool, site) (nbu_tape_media_count{pool="Scratch"}) < 5
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Tape scratch pool {{ $labels.pool }} low on site {{ $labels.site }}"
+          description: "Fewer than 5 volumes remain in scratch pool {{ $labels.pool }} on site {{ $labels.site }}. Order or reassign tapes before the pool is exhausted."
+      # A disk-pool volume is not UP. Requires nbu_disk_pool_volume_count (API v12.0+, NBU 10.5+).
+      - alert: NbuDiskPoolVolumeDegraded
+        expr: sum by (site, pool_name, storage_category, state) (nbu_disk_pool_volume_count{state!="UP"}) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk pool volume not UP in {{ $labels.pool_name }} on site {{ $labels.site }}"
+          description: "One or more volumes in disk pool {{ $labels.pool_name }} ({{ $labels.storage_category }}) are in state {{ $labels.state }} on site {{ $labels.site }}. Check storage server connectivity."

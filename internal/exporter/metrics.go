@@ -140,6 +140,26 @@ func (d *DurationAccum) Buckets() map[float64]uint64 {
 	return m
 }
 
+// ClientJobKey identifies per-client job counts by client, action and status
+// (the nbu_client_jobs_count metric).
+type ClientJobKey struct {
+	Client string // NetBackup client hostname
+	Action string // job action (BACKUP, DUPLICATION, IMPORT, …)
+	Status string // job status code as string ("0" == success)
+}
+
+// Labels returns the metric labels in descriptor order: [client, action, status].
+func (k ClientJobKey) Labels() []string { return []string{k.Client, k.Action, k.Status} }
+
+// ClientSuccessKey identifies a per-client/policy/action last-success timestamp
+// (the nbu_client_last_job_success_seconds metric), covering the full lifecycle
+// (BACKUP, DUPLICATION, IMPORT).
+type ClientSuccessKey struct {
+	Client string
+	Policy string
+	Action string
+}
+
 // JobAggregator accumulates every job-derived metric across paginated pages in a
 // single pass. A pointer is threaded through FetchJobDetails so each page folds
 // into the same maps. Keys are comparable structs for direct map lookups.
@@ -153,22 +173,56 @@ type JobAggregator struct {
 	DedupCount  map[JobPolicyKey]float64        // job count contributing to dedup mean
 	QueuedCount map[JobQueueKey]float64         // queued job count per action/reason
 	Duration    map[JobPolicyKey]*DurationAccum // completed-job duration histogram per action/policy
+
+	// Per-client lifecycle (opt-in). Populated only for allowlisted clients; both
+	// maps stay empty unless EnablePerClient has set a non-nil allowlist.
+	ClientCount       map[ClientJobKey]float64     // job count per client/action/status
+	ClientLastSuccess map[ClientSuccessKey]float64 // Unix ts of last status=0 job per client/policy/action
+	clientAllow       map[string]struct{}          // nil => per-client tracking off
 }
 
 // NewJobAggregator returns a JobAggregator with all maps initialized and capacity
 // hints applied to reduce reallocation during aggregation.
 func NewJobAggregator() *JobAggregator {
 	return &JobAggregator{
-		Size:        make(map[JobMetricKey]float64, expectedJobMetricKeys),
-		Count:       make(map[JobMetricKey]float64, expectedJobMetricKeys),
-		StatusCount: make(map[JobStatusKey]float64, expectedStatusMetricKeys),
-		StateCount:  make(map[JobStateKey]float64, expectedStatusMetricKeys),
-		FilesCount:  make(map[JobPolicyKey]float64, expectedJobMetricKeys),
-		DedupSum:    make(map[JobPolicyKey]float64, expectedJobMetricKeys),
-		DedupCount:  make(map[JobPolicyKey]float64, expectedJobMetricKeys),
-		QueuedCount: make(map[JobQueueKey]float64, expectedStatusMetricKeys),
-		Duration:    make(map[JobPolicyKey]*DurationAccum, expectedJobMetricKeys),
+		Size:              make(map[JobMetricKey]float64, expectedJobMetricKeys),
+		Count:             make(map[JobMetricKey]float64, expectedJobMetricKeys),
+		StatusCount:       make(map[JobStatusKey]float64, expectedStatusMetricKeys),
+		StateCount:        make(map[JobStateKey]float64, expectedStatusMetricKeys),
+		FilesCount:        make(map[JobPolicyKey]float64, expectedJobMetricKeys),
+		DedupSum:          make(map[JobPolicyKey]float64, expectedJobMetricKeys),
+		DedupCount:        make(map[JobPolicyKey]float64, expectedJobMetricKeys),
+		QueuedCount:       make(map[JobQueueKey]float64, expectedStatusMetricKeys),
+		Duration:          make(map[JobPolicyKey]*DurationAccum, expectedJobMetricKeys),
+		ClientCount:       make(map[ClientJobKey]float64),
+		ClientLastSuccess: make(map[ClientSuccessKey]float64),
 	}
+}
+
+// EnablePerClient turns on per-client lifecycle tracking for the allowlisted
+// clients. When enabled is false (the default) the aggregator records no per-client
+// series at all. An enabled-but-empty allowlist tracks nothing — matching the
+// opt-in collector's "empty allowlist emits nothing" contract.
+func (a *JobAggregator) EnablePerClient(enabled bool, allowlist []string) {
+	if !enabled {
+		a.clientAllow = nil
+		return
+	}
+	allow := make(map[string]struct{}, len(allowlist))
+	for _, c := range allowlist {
+		allow[c] = struct{}{}
+	}
+	a.clientAllow = allow
+}
+
+// trackClient reports whether the named client should be folded into the
+// per-client maps (per-client tracking on, and the client is allowlisted).
+func (a *JobAggregator) trackClient(name string) bool {
+	if a.clientAllow == nil {
+		return false
+	}
+	_, ok := a.clientAllow[name]
+	return ok
 }
 
 // observeDuration folds a completed job's duration into the histogram for its
