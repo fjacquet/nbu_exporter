@@ -92,13 +92,19 @@ func TestPerClient_EmptyAllowlistEmitsNothing(t *testing.T) {
 	require.Empty(t, mock.urls, "no queries when the allowlist is empty")
 }
 
-func TestPerClient_QuotedNameSkipped(t *testing.T) {
+func TestPerClient_QuotedNameEscaped(t *testing.T) {
+	// A client name containing a single quote is OData-escaped ('' ), so the query
+	// is well-formed and still issued (rather than the client being dropped).
 	mock := &perClientMock{response: `{"data":[]}`}
 	c := newPerClientCollector(mock, perClientConfig("bad'name"), "site1")
 	ch := make(chan prometheus.Metric, 4)
 	require.NoError(t, c.Collect(context.Background(), ch))
 	close(ch)
-	require.Empty(t, mock.urls, "a name with a single quote is skipped (no unsafe filter)")
+
+	require.Len(t, mock.urls, 1, "the client is still queried, with an escaped filter")
+	u, err := neturl.Parse(mock.urls[0])
+	require.NoError(t, err)
+	require.Contains(t, u.Query().Get("filter"), "clientName eq 'bad''name'")
 }
 
 func TestPerClient_FetchErrorDegrades(t *testing.T) {

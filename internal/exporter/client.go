@@ -106,6 +106,15 @@ const (
 	QueryParamFilter = "filter"       // Filter expression for result filtering
 )
 
+// odataQuoteString escapes a value for use inside single quotes in an OData filter
+// expression: a single quote is doubled (OData string-literal escaping). The result
+// must still be wrapped in '...' by the caller, e.g.
+// fmt.Sprintf("name eq '%s'", odataQuoteString(v)). This keeps string-valued filters
+// well-formed for any value (note: url.Values.Encode does not escape quotes).
+func odataQuoteString(s string) string {
+	return strings.ReplaceAll(s, "'", "''")
+}
+
 // NbuClient handles HTTP communication with the NetBackup REST API.
 // It manages TLS configuration, request headers, and provides methods for
 // fetching data from various NetBackup API endpoints.
