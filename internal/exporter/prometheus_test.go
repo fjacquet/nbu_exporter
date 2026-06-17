@@ -380,12 +380,13 @@ func TestNbuCollectorDescribe(t *testing.T) {
 func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -442,12 +443,13 @@ func TestNbuCollectorCreateScrapeSpanNilSafe(t *testing.T) {
 func TestNbuCollectorCreateScrapeSpanWithTracer(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -510,12 +512,13 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -627,12 +630,13 @@ func TestNbuCollectorCollectWithoutTracing(t *testing.T) {
 func TestNbuCollectorTracingDisabled(t *testing.T) {
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -702,12 +706,13 @@ func TestNbuCollectorStorageCacheIntegration(t *testing.T) {
 
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -773,12 +778,13 @@ func TestNbuCollectorHelpStringIncludesTTL(t *testing.T) {
 
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",

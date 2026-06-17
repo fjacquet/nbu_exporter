@@ -50,12 +50,13 @@ func TestIntegrationEndToEndTracing(t *testing.T) {
 	// Create client and verify it gets a tracer
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			ScrapingInterval: "5m",
 		},
@@ -110,12 +111,13 @@ func TestIntegrationBackwardCompatibility(t *testing.T) {
 	// Create config without OpenTelemetry
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -205,12 +207,13 @@ func TestIntegrationGracefulDegradation(t *testing.T) {
 	// Create client
 	cfg := models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			ScrapingInterval: "5m",
 		},

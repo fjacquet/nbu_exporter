@@ -28,18 +28,40 @@ const (
 // This list is used for version detection fallback (newest to oldest).
 var SupportedAPIVersions = []string{APIVersion140, APIVersion130, APIVersion120, APIVersion100}
 
+// NbuServerConfig holds connection settings for a single NetBackup master server.
+// It mirrors the legacy inline NbuServer struct but adds a Site identifier used
+// by the multi-site feature. The Site field defaults to the Host value when the
+// legacy single nbuserver: block is auto-mapped.
+type NbuServerConfig struct {
+	Site               string `yaml:"site"`
+	Port               string `yaml:"port"`
+	Scheme             string `yaml:"scheme"`
+	URI                string `yaml:"uri"`
+	Domain             string `yaml:"domain"`
+	DomainType         string `yaml:"domainType"`
+	Host               string `yaml:"host"`
+	APIKey             string `yaml:"apiKey"`
+	APIVersion         string `yaml:"apiVersion"`
+	ContentType        string `yaml:"contentType"`
+	InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+}
+
 // Config represents the complete application configuration for the NBU exporter.
 // It includes settings for the server and the NBU server.
 type Config struct {
 	Server struct {
-		Port             string `yaml:"port"`
-		Host             string `yaml:"host"`
-		URI              string `yaml:"uri"`
-		ScrapingInterval string `yaml:"scrapingInterval"`
-		LogName          string `yaml:"logName"`
-		CacheTTL         string `yaml:"cacheTTL"` // TTL for storage metrics cache (e.g., "5m")
+		Port               string `yaml:"port"`
+		Host               string `yaml:"host"`
+		URI                string `yaml:"uri"`
+		ScrapingInterval   string `yaml:"scrapingInterval"`
+		LogName            string `yaml:"logName"`
+		CacheTTL           string `yaml:"cacheTTL"`           // TTL for storage metrics cache (e.g., "5m")
+		CollectionInterval string `yaml:"collectionInterval"` // How far back to collect job data (e.g., "5m")
 	} `yaml:"server"`
 
+	// NbuServer is the legacy single-server configuration block. It is kept for
+	// backward compatibility and is automatically promoted into NbuServers[0]
+	// during Validate()/SetDefaults() if NbuServers is empty.
 	NbuServer struct {
 		Port               string `yaml:"port"`
 		Scheme             string `yaml:"scheme"`
@@ -52,6 +74,10 @@ type Config struct {
 		ContentType        string `yaml:"contentType"`
 		InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
 	} `yaml:"nbuserver"`
+
+	// NbuServers is the multi-site server list. When empty and NbuServer.Host is
+	// set, SetDefaults() auto-maps the legacy block into this slice.
+	NbuServers []NbuServerConfig `yaml:"nbuservers"`
 
 	OpenTelemetry struct {
 		Enabled      bool    `yaml:"enabled"`
@@ -95,6 +121,31 @@ func (c *Config) SetDefaults() {
 	if c.Server.CacheTTL == "" {
 		c.Server.CacheTTL = "5m"
 	}
+
+	// Set default collection interval (5 minutes)
+	if c.Server.CollectionInterval == "" {
+		c.Server.CollectionInterval = "5m"
+	}
+
+	// Auto-map legacy single nbuserver: block into NbuServers when the list is empty.
+	// deprecated single nbuserver auto-mapped
+	if len(c.NbuServers) == 0 && c.NbuServer.Host != "" {
+		c.NbuServers = []NbuServerConfig{
+			{
+				Site:               c.NbuServer.Host,
+				Port:               c.NbuServer.Port,
+				Scheme:             c.NbuServer.Scheme,
+				URI:                c.NbuServer.URI,
+				Domain:             c.NbuServer.Domain,
+				DomainType:         c.NbuServer.DomainType,
+				Host:               c.NbuServer.Host,
+				APIKey:             c.NbuServer.APIKey,
+				APIVersion:         c.NbuServer.APIVersion,
+				ContentType:        c.NbuServer.ContentType,
+				InsecureSkipVerify: c.NbuServer.InsecureSkipVerify,
+			},
+		}
+	}
 }
 
 // Validate checks if the configuration is valid and returns an error if not.
@@ -120,6 +171,10 @@ func (c *Config) Validate() error {
 	}
 
 	if err := c.validateNBUServerConfig(); err != nil {
+		return err
+	}
+
+	if err := c.validateNbuServers(); err != nil {
 		return err
 	}
 
@@ -188,6 +243,43 @@ func (c *Config) validateNBUServerConfig() error {
 	}
 	if c.NbuServer.APIKey == "" {
 		return errors.New("NBU server API key is required")
+	}
+	return nil
+}
+
+// validateNbuServers validates the NbuServers slice: requires at least one entry,
+// each entry must have a non-empty Site and unique Site across the slice, and each
+// entry's connection fields (host/port/scheme/apiKey) must be present and valid.
+func (c *Config) validateNbuServers() error {
+	if len(c.NbuServers) == 0 {
+		return errors.New("at least one entry in nbuservers is required")
+	}
+
+	seen := make(map[string]bool, len(c.NbuServers))
+	for i, s := range c.NbuServers {
+		if s.Site == "" {
+			return fmt.Errorf("nbuservers[%d]: site is required", i)
+		}
+		if seen[s.Site] {
+			return fmt.Errorf("nbuservers: duplicate site name %q", s.Site)
+		}
+		seen[s.Site] = true
+
+		if s.Host == "" {
+			return fmt.Errorf("nbuservers[%d] (%s): host is required", i, s.Site)
+		}
+		if s.Port == "" {
+			return fmt.Errorf("nbuservers[%d] (%s): port is required", i, s.Site)
+		}
+		if err := validatePort(s.Port); err != nil {
+			return fmt.Errorf("nbuservers[%d] (%s): invalid port %s", i, s.Site, s.Port)
+		}
+		if s.Scheme != "http" && s.Scheme != "https" {
+			return fmt.Errorf("nbuservers[%d] (%s): invalid scheme %q (must be http or https)", i, s.Site, s.Scheme)
+		}
+		if s.APIKey == "" {
+			return fmt.Errorf("nbuservers[%d] (%s): apiKey is required", i, s.Site)
+		}
 	}
 	return nil
 }

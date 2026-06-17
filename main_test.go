@@ -34,12 +34,13 @@ func testdataPath(t *testing.T, filename string) string {
 func createTestConfig() models.Config {
 	return models.Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Host:             "127.0.0.1",
 			Port:             "0", // Let OS assign port

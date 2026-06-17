@@ -91,12 +91,13 @@ func TestSetDefaults_PreservesEmptyAPIVersionForAutoDetection(t *testing.T) {
 func createConfigWithAPIVersion(apiVersion string) *Config {
 	return &Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -510,12 +511,13 @@ func TestConfigGetServerAddress(t *testing.T) {
 			name: "standard server address",
 			config: Config{
 				Server: struct {
-					Port             string `yaml:"port"`
-					Host             string `yaml:"host"`
-					URI              string `yaml:"uri"`
-					ScrapingInterval string `yaml:"scrapingInterval"`
-					LogName          string `yaml:"logName"`
-					CacheTTL         string `yaml:"cacheTTL"`
+					Port               string `yaml:"port"`
+					Host               string `yaml:"host"`
+					URI                string `yaml:"uri"`
+					ScrapingInterval   string `yaml:"scrapingInterval"`
+					LogName            string `yaml:"logName"`
+					CacheTTL           string `yaml:"cacheTTL"`
+					CollectionInterval string `yaml:"collectionInterval"`
 				}{
 					Host: "0.0.0.0",
 					Port: "9440",
@@ -527,12 +529,13 @@ func TestConfigGetServerAddress(t *testing.T) {
 			name: "localhost with custom port",
 			config: Config{
 				Server: struct {
-					Port             string `yaml:"port"`
-					Host             string `yaml:"host"`
-					URI              string `yaml:"uri"`
-					ScrapingInterval string `yaml:"scrapingInterval"`
-					LogName          string `yaml:"logName"`
-					CacheTTL         string `yaml:"cacheTTL"`
+					Port               string `yaml:"port"`
+					Host               string `yaml:"host"`
+					URI                string `yaml:"uri"`
+					ScrapingInterval   string `yaml:"scrapingInterval"`
+					LogName            string `yaml:"logName"`
+					CacheTTL           string `yaml:"cacheTTL"`
+					CollectionInterval string `yaml:"collectionInterval"`
 				}{
 					Host: "localhost",
 					Port: "9090",
@@ -556,12 +559,13 @@ func TestConfigGetServerAddress(t *testing.T) {
 func createConfigWithInterval(interval string) Config {
 	return Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			ScrapingInterval: interval,
 		},
@@ -788,12 +792,13 @@ func TestConfigValidateServerFields(t *testing.T) {
 	baseConfig := func() Config {
 		return Config{
 			Server: struct {
-				Port             string `yaml:"port"`
-				Host             string `yaml:"host"`
-				URI              string `yaml:"uri"`
-				ScrapingInterval string `yaml:"scrapingInterval"`
-				LogName          string `yaml:"logName"`
-				CacheTTL         string `yaml:"cacheTTL"`
+				Port               string `yaml:"port"`
+				Host               string `yaml:"host"`
+				URI                string `yaml:"uri"`
+				ScrapingInterval   string `yaml:"scrapingInterval"`
+				LogName            string `yaml:"logName"`
+				CacheTTL           string `yaml:"cacheTTL"`
+				CollectionInterval string `yaml:"collectionInterval"`
 			}{
 				Port:             "9440",
 				Host:             "localhost",
@@ -1026,12 +1031,13 @@ func TestConfigValidateSupportedVersions(t *testing.T) {
 func createBaseTestConfig() Config {
 	return Config{
 		Server: struct {
-			Port             string `yaml:"port"`
-			Host             string `yaml:"host"`
-			URI              string `yaml:"uri"`
-			ScrapingInterval string `yaml:"scrapingInterval"`
-			LogName          string `yaml:"logName"`
-			CacheTTL         string `yaml:"cacheTTL"`
+			Port               string `yaml:"port"`
+			Host               string `yaml:"host"`
+			URI                string `yaml:"uri"`
+			ScrapingInterval   string `yaml:"scrapingInterval"`
+			LogName            string `yaml:"logName"`
+			CacheTTL           string `yaml:"cacheTTL"`
+			CollectionInterval string `yaml:"collectionInterval"`
 		}{
 			Port:             "9440",
 			Host:             "localhost",
@@ -1267,12 +1273,13 @@ func TestConfigValidateOTelEndpoint(t *testing.T) {
 	baseConfig := func() Config {
 		return Config{
 			Server: struct {
-				Port             string `yaml:"port"`
-				Host             string `yaml:"host"`
-				URI              string `yaml:"uri"`
-				ScrapingInterval string `yaml:"scrapingInterval"`
-				LogName          string `yaml:"logName"`
-				CacheTTL         string `yaml:"cacheTTL"`
+				Port               string `yaml:"port"`
+				Host               string `yaml:"host"`
+				URI                string `yaml:"uri"`
+				ScrapingInterval   string `yaml:"scrapingInterval"`
+				LogName            string `yaml:"logName"`
+				CacheTTL           string `yaml:"cacheTTL"`
+				CollectionInterval string `yaml:"collectionInterval"`
 			}{
 				Port:             "9440",
 				Host:             "localhost",
@@ -1837,5 +1844,68 @@ func TestCollectorsConfigDefaults(t *testing.T) {
 	if c.Collectors.Alerts.Enabled || c.Collectors.Malware.Enabled ||
 		c.Collectors.Catalog.Enabled || c.Collectors.SLO.Enabled {
 		t.Errorf("new collectors must default to disabled, got %+v", c.Collectors)
+	}
+}
+
+// TestConfigNbuServersAutoMapLegacy verifies that a single legacy nbuserver block is
+// automatically promoted into NbuServers[0] with Site set to the host name.
+func TestConfigNbuServersAutoMapLegacy(t *testing.T) {
+	cfg := createConfigWithAPIVersion("13.0")
+
+	if err := cfg.Validate(); err != nil {
+		t.Fatalf("Validate() unexpected error: %v", err)
+	}
+
+	if len(cfg.NbuServers) != 1 {
+		t.Fatalf("expected len(NbuServers)==1, got %d", len(cfg.NbuServers))
+	}
+
+	if cfg.NbuServers[0].Site != cfg.NbuServer.Host {
+		t.Errorf("NbuServers[0].Site = %q, want %q (NbuServer.Host)", cfg.NbuServers[0].Site, cfg.NbuServer.Host)
+	}
+}
+
+// TestConfigNbuServersRequireUniqueSite verifies that duplicate Site values in
+// NbuServers produce a validation error.
+func TestConfigNbuServersRequireUniqueSite(t *testing.T) {
+	cfg := createConfigWithAPIVersion("13.0")
+	cfg.NbuServers = []NbuServerConfig{
+		{
+			Site:       "paris",
+			Host:       testServerNBUMaster,
+			Port:       "1556",
+			Scheme:     "https",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
+			APIVersion: "13.0",
+		},
+		{
+			Site:       "paris", // duplicate
+			Host:       testServerNBUMaster,
+			Port:       "1556",
+			Scheme:     "https",
+			URI:        testPathNetBackup,
+			APIKey:     testKeyName,
+			APIVersion: "13.0",
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Error("Validate() expected error for duplicate Site names, got nil")
+	} else if !strings.Contains(err.Error(), "duplicate") {
+		t.Errorf("Validate() error = %q, want error containing 'duplicate'", err.Error())
+	}
+}
+
+// TestConfigCollectionIntervalDefault verifies that SetDefaults populates
+// Server.CollectionInterval with "5m" when not set.
+func TestConfigCollectionIntervalDefault(t *testing.T) {
+	cfg := &Config{}
+
+	cfg.SetDefaults()
+
+	if cfg.Server.CollectionInterval != "5m" {
+		t.Errorf("SetDefaults() CollectionInterval = %q, want %q", cfg.Server.CollectionInterval, "5m")
 	}
 }
