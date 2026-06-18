@@ -1,0 +1,143 @@
+---
+# NetBackup lifecycle alerting rules
+# Complement to nbu.rules.yml — focuses on per-client compliance, tape, and multi-site.
+# Requires: nbu_client_jobs_count and nbu_client_last_job_success_seconds metrics
+
+groups:
+  - name: nbu_client_compliance
+    rules:
+      # Client has had no successful BACKUP job in the last 25 hours.
+      # 25h gives a 1-hour margin above the daily backup window.
+      - alert: NbuClientNoRecentBackup
+        expr: |
+          (time() - nbu_client_last_job_success_seconds{action="BACKUP"}) > 90000
+        for: 5m
+        labels:
+          severity: critical
+          team: backup
+        annotations:
+          summary: "No successful backup for client {{ $labels.client }} (policy {{ $labels.policy }})"
+          description: >
+            Client {{ $labels.client }} (policy {{ $labels.policy }}) has not had a
+            successful backup in {{ $value | humanizeDuration }}.
+            Check NetBackup job logs for this client.
+
+      # Backup copy to tape (DUPLICATION) missing or stale — 26h threshold.
+      - alert: NbuClientNoRecentTapeCopy
+        expr: |
+          (time() - nbu_client_last_job_success_seconds{action="DUPLICATION"}) > 93600
+        for: 5m
+        labels:
+          severity: warning
+          team: backup
+        annotations:
+          summary: "No recent tape copy for client {{ $labels.client }} (policy {{ $labels.policy }})"
+          description: >
+            Client {{ $labels.client }} (policy {{ $labels.policy }}) has not had a
+            successful tape duplication job in {{ $value | humanizeDuration }}.
+            Verify the Storage Lifecycle Policy is running correctly.
+
+      # Replication to secondary master (IMPORT on Master 2) missing or stale — 28h threshold.
+      # This alert fires on the exporter instance monitoring Master 2.
+      - alert: NbuClientNoRecentReplication
+        expr: |
+          (time() - nbu_client_last_job_success_seconds{action="IMPORT"}) > 100800
+        for: 5m
+        labels:
+          severity: warning
+          team: backup
+        annotations:
+          summary: "No recent replication for client {{ $labels.client }} (policy {{ $labels.policy }})"
+          description: >
+            Client {{ $labels.client }} (policy {{ $labels.policy }}) has not had a
+            successful replication (IMPORT) job in {{ $value | humanizeDuration }}.
+            Check inter-site connectivity and Auto Image Replication configuration.
+
+      # Client backup failure rate above threshold over the scraping window.
+      - alert: NbuClientBackupFailureRate
+        expr: |
+          (
+            sum by (client) (nbu_client_jobs_count{action="BACKUP", status!="0"})
+            /
+            clamp_min(sum by (client) (nbu_client_jobs_count{action="BACKUP"}), 1)
+          ) * 100 > 20
+        for: 30m
+        labels:
+          severity: warning
+          team: backup
+        annotations:
+          summary: "High backup failure rate for client {{ $labels.client }}"
+          description: >
+            {{ $value | printf "%.0f" }}% of backup jobs for {{ $labels.client }}
+            failed in the current scraping window.
+
+  - name: nbu_tape
+    # Tape alerts require nbu_tape_drives_count and nbu_tape_media_count metrics.
+    # These are emitted by the tape collector (collectors.tape.enabled: true in config)
+    # and are only available on NetBackup 10.5+ (API v12.0+).
+    rules:
+      # Tape drive has been in DOWN state for more than 30 minutes.
+      - alert: NbuTapeDriveDown
+        expr: nbu_tape_drives_count{status="DRIVE_STATUS_DOWN"} > 0
+        for: 30m
+        labels:
+          severity: warning
+          team: backup
+        annotations:
+          summary: "Tape drive DOWN on {{ $labels.site }}"
+          description: >
+            {{ $value }} {{ $labels.drive_type }} drive(s) are in DOWN state
+            (robot {{ $labels.robot_type }}) on site {{ $labels.site }}.
+            Investigate robot connectivity or drive hardware.
+
+      # Tape scratch pool is running low on available volumes.
+      # Adjust the pool label value and threshold to match your NBU configuration.
+      # The pool name is the NBU volume pool name — typically "Scratch" or "NetBackup".
+      - alert: NbuTapePoolScratchLow
+        expr: sum by (pool, site) (nbu_tape_media_count{pool="Scratch"}) < 5
+        for: 15m
+        labels:
+          severity: warning
+          team: backup
+        annotations:
+          summary: "Low scratch tape count in pool {{ $labels.pool }} on {{ $labels.site }}"
+          description: >
+            Only {{ $value }} volumes remain in scratch pool {{ $labels.pool }} on
+            {{ $labels.site }}. Order or reassign tapes before the pool is exhausted.
+
+      # A disk volume within a disk pool has been in DOWN or UNKNOWN state.
+      # Requires nbu_disk_pool_volume_count (API v12.0+, NBU 10.5+).
+      - alert: NbuDiskPoolVolumeDegraded
+        expr: nbu_disk_pool_volume_count{state!="UP"} > 0
+        for: 10m
+        labels:
+          severity: warning
+          team: backup
+        annotations:
+          summary: "Disk pool volume degraded in {{ $labels.pool_name }} on {{ $labels.site }}"
+          description: >
+            {{ $value }} volume(s) in pool {{ $labels.pool_name }}
+            ({{ $labels.storage_category }}) are in state {{ $labels.state }} on
+            {{ $labels.site }}. Check storage server connectivity.
+
+  - name: nbu_multisite
+    # Multi-site rules require an nbuservers[] configuration with distinct site labels.
+    rules:
+      # Inter-site backup volume divergence: if one site backs up significantly
+      # fewer bytes than the other, it may indicate a connectivity or config issue.
+      - alert: NbuInterSiteDivergence
+        expr: |
+          (
+            sum by (site) (nbu_jobs_bytes{action="BACKUP"})
+            / on() group_left()
+            avg(sum by (site) (nbu_jobs_bytes{action="BACKUP"}))
+          ) < 0.3
+        for: 1h
+        labels:
+          severity: warning
+          team: backup
+        annotations:
+          summary: "Backup volume on site {{ $labels.site }} is unusually low"
+          description: >
+            Site {{ $labels.site }} backed up only {{ $value | humanizePercentage }}
+            of the cross-site average (threshold: 30%). Check connectivity and job scheduling.
