@@ -2,186 +2,190 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/IMPLEMENTATION_SUMMARY/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/PRE_COMMIT_CHECKLIST/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/REFACTORING_SUMMARY/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/api-10.5-migration/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/changelog/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/code-analysis-improvements/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/dashboards/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
+    </url>
+    <url>
+         <loc>https://fjacquet.github.io/nbu_exporter/deploy-stack/</loc>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/deployment-quick-reference/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/deployment-verification/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/docker/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/metrics/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/netbackup-11-migration/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/opentelemetry-example/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/trace-analysis-guide/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/adr/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/adr/0001-tooling-baseline-sync-with-pflex/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/adr/0002-opt-in-sub-collector-framework/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/adr/0003-api-version-model-and-jobs-cursor-pagination/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/adr/0004-multisite-snapshot-collection-model/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/config-examples/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/getting-started/configuration/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/getting-started/installation/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/getting-started/quickstart/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-04-sync-nbu-tooling-baseline/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-14-dashboard-redesign/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-14-nbu-11.2-validation/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-14-quickstart-stack/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-16-nbu-10x-support/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-17-feature1-multisite/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-17-feature2-tape-metrics/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-17-feature3-per-client/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/plans/2026-06-17-feature4-alerting-rules/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-04-sync-nbu-tooling-baseline-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-14-dashboard-redesign-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-14-nbu-11.2-validation-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-14-quickstart-stack-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-16-nbu-10x-and-roadmap-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-16-nbu-10x-support-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-16-nbu-feature-deferrals/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-17-feature1-multisite-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-17-feature2-tape-metrics-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-17-feature3-per-client-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-17-feature4-alerting-rules-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/superpowers/specs/2026-06-17-multisite-dashboards-design/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
     <url>
          <loc>https://fjacquet.github.io/nbu_exporter/veritas-10.5/getting-started/</loc>
-         <lastmod>2026-06-17</lastmod>
+         <lastmod>2026-06-18</lastmod>
     </url>
 </urlset>
