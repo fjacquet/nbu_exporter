@@ -50,6 +50,9 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./deploy/prometheus/nbu.rules.yml:/etc/prometheus/rules/nbu.rules.yml:ro
+      - ./deploy/prometheus/rules-perclient.yml:/etc/prometheus/rules/rules-perclient.yml:ro
+      - ./deploy/prometheus/rules-tape.yml:/etc/prometheus/rules/rules-tape.yml:ro
+      - ./deploy/prometheus/rules-multisite.yml:/etc/prometheus/rules/rules-multisite.yml:ro
       - prometheus-data:/prometheus
     ports:
       - "${PROMETHEUS_PORT:-9090}:9090"

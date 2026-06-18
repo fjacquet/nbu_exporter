@@ -7,6 +7,9 @@ global:
 
 rule_files:
   - /etc/prometheus/rules/nbu.rules.yml
+  - /etc/prometheus/rules/rules-perclient.yml
+  - /etc/prometheus/rules/rules-tape.yml
+  - /etc/prometheus/rules/rules-multisite.yml
 
 scrape_configs:
   # NBU Exporter metrics
