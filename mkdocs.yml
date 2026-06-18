@@ -54,6 +54,7 @@ nav:
       - NetBackup 11.0: netbackup-11-migration.md
       - API 10.5: api-10.5-migration.md
   - Deployment:
+      - Full Stack (docker-compose): deploy-stack.md
       - Verification: deployment-verification.md
       - Quick Reference: deployment-quick-reference.md
       - Docker: docker.md

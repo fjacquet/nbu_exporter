@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Full-stack deployment guide** (`docs/deploy-stack.md`, thanks **@cbijon**): end-to-end
+  docker-compose walkthrough — API-key generation, single- and multi-site config, verification,
+  alerting, optional collectors, and production hardening. Linked from the README and the docs
+  "Deployment" nav. The README was also rewritten around the docker-compose stack as the
+  recommended path (feature list, inline config example, dashboards table).
+
+### Fixed
+
+- **Per-client, tape, and multi-site alerting rules are now actually loaded by the bundled
+  stack.** `rules-perclient.yml`, `rules-tape.yml`, and `rules-multisite.yml` shipped with unit
+  tests but were never wired into `prometheus.yml` (`rule_files:`) or mounted by `docker-compose`
+  — only `nbu.rules.yml` was. All four files are now mounted into `/etc/prometheus/rules/` and
+  listed under `rule_files:`, so their alerts evaluate out of the box.
+
 ## [4.0.0] - 2026-06-17
 
 ### Added
