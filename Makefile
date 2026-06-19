@@ -1,24 +1,35 @@
 # Define the output binary
 CLI_BIN = nbu_exporter
-DIST    = dist
+DIST    ?= dist
+COVER   ?= coverage.out
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS = -s -w
 
 # Pinned tool versions (installed by `make tools`).
-GOLANGCI_LINT_VERSION   ?= v2.12.2
+GOLANGCI_VERSION    ?= v2.12.2
+GORELEASER_VERSION  ?= v2.16.0
 CYCLONEDX_GOMOD_VERSION ?= latest
 GOVULNCHECK_VERSION     ?= latest
 
-# Default target: build, test, docker
-all: cli test docker
+.PHONY: all clean install tools lint format test build vuln sbom security docs coverage-upload release ci \
+        fmt-check fmt vet test-race check-rules sure cli build-release test-coverage docker run-cli run-docker
 
-# Install pinned dev/CI tooling into $(GOBIN)/$GOPATH/bin.
+.DEFAULT_GOAL := all
+
+all: clean lint test build
+
+# --- tooling ---
+
+install:
+	go mod download
+
 tools:
-	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
-	go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@$(CYCLONEDX_GOMOD_VERSION)
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_VERSION)
 	go install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
+	go install github.com/goreleaser/goreleaser/v2@$(GORELEASER_VERSION)
+	go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@$(CYCLONEDX_GOMOD_VERSION)
 
-# --- quality gates (used by CI) ---
+# --- quality gates ---
 
 fmt-check:
 	@out=$$(gofmt -l $$(find . -path ./vendor -prune -o -name '*.go' -print)); \
@@ -27,17 +38,23 @@ fmt-check:
 fmt:
 	go fmt ./...
 
+format:
+	golangci-lint fmt
+
 vet:
 	go vet ./...
 
 lint:
-	golangci-lint run ./...
+	golangci-lint run --timeout=5m
 
 test:
-	go test ./...
+	go test -race -coverprofile=$(COVER) -covermode=atomic ./...
 
 test-race:
-	go test -race -coverprofile=coverage.out -covermode=atomic ./...
+	go test -race -coverprofile=$(COVER) -covermode=atomic ./...
+
+build:
+	go build -v ./...
 
 vuln:
 	govulncheck ./...
@@ -48,14 +65,27 @@ check-rules:
 	promtool test rules deploy/prometheus/rules-perclient_test.yml deploy/prometheus/rules-tape_test.yml deploy/prometheus/rules-multisite_test.yml
 
 # Aggregate gate run by CI.
-ci: fmt-check vet lint test-race vuln
-
-# Local convenience: format, vet, test, build, lint.
-sure: fmt vet test
-	go build ./...
-	golangci-lint run
+ci: lint test build vuln
 
 # --- artifacts ---
+
+sbom:
+	@mkdir -p $(DIST)
+	go run github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest mod -json -output $(DIST)/sbom.cdx.json
+
+security:
+	uvx semgrep scan --config auto --error --skip-unknown-extensions
+
+docs:
+	uvx --with mkdocs-material --with pymdown-extensions mkdocs build --strict --site-dir site
+
+coverage-upload:
+	uvx --from codecov-cli codecov upload-process --file $(COVER) || true
+
+release:
+	goreleaser release --clean
+
+# --- local convenience ---
 
 # Build the CLI binary
 cli:
@@ -65,15 +95,14 @@ cli:
 build-release:
 	go build -ldflags="$(LDFLAGS)" -o bin/$(CLI_BIN) .
 
-# CycloneDX SBOM for the Go module (source/dependency SBOM).
-sbom:
-	@mkdir -p $(DIST)
-	cyclonedx-gomod mod -licenses -json -output $(DIST)/sbom.cdx.json
-	@echo "wrote $(DIST)/sbom.cdx.json"
-
 # Tests with HTML coverage report
 test-coverage: test-race
-	go tool cover -html=coverage.out -o coverage.html
+	go tool cover -html=$(COVER) -o coverage.html
+
+# Local convenience: format, vet, test, build, lint.
+sure: fmt vet test
+	go build ./...
+	golangci-lint run
 
 # Build the Docker image
 docker:
@@ -92,11 +121,8 @@ run-docker: docker
 
 # Clean up build artifacts
 clean:
-	rm -f bin/$(CLI_BIN) coverage.out coverage.html
-	rm -rf $(DIST)
+	rm -rf $(DIST) site $(COVER) *.sarif
+	rm -f bin/$(CLI_BIN) coverage.html
 	@if [ -n "$(shell docker images -q $(CLI_BIN) 2> /dev/null)" ]; then \
 		docker image rm -f $(CLI_BIN); \
 	fi
-
-.PHONY: all tools fmt-check fmt vet lint test test-race vuln check-rules ci sure \
-        cli build-release sbom test-coverage docker run-cli run-docker clean
