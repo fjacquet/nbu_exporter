@@ -128,7 +128,8 @@ homebrew_casks:
     repository:
       owner: fjacquet
       name: homebrew-tap
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    skip_upload: '{{ if .Env.HOMEBREW_TAP_GITHUB_TOKEN }}false{{ else }}true{{ end }}'
     directory: Casks
     binaries:
       - nbu_exporter
