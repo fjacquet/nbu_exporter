@@ -116,6 +116,27 @@ nbuservers:
 
 The `.env` / `NBU1_*` naming is a single-server convenience; there is no limit on variable names.
 
+### API keys with special characters
+
+The API key is sent verbatim as the value of the HTTP `Authorization` header — it is
+never URL-encoded and never placed in a request body, so any character is safe end to
+end. The only place quoting matters is **parsing at load time**, and it differs by where
+you put the key:
+
+| Source | Rule |
+|---|---|
+| `.env`, single-quoted `'…'` | Fully literal — no `$` expansion, no `\` escapes, no `#` comment. Best default. Cannot contain a literal `'`. |
+| `.env`, double-quoted `"…"` | Expands `$VAR`/`${VAR}` and processes `\` escapes. `$`, `\`, `"` are special — write `\$`, `\\`, `\"`. |
+| `.env`, unquoted | `$VAR` expands; a ` #` (space-hash) starts a comment; a value **starting** with `'`/`"` is treated as quoted. |
+| `config.yaml` inline | Only the exact `${NAME}` token is interpolated (`os.LookupEnv`), so a literal key containing `${NAME}` is treated as an env ref. Prefer referencing an env var. |
+
+For quotes inside the key specifically: use double quotes to include a `'`, single
+quotes to include a `"`. NetBackup API keys are token strings (dot-separated,
+base64url-style segments), so in practice they contain none of these characters and an
+unquoted value works fine. When referencing an env var from `config.yaml`
+(`apiKey: "${NBU1_APIKEY}"`) the value is inserted verbatim and never re-scanned, so the
+env var itself may contain `$`, `${…}`, or any character.
+
 ## Server Section
 
 | Field | Type | Required | Description |
