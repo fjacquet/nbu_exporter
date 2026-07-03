@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -51,6 +52,12 @@ var (
 	configFile string
 	debug      bool
 	apiTrace   bool
+
+	// version is the exporter build version. It defaults to "dev" for local
+	// builds and is overridden at release time via -ldflags "-X main.version=..."
+	// (GoReleaser injects the tag; the Makefile injects `git describe`). It is
+	// surfaced on /metrics as nbu_exporter_build_info{version,goversion}.
+	version = "dev"
 )
 
 // Server encapsulates the HTTP server and its dependencies for serving Prometheus metrics.
@@ -222,6 +229,16 @@ func (s *Server) Start() error {
 
 	// Store collector reference for shutdown cleanup
 	s.collector = collector
+
+	// Expose the exporter build (version + Go version) as a constant metric so a
+	// scrape reveals exactly which build is running, independent of collection.
+	if err := s.registry.Register(exporter.NewBuildInfoCollector(version, runtime.Version())); err != nil {
+		s.loopCancel()
+		<-s.loopDone
+		_ = s.loop.Close()
+		_ = collector.Close()
+		return fmt.Errorf("failed to register build info collector: %w", err)
+	}
 
 	// Register collector with Prometheus
 	if err := s.registry.Register(collector); err != nil {

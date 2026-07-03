@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`nbu_exporter_build_info` metric**: a constant `1` gauge carrying the running
+  exporter `version` and `goversion` labels, so a `/metrics` scrape reveals exactly which
+  build is deployed. The version comes from `-ldflags "-X main.version=..."` (GoReleaser
+  injects the release tag; the Makefile injects `git describe`; local `go build` reports
+  `dev`). Unlike the per-site collectors, this metric carries no `site` label — it describes
+  the exporter process itself.
 - **Full-stack deployment guide** (`docs/deploy-stack.md`, thanks **@cbijon**): end-to-end
   docker-compose walkthrough — API-key generation, single- and multi-site config, verification,
   alerting, optional collectors, and production hardening. Linked from the README and the docs

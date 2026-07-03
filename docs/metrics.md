@@ -135,6 +135,7 @@ collectors:
 | `nbu_api_version` | `version` | Currently active NetBackup API version (14.0, 13.0, 12.0, or 10.0) |
 | `nbu_response_time_ms` | — | NetBackup API response time in milliseconds |
 | `nbu_last_scrape_timestamp_seconds` | `source` | Unix timestamp of the last successful collection (`source`: `storage` or `jobs`) |
+| `nbu_exporter_build_info` | `version`, `goversion` | Exporter build info; constant `1`, with the running exporter version and Go version. **No `site` label** — it describes the exporter process, not a NetBackup primary. |
 
 ## Label Encoding
 
