@@ -1,0 +1,42 @@
+[Unit]
+Description=Veritas NetBackup Exporter (Prometheus + OTLP)
+Documentation=https://github.com/fjacquet/nbu_exporter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nbu
+Group=nbu
+
+# Master-server API keys referenced as ${NBU1_APIKEY} etc. in config.yaml.
+# Keep this file mode 0600, owned root:nbu.
+EnvironmentFile=/etc/nbu_exporter/nbu_exporter.env
+
+ExecStart=/usr/local/bin/nbu_exporter --config /etc/nbu_exporter/config.yaml
+# `systemctl reload nbu_exporter` performs a live config reload (SIGHUP).
+ExecReload=/bin/kill -HUP $MAINPID
+
+Restart=on-failure
+RestartSec=5
+
+# Log to the journal (set `logName: ""` in config.yaml). View with:
+#   journalctl -u nbu_exporter -f
+StandardOutput=journal
+StandardError=journal
+
+# --- Hardening (works with the journald logging above; no writable paths needed) ---
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
