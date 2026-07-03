@@ -3,7 +3,7 @@ CLI_BIN = nbu_exporter
 DIST    ?= dist
 COVER   ?= coverage.out
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-LDFLAGS = -s -w
+LDFLAGS = -s -w -X main.version=$(VERSION)
 
 # Pinned tool versions (installed by `make tools`).
 GOLANGCI_VERSION    ?= v2.12.2
