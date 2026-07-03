@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.4] - 2026-07-03
+
 ### Added
 
 - **`nbu_exporter_build_info` metric**: a constant `1` gauge carrying the running
@@ -14,12 +16,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   build is deployed. The version comes from `-ldflags "-X main.version=..."` (GoReleaser
   injects the release tag; the Makefile injects `git describe`; local `go build` reports
   `dev`). Unlike the per-site collectors, this metric carries no `site` label — it describes
-  the exporter process itself.
+  the exporter process itself ([#53](https://github.com/fjacquet/nbu_exporter/pull/53)).
+
+## [4.0.3] - 2026-07-03
+
+### Added
+
+- **systemd deployment**: a packaged unit file, environment file, and accompanying guide
+  for running the exporter under systemd ([#52](https://github.com/fjacquet/nbu_exporter/pull/52)).
+
+## [4.0.2] - 2026-07-01
+
+### Added
+
+- Documentation on handling special characters in the API key value.
+- MkDocs now uses the project brand icon as its favicon and logo
+  ([#50](https://github.com/fjacquet/nbu_exporter/pull/50), [#51](https://github.com/fjacquet/nbu_exporter/pull/51)).
+
+## [4.0.1] - 2026-06-20
+
+### Added
+
 - **Full-stack deployment guide** (`docs/deploy-stack.md`, thanks **@cbijon**): end-to-end
   docker-compose walkthrough — API-key generation, single- and multi-site config, verification,
   alerting, optional collectors, and production hardening. Linked from the README and the docs
   "Deployment" nav. The README was also rewritten around the docker-compose stack as the
-  recommended path (feature list, inline config example, dashboards table).
+  recommended path (feature list, inline config example, dashboards table)
+  ([#45](https://github.com/fjacquet/nbu_exporter/pull/45)).
+
+### Changed
+
+- README quickstart now points at `.env` rather than `config.yaml`.
+- CI migrated to the `fjacquet/ci` reusable (make-based) workflows, and the `security`
+  workflow is now advisory to match the central default
+  ([#46](https://github.com/fjacquet/nbu_exporter/pull/46), [#47](https://github.com/fjacquet/nbu_exporter/pull/47)).
 
 ### Fixed
 
@@ -27,7 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stack.** `rules-perclient.yml`, `rules-tape.yml`, and `rules-multisite.yml` shipped with unit
   tests but were never wired into `prometheus.yml` (`rule_files:`) or mounted by `docker-compose`
   — only `nbu.rules.yml` was. All four files are now mounted into `/etc/prometheus/rules/` and
-  listed under `rule_files:`, so their alerts evaluate out of the box.
+  listed under `rule_files:`, so their alerts evaluate out of the box
+  ([#45](https://github.com/fjacquet/nbu_exporter/pull/45)).
+- Release packaging: corrected the Homebrew cask token environment variable and added a
+  `skip_upload` guard ([#49](https://github.com/fjacquet/nbu_exporter/pull/49)).
 
 ## [4.0.0] - 2026-06-17
 
