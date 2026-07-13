@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2026-07-14
+
+### Added
+
+- **Env-driven TLS verification skip (`NBU1_SKIP_CERTIFICATE`)** — the per-server `insecureSkipVerify` setting now accepts either a native YAML boolean or a `${VAR}` environment reference (e.g. `${NBU1_SKIP_CERTIFICATE}`), resolved at startup, matching the existing `${NBU1_*}` pattern. The active default is unchanged; the env form is opt-in via a documented comment in `config.yaml`.
+
 ## [4.0.4] - 2026-07-03
 
 ### Added
