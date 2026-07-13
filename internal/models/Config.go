@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -33,17 +34,73 @@ var SupportedAPIVersions = []string{APIVersion140, APIVersion130, APIVersion120,
 // by the multi-site feature. The Site field defaults to the Host value when the
 // legacy single nbuserver: block is auto-mapped.
 type NbuServerConfig struct {
-	Site               string `yaml:"site"`
-	Port               string `yaml:"port"`
-	Scheme             string `yaml:"scheme"`
-	URI                string `yaml:"uri"`
-	Domain             string `yaml:"domain"`
-	DomainType         string `yaml:"domainType"`
-	Host               string `yaml:"host"`
-	APIKey             string `yaml:"apiKey"`
-	APIVersion         string `yaml:"apiVersion"`
-	ContentType        string `yaml:"contentType"`
-	InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+	Site               string  `yaml:"site"`
+	Port               string  `yaml:"port"`
+	Scheme             string  `yaml:"scheme"`
+	URI                string  `yaml:"uri"`
+	Domain             string  `yaml:"domain"`
+	DomainType         string  `yaml:"domainType"`
+	Host               string  `yaml:"host"`
+	APIKey             string  `yaml:"apiKey"`
+	APIVersion         string  `yaml:"apiVersion"`
+	ContentType        string  `yaml:"contentType"`
+	InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
+}
+
+// EnvBool is a boolean config value that may be written in YAML either as a native
+// boolean (insecureSkipVerify: true) or as a ${VAR} environment reference resolved at
+// secret-resolution time (insecureSkipVerify: ${NBU1_SKIP_CERTIFICATE}). This keeps
+// backward compatibility with existing native-bool configs while allowing env-driven
+// control that matches the ${NBU1_*} pattern already used for host/apiKey.
+type EnvBool struct {
+	raw string // ${...} reference or literal string form, when written as a string
+	val bool   // resolved value
+}
+
+// NewEnvBool returns an already-resolved EnvBool (for tests / programmatic config).
+func NewEnvBool(v bool) EnvBool { return EnvBool{val: v} }
+
+// Bool returns the resolved boolean value.
+func (b EnvBool) Bool() bool { return b.val }
+
+// UnmarshalYAML accepts either a native YAML boolean or a string (which may be a ${VAR}
+// reference resolved later by Resolve). yaml.v2 signature.
+func (b *EnvBool) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var bv bool
+	if err := unmarshal(&bv); err == nil {
+		b.val = bv
+		return nil
+	}
+	var s string
+	if err := unmarshal(&s); err != nil {
+		return fmt.Errorf("insecureSkipVerify must be a boolean or ${ENV} reference: %w", err)
+	}
+	b.raw = s
+	return nil
+}
+
+// Resolve expands any ${VAR} reference (via expand) and parses the result to a bool.
+// It is a no-op when the value was a native boolean or the field was omitted. An empty
+// expansion resolves to false; a non-boolean expansion is an error.
+func (b *EnvBool) Resolve(expand func(string) (string, error)) error {
+	if b.raw == "" {
+		return nil
+	}
+	s, err := expand(b.raw)
+	if err != nil {
+		return err
+	}
+	s = strings.TrimSpace(s)
+	if s == "" {
+		b.val = false
+		return nil
+	}
+	v, err := strconv.ParseBool(s)
+	if err != nil {
+		return fmt.Errorf("insecureSkipVerify: cannot parse %q as boolean", s)
+	}
+	b.val = v
+	return nil
 }
 
 // ApplyTo copies this server's connection settings into cfg's legacy NbuServer
@@ -97,16 +154,16 @@ type Config struct {
 	// backward compatibility and is automatically promoted into NbuServers[0]
 	// during Validate()/SetDefaults() if NbuServers is empty.
 	NbuServer struct {
-		Port               string `yaml:"port"`
-		Scheme             string `yaml:"scheme"`
-		URI                string `yaml:"uri"`
-		Domain             string `yaml:"domain"`
-		DomainType         string `yaml:"domainType"`
-		Host               string `yaml:"host"`
-		APIKey             string `yaml:"apiKey"`
-		APIVersion         string `yaml:"apiVersion"`
-		ContentType        string `yaml:"contentType"`
-		InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+		Port               string  `yaml:"port"`
+		Scheme             string  `yaml:"scheme"`
+		URI                string  `yaml:"uri"`
+		Domain             string  `yaml:"domain"`
+		DomainType         string  `yaml:"domainType"`
+		Host               string  `yaml:"host"`
+		APIKey             string  `yaml:"apiKey"`
+		APIVersion         string  `yaml:"apiVersion"`
+		ContentType        string  `yaml:"contentType"`
+		InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
 	} `yaml:"nbuserver"`
 
 	// NbuServers is the multi-site server list. When empty and NbuServer.Host is

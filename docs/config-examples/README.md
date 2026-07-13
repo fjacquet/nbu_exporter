@@ -168,7 +168,7 @@ nbuserver:
 | `apiVersion` | string | No | Auto-detect | API version ("13.0", "12.0", "10.0", or omit for auto-detection) |
 | `apiKey` | string | Yes | - | NetBackup API key (generate from NetBackup UI) |
 | `contentType` | string | Yes | - | API content type header |
-| `insecureSkipVerify` | bool | No | false | Skip TLS verification (not recommended for production) |
+| `insecureSkipVerify` | bool or `${VAR}` | No | false | Skip TLS verification (not recommended for production). Native bool or a `${VAR}` reference (e.g. `${NBU1_SKIP_CERTIFICATE}`) resolved at startup. |
 
 ### NBU Servers Section (multi-site)
 

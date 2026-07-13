@@ -429,7 +429,7 @@ func createTestConfig(serverURL, apiVersion string) models.Config {
 	cfg.NbuServer.APIKey = testutil.TestAPIKey
 	cfg.NbuServer.APIVersion = apiVersion
 	cfg.NbuServer.ContentType = testutil.ContentTypeJSON
-	cfg.NbuServer.InsecureSkipVerify = true
+	cfg.NbuServer.InsecureSkipVerify = models.NewEnvBool(true)
 
 	return cfg
 }

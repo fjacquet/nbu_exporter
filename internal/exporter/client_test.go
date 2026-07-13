@@ -172,16 +172,16 @@ func createTestServer(t *testing.T, apiVersion, apiKey string) *httptest.Server 
 func createBasicTestConfig(apiVersion, apiKey string) models.Config {
 	return models.Config{
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: apiVersion,
 			APIKey:     apiKey,
@@ -231,16 +231,16 @@ func TestNbuClientFetchDataNotAcceptableError(t *testing.T) {
 
 			cfg := models.Config{
 				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+					Port               string         `yaml:"port"`
+					Scheme             string         `yaml:"scheme"`
+					URI                string         `yaml:"uri"`
+					Domain             string         `yaml:"domain"`
+					DomainType         string         `yaml:"domainType"`
+					Host               string         `yaml:"host"`
+					APIKey             string         `yaml:"apiKey"`
+					APIVersion         string         `yaml:"apiVersion"`
+					ContentType        string         `yaml:"contentType"`
+					InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 				}{
 					APIVersion: tt.apiVersion,
 					APIKey:     testAPIKey,
@@ -350,16 +350,16 @@ func TestNbuClientAuthorizationHeaderUnchanged(t *testing.T) {
 
 			cfg := models.Config{
 				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+					Port               string         `yaml:"port"`
+					Scheme             string         `yaml:"scheme"`
+					URI                string         `yaml:"uri"`
+					Domain             string         `yaml:"domain"`
+					DomainType         string         `yaml:"domainType"`
+					Host               string         `yaml:"host"`
+					APIKey             string         `yaml:"apiKey"`
+					APIVersion         string         `yaml:"apiVersion"`
+					ContentType        string         `yaml:"contentType"`
+					InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 				}{
 					APIVersion: "12.0",
 					APIKey:     apiKey,
@@ -505,7 +505,7 @@ func createMinimalConfig(apiVersion, apiKey string) models.Config {
 	cfg := models.Config{}
 	cfg.NbuServer.APIVersion = apiVersion
 	cfg.NbuServer.APIKey = apiKey
-	cfg.NbuServer.InsecureSkipVerify = true
+	cfg.NbuServer.InsecureSkipVerify = models.NewEnvBool(true)
 	return cfg
 }
 
@@ -583,7 +583,7 @@ func TestNewNbuClientWithVersionDetectionExplicitVersion(t *testing.T) {
 			cfg.NbuServer.URI = "/netbackup"
 			cfg.NbuServer.APIKey = testAPIKey
 			cfg.NbuServer.APIVersion = tt.configuredVersion
-			cfg.NbuServer.InsecureSkipVerify = true
+			cfg.NbuServer.InsecureSkipVerify = models.NewEnvBool(true)
 
 			// For explicit versions, we should not attempt detection
 			if !tt.shouldDetect {
@@ -1249,7 +1249,7 @@ func TestNewNbuClient_TLSConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := createBasicTestConfig("13.0", "test-key")
-			cfg.NbuServer.InsecureSkipVerify = tt.insecureSkipVerify
+			cfg.NbuServer.InsecureSkipVerify = models.NewEnvBool(tt.insecureSkipVerify)
 
 			client := NewNbuClient(cfg)
 
@@ -1257,9 +1257,9 @@ func TestNewNbuClient_TLSConfig(t *testing.T) {
 			require.NotNil(t, client.client, "NewNbuClient() did not initialize HTTP client")
 
 			// Verify config is stored
-			if client.cfg.NbuServer.InsecureSkipVerify != tt.insecureSkipVerify {
+			if client.cfg.NbuServer.InsecureSkipVerify.Bool() != tt.insecureSkipVerify {
 				t.Errorf("NewNbuClient() InsecureSkipVerify = %v, want %v",
-					client.cfg.NbuServer.InsecureSkipVerify, tt.insecureSkipVerify)
+					client.cfg.NbuServer.InsecureSkipVerify.Bool(), tt.insecureSkipVerify)
 			}
 		})
 	}
@@ -1380,7 +1380,7 @@ func TestNbuClient_TLSInTransport(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := createBasicTestConfig("13.0", "test-key")
-			cfg.NbuServer.InsecureSkipVerify = tt.insecureSkipVerify
+			cfg.NbuServer.InsecureSkipVerify = models.NewEnvBool(tt.insecureSkipVerify)
 
 			client := NewNbuClient(cfg)
 			if client == nil {

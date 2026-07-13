@@ -119,7 +119,7 @@ nbuserver:
 				if cfg.NbuServer.Domain != "example.com" {
 					t.Errorf("Expected domain 'example.com', got '%s'", cfg.NbuServer.Domain)
 				}
-				if !cfg.NbuServer.InsecureSkipVerify {
+				if !cfg.NbuServer.InsecureSkipVerify.Bool() {
 					t.Error("Expected insecureSkipVerify to be true")
 				}
 			},
@@ -300,6 +300,175 @@ nbuserver:
 		}
 		if cfg.NbuServer.APIKey != "env-api-key" {
 			t.Errorf("APIKey = %q, want %q", cfg.NbuServer.APIKey, "env-api-key")
+		}
+	})
+
+	t.Run("insecureSkipVerify native bool passes through unchanged", func(t *testing.T) {
+		cfg := &models.Config{}
+		cfg.NbuServer.Host = "literal-host"
+		cfg.NbuServer.APIKey = "literal-key"
+		cfg.NbuServer.InsecureSkipVerify = models.NewEnvBool(true)
+
+		if err := ResolveSecrets(cfg); err != nil {
+			t.Fatalf("ResolveSecrets() unexpected error: %v", err)
+		}
+		if !cfg.NbuServer.InsecureSkipVerify.Bool() {
+			t.Error("native bool true should remain true after ResolveSecrets")
+		}
+	})
+
+	t.Run("insecureSkipVerify resolves ${VAR} reference to true", func(t *testing.T) {
+		t.Setenv("TEST_NBU_SKIP_CERT", "true")
+
+		tmpDir := t.TempDir()
+		filePath := filepath.Join(tmpDir, "skip-cert-config.yaml")
+		content := `
+server:
+  host: "localhost"
+  port: "9440"
+  uri: "/metrics"
+  scrapingInterval: "5m"
+  logName: "test.log"
+nbuserver:
+  host: "literal-host"
+  port: "1556"
+  scheme: "https"
+  uri: "/netbackup"
+  apiKey: "literal-key"
+  apiVersion: "13.0"
+  insecureSkipVerify: "${TEST_NBU_SKIP_CERT}"
+`
+		if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file: %v", err)
+		}
+
+		var cfg models.Config
+		if err := ReadFile(&cfg, filePath); err != nil {
+			t.Fatalf("ReadFile() unexpected error: %v", err)
+		}
+		if !cfg.NbuServer.InsecureSkipVerify.Bool() {
+			t.Error("TEST_NBU_SKIP_CERT=true did not resolve insecureSkipVerify to true")
+		}
+	})
+
+	t.Run("insecureSkipVerify unset ${VAR} returns error with field context", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		filePath := filepath.Join(tmpDir, "skip-cert-unset-config.yaml")
+		content := `
+server:
+  host: "localhost"
+  port: "9440"
+  uri: "/metrics"
+  scrapingInterval: "5m"
+  logName: "test.log"
+nbuserver:
+  host: "literal-host"
+  port: "1556"
+  scheme: "https"
+  uri: "/netbackup"
+  apiKey: "literal-key"
+  apiVersion: "13.0"
+  insecureSkipVerify: "${UNSET_SKIP_CERT_VAR_XYZ}"
+`
+		if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file: %v", err)
+		}
+
+		var cfg models.Config
+		err := ReadFile(&cfg, filePath)
+		if err == nil {
+			t.Fatal("ReadFile() expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "nbuserver.insecureSkipVerify") {
+			t.Errorf("error %q should mention field nbuserver.insecureSkipVerify", err.Error())
+		}
+		if !strings.Contains(err.Error(), "UNSET_SKIP_CERT_VAR_XYZ") {
+			t.Errorf("error %q should name the missing var", err.Error())
+		}
+	})
+
+	t.Run("insecureSkipVerify non-boolean value errors", func(t *testing.T) {
+		t.Setenv("TEST_NBU_SKIP_CERT_BAD", "not-a-bool")
+
+		tmpDir := t.TempDir()
+		filePath := filepath.Join(tmpDir, "skip-cert-bad-config.yaml")
+		content := `
+server:
+  host: "localhost"
+  port: "9440"
+  uri: "/metrics"
+  scrapingInterval: "5m"
+  logName: "test.log"
+nbuserver:
+  host: "literal-host"
+  port: "1556"
+  scheme: "https"
+  uri: "/netbackup"
+  apiKey: "literal-key"
+  apiVersion: "13.0"
+  insecureSkipVerify: "${TEST_NBU_SKIP_CERT_BAD}"
+`
+		if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file: %v", err)
+		}
+
+		var cfg models.Config
+		err := ReadFile(&cfg, filePath)
+		if err == nil {
+			t.Fatal("ReadFile() expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "insecureSkipVerify") {
+			t.Errorf("error %q should mention insecureSkipVerify", err.Error())
+		}
+	})
+
+	t.Run("nbuservers list resolves a distinct ${VAR} per site", func(t *testing.T) {
+		t.Setenv("TEST_NBU1_SKIP_CERT", "true")
+		t.Setenv("TEST_NBU2_SKIP_CERT", "false")
+
+		tmpDir := t.TempDir()
+		filePath := filepath.Join(tmpDir, "skip-cert-multisite-config.yaml")
+		content := `
+server:
+  host: "localhost"
+  port: "9440"
+  uri: "/metrics"
+  scrapingInterval: "5m"
+  logName: "test.log"
+nbuservers:
+  - site: "paris"
+    host: "nbu-paris.example.com"
+    port: "1556"
+    scheme: "https"
+    uri: "/netbackup"
+    apiKey: "paris-key"
+    apiVersion: "13.0"
+    insecureSkipVerify: "${TEST_NBU1_SKIP_CERT}"
+  - site: "lyon"
+    host: "nbu-lyon.example.com"
+    port: "1556"
+    scheme: "https"
+    uri: "/netbackup"
+    apiKey: "lyon-key"
+    apiVersion: "13.0"
+    insecureSkipVerify: "${TEST_NBU2_SKIP_CERT}"
+`
+		if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file: %v", err)
+		}
+
+		var cfg models.Config
+		if err := ReadFile(&cfg, filePath); err != nil {
+			t.Fatalf("ReadFile() unexpected error: %v", err)
+		}
+		if len(cfg.NbuServers) != 2 {
+			t.Fatalf("expected 2 nbuservers entries, got %d", len(cfg.NbuServers))
+		}
+		if !cfg.NbuServers[0].InsecureSkipVerify.Bool() {
+			t.Error("site paris: TEST_NBU1_SKIP_CERT=true did not resolve to true")
+		}
+		if cfg.NbuServers[1].InsecureSkipVerify.Bool() {
+			t.Error("site lyon: TEST_NBU2_SKIP_CERT=false did not resolve to false")
 		}
 	})
 }

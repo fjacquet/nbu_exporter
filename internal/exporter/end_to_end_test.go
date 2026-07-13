@@ -511,7 +511,7 @@ func createTestConfigTLS(serverURL, apiVersion string) models.Config {
 	cfg.NbuServer.APIVersion = apiVersion
 	cfg.NbuServer.APIKey = "test-api-key"
 	cfg.NbuServer.ContentType = fmt.Sprintf("application/vnd.netbackup+json;version=%s", apiVersion)
-	cfg.NbuServer.InsecureSkipVerify = true
+	cfg.NbuServer.InsecureSkipVerify = models.NewEnvBool(true)
 
 	return cfg
 }

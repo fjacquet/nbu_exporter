@@ -20,7 +20,7 @@ nbuserver:
     apiVersion: "13.0"  # Optional: auto-detects if omitted
     apiKey: "your-api-key-here"
     contentType: "application/vnd.netbackup+json; version=13.0"
-    insecureSkipVerify: false
+    insecureSkipVerify: false  # or "${NBU1_SKIP_CERTIFICATE}" — see Environment Variables below
 
 # Optional: OpenTelemetry distributed tracing
 # opentelemetry:
@@ -76,6 +76,11 @@ the host), so existing single-site configurations keep working unchanged. See
 
 The `host` and `apiKey` fields in the `nbuserver` section support `${VAR}` interpolation.
 At startup the exporter expands every `${VAR}` reference and fails loudly if a variable is not set.
+
+`insecureSkipVerify` accepts either a native boolean (`insecureSkipVerify: true`) or the same
+`${VAR}` interpolation (`insecureSkipVerify: "${NBU1_SKIP_CERTIFICATE}"`), resolved at startup
+alongside `host`/`apiKey`. This lets you toggle TLS verification per environment (e.g. a lab
+override) without editing `config.yaml`.
 
 `nbu_exporter` loads a `.env` file natively at startup — you do not need a shell wrapper or
 `export` statements. It looks for `.env` in the working directory first, then in the same
@@ -164,7 +169,7 @@ the same fields plus a required, unique `site` (see [Multiple Sites](#multiple-s
 | `apiVersion` | string | No | API version (14.0, 13.0, 12.0, or 10.0). Auto-detects if omitted. |
 | `apiKey` | string | Yes | NetBackup API key |
 | `contentType` | string | Yes | API content type header |
-| `insecureSkipVerify` | bool | No | Skip TLS certificate verification |
+| `insecureSkipVerify` | bool or `${VAR}` | No | Skip TLS certificate verification. Native bool or a `${VAR}` reference (e.g. `${NBU1_SKIP_CERTIFICATE}`) resolved at startup; defaults to `false`. |
 
 ## OpenTelemetry Section (Optional)
 

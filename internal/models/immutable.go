@@ -71,7 +71,7 @@ func NewImmutableConfig(cfg *Config) (ImmutableConfig, error) {
 		baseURL:            cfg.GetNBUBaseURL(),
 		apiKey:             cfg.NbuServer.APIKey,
 		apiVersion:         cfg.NbuServer.APIVersion,
-		insecureSkipVerify: cfg.NbuServer.InsecureSkipVerify,
+		insecureSkipVerify: cfg.NbuServer.InsecureSkipVerify.Bool(),
 
 		// Server
 		serverAddress:    cfg.GetServerAddress(),

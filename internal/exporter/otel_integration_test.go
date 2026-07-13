@@ -61,16 +61,16 @@ func TestIntegrationEndToEndTracing(t *testing.T) {
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: "13.0",
 			APIKey:     testKeyName,
@@ -125,16 +125,16 @@ func TestIntegrationBackwardCompatibility(t *testing.T) {
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			Host:       "nbu-master",
 			Port:       "1556",
@@ -218,16 +218,16 @@ func TestIntegrationGracefulDegradation(t *testing.T) {
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: "13.0",
 			APIKey:     testKeyName,
@@ -289,16 +289,16 @@ func TestIntegrationTracePropagation(t *testing.T) {
 	// Create client
 	cfg := models.Config{
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: "13.0",
 			APIKey:     testKeyName,

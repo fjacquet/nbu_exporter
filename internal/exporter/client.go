@@ -152,7 +152,7 @@ func NewNbuClient(cfg models.Config, opts ...ClientOption) *NbuClient {
 	}
 
 	// Log security warning if TLS verification is disabled
-	if cfg.NbuServer.InsecureSkipVerify {
+	if cfg.NbuServer.InsecureSkipVerify.Bool() {
 		log.Error("SECURITY WARNING: TLS certificate verification disabled - this is insecure for production use")
 	}
 
@@ -201,7 +201,7 @@ func NewNbuClient(cfg models.Config, opts ...ClientOption) *NbuClient {
 		IdleConnTimeout:     idleConnTimeout,
 		TLSHandshakeTimeout: 10 * time.Second,
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: cfg.NbuServer.InsecureSkipVerify,
+			InsecureSkipVerify: cfg.NbuServer.InsecureSkipVerify.Bool(),
 			MinVersion:         tls.VersionTLS12, // Enforce TLS 1.2 minimum
 		},
 	}
