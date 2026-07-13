@@ -53,16 +53,16 @@ func BenchmarkFetchDataWithoutTracing(b *testing.B) {
 
 	cfg := models.Config{
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: benchAPIVersion,
 			APIKey:     benchTestKey,
@@ -121,16 +121,16 @@ func BenchmarkFetchDataWithTracingFullSampling(b *testing.B) {
 
 	cfg := models.Config{
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: benchAPIVersion,
 			APIKey:     benchTestKey,
@@ -189,16 +189,16 @@ func BenchmarkFetchDataWithTracingPartialSampling(b *testing.B) {
 
 	cfg := models.Config{
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: benchAPIVersion,
 			APIKey:     benchTestKey,
@@ -238,16 +238,16 @@ func BenchmarkSpanCreation(b *testing.B) {
 
 	cfg := models.Config{
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: benchAPIVersion,
 			APIKey:     benchTestKey,
@@ -288,16 +288,16 @@ func BenchmarkAttributeRecording(b *testing.B) {
 
 	cfg := models.Config{
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			APIVersion: benchAPIVersion,
 			APIKey:     benchTestKey,

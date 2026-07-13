@@ -50,16 +50,16 @@ func createTestConfig() models.Config {
 			CacheTTL:         "5m",
 		},
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string         `yaml:"port"`
+			Scheme             string         `yaml:"scheme"`
+			URI                string         `yaml:"uri"`
+			Domain             string         `yaml:"domain"`
+			DomainType         string         `yaml:"domainType"`
+			Host               string         `yaml:"host"`
+			APIKey             string         `yaml:"apiKey"`
+			APIVersion         string         `yaml:"apiVersion"`
+			ContentType        string         `yaml:"contentType"`
+			InsecureSkipVerify models.EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			Scheme:             "https",
 			Host:               "localhost",
@@ -67,7 +67,7 @@ func createTestConfig() models.Config {
 			URI:                "/netbackup",
 			APIKey:             "test-api-key-12345678",
 			APIVersion:         "13.0",
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: models.NewEnvBool(true),
 		},
 	}
 }
@@ -367,7 +367,7 @@ func TestServerStartShutdown_Integration(t *testing.T) {
 	cfg.NbuServer.Host = host
 	cfg.NbuServer.Port = port
 	cfg.NbuServer.Scheme = "https"
-	cfg.NbuServer.InsecureSkipVerify = true
+	cfg.NbuServer.InsecureSkipVerify = models.NewEnvBool(true)
 
 	// Create server with SafeConfig
 	safeCfg := models.NewSafeConfig(&cfg)
@@ -518,7 +518,7 @@ func TestServerErrorPropagation(t *testing.T) {
 	cfg.NbuServer.Host = nbuHost
 	cfg.NbuServer.Port = nbuPort
 	cfg.NbuServer.Scheme = "https"
-	cfg.NbuServer.InsecureSkipVerify = true
+	cfg.NbuServer.InsecureSkipVerify = models.NewEnvBool(true)
 
 	safeCfg := models.NewSafeConfig(&cfg)
 	server := NewServer(safeCfg, "")

@@ -19,7 +19,7 @@ func createValidConfig() *Config {
 	cfg.NbuServer.URI = "/netbackup"
 	cfg.NbuServer.APIKey = "test-api-key-12345678"
 	cfg.NbuServer.APIVersion = "13.0"
-	cfg.NbuServer.InsecureSkipVerify = false
+	cfg.NbuServer.InsecureSkipVerify = NewEnvBool(false)
 
 	cfg.OpenTelemetry.Enabled = true
 	cfg.OpenTelemetry.Endpoint = "localhost:4317"

@@ -65,7 +65,7 @@ func newNbuServerConfig(site, serverURL, apiVersion string) models.NbuServerConf
 		APIKey:             testAPIKey,
 		APIVersion:         apiVersion,
 		ContentType:        contentTypeJSON,
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: models.NewEnvBool(true),
 	}
 }
 

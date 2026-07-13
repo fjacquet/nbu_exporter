@@ -9,9 +9,11 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// ResolveSecrets expands ${ENV} references in the NBU server host and apiKey fields.
-// Mutates cfg in place. Call this immediately after YAML decode, before Validate().
-// Returns an error (with field context) if any referenced variable is not set.
+// ResolveSecrets expands ${ENV} references in the NBU server host, apiKey, and
+// insecureSkipVerify fields (legacy single-server block and, if present, each entry of
+// the multi-site nbuservers list). Mutates cfg in place. Call this immediately after
+// YAML decode, before Validate(). Returns an error (with field context) if any
+// referenced variable is not set.
 func ResolveSecrets(cfg *models.Config) error {
 	host, err := ExpandEnv(cfg.NbuServer.Host)
 	if err != nil {
@@ -24,6 +26,16 @@ func ResolveSecrets(cfg *models.Config) error {
 		return fmt.Errorf("nbuserver.apiKey: %w", err)
 	}
 	cfg.NbuServer.APIKey = apiKey
+
+	if err := cfg.NbuServer.InsecureSkipVerify.Resolve(ExpandEnv); err != nil {
+		return fmt.Errorf("nbuserver.insecureSkipVerify: %w", err)
+	}
+
+	for i := range cfg.NbuServers {
+		if err := cfg.NbuServers[i].InsecureSkipVerify.Resolve(ExpandEnv); err != nil {
+			return fmt.Errorf("nbuservers[%d] (%s) insecureSkipVerify: %w", i, cfg.NbuServers[i].Site, err)
+		}
+	}
 
 	return nil
 }

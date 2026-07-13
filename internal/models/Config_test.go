@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -18,16 +19,16 @@ func TestConfigSetDefaults(t *testing.T) {
 			name: "preserves empty API version for auto-detection",
 			config: Config{
 				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+					Port               string  `yaml:"port"`
+					Scheme             string  `yaml:"scheme"`
+					URI                string  `yaml:"uri"`
+					Domain             string  `yaml:"domain"`
+					DomainType         string  `yaml:"domainType"`
+					Host               string  `yaml:"host"`
+					APIKey             string  `yaml:"apiKey"`
+					APIVersion         string  `yaml:"apiVersion"`
+					ContentType        string  `yaml:"contentType"`
+					InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
 				}{
 					APIVersion: "",
 				},
@@ -38,16 +39,16 @@ func TestConfigSetDefaults(t *testing.T) {
 			name: "preserves existing API version",
 			config: Config{
 				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+					Port               string  `yaml:"port"`
+					Scheme             string  `yaml:"scheme"`
+					URI                string  `yaml:"uri"`
+					Domain             string  `yaml:"domain"`
+					DomainType         string  `yaml:"domainType"`
+					Host               string  `yaml:"host"`
+					APIKey             string  `yaml:"apiKey"`
+					APIVersion         string  `yaml:"apiVersion"`
+					ContentType        string  `yaml:"contentType"`
+					InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
 				}{
 					APIVersion: "11.1",
 				},
@@ -106,16 +107,16 @@ func createConfigWithAPIVersion(apiVersion string) *Config {
 			LogName:          testLogName,
 		},
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string  `yaml:"port"`
+			Scheme             string  `yaml:"scheme"`
+			URI                string  `yaml:"uri"`
+			Domain             string  `yaml:"domain"`
+			DomainType         string  `yaml:"domainType"`
+			Host               string  `yaml:"host"`
+			APIKey             string  `yaml:"apiKey"`
+			APIVersion         string  `yaml:"apiVersion"`
+			ContentType        string  `yaml:"contentType"`
+			InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			Port:       "1556",
 			Scheme:     "https",
@@ -444,16 +445,16 @@ func TestAPIVersionConstants(t *testing.T) {
 func createConfigWithNBUServer(scheme, host, port, uri string) Config {
 	return Config{
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string  `yaml:"port"`
+			Scheme             string  `yaml:"scheme"`
+			URI                string  `yaml:"uri"`
+			Domain             string  `yaml:"domain"`
+			DomainType         string  `yaml:"domainType"`
+			Host               string  `yaml:"host"`
+			APIKey             string  `yaml:"apiKey"`
+			APIVersion         string  `yaml:"apiVersion"`
+			ContentType        string  `yaml:"contentType"`
+			InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			Scheme: scheme,
 			Host:   host,
@@ -678,16 +679,16 @@ func TestConfigMaskAPIKey(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config := Config{
 				NbuServer: struct {
-					Port               string `yaml:"port"`
-					Scheme             string `yaml:"scheme"`
-					URI                string `yaml:"uri"`
-					Domain             string `yaml:"domain"`
-					DomainType         string `yaml:"domainType"`
-					Host               string `yaml:"host"`
-					APIKey             string `yaml:"apiKey"`
-					APIVersion         string `yaml:"apiVersion"`
-					ContentType        string `yaml:"contentType"`
-					InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+					Port               string  `yaml:"port"`
+					Scheme             string  `yaml:"scheme"`
+					URI                string  `yaml:"uri"`
+					Domain             string  `yaml:"domain"`
+					DomainType         string  `yaml:"domainType"`
+					Host               string  `yaml:"host"`
+					APIKey             string  `yaml:"apiKey"`
+					APIVersion         string  `yaml:"apiVersion"`
+					ContentType        string  `yaml:"contentType"`
+					InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
 				}{
 					APIKey: tt.apiKey,
 				},
@@ -704,16 +705,16 @@ func TestConfigMaskAPIKey(t *testing.T) {
 func TestConfigBuildURL(t *testing.T) {
 	config := Config{
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string  `yaml:"port"`
+			Scheme             string  `yaml:"scheme"`
+			URI                string  `yaml:"uri"`
+			Domain             string  `yaml:"domain"`
+			DomainType         string  `yaml:"domainType"`
+			Host               string  `yaml:"host"`
+			APIKey             string  `yaml:"apiKey"`
+			APIVersion         string  `yaml:"apiVersion"`
+			ContentType        string  `yaml:"contentType"`
+			InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			Scheme: "https",
 			Host:   testServerNBUMaster,
@@ -806,16 +807,16 @@ func TestConfigValidateServerFields(t *testing.T) {
 				ScrapingInterval: "5m",
 			},
 			NbuServer: struct {
-				Port               string `yaml:"port"`
-				Scheme             string `yaml:"scheme"`
-				URI                string `yaml:"uri"`
-				Domain             string `yaml:"domain"`
-				DomainType         string `yaml:"domainType"`
-				Host               string `yaml:"host"`
-				APIKey             string `yaml:"apiKey"`
-				APIVersion         string `yaml:"apiVersion"`
-				ContentType        string `yaml:"contentType"`
-				InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+				Port               string  `yaml:"port"`
+				Scheme             string  `yaml:"scheme"`
+				URI                string  `yaml:"uri"`
+				Domain             string  `yaml:"domain"`
+				DomainType         string  `yaml:"domainType"`
+				Host               string  `yaml:"host"`
+				APIKey             string  `yaml:"apiKey"`
+				APIVersion         string  `yaml:"apiVersion"`
+				ContentType        string  `yaml:"contentType"`
+				InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
 			}{
 				Port:   "1556",
 				Scheme: "https",
@@ -1045,16 +1046,16 @@ func createBaseTestConfig() Config {
 			ScrapingInterval: "5m",
 		},
 		NbuServer: struct {
-			Port               string `yaml:"port"`
-			Scheme             string `yaml:"scheme"`
-			URI                string `yaml:"uri"`
-			Domain             string `yaml:"domain"`
-			DomainType         string `yaml:"domainType"`
-			Host               string `yaml:"host"`
-			APIKey             string `yaml:"apiKey"`
-			APIVersion         string `yaml:"apiVersion"`
-			ContentType        string `yaml:"contentType"`
-			InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+			Port               string  `yaml:"port"`
+			Scheme             string  `yaml:"scheme"`
+			URI                string  `yaml:"uri"`
+			Domain             string  `yaml:"domain"`
+			DomainType         string  `yaml:"domainType"`
+			Host               string  `yaml:"host"`
+			APIKey             string  `yaml:"apiKey"`
+			APIVersion         string  `yaml:"apiVersion"`
+			ContentType        string  `yaml:"contentType"`
+			InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
 		}{
 			Port:   "1556",
 			Scheme: "https",
@@ -1287,16 +1288,16 @@ func TestConfigValidateOTelEndpoint(t *testing.T) {
 				ScrapingInterval: "5m",
 			},
 			NbuServer: struct {
-				Port               string `yaml:"port"`
-				Scheme             string `yaml:"scheme"`
-				URI                string `yaml:"uri"`
-				Domain             string `yaml:"domain"`
-				DomainType         string `yaml:"domainType"`
-				Host               string `yaml:"host"`
-				APIKey             string `yaml:"apiKey"`
-				APIVersion         string `yaml:"apiVersion"`
-				ContentType        string `yaml:"contentType"`
-				InsecureSkipVerify bool   `yaml:"insecureSkipVerify"`
+				Port               string  `yaml:"port"`
+				Scheme             string  `yaml:"scheme"`
+				URI                string  `yaml:"uri"`
+				Domain             string  `yaml:"domain"`
+				DomainType         string  `yaml:"domainType"`
+				Host               string  `yaml:"host"`
+				APIKey             string  `yaml:"apiKey"`
+				APIVersion         string  `yaml:"apiVersion"`
+				ContentType        string  `yaml:"contentType"`
+				InsecureSkipVerify EnvBool `yaml:"insecureSkipVerify"`
 			}{
 				Port:   "1556",
 				Scheme: "https",
@@ -1703,7 +1704,7 @@ func TestConfigBuildURLAfterValidation(t *testing.T) {
 func TestValidate_InsecureSkipVerify_AllowedViaConfig(t *testing.T) {
 	// InsecureSkipVerify is controlled via config file - no env var required
 	cfg := createBaseTestConfig()
-	cfg.NbuServer.InsecureSkipVerify = true
+	cfg.NbuServer.InsecureSkipVerify = NewEnvBool(true)
 
 	err := cfg.Validate()
 
@@ -1714,7 +1715,7 @@ func TestValidate_InsecureSkipVerify_AllowedViaConfig(t *testing.T) {
 
 func TestValidate_SecureByDefault(t *testing.T) {
 	cfg := createBaseTestConfig()
-	cfg.NbuServer.InsecureSkipVerify = false // Default secure mode
+	cfg.NbuServer.InsecureSkipVerify = NewEnvBool(false) // Default secure mode
 
 	err := cfg.Validate()
 
@@ -1992,5 +1993,81 @@ func TestGetCollectionInterval(t *testing.T) {
 	cfg.Server.CollectionInterval = "not-a-duration"
 	if got := cfg.GetCollectionInterval(); got != 5*time.Minute {
 		t.Errorf("invalid GetCollectionInterval() = %v, want 5m fallback", got)
+	}
+}
+
+func TestEnvBoolNativeAndEnvRef(t *testing.T) {
+	// native YAML bool
+	var native struct {
+		Skip EnvBool `yaml:"skip"`
+	}
+	if err := yaml.Unmarshal([]byte("skip: true\n"), &native); err != nil {
+		t.Fatalf("unmarshal native bool: %v", err)
+	}
+	if !native.Skip.Bool() {
+		t.Fatal("native bool true not resolved to true")
+	}
+
+	// ${VAR} reference: unresolved until Resolve is called (defaults false)
+	var ref struct {
+		Skip EnvBool `yaml:"skip"`
+	}
+	if err := yaml.Unmarshal([]byte("skip: ${NBU1_SKIP_CERTIFICATE}\n"), &ref); err != nil {
+		t.Fatalf("unmarshal env ref: %v", err)
+	}
+	if ref.Skip.Bool() {
+		t.Fatal("env ref should be false before Resolve")
+	}
+	// resolve via a fake expander returning "true"
+	if err := ref.Skip.Resolve(func(s string) (string, error) { return "true", nil }); err != nil {
+		t.Fatalf("resolve: %v", err)
+	}
+	if !ref.Skip.Bool() {
+		t.Fatal("env ref true not resolved")
+	}
+
+	// absent field defaults to false and Resolve is a no-op
+	var absent struct {
+		Skip EnvBool `yaml:"skip"`
+	}
+	if err := yaml.Unmarshal([]byte("other: 1\n"), &absent); err != nil {
+		t.Fatalf("unmarshal absent: %v", err)
+	}
+	if err := absent.Skip.Resolve(func(s string) (string, error) { return "", nil }); err != nil {
+		t.Fatalf("resolve absent: %v", err)
+	}
+	if absent.Skip.Bool() {
+		t.Fatal("absent field should be false")
+	}
+
+	// unset ${VAR}: Resolve propagates the expander's error (matches host/apiKey policy)
+	var unset struct {
+		Skip EnvBool `yaml:"skip"`
+	}
+	if err := yaml.Unmarshal([]byte("skip: ${UNSET_SKIP_VAR}\n"), &unset); err != nil {
+		t.Fatalf("unmarshal unset ref: %v", err)
+	}
+	wantErr := errors.New("environment variable(s) referenced in config but not set: UNSET_SKIP_VAR")
+	if err := unset.Skip.Resolve(func(s string) (string, error) { return "", wantErr }); err == nil {
+		t.Fatal("expected error resolving unset ${VAR}, got nil")
+	}
+
+	// non-boolean expansion is an error
+	var bad struct {
+		Skip EnvBool `yaml:"skip"`
+	}
+	if err := yaml.Unmarshal([]byte("skip: ${SKIP_TLS}\n"), &bad); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if err := bad.Skip.Resolve(func(s string) (string, error) { return "not-a-bool", nil }); err == nil {
+		t.Fatal("expected error for non-boolean expansion, got nil")
+	}
+
+	// non-bool, non-string YAML value is a type error
+	var invalid struct {
+		Skip EnvBool `yaml:"skip"`
+	}
+	if err := yaml.Unmarshal([]byte("skip: [1, 2, 3]\n"), &invalid); err == nil {
+		t.Fatal("expected error unmarshalling a list into EnvBool, got nil")
 	}
 }

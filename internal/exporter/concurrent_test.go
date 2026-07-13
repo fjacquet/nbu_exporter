@@ -365,7 +365,7 @@ func createConcurrentTestConfig(server *httptest.Server) models.Config {
 	cfg.NbuServer.URI = "/netbackup"
 	cfg.NbuServer.APIKey = testAPIKey
 	cfg.NbuServer.APIVersion = models.APIVersion130
-	cfg.NbuServer.InsecureSkipVerify = true
+	cfg.NbuServer.InsecureSkipVerify = models.NewEnvBool(true)
 	cfg.Server.ScrapingInterval = "5m"
 	return cfg
 }

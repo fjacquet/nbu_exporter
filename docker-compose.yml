@@ -34,6 +34,7 @@ services:
       # or your own env references) rather than extending this block.
       - NBU1_HOSTNAME=${NBU1_HOSTNAME:-master.my.domain}
       - NBU1_APIKEY=${NBU1_APIKEY:-}
+      - NBU1_SKIP_CERTIFICATE=${NBU1_SKIP_CERTIFICATE:-false}
     networks:
       - monitoring
 
