@@ -4,6 +4,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fjacquet/nbu_exporter/internal/exporter"
 	"github.com/fjacquet/nbu_exporter/internal/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -197,26 +200,78 @@ func TestSetupLogging_InvalidPath(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to initialize logging")
 }
 
-// TestHealthHandler verifies the /health endpoint returns 200 OK.
-// When collector is nil (before Start()), returns "OK (starting)" to indicate startup phase.
+// TestHealthHandler verifies /health always returns 200, with a JSON body
+// describing every site's cached status. It never makes a live connectivity
+// call — it reads whatever the collection loop last published.
 func TestHealthHandler(t *testing.T) {
 	safeCfg, configPath := createTestSafeConfig()
 	server := NewServer(safeCfg, configPath)
+	server.store = &exporter.SnapshotStore{}
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	rec := httptest.NewRecorder()
 
 	server.healthHandler(rec, req)
 
-	assert.Equal(t, http.StatusOK, rec.Code, "Health handler should return 200")
-	// Before Start() is called, collector is nil, so returns "OK (starting)"
-	assert.Equal(t, "OK (starting)\n", rec.Body.String(), "Health handler should return 'OK (starting)' before collector init")
+	assert.Equal(t, http.StatusOK, rec.Code, "Health handler should always return 200")
+
+	var body struct {
+		Sites []struct {
+			Site string `json:"site"`
+			OK   bool   `json:"ok"`
+		} `json:"sites"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	assert.Empty(t, body.Sites, "no snapshot stored yet, sites should be empty")
+}
+
+// TestHealthHandler_ReturnsCachedSiteStatus verifies the JSON body reflects
+// the store's last published snapshot, including an unhealthy site — and
+// that the status code stays 200 regardless.
+func TestHealthHandler_ReturnsCachedSiteStatus(t *testing.T) {
+	safeCfg, configPath := createTestSafeConfig()
+	server := NewServer(safeCfg, configPath)
+	server.store = &exporter.SnapshotStore{}
+	server.store.Store(&exporter.Snapshot{
+		Sites: map[string]*exporter.SiteSnapshot{
+			"nbu-site-01": {
+				Site:              "nbu-site-01",
+				Up:                false,
+				StorageErr:        errors.New("storage query: status 401"),
+				LastStorageScrape: time.Date(2026, 8, 1, 9, 0, 0, 0, time.UTC),
+				LastJobsScrape:    time.Date(2026, 8, 1, 9, 0, 1, 0, time.UTC),
+			},
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	rec := httptest.NewRecorder()
+
+	server.healthHandler(rec, req)
+
+	assert.Equal(t, http.StatusOK, rec.Code, "Health handler should return 200 even for an unhealthy site")
+
+	var body struct {
+		Sites []struct {
+			Site       string `json:"site"`
+			OK         bool   `json:"ok"`
+			LastScrape string `json:"last_scrape"`
+			Err        string `json:"err"`
+		} `json:"sites"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	require.Len(t, body.Sites, 1)
+	assert.Equal(t, "nbu-site-01", body.Sites[0].Site)
+	assert.False(t, body.Sites[0].OK)
+	assert.Contains(t, body.Sites[0].Err, "storage query: status 401")
+	assert.Equal(t, "2026-08-01T09:00:01Z", body.Sites[0].LastScrape, "should use the later of the two scrape timestamps")
 }
 
 // TestHealthHandler_AllMethods verifies health endpoint accepts various HTTP methods.
 func TestHealthHandler_AllMethods(t *testing.T) {
 	safeCfg, configPath := createTestSafeConfig()
 	server := NewServer(safeCfg, configPath)
+	server.store = &exporter.SnapshotStore{}
 
 	methods := []string{http.MethodGet, http.MethodHead, http.MethodPost}
 	for _, method := range methods {
@@ -229,6 +284,20 @@ func TestHealthHandler_AllMethods(t *testing.T) {
 			assert.Equal(t, http.StatusOK, rec.Code, "Health handler should return 200 for %s", method)
 		})
 	}
+}
+
+func TestLivezReturnsOK(t *testing.T) {
+	rec := httptest.NewRecorder()
+	staticOKHandler(rec, httptest.NewRequest(http.MethodGet, "/livez", nil))
+
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestReadyzReturnsOK(t *testing.T) {
+	rec := httptest.NewRecorder()
+	staticOKHandler(rec, httptest.NewRequest(http.MethodGet, "/readyz", nil))
+
+	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 // TestServerErrorChan verifies the error channel is accessible.

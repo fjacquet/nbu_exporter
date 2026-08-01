@@ -18,11 +18,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"runtime"
+	"sort"
+	"strings"
 	"syscall"
 	"time"
 
@@ -263,6 +266,8 @@ func (s *Server) Start() error {
 
 	mux.Handle(cfg.Server.URI, prometheusHandler)
 	mux.HandleFunc("/health", s.healthHandler)
+	mux.HandleFunc("/livez", staticOKHandler)
+	mux.HandleFunc("/readyz", staticOKHandler)
 
 	// Create HTTP server
 	s.httpSrv = &http.Server{
@@ -448,37 +453,60 @@ func (s *Server) extractTraceContextMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// healthHandler provides health check with NetBackup connectivity verification.
-// Returns 200 OK if NBU API is reachable, 503 Service Unavailable otherwise.
-// Used by load balancers and orchestrators (Kubernetes probes).
-//
-// Behavior:
-//   - If collector not initialized (startup phase): returns 200 "OK (starting)"
-//   - If NBU API is reachable: returns 200 "OK"
-//   - If NBU API is unreachable: returns 503 "UNHEALTHY: NetBackup API unreachable"
-//
-// The connectivity test uses a lightweight API call with 5-second timeout.
-func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	// Fast path: if no collector, just return OK (startup phase)
-	if s.collector == nil {
-		w.WriteHeader(http.StatusOK)
-		_, _ = fmt.Fprintf(w, "OK (starting)\n")
-		return
+// healthHandler always answers 200. The JSON body reports every configured
+// site's cached status from the last collection cycle — it never makes a
+// live connectivity call, so it is O(1) and safe to hit at any frequency.
+func (s *Server) healthHandler(w http.ResponseWriter, _ *http.Request) {
+	type siteHealth struct {
+		Site       string `json:"site"`
+		OK         bool   `json:"ok"`
+		LastScrape string `json:"last_scrape"`
+		Err        string `json:"err,omitempty"`
+	}
+	out := struct {
+		Sites []siteHealth `json:"sites"`
+	}{}
+
+	if s.store != nil {
+		if snap := s.store.Load(); snap != nil {
+			names := make([]string, 0, len(snap.Sites))
+			for name := range snap.Sites {
+				names = append(names, name)
+			}
+			sort.Strings(names)
+			for _, name := range names {
+				site := snap.Sites[name]
+				lastScrape := site.LastStorageScrape
+				if site.LastJobsScrape.After(lastScrape) {
+					lastScrape = site.LastJobsScrape
+				}
+				var errParts []string
+				if site.StorageErr != nil {
+					errParts = append(errParts, "storage: "+site.StorageErr.Error())
+				}
+				if site.JobsErr != nil {
+					errParts = append(errParts, "jobs: "+site.JobsErr.Error())
+				}
+				out.Sites = append(out.Sites, siteHealth{
+					Site:       site.Site,
+					OK:         site.Up,
+					LastScrape: lastScrape.Format(time.RFC3339),
+					Err:        strings.Join(errParts, "; "),
+				})
+			}
+		}
 	}
 
-	// Test NetBackup connectivity with timeout from request context
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(out)
+}
 
-	if err := s.collector.TestConnectivity(ctx); err != nil {
-		log.Warnf("Health check failed: %v", err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		_, _ = fmt.Fprintf(w, "UNHEALTHY: NetBackup API unreachable\n")
-		return
-	}
-
+// staticOKHandler always answers 200 — no collection state, nothing that
+// can make it fail. /livez and /readyz both use it: a probe wired here can
+// never be the reason a healthy process gets restarted or pulled from
+// rotation.
+func staticOKHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	_, _ = fmt.Fprintf(w, "OK\n")
 }
 
 // validateConfig checks if the configuration file exists, loads it, and validates its contents.
