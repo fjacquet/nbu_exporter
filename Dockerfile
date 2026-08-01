@@ -34,6 +34,12 @@ COPY config.yaml /etc/nbu_exporter/config.yaml
 # Expose the default port (configurable via config.yaml)
 EXPOSE 9440
 
+# /livez never depends on target reachability or the collection cycle, so it
+# can never flag a healthy process as down over an unreachable NetBackup
+# master (see ADR-0005 / architecture.md "Health probes").
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://127.0.0.1:9440/livez || exit 1
+
 USER nbu
 
 ENTRYPOINT ["/usr/bin/nbu_exporter"]
