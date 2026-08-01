@@ -178,7 +178,7 @@ docker ps | grep nbu_exporter
 
 # Check health endpoint
 curl http://localhost:9440/health
-# Expected: {"status":"healthy"}
+# Expected: 200 OK, JSON body e.g. {"sites":[{"site":"...","ok":true,"last_scrape":"...","err":""}]}
 ```
 
 ### Level 2: Metrics Availability
@@ -425,7 +425,7 @@ echo $! > nbu_exporter.pid
 ```bash
 # Check health
 curl http://localhost:9440/health
-# Expected: {"status":"healthy"}
+# Expected: 200 OK, JSON body e.g. {"sites":[{"site":"...","ok":true,"last_scrape":"...","err":""}]}
 
 # Check metrics
 curl -s http://localhost:9440/metrics | grep "^nbu_" | wc -l
@@ -895,7 +895,7 @@ echo
 
 # Verify deployment
 echo "Verifying deployment..."
-if curl -sf http://localhost:9440/health > /dev/null; then
+if curl -sf http://localhost:9440/readyz > /dev/null; then
     echo "✓ Health check passed"
 else
     echo "✗ Health check failed"
@@ -998,7 +998,7 @@ echo
 
 # Verify rollback
 echo "Verifying rollback..."
-if curl -sf http://localhost:9440/health > /dev/null; then
+if curl -sf http://localhost:9440/readyz > /dev/null; then
     echo "✓ Health check passed"
 else
     echo "✗ Health check failed"

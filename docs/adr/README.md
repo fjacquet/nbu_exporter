@@ -15,3 +15,4 @@ superseding decision gets a new ADR that references the old one.
 | [0002](0002-opt-in-sub-collector-framework.md) | Pluggable opt-in sub-collector framework | Accepted | 2026-06-14 |
 | [0003](0003-api-version-model-and-jobs-cursor-pagination.md) | NetBackup API version model and jobs cursor pagination | Accepted | 2026-06-17 |
 | [0004](0004-multisite-snapshot-collection-model.md) | Multi-site support via the snapshot collection model and a `site` identity label | Accepted | 2026-06-17 |
+| [0005](0005-health-always-200-and-static-probes.md) | `/livez`/`/readyz` static probes; `/health` always answers 200 with cached, non-live state | Accepted | 2026-08-01 |

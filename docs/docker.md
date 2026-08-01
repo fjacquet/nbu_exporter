@@ -42,7 +42,7 @@ services:
       - ./log:/var/log/nbu_exporter
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9440/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9440/readyz"]
       interval: 30s
       timeout: 10s
       retries: 3

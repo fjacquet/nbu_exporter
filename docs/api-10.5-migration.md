@@ -266,8 +266,8 @@ nbuserver:
 ```bash
 curl http://localhost:9440/health
 
-# Expected output:
-# {"status":"healthy"}
+# Expected output (always 200):
+# {"sites":[{"site":"...","ok":true,"last_scrape":"...","err":""}]}
 ```
 
 ### 2. Check Metrics Endpoint

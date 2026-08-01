@@ -49,11 +49,11 @@ resources: {}
 
 livenessProbe:
   httpGet:
-    path: /health
+    path: /livez
     port: http
 readinessProbe:
   httpGet:
-    path: /health
+    path: /readyz
     port: http
 
 volumes: []
