@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM golang:1.26 AS builder
+FROM docker.io/library/golang:1.26 AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY . .
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o nbu_exporter .
 
 # Stage 2: Runtime
-FROM alpine:latest
+FROM docker.io/library/alpine:latest
 
 # Create the runtime user and log dir. These are busybox builtins (no network).
 RUN adduser -D -u 10001 nbu && \
