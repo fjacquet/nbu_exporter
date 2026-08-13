@@ -133,7 +133,7 @@ you put the key:
 | `.env`, single-quoted `'…'` | Fully literal — no `$` expansion, no `\` escapes, no `#` comment. Best default. Cannot contain a literal `'`. |
 | `.env`, double-quoted `"…"` | Expands `$VAR`/`${VAR}` and processes `\` escapes. `$`, `\`, `"` are special — write `\$`, `\\`, `\"`. |
 | `.env`, unquoted | `$VAR` expands; a ` #` (space-hash) starts a comment; a value **starting** with `'`/`"` is treated as quoted. |
-| `config.yaml` inline | Only the exact `${NAME}` token is interpolated (`os.LookupEnv`), so a literal key containing `${NAME}` is treated as an env ref. Prefer referencing an env var. |
+| `config.yaml` inline | Only the `${NAME}` and `${NAME:-default}` tokens are interpolated (`os.LookupEnv`), so a literal key containing either form is treated as an env ref. Prefer referencing an env var. |
 
 For quotes inside the key specifically: use double quotes to include a `'`, single
 quotes to include a `"`. NetBackup API keys are token strings (dot-separated,
@@ -141,6 +141,24 @@ base64url-style segments), so in practice they contain none of these characters 
 unquoted value works fine. When referencing an env var from `config.yaml`
 (`apiKey: "${NBU1_APIKEY}"`) the value is inserted verbatim and never re-scanned, so the
 env var itself may contain `$`, `${…}`, or any character.
+
+## Fallback values: `${VAR:-default}`
+
+A bare `${VAR}` **fails at startup** when the variable is unset — misconfiguration should
+be loud rather than authenticate with an empty secret. Where a safe default exists, write
+`${VAR:-default}` instead: the reference then never errors, falling back when the variable
+is unset *or* empty, exactly as in the shell and in `docker-compose.yml`. That is why the
+shipped `config.yaml` can be env-driven and still start out of the box:
+
+```yaml
+insecureSkipVerify: "${NBU1_SKIP_CERTIFICATE:-false}"
+```
+
+`false` is this exporter's original shipped default, so a host that never exported
+`NBU1_SKIP_CERTIFICATE` behaves exactly as before.
+
+Use it for settings, not for secrets — a `${NBU1_APIKEY:-}` would silently turn a missing
+password into an empty one.
 
 ## Server Section
 
