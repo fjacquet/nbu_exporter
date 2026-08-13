@@ -59,17 +59,13 @@ func ExpandEnvSecret(field, s string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Only the variable NAMES go into the error. The raw field value may itself contain
-	// part of a credential (a mixed literal like "pw${VAR}"), and this error is logged.
-	if out == "" {
-		var names []string
-		for _, m := range envRefPattern.FindAllStringSubmatch(s, -1) {
-			names = append(names, "${"+m[1]+"}")
-		}
-		if len(names) > 0 {
-			return "", fmt.Errorf("%s references %s, which resolved to an empty value",
-				field, strings.Join(names, ", "))
-		}
+	// The message names the FIELD and nothing else. Config-load errors are logged, and
+	// every part of s is potentially secret — even the variable name is a substring of a
+	// credential field, which is why it is not echoed either. The offending reference is
+	// visible in config.yaml next to the field this names.
+	if out == "" && envRefPattern.MatchString(s) {
+		return "", fmt.Errorf("%s is set from an environment reference that resolved to an "+
+			"empty value; export the variable or remove the reference", field)
 	}
 	return out, nil
 }

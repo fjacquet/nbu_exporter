@@ -16,7 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   always has.
   Credential fields are stricter: a field written as an env reference that resolves to
   nothing is now rejected, so a stray `NBU1_PASSWORD=` line fails at startup instead
-  of authenticating with an empty credential. The shipped `config.yaml` now uses
+  of authenticating with an empty credential. The error names only the config field:
+  config-load failures are logged, and every part of a credential field — the variable
+  name included — is potentially sensitive. The shipped `config.yaml` now uses
   `insecureSkipVerify: "${NBU1_SKIP_CERTIFICATE:-false}"`, so the setting is env-driven out of the box
   yet still resolves to `false` — this repo's original shipped default — on a host that
   never exported the variable.
