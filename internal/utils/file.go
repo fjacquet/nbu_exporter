@@ -15,13 +15,13 @@ import (
 // YAML decode, before Validate(). Returns an error (with field context) if any
 // referenced variable is not set.
 func ResolveSecrets(cfg *models.Config) error {
-	host, err := ExpandEnv(cfg.NbuServer.Host)
+	host, err := ExpandEnvSecret("host", cfg.NbuServer.Host)
 	if err != nil {
 		return fmt.Errorf("nbuserver.host: %w", err)
 	}
 	cfg.NbuServer.Host = host
 
-	apiKey, err := ExpandEnv(cfg.NbuServer.APIKey)
+	apiKey, err := ExpandEnvSecret("apiKey", cfg.NbuServer.APIKey)
 	if err != nil {
 		return fmt.Errorf("nbuserver.apiKey: %w", err)
 	}
