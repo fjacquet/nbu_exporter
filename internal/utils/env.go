@@ -59,8 +59,17 @@ func ExpandEnvSecret(field, s string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if out == "" && envRefPattern.MatchString(s) {
-		return "", fmt.Errorf("%s references %s, which resolved to an empty value", field, s)
+	// Only the variable NAMES go into the error. The raw field value may itself contain
+	// part of a credential (a mixed literal like "pw${VAR}"), and this error is logged.
+	if out == "" {
+		var names []string
+		for _, m := range envRefPattern.FindAllStringSubmatch(s, -1) {
+			names = append(names, "${"+m[1]+"}")
+		}
+		if len(names) > 0 {
+			return "", fmt.Errorf("%s references %s, which resolved to an empty value",
+				field, strings.Join(names, ", "))
+		}
 	}
 	return out, nil
 }
