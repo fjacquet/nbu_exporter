@@ -36,7 +36,9 @@ nbuserver:
   # ${VAR} reference resolved at startup, same pattern as host/apiKey above:
   #   insecureSkipVerify: true
   #   insecureSkipVerify: "${NBU1_SKIP_CERTIFICATE}"
-  insecureSkipVerify: false
+  # The ":-false" fallback keeps startup working when the variable is not exported; a bare
+  # ${NBU1_SKIP_CERTIFICATE} would abort instead, as bare references do for secrets.
+  insecureSkipVerify: "${NBU1_SKIP_CERTIFICATE:-false}"
 
 # Optional: OpenTelemetry distributed tracing configuration
 # Enables distributed tracing for NetBackup API calls and Prometheus scrape cycles

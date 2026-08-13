@@ -142,6 +142,24 @@ unquoted value works fine. When referencing an env var from `config.yaml`
 (`apiKey: "${NBU1_APIKEY}"`) the value is inserted verbatim and never re-scanned, so the
 env var itself may contain `$`, `${…}`, or any character.
 
+## Fallback values: `${VAR:-default}`
+
+A bare `${VAR}` **fails at startup** when the variable is unset — misconfiguration should
+be loud rather than authenticate with an empty secret. Where a safe default exists, write
+`${VAR:-default}` instead: the reference then never errors, falling back when the variable
+is unset *or* empty, exactly as in the shell and in `docker-compose.yml`. That is why the
+shipped `config.yaml` can be env-driven and still start out of the box:
+
+```yaml
+insecureSkipVerify: "${NBU1_SKIP_CERTIFICATE:-false}"
+```
+
+`false` is this exporter's original shipped default, so a host that never exported
+`NBU1_SKIP_CERTIFICATE` behaves exactly as before.
+
+Use it for settings, not for secrets — a `${NBU1_APIKEY:-}` would silently turn a missing
+password into an empty one.
+
 ## Server Section
 
 | Field | Type | Required | Description |
