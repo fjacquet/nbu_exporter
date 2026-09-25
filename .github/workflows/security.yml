@@ -1,0 +1,18 @@
+# Canonical caller for the Go security gate. Copy to a consumer repo as
+# `.github/workflows/security.yml`. Runs `make security` (semgrep) via fjacquet/ci.
+# The blocking CodeQL/osv gates live in make security; do not inline scanners here.
+name: Security
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  security:
+    uses: fjacquet/ci/.github/workflows/go-security.yml@v1
+    permissions:
+      contents: read
