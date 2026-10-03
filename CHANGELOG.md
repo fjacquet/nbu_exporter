@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.3.3] - 2026-10-03
+
+### Added
+
+- CI: security workflow added, calling the shared `go-security` reusable workflow from `fjacquet/ci`.
+
+### Changed
+
+- Go 1.26.6 -> 1.27.1 (`go` directive in `go.mod`, Dockerfile builder image).
+- Makefile tool pins: golangci-lint v2.12.2 -> v2.13.2, goreleaser v2.16.0 -> v2.18.0, govulncheck `latest` -> v1.8.0.
+- Dependencies refreshed with `go get -u ./...`: OpenTelemetry 1.46.0 -> 1.47.0,
+  `prometheus/common` 0.71.0 -> 0.72.0.
+- `google.golang.org/grpc` kept at 1.83.2: 1.84.0 is affected by **GO-2026-6443**.
+
+## [5.3.2] - 2026-09-13
+
+### Security
+
+- `google.golang.org/grpc` 1.83.0 -> 1.83.2, fixing **GHSA-vp52-pcj8-j9qc** and
+  **GHSA-2v4p-qf9q-27wj** (HIGH), pulled in with an `otel` 1.45.0 -> 1.46.0 refresh.
+
+## [5.3.0] - 2026-08-15
+
 ### Added
 
 - `${VAR:-default}` fallbacks in config env references, ported from `pscale_exporter`.
@@ -22,13 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `insecureSkipVerify: "${NBU1_SKIP_CERTIFICATE:-false}"`, so the setting is env-driven out of the box
   yet still resolves to `false` — this repo's original shipped default — on a host that
   never exported the variable.
-
-## [5.3.2] - 2026-09-13
-
-### Security
-
-- `google.golang.org/grpc` 1.83.0 -> 1.83.2, fixing **GHSA-vp52-pcj8-j9qc** and
-  **GHSA-2v4p-qf9q-27wj** (HIGH), pulled in with an `otel` 1.45.0 -> 1.46.0 refresh.
 
 ## [5.1.0] - 2026-08-01
 

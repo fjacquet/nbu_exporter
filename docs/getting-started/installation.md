@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Go 1.25 or later
+- Go 1.27.1 or later
 - Veritas NetBackup 10.0 or later
 - Access to NetBackup REST API
 - NetBackup API key (generated from NBU UI)
