@@ -37,7 +37,7 @@ Before upgrading, ensure you have:
 1. **NetBackup Server**: Version 10.5 or later
 2. **API Access**: Valid API key with appropriate permissions
 3. **Current Exporter**: Backup your current configuration and binary
-4. **Go Environment** (if building from source): Go 1.27.1 or later
+4. **Go Environment** (if building from source): Go 1.27.2 or later
 
 ### Checking Your NetBackup Version
 

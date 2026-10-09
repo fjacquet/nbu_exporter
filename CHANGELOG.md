@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Build with Go 1.27.2 to fix the Go 1.27.1 standard library vulnerabilities flagged by govulncheck (GO-2026-6603, GO-2026-6605, GO-2026-6607, GO-2026-6608, GO-2026-6610, GO-2026-6611, GO-2026-6613, GO-2026-6617 in `net/http`, `crypto/tls`, `mime/multipart`).
+- Update dependencies with `go get -u ./...`: `golang.org/x/net` v0.59.0 -> v0.60.0, `golang.org/x/sys` v0.48.0 -> v0.49.0, `golang.org/x/sync` v0.23.0 -> v0.24.0, `github.com/prometheus/client_golang` v1.24.1 -> v1.25.0, `genproto` googleapis api/rpc refreshed. `google.golang.org/grpc` kept at 1.83.2 per the existing note.
+- Update the golangci-lint pin to v2.14.0, which type-checks against the Go 1.27.2 standard library (v2.13.2 cannot).
+
 ## [5.3.3] - 2026-10-03
 
 ### Added
